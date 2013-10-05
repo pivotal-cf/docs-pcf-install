@@ -47,7 +47,7 @@ This site provides help for operating and using Pivotal CF.
         </a>
      </li>
      <li>
-        <a href="/getting-started/spring-data-hadoop.html">
+        <a href="/private_networks.html">
         Private Networks
         </a>
      </li>

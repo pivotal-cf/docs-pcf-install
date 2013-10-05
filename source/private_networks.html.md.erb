@@ -1,0 +1,100 @@
+---
+title: Isolating a CF Deployment in a Private Network
+---
+
+During setup, you may want to place your router or a load balancer on a public network, then route requests to the Pivotal CF deployment on a private network. Isolating your Pivotal CF deployment provides extra security and makes it possible for you to use as many IP addresses as you need via a subnet for the private network.
+
+To accomplish this setup, one option is to add a VLAN in vSphere for deploying Pivotal CF. This requires that you set up a virtual router in the vSphere for Pivotal CF. There are many virtual router options in the VMware [virtual appliance market](https://solutionexchange.vmware.com/store/category_groups/19). For this example, we use pfSense, a free open source product.
+
+## Adding a VLAN in vSphere Using pfSense ##
+### <a id='new_network'></a>Step 1: Create a new network in vSphere ###
+
+**Option 1**: Connect to vCenter using the vSphere client.
+1. On the **Inventory** tab, select **Hosts and Clusters**.
+
+ <%= image_tag("inventory.png") %>
+
+1. In the resources tree, expand the datacenter and cluster to reveal the list of hosts, then select the host you want to update.
+
+ <%= image_tag("hosts_clusters.png") %>
+
+1. Navigate to the **Configuration** tab and select the **Networking** view, then click **Add Networking** to add a new network.
+
+ <%= image_tag("config_tab.psd") %>
+
+ **Note:** Do not connect any physical network adapters to this network. Doing so prevents you from isolating the network.
+
+### <a id='deploy_pfsense'></a>Step 2: Deploy a pfSense VM to vSphere ###
+
+1. Download the pfSense VMware appliance from the virtual appliances page at [vmsource.com](http://www.vmsources.com/resources/doc_download/35-pfsense). You can also download the ISO or an .ova VMware version from [pfsense.org](http://www.pfsense.org).
+
+1. Select **File > Deploy OVF template** to launch the **Deploy OVF Template** wizard.
+
+ <%= image_tag("file_menu.png") %>
+
+1. On the **Source** page, browse to the pfSense OVA file and click **Next**.
+
+ <%= image_tag("source_page.png") %>
+
+1. On the **OVF Template Details** page, review the template information and click **Next**.
+
+1. On the **Name and Location** page, name the template and select a location, then click **Next**.
+
+ <%= image_tag("name_page.png") %>
+
+1. On the **Resource Pool** page, select an available resource pool and click **Next**.
+
+ <%= image_tag("pool_page.png") %>
+
+1. On the **Storage** page, select a storage location and click **Next**.
+
+ <%= image_tag("storage_page.png") %>
+
+1. On the **Disk Format** page, review the default settings, make changes if necessary, and click **Next**.
+
+ <%= image_tag("format_page.png") %>
+
+1. On the **Network Mapping page**, ensure the new network maps to the source network you just created and click **Next**.
+
+ <%= image_tag("mapping_page.png") %>
+
+1. On the **Ready to Complete** page, review the settings and check the **Power on after deployment** checkbox. Click **Back** to make any changes or **Finish** to complete the wizard and start the pfSense VM.
+
+After pfSense is powered on, the pfSense VM will serve as the router for the VLAN. The default IP range is 10.0.0.1/8.
+
+**Note:** You can configure the WAN and LAN interfaces manually at any time.
+
+### <a id='deploy_cf'></a> Step 3: Deploy a Pivotal CF Installation VM to the VLAN ###
+
+**Note:** Before deploying the Pivotal CF installation VM, refer to step 9 above to ensure you have correctly configured the **Network Mapping** page of the **Deploy OVF Template** wizard.
+
+There are two options for deploying the Pivotal CF installation VM:
+
+**Option 1: One network adapter**
+
+1. Leave only one network adapter on the installation VM.
+
+1. Add a port forwarding rule to forward incoming HTTPS traffic to the installation VM. This allows you to manage pfSense from outside the network using the webConfigurator. To edit the port forwarding rules, open the webConfigurator and select **Firewall > NAT**.
+
+ <%= image_tag("port_forward.png") %>
+
+1. Add firewall rules to allow traffic to pass, as in the following example rules:
+* Allow SSH traffic (port 22) to the pfSense VM
+* Allow HTTP traffic (port 80) to the pfSense VM (allows access to the webConfigurator GUI)
+* Allow HTTPS traffic (port 443) to the Tempest installation VM (in this example, 10.01.100.12)
+
+ <%= image_tag("firewall.png") %>
+
+**Option 2: Two network adapters**
+
+Add a second network adapter to the installation VM. This results in the installation VM  having two IP addresses:
+* A public-facing IP address
+* An internal VLAN to communicate with other BOSH/Cloud Foundry components
+
+Once you have completed one of the above options, the installation VM’s IP addresses will belong to the VLAN.
+
+### <a id='managing_pfsense'></a> Managing pfSense ###
+
+pfSense recommends you use the web-based GUI, webConfigurator, to manage pfSense. The default username and password are **admin/pfsense**. On first login, update your credentials from the default settings.
+
+Refer to the pfSense [documentation](https://doc.pfsense.org/index.php/WebGUI) for more information about using the pfSense webConfigurator.

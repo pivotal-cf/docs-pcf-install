@@ -9,7 +9,7 @@ To accomplish this setup, one option is to add a VLAN in vSphere for deploying P
 ## Adding a VLAN in vSphere Using pfSense ##
 ### <a id='new_network'></a>Step 1: Create a new network in vSphere ###
 
-**Option 1**: Connect to vCenter using the vSphere client.
+Connect to vCenter using the vSphere client.
 
 1. On the **Inventory** tab, select **Hosts and Clusters**.
 
@@ -19,7 +19,7 @@ To accomplish this setup, one option is to add a VLAN in vSphere for deploying P
 
  <%= image_tag("hosts_clusters.png") %>
 
-1. Navigate to the **Configuration** tab and select the **Networking** view, then click **Add Networking** to add a new network.
+1. Navigate to the **Configuration** tab and select the **Networking** view, then click **Add Networking** to add a new network. You will deploy Pivotal CF to this network.
 
  <%= image_tag("config_tab.psd") %>
 
@@ -33,7 +33,7 @@ To accomplish this setup, one option is to add a VLAN in vSphere for deploying P
 
  <%= image_tag("file_menu.png") %>
 
-1. On the **Source** page, browse to the pfSense OVA file and click **Next**.
+1. On the **Source** page, browse to the pfSense .ova file and click **Next**.
 
  <%= image_tag("source_page.png") %>
 
@@ -43,7 +43,7 @@ To accomplish this setup, one option is to add a VLAN in vSphere for deploying P
 
  <%= image_tag("name_page.png") %>
 
-1. On the **Resource Pool** page, select an available resource pool and click **Next**.
+1. **(Optional)** On the **Resource Pool** page, select an available resource pool and click **Next**.
 
  <%= image_tag("pool_page.png") %>
 
@@ -71,11 +71,11 @@ After pfSense is powered on, the pfSense VM will serve as the router for the VLA
 
 There are two options for deploying the Pivotal CF installation VM:
 
-**Option 1: One network adapter**
+**Option 1:** One network adapter
 
-1. Leave only one network adapter on the installation VM.
+1. Leave only one network adapter on the installation VM. This network adapter should connect to the private network you just created.
 
-1. Add a port forwarding rule to forward incoming HTTPS traffic to the installation VM. This allows you to manage pfSense from outside the network using the webConfigurator. To edit the port forwarding rules, open the webConfigurator and select **Firewall > NAT**.
+1. Add a port forwarding rule to forward incoming HTTPS traffic to the installation VM. This allows you to manage pfSense from outside the network using the webConfigurator GUI. To edit the port forwarding rules, open the webConfigurator and select **Firewall > NAT**.
 
  <%= image_tag("port_forward.png") %>
 
@@ -90,13 +90,19 @@ There are two options for deploying the Pivotal CF installation VM:
 
 Add a second network adapter to the installation VM. This results in the installation VM  having two IP addresses:
 
-* A public-facing IP address
-* An internal VLAN to communicate with other BOSH/Cloud Foundry components
+* A public-facing IP address: In the previous procedure, this is the network adapter connected to "VM Network."
+* An internal VLAN to communicate with other BOSH/Cloud Foundry components: This is the network adapter connected to the new private network you created above.
 
 Once you have completed one of the above options, the installation VM’s IP addresses will belong to the VLAN.
 
 ### <a id='managing_pfsense'></a> Managing pfSense ###
 
-pfSense recommends you use the web-based GUI, webConfigurator, to manage pfSense. The default username and password are **admin/pfsense**. On first login, update your credentials from the default settings.
+pfSense recommends you use the web-based GUI, webConfigurator, to manage pfSense.
+
+1. Ensure that you are inside the new private network you created above before attempting to access webConfigurator.
+1. Log in using the default username and password: **admin/pfsense**. On first login, update your credentials from the default settings.
+1. **(Optional)** If you need access from a public IP, complete one of the following options:
+ * Add a firewall rule to the pfSense image to allow access to ports 80 and 443. Refer to option 1 above for more information.
+ * Temporarily disable the gateway using the `pfctl -d` command. Restore the gateway after you have finished using the `pfctl -e` command.
 
 Refer to the pfSense [documentation](https://doc.pfsense.org/index.php/WebGUI) for more information about using the pfSense webConfigurator.

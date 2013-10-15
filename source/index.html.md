@@ -10,7 +10,7 @@ This site provides help for operating and using Pivotal CF.
       <h2>Getting Started</h2>
       <span></span>
     </a>
-    <img src="images/elephant_rgb_sq.png" alt="">
+    <img src="images/favicon.ico" alt="">
     <p class="description">
       This section walks you through installing and deploying Pivotal CF
     </p>
@@ -20,7 +20,7 @@ This site provides help for operating and using Pivotal CF.
       <h2>Operator's Guide</h2>
       <span></span>
     </a>
-    <img src="images/elephant_rgb_sq.png" alt="">
+    <img src="images/favicon.ico" alt="">
     <p class="description">
       This section provides help for Pivotal CF operators.
     </p>

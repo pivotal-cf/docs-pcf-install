@@ -47,6 +47,8 @@
 #   end
 # end
 
+require 'navigation'
+require 'quicklinks'
 
 set :markdown_engine, :redcarpet
 set :markdown, :layout_engine => :erb,

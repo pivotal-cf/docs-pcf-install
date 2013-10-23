@@ -26,7 +26,7 @@ This site provides help for operating and using Pivotal CF.
     </p>
     <ol class="lesson-list">
        <li>
-          <a href="/getting-started/map-reduce-java.html">
+          <a href="troubleshooting.html">
           Troubleshooting
          </a>
       </li>

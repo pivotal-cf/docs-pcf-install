@@ -159,21 +159,23 @@ Refer to the Status tab of the Runtime product tile to view information similar 
 
 ### <a id='bosh_ssh'></a>bosh ssh ###
 
-Simplifies the process of getting you into the VM via SSH, as well as giving you sudo access.
+This command simplifies the process of accessing the VM using SSH. `bosh ssh` also gives you `sudo` access.
 
-You’ll first need to provide BOSH with the public key you want it to use. The tempest user does not have one. This can be achieved easily by running ssh-keygen -t rsa and then accepting the defaults. Then, if you’d like to SSH into the first DEA machine, you can run:
+To use `bosh ssh`:
 
-bosh ssh dea/0 --public_key ~/.ssh/id_rsa.pub
+1. Run `ssh-keygen -t rsa` to provide BOSH with the correct public key.
 
-If you’d like to SSH into a different machine, just substitute the coordinates you retrieve from bosh vms.
+1. Accept the defaults.
 
-You’ll be asked for a password. Don’t be confused. This becomes the password for the temporary user that’s being created as part of your SSH experience. You’ll use it when you inevitably want to sudo -i.
+1. Run `bosh ssh dea/0 --public_key ~/.ssh/id_rsa.pub` to SSH into the first DEA machine. To SSH into a different machine, substitute the coordinates you retrieve from `bosh vms`.
 
-The public key choice will be saved for subsequent executions of bosh ssh.
+1. You are prompted to create a password for the temporary user `bosh ssh` creates. You will use temporary user later if you need to run `sudo -i`.
+
+Pivotal CF saves the public key choice for subsequent executions of `bosh ssh`.
 
 ## <a id='common_probs'></a>Common Problems ##
 
-#### <a id='time_out'></a>“Creating bound missing VMs” times out ####
+### <a id='time_out'></a>“Creating bound missing VMs” times out ###
 
 This task happens immediately following package compilation, but before job assignment to agents. It appears as:
 
@@ -185,25 +187,25 @@ This is almost certainly a NATS issue with the VM in question. The easiest way t
 
 In many cases, if NATS isn’t reachable, you may not be able to hit the VM via TCP period (i.e. no SSH)! This is a situation where the vSphere Console is a fallback option.
 
-1) Console to the VM and login. Find the VM of interest in the Credentials tab of the RUNTIME section of the Pivotal CF UI, and use the “VM credentials.”
+1. Console to the VM and login. Find the VM of interest in the Credentials tab of the RUNTIME section of the Pivotal CF UI, and use the “VM credentials.”
 
 
-2) Become root.
+1. Become root.
 
-3) cd /var/vcap/bosh/log.
+1. Run `cd /var/vcap/bosh/log`.
 
-4) Open the file current.
+1. Open the file `current`.
 
-5) You’re looking for a couple of things:
-
-First, see if the BOSH agent and director have successfully completed a handshake, represented in the logs as a “ping-pong”:
+1. First, see if the BOSH agent and director have successfully completed a handshake, represented in the logs as a “ping-pong”:
 
 <pre class="terminal">
 2013-10-03_14:35:48.58456 #[608] INFO: Message: {"method"=>"ping", "arguments"=>[], "reply_to"=>"director.f4b7df14-cb8f-4214-b668-1660944090e4.19719508-e0dd-4f53-b755-58b6336058ab"}
 2013-10-03_14:35:48.60182 #[608] INFO: reply_to: director.f4b7df14-cb8f-4214-b668-1660944090e4.19719508-e0dd-4f53-b755-58b6336058ab: payload: {:value=>"pong"}
 </pre>
 
-This handshake must complete for the agent to receive instructions from the director. If you do not see it, look for another line toward the beginning of the file, prefixed INFO: loaded new infrastructure settings. Here’s an example:
+This handshake must complete for the agent to receive instructions from the director.
+
+1. If you do not see the handshake, look for another line toward the beginning of the file, prefixed INFO: loaded new infrastructure settings. Here’s an example:
 
 <pre class="terminal">
 2013-10-03_14:35:21.83222 #[608] INFO: loaded new infrastructure settings: {"vm"=>{"name"=>"vm-4d80ede4-b0a5-4992-aea6-1c6a0386e18e", "id"=>"vm-360"}, "agent_id"=>"56aea4ef-6aa9-4c39-8019-7024c1cfdde4", "networks"=>{"default"=>{"ip"=>"192.168.86.19", "netmask"=>"255.255.255.0", "cloud_properties"=>{"name"=>"VMNetwork"}, "default"=>["dns", "gateway"], "dns"=>["192.168.86.2", "192.168.86.17"], "gateway"=>"192.168.86.2", "dns_record_name"=>"0.nats.default.cf-d7293430724a2c421061.microbosh", "mac"=>"00:50:56:9b:71:67"}}, "disks"=>{"system"=>0, "ephemeral"=>1, "persistent"=>{}}, "ntp"=>[], "blobstore"=>{"provider"=>"dav", "options"=>{"endpoint"=>"http://192.168.86.17:25250", "user"=>"agent", "password"=>"agent"}}, "mbus"=>"nats://nats:nats@192.168.86.17:4222", "env"=>{"bosh"=>{"password"=>"$6$40f9977ca2abd9d9$v2AIebPPYZflT6B265FkOigsR/8Wt0BiPsS2GDq2BpJoI5cPjWjRK5HJyq3gTZH7zK4i4tQ9K4rvvC/8ADZHW0"}}}

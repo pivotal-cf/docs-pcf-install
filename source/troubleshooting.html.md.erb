@@ -3,7 +3,7 @@
 title: Pivotal CF Troubleshooting Guide
 ---
 
-### <a id='install'></a>Troubleshooting Pivotal CF Installations ###
+## <a id='install'></a>Troubleshooting Pivotal CF Installations ##
 
 If you encounter a problem during a Pivotal CF install, the following list of troubleshooting measures can help you diagnose and resolve issues. These measures are outlined in more detail below.
 
@@ -33,7 +33,7 @@ Use the BOSH director credentials.
 
  Example`bosh cck` output:
 
-<pre class="terminal"> 
+<pre class="terminal">
 $ bosh cck
 ccdb/0 (vm-3e37133c-bc33-450e-98b1-f86d5b63502a) is not responding:
 
@@ -42,7 +42,7 @@ ccdb/0 (vm-3e37133c-bc33-450e-98b1-f86d5b63502a) is not responding:
 - Recreate VM using last known apply spec
 - Delete VM reference (DANGEROUS!)
 </pre>
- 
+
 
 
 - `Ignore problem`: Do nothing. You might want to ignore the problem in order to `bosh ssh` and do some troubleshooting on the machine. If performing other steps continually brings the machine to this state, you could have a configuration problem that will be hard to detect without looking at the agent logs (see below).
@@ -54,7 +54,7 @@ ccdb/0 (vm-3e37133c-bc33-450e-98b1-f86d5b63502a) is not responding:
 
 Example `bosh cck` output:
 
-<pre class-"terminal">
+<pre class="terminal">
 $ bosh cck
 VM with cloud ID `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' missing:
 
@@ -74,16 +74,144 @@ Example `bosh cck` output:
 <pre class="terminal">
 	$bosh cck
 	VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' reports itself as `ccdb/0' but does not have a bound instance:
-	
+
 	- Ignore problem
 	- Delete VM (unless it has persistent disk)
 	- Reassociate VM with corresponding instance
-	</pre>
-	
-- `Ignore problem`: Do nothing. You might want to ignore the problem in order to `bosh ssh` and do some troubleshooting on the machine. If performing other steps continually brings the machine to this state, you could have a configuration problem that will be hard to detect without looking at the agent logs (see below).
-- `Delete VM (unless it has persistent disk)`: If you believe that the VM is associated with a job erroneously, this is a good option.
-- `Reassociate VM with corresponding instance`: If you believe that the VM is correct in saying it should be associated with the job, and that the BOSH DB is in error, this is a good option.
+</pre>
+
+ - `Ignore problem`: Do nothing. You might want to ignore the problem in order to `bosh ssh` and do some troubleshooting on the machine. If performing other steps continually brings the machine to this state, you could have a configuration problem that will be hard to detect without looking at the agent logs (see below).
+ - `Delete VM (unless it has persistent disk)`: If you believe that the VM is associated with a job erroneously, this is a good option.
+ - `Reassociate VM with corresponding instance`: If you believe that the VM is correct in saying it should be associated with the job, and that the BOSH DB is in error, this is a good option.
 
 #### <a id='out_of_sync'></a>Out of Sync VM ####
 
+Example `bosh cck` output:
+
+<pre class="terminal">
+VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' is out of sync: expected `cf-d7293430724a2c421061: ccdb/0', got `cf-d7293430724a2c421061: nats/0':
+
+- Ignore problem
+- Delete VM (unless it has persistent disk)
+</pre>
+
+- `Ignore problem`: Do nothing. You might want to ignore the problem in order to `bosh ssh` and do some troubleshooting on the machine. If performing other steps continually brings the machine to this state, you could have a configuration problem that will be hard to detect without looking at the agent logs (see below).
+- `Delete VM (unless it has persistent disk)`: If you believe that the VM is associated with a job erroneously, this is a good option.
+
+### <a id='bosh_vms'></a>bosh vms ###
+
+Gives you an overview of the virtual machines BOSH is managing as part of this deployment. When things go wrong, will often show you VMs in an "unknown" state, which is a clue that a `bosh cck` might be needed.
+
+<pre class="terminal">
+	$ bosh vms
+	Deployment `cf-d7293430724a2c421061'
+
+	Director task 99
+
+	Task 99 done
+
+	+----------------------+---------+--------------------+---------------+
+	| Job/index        	| State   | Resource Pool  	| IPs           |
+	+----------------------+---------+--------------------+---------------+
+	| ccdb/0           	| running | ccdb           	| 192.168.86.22 |
+	| cloud_controller/0    | running | cloud_controller  | 192.168.86.23 |
+	| collector/0      	| running | collector      	| 192.168.86.25 |
+	| consoledb/0      	| running | consoledb      	| 192.168.86.29 |
+	| dea/0            	| running | dea            	| 192.168.86.47 |
+	| health_manager/0 	| running | health_manager 	| 192.168.86.20 |
+	| loggregator/0    	| running | loggregator    	| 192.168.86.31 |
+	| loggregator_router/0  | running | loggregator_router| 192.168.86.32 |
+	| nats/0           	| running | nats           	| 192.168.86.19 |
+	| nfs_server/0     	| running | nfs_server     	| 192.168.86.21 |
+	| router/0         	| running | router         	| 192.168.86.16 |
+	| saml_login/0     	| running | saml_login     	| 192.168.86.28 |
+	| syslog/0         	| running | syslog         	| 192.168.86.24 |
+	| uaa/0            	| running | uaa            	| 192.168.86.27 |
+	| uaadb/0          	| running | uaadb          	| 192.168.86.26 |
+	+----------------------+---------+--------------------+---------------+
+
+	VMs total: 15
+	Deployment `cf_services-2c3c918a135ab5f91ee1'
+
+	Director task 100
+
+	Task 100 done
+
+	+-----------------+---------+---------------+---------------+
+	| Job/index   	| State   | Resource Pool | IPs       	|
+	+-----------------+---------+---------------+---------------+
+	| mysql_gateway/0 | running | mysql_gateway | 192.168.86.52 |
+	| mysql_node/0	| running | mysql_node	| 192.168.86.53   |
+	+-----------------+---------+---------------+---------------+
+
+	VMs total: 2
+</pre>
+
+This command can also be run with arguments to retrieve additional information:
+
+ - `--details`: Return detailed VM information (Cloud ID, Agent ID, Resurrection Enabled?)
+
+ - `--vitals`: Return VM vitals information (Load, CPU, Memory Usage, Swap Usage, Disk Usage)
+
+The information is very similar to what you'll find in the Status tab of the RUNTIME section of the Pivotal CF UI.
+
+Also helpful to figure out what VMs you can `bosh ssh` into.
+
+### <a id='bosh_ssh'></a>bosh ssh ###
+
+Simplifies the process of getting you into the VM via SSH, as well as giving you sudo access.
+
+You’ll first need to provide BOSH with the public key you want it to use. The tempest user does not have one. This can be achieved easily by running ssh-keygen -t rsa and then accepting the defaults. Then, if you’d like to SSH into the first DEA machine, you can run:
+
+bosh ssh dea/0 --public_key ~/.ssh/id_rsa.pub
+
+If you’d like to SSH into a different machine, just substitute the coordinates you retrieve from bosh vms.
+
+You’ll be asked for a password. Don’t be confused. This becomes the password for the temporary user that’s being created as part of your SSH experience. You’ll use it when you inevitably want to sudo -i.
+
+The public key choice will be saved for subsequent executions of bosh ssh.
+
+## <a id='common_probs'></a>Common Problems ##
+
+#### <a id='time_out'></a>“Creating bound missing VMs” times out ####
+
+This task happens immediately following package compilation, but before job assignment to agents. It appears as:
+
+<pre class="terminal">
+cloud_controller/0: Timed out pinging to f690db09-876c-475e-865f-2cece06aba79 after 600 seconds (00:10:24)
+</pre>
+
+This is almost certainly a NATS issue with the VM in question. The easiest way to identify a NATS issue is to take a look at the agent log for that machine. Unfortunately, since the BOSH agent is not reachable by the Director, you’ll have to get on the VM via other means.
+
+In many cases, if NATS isn’t reachable, you may not be able to hit the VM via TCP period (i.e. no SSH)! This is a situation where the vSphere Console is a fallback option.
+
+1) Console to the VM and login. Find the VM of interest in the Credentials tab of the RUNTIME section of the Pivotal CF UI, and use the “VM credentials.”
+
+
+2) Become root.
+
+3) cd /var/vcap/bosh/log.
+
+4) Open the file current.
+
+5) You’re looking for a couple of things:
+
+First, see if the BOSH agent and director have successfully completed a handshake, represented in the logs as a “ping-pong”:
+
+<pre class="terminal">
+2013-10-03_14:35:48.58456 #[608] INFO: Message: {"method"=>"ping", "arguments"=>[], "reply_to"=>"director.f4b7df14-cb8f-4214-b668-1660944090e4.19719508-e0dd-4f53-b755-58b6336058ab"}
+2013-10-03_14:35:48.60182 #[608] INFO: reply_to: director.f4b7df14-cb8f-4214-b668-1660944090e4.19719508-e0dd-4f53-b755-58b6336058ab: payload: {:value=>"pong"}
+</pre>
+
+This handshake must complete for the agent to receive instructions from the director. If you do not see it, look for another line toward the beginning of the file, prefixed INFO: loaded new infrastructure settings. Here’s an example:
+
+<pre class="terminal">
+2013-10-03_14:35:21.83222 #[608] INFO: loaded new infrastructure settings: {"vm"=>{"name"=>"vm-4d80ede4-b0a5-4992-aea6-1c6a0386e18e", "id"=>"vm-360"}, "agent_id"=>"56aea4ef-6aa9-4c39-8019-7024c1cfdde4", "networks"=>{"default"=>{"ip"=>"192.168.86.19", "netmask"=>"255.255.255.0", "cloud_properties"=>{"name"=>"VMNetwork"}, "default"=>["dns", "gateway"], "dns"=>["192.168.86.2", "192.168.86.17"], "gateway"=>"192.168.86.2", "dns_record_name"=>"0.nats.default.cf-d7293430724a2c421061.microbosh", "mac"=>"00:50:56:9b:71:67"}}, "disks"=>{"system"=>0, "ephemeral"=>1, "persistent"=>{}}, "ntp"=>[], "blobstore"=>{"provider"=>"dav", "options"=>{"endpoint"=>"http://192.168.86.17:25250", "user"=>"agent", "password"=>"agent"}}, "mbus"=>"nats://nats:nats@192.168.86.17:4222", "env"=>{"bosh"=>{"password"=>"$6$40f9977ca2abd9d9$v2AIebPPYZflT6B265FkOigsR/8Wt0BiPsS2GDq2BpJoI5cPjWjRK5HJyq3gTZH7zK4i4tQ9K4rvvC/8ADZHW0"}}}
+</pre>
+
+This is a JSON blob of key/value pairs representing what the BOSH agent knows about its infrastructure. Most important for this issue is this section:
+
+"mbus"=>"nats://nats:nats@192.168.86.17:4222"
+
+This key/value pair represents where the agent believes its NATS server to be. One diagnostic is to try pinging this NATS IP address from this VM. That’ll tell you if you’re having routing issues.
 

@@ -258,6 +258,39 @@ This is a JSON blob of key/value pairs representing the expected infrastructure 
 
 This key/value pair represents where the agent expects the NATS server to be. One diagnostic tactic is to try pinging this NATS IP address from the VM to determine whether you are experiencing routing issues.
 
+### <a id='RSA-cert'></a>Install exits with a creates/updates/deletes app failure or with a 403 ###
+
+**Scenario 1:**
+Your Pivotal CF install exits with the following 403 error when you attempt to log in to the Developer Console:
+
+<pre>
+{"type": "step_finished", "id": "console.deploy"}
+
+/home/tempest-web/tempest/web/vendor/bundle/ruby/1.9.1/gems/mechanize-2.7.2/lib/mechanize/http/agent.rb:306:in `fetch': 403 => Net::HTTPForbidden for https://login.api.x.y/oauth/authorizeresponse_type=code&client_id=portal&redirect_uri=https%3... -- unhandled response (Mechanize::ResponseCodeError)
+</pre>
+
+**Scenario 2:**
+Your Pivotal CF install exits with a `creates/updates/deletes an app (FAILED - 1)` error message with the following stack trace:
+
+<pre>
+1) App CRUD creates/updates/deletes an app
+   Failure/Error: Unable to find matching line from backtrace
+   CFoundry::TargetRefused:
+     Connection refused - connect(2)
+</pre>
+
+In either of the above scenarios, ensure that you have correctly entered your domains in wildcard format:
+
+1. Browse to the Operations Manager interface IP.
+
+1. Click the **Elastic Runtime** tile.
+
+1. Select **HA Proxy** and click **Generate Self-Signed RSA Certificate**.
+
+1. Enter your system and app domains in wildcard format, as well as optionally any custom domains, and click **Save**. Refer to **Elastic Runtime > Cloud Controller** for explanations of these domain values.
+
+ <%= image_tag('rsa_cert.png') %>
+
 ### <a id='runtime_depend'></a>Install fails when Gateway instances > 0 ###
 
 If you configure the number of Gateway instances to be greater than zero for a given product, you create a dependency on Elastic Runtime for that product installation. If you attempt to install a product tile with an Elastic Runtime dependency before installing Elastic Runtime, the install fails.

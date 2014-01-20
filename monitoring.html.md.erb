@@ -1,0 +1,60 @@
+---
+title: Essential Tips and Known Issues
+---
+
+To successfully operate Pivotal CF, you must know how to do some basic monitoring, and be aware of known issues for the current release.
+
+## <a id="monitor"></a>Monitoring in Pivotal CF ##
+
+This section covers monitoring essentials and suggests sources for finding more powerful tools and techniques.
+
+### <a id="monitor_vm"></a>Monitoring a VM to avoid running out of disk space ###
+
+Be prepared to act to keep certain VMs from running out of disk space. If a VM runs out of disk space, Elastic Runtime can fail.
+
+The vSphere client lets you detect problems with VMs in the following way:
+
+1. Select the VM you want to monitor.
+1. Click Alarms at the bottom left of the client window.
+1. If the VM starts to run out of disk space, an alarm appears in the bottom panel.
+
+The two essential VMs to watch are the Pivotal CF instance and the NFS server. The next sections explain what to do if these VMs start to run out of disk space.
+
+#### <a id="monitor_ops_mgr"></a>Ensuring that the Operations Manager VM has enough disk space ####
+
+The /tmp directory in the Operations Manager VM (that is, the Installer VM) is where the VM logs go. Over time, the logs can get big enough to cause the VM to run out of disk space.
+
+If the VM starts to run out of disk space, restart the VM to clear the log entries out of /tmp.
+
+An alternative to watching for alarms is to set up a cron job that clears logs from /tmp on a regular basis.
+
+#### <a id="monitor_nfs"></a>Ensuring that the NFS Server VM has enough disk space ####
+
+The NFS Server VM is the blob store where Elastic Runtime uploads applications. The default size of the blob store is 100 Gigabytes, but if enough (or large enough) applications are uploaded, the VM can run out of disk space.
+
+If the VM starts to run out of disk space, make the VM larger by changing settings in the Resource Allocation tab of vSphere client.
+
+### <a id="monitor_advanced"></a>More Advanced Monitoring ###
+
+Watching for alarms may not be a good solution for your monitoring needs. You might to monitor factors other than disk space usage, such as operating system performance, for example.
+
+Many tools and techniques exist for monitoring in vSphere. Try searching the VMware website for information about vCenter Operations Manager, and the  vSphere Client online help for  “Monitoring Events, Alarms, and Automated Actions” or similar topics.
+
+## <a id="known"></a>Known Issues ##
+
+ Version 1.0.0.1 of Pivotal CF includes the following known issues:
+
+ * vSphere folder names with special characters in the name will cause failures.
+ * You must use the UAAC gem to create additional admin users.
+ * Changing the CF admin user's password will revert if Elastic Runtime is re-installed.
+ * If vSphere performance data is not available, a deploy will result in a divide by zero error.
+ * Networks, clusters, and datacenters cannot be in folders.
+ * If DHCP is available to the Pivotal CF VM, the IP could be reset from the static IP (reboot to fix).
+ * Admins must create organizations and users if SMTP is not available for inviting users via email.
+ * SMTP settings for the console must be changed manually after the first deploy.
+ * Deleting a service (MySQL, Rabbit, HD) from the Product Dashboard requires manual service broker removal.
+ * Logging into the Pivotal CF VM causes browser to complain about self-signed certificates.
+ * You must turn hardware virtualization off if the vSphere host does not support VT-X/EPT.
+ * If you delete and add products in the same update, the Pivotal CF Operations Manager will attempt to use IPs for the new products that have not yet been freed and will raise an error. Instead, delete products and click **Install Updates** before attempting to add products.
+ * Forcing the login server to use SSL is not supported for deployments that use the 172.16/12 network range. Instead, set login.protocol to http in your deployment manifest. Refer to Pivotal Support Knowledge Base article [200930818](https://discuss.zendesk.com/hc/en-us/articles/200930818-Pivotal-CF-does-not-support-forcing-SSL-for-the-172-16-12-network-range) for more information.
+ * Active Directory and LDAP integration for Pivotal CF users with the VMware vCenter Single Sign-On Appliance requires a manual procedure. Refer to Pivotal Support Knowledge Base article [201119123](http://ask.gopivotal.com/hc/en-us/articles/201119123-PCF-Elastic-Runtime-Service-1-0-0-1-vCenter-SSO-integration-procedure-) for more information.

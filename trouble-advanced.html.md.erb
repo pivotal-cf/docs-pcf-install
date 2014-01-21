@@ -1,92 +1,112 @@
 #encoding: utf-8
 ---
-title: Pivotal CF Troubleshooting Guide
+title: Advanced Troubleshooting with the BOSH CLI
 ---
 
-## <a id='install'></a>Troubleshooting Pivotal CF Installations ##
+Recall that you performed your first install in the Operations Manager by clicking the `vmware vSphere` tile. This created the VM that Operations Manager uses to perform all subsequent installs and updates. A component on that VM called BOSH Director does the work. To perform advanced troubleshooting, you can log into BOSH Director to perform diagnostic commands in the BOSH Command-Line Interface (CLI).
 
-If you encounter a problem during a Pivotal CF install, the following list of troubleshooting measures can help you diagnose and resolve issues. These measures are outlined in more detail below. In particular, BOSH includes helpful diagnostic tools. For an overview and more information about BOSH, refer to the BOSH documentation.
+If you are unable to resolve an issue by viewing configurations, exploring logs, or reviewing common problems, the BOSH CLI can help you troubleshoot in more depth.
 
-## <a id='access_bosh'></a>Step 1: Access the BOSH director ##
+## <a id='prepare'></a>Preparing to use the BOSH CLI ##
 
-1. Either SSH to the Pivotal CF installation VM or access it using the vSphere console.
+Using the BOSH CLI requires fairly lengthy preparation.
 
-1. Log in using the credentials you provided when you imported the Pivotal CF .ova in vCenter.
+Before you begin, write down:
 
-1. Run `cd /home/tempest-web/tempest/web/`.
+* The IP address of the Pivotal CF VM shown in the `Settings` tab of the vmware vSphere tile.
+* Your ova import credentials—that is, the username and password used to import the Pivotal CF `.ova` file into vCenter.
+* The IP address shown for the "Ops Manager" job in the `Status` tab of the vmware vSphere tile—this is in fact the IP address of the VM where BOSH Director is running.
+* The BOSH Director credentials, shown on the `Credentials` tab of the vmware vSphere tile.
 
-1. Run `export BUNDLE_GEMFILE=/home/tempest-web/tempest/web/bosh.Gemfile`, OR prepend `BUNDLE_GEMFILE=./bosh.Gemfile` to all of your BOSH commands.
+First, connect to the VM where the Operations Manager web application is running:
 
-1. Run `bundle exec bosh target <IP_OF_YOUR_DIRECTOR>`.
+1. Open a terminal.
+1. Connect to the Pivotal CF installation VM with SSH with your ova import username:
 
- **Note**: Refer to the **Status** tab of the **vmware vSphere** tile to find the IP of your BOSH director.
+ `ssh <ova_import_username>@<Pivotal_CF_VM_IP_address>`
+1. Enter your ova import password when prompted.
 
-1. Run `bundle exec bosh login`. Use the BOSH director credentials to log in.
+**Note:** you can perform a similar procedure in a vSphere console.
 
- **Note**: Refer to the **Credentials** tab of the **vmware vSphere** tile to find the BOSH director credentials.
+Then log into BOSH Director:
 
-1. Run `bosh deployment /var/tempest/workspaces/default/deployments/cf-******.yml`, where the wildcard represents a unique ID the installation generates. To find the unique ID, click the VMware vSphere tile, select the **Resource sizes** tab, and look at the address. The ID appears as a string of numbers and letters after `microbosh-`.
+1. Set the `BUNDLE_GEMFILE` variable to point to the BOSH gemfile for the web application:
 
- **Note**: If you are working in the MySQL product context, use `cf_services-******.yml` instead. You can find the unique ID for MySQL from the MySQL Dev product tile by following the steps above.
+ `export BUNDLE_GEMFILE=/home/tempest-web/tempest/web/bosh.Gemfile`
+1. Point BOSH to your Ops Manager:
 
-### <a id='reference'></a>Locating reference files ###
+ `bundle exec bosh target <Ops_Manager_IP_Address>`
+1. Log in using the BOSH Director credentials.
 
-After you SSH into the Pivotal CF installation VM, you have access to reference files that may help you diagnose issues with the Pivotal CF install.
+**Note:** An alternative to Step 1 is to prepend `BUNDLE_GEMFILE=./bosh.Gemfile` to all BOSH commands.
 
- * **Pivotal CF config files**: The Pivotal CF configuration is stored in `/var/tempest/workspaces/default/config.yml`. The configuration data is stored in an encrypted form, so you can't edit it directly. However, you can delete this file if you need to start over with a fresh Pivotal CF install.
+Continue by setting BOSH Director to apply CLI commands to the deployment you want to troubleshoot. Here, "deployment" means a particular installation of a particular product. Put another way, each tile in your Operations Manager Installation Dashboard corresponds to a deployment, which is in turn described by a YAML file.
 
- * **BOSH installation failure logs**: Logs from the BOSH installation are stored in `/var/tempest/workspaces/default/deployments/micro`.
+* An Elastic Runtime installation is described by a file whose name has the form `cf-<20-character_random_string>.yml`
+* A MySQL Dev installation is described by a file whose name has the form`cf_services-<20-character_random_string>.yml`
+* Other installations are described by files whose names have the form `<20-character_random_string>.yml`
 
-## <a id='bosh_cli'></a>Step 2: Try relevant BOSH CLI commands ##
+To identify the YAML file that describes your deployment, grep for the appropriate filename.
 
-### <a id='bosh_cck'></a>bosh cck (bosh cloudcheck) ###
+* This command identifies Elastic Runtime deployments:
 
-This command attempts to detect any differences between the world the director expects for this deployment and the actual state of the world. For each difference it detects, `bosh cck` offers a potential resolution. The possible resolutions are listed below:
+ `ls -al /var/tempest/workspaces/default/deployments/ | grep cf-*.yml`
+
+Where there are more than one installations of the same product, use the one whose release version, as specified in the YAML file, matches what is shown on the Operations Manager tile. Now you know which filename to use for the final step of preparation for using the BOSH CLI.
+
+* Set BOSH director to run CLI commands against the deployment whose YAML file you have just identified:
+
+ `bundle exec bosh deployment /var/tempest/workspaces/default/deployments/<deployment_filename>.yml`
+
+## <a id='bosh_cli'></a>Overview of the BOSH CLI ##
+
+Three BOSH CLI commands are helpful in troubleshooting. All provide output that is scoped to the current deployment.
+
+* `BOSH CCK (Cloudcheck)` detects differences between the world that Director expects and the actual state of the world
+* `BOSH VMS` provides an overview of the virtual machines BOSH is managing
+* `BOSH SSH` provides simplified access to the VM, including the ability to run `sudo`
+
+These commands respond by identifying one or more of five possible actions you can take:
+
+* `Reboot VM`: **In most cases, try this first**. The error could be transient.
+* `Ignore problem`: Do nothing. You might want to ignore the problem in order to run `bosh ssh` and attempt troubleshooting on the machine. If performing other steps continually brings the machine to this state, you could have a configuration problem that will be hard to detect without looking at the agent logs.
+* `Reassociate VM with corresponding instance`: If you believe that the VM is correctly associated with the job, and that the BOSH DB is in error, this is a good option.
+* `Recreate VM using last known apply spec`: Destroy the server and have BOSH recreate it from the deployment manifest the installer provides. If the machine is corrupted, this is the best option.
+* `Delete VM reference (DANGEROUS!)`: Select this option only if you know that the BOSH database has a stale reference causing it to expect that an agent should be running on this machine. Once you delete the VM reference, you can no longer control the machine using BOSH.
+
+The remainder of this topic explains the commands and provides examples.
+
+### <a id='bosh_cck'></a>bosh cck (cloudcheck) ###
+
+This command attempts to detect any differences between the world the director expects for this deployment and the actual state of the world. For each difference it detects, `bosh cck` offers a potential resolution. The examples below show how `cloudcheck` responds in a different scenario.
 
 #### <a id='unresponsive_agent'></a>Unresponsive Agent ####
 
- Example`bosh cck` output:
-
 <pre class="terminal">
-$ bosh cck
-ccdb/0 (vm-3e37133c-bc33-450e-98b1-f86d5b63502a) is not responding:
+	$ bosh cck
+	ccdb/0 (vm-3e37133c-bc33-450e-98b1-f86d5b63502a) is not responding:
 
-- Ignore problem
-- Reboot VM
-- Recreate VM using last known apply spec
-- Delete VM reference (DANGEROUS!)
+	- Ignore problem
+	- Reboot VM
+	- Recreate VM using last known apply spec
+	- Delete VM reference (DANGEROUS!)
 </pre>
-
-
-
-- `Ignore problem`: Do nothing. You might want to ignore the problem in order to run `bosh ssh` and attempt troubleshooting on the machine. If performing other steps continually brings the machine to this state, you could have a configuration problem that will be hard to detect without looking at the agent logs.
-- `Reboot VM`: **In most cases, try this first**. The error could be transient.
-- `Recreate VM using last known apply spec` - Destroy the server and have BOSH recreate it from the deployment manifest the installer provides. If the machine is corrupted, this is the best option.
-- `Delete VM reference (DANGEROUS!)` - Select this option only if you know that the BOSH database has a stale reference causing it to expect that an agent should be running on this machine. Once you delete the VM reference, you can no longer control the machine using BOSH.
 
 #### <a id='missing_vm'></a>Missing VM ####
 
-Example `bosh cck` output:
-
 <pre class="terminal">
-$ bosh cck
-VM with cloud ID `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' missing:
+	$ bosh cck
+	VM with cloud ID `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' missing:
 
-- Ignore problem
-- Recreate VM using last known apply spec
-- Delete VM reference (DANGEROUS!)
+	- Ignore problem
+	- Recreate VM using last known apply spec
+	- Delete VM reference (DANGEROUS!)
 </pre>
-
-- `Ignore problem`: Do nothing. You might want to ignore the problem in order to run `bosh ssh` and attempt troubleshooting on the machine. If performing other steps continually brings the machine to this state, you could have a configuration problem that will be hard to detect without looking at the agent logs.
-- `Recreate VM using last known apply spec` - Destroy the server and have BOSH recreate it from the deployment manifest the installer provides. If the machine is corrupted, this is the best option.
-- `Delete VM reference (DANGEROUS!)` - Select this option only if you know that the BOSH database has a stale reference causing it to expect that an agent should be running on this machine. Once you delete the VM reference, you can no longer control the machine using BOSH.
 
 #### <a id='unbound_instancevm'></a>Unbound Instance VM ####
 
-Example `bosh cck` output:
-
 <pre class="terminal">
-	$bosh cck
+	$ bosh cck
 	VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' reports itself as `ccdb/0' but does not have a bound instance:
 
 	- Ignore problem
@@ -94,23 +114,15 @@ Example `bosh cck` output:
 	- Reassociate VM with corresponding instance
 </pre>
 
- - `Ignore problem`: Do nothing. You might want to ignore the problem in order to `bosh ssh` and attempt troubleshooting on the machine. If performing other steps continually brings the machine to this state, you could have a configuration problem that will be hard to detect without looking at the agent logs.
- - `Delete VM (unless it has persistent disk)`: If you believe that the VM is associated with a job erroneously, this is a good option.
- - `Reassociate VM with corresponding instance`: If you believe that the VM is correctly associated with the job, and that the BOSH DB is in error, this is a good option.
-
 #### <a id='out_of_sync'></a>Out of Sync VM ####
 
-Example `bosh cck` output:
-
 <pre class="terminal">
-VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' is out of sync: expected `cf-d7293430724a2c421061: ccdb/0', got `cf-d7293430724a2c421061: nats/0':
+	$ bosh cck
+	VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' is out of sync: expected `cf-d7293430724a2c421061: ccdb/0', got `cf-d7293430724a2c421061: nats/0':
 
-- Ignore problem
-- Delete VM (unless it has persistent disk)
+	- Ignore problem
+	- Delete VM (unless it has persistent disk)
 </pre>
-
-- `Ignore problem`: Do nothing. You might want to ignore the problem in order to `bosh ssh` and attempt troubleshooting on the machine. If performing other steps continually brings the machine to this state, you could have a configuration problem that will be hard to detect without looking at the agent logs.
-- `Delete VM (unless it has persistent disk)`: If you believe that the VM is associated with a job erroneously, this is a good option.
 
 ### <a id='bosh_vms'></a>bosh vms ###
 

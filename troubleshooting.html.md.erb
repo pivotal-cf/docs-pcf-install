@@ -3,7 +3,7 @@
 title: Pivotal CF Troubleshooting Guide
 ---
 
-This guide provides help with diagnosing and resolving issues that you might encounter during a Pivotal CF install. We begin with general principles and heuristics, and go on to describe specific known problems.
+This guide provides help with diagnosing and resolving issues encountered during a Pivotal CF install. We begin with general principles and heuristics, and go on to describe specific known problems.
 
 An install or update can fail for many reasons. Fortunately, the system tends to heal or work around hardware or network faults quickly. By the time you click the `Install` or `Apply Changes` button again, the problem may be resolved.
 
@@ -16,67 +16,64 @@ Here is an example of output from a failed attempt to add the Pivotal Analytics 
     Exited with 1.
 </pre>
 
-The failure occurred when a VM died during deploy, but that would be hard to guess from the generic error `Exited with 1`. In cases where a failure is not accompanied by useful information, it’s a good idea to click the `Install` or `Apply Changes` button. Even doing so repeatedly does no harm.
+The failure occurred when a VM died during deploy, but that would be hard to guess from the generic error `Exited with 1`. In cases like this, where a failure is not accompanied by useful information, it’s a good idea to click the `Install` or `Apply Changes` button. Even doing so repeatedly does no harm.
 
-When the system does provide informative evidence, review the Common Problems section at the end of this guide to see if your problem is covered there.
+When the system _does_ provide informative evidence, review the [Common Problems](#common_probs) section at the end of this guide to see if your problem is covered there.
 
-As you troubleshoot, bear in mind that communication between Pivotal CF components is as important as successful installation of the components themselves. Communication between components occurs in two forms: through the NATS messaging bus and through the Router. Both the NATS message bus and the Router are components with their own VMs.
-
-If something interferes with messaging or routing, an installation can fail. For example, the Pivotal CF VM tries to push a test application to the cloud during post-installation testing, and the installation fails if the VM cannot route traffic to the Router.
+One important source of problems is communication between Pivotal CF components, either through the NATS messaging bus or through the Router. Both the NATS message bus and the Router are components with their own VMs. If something interferes with messaging or routing, an installation can fail. For example, the Pivotal CF VM tries to push a test application to the cloud during post-installation testing, and the installation fails if the VM cannot route traffic to the Router.
 
 ## <a id='debug'></a>Viewing the debug endpoint ##
 
-As its name implies, the debug endpoint is a web page that provides information useful in troubleshooting. If you have superuser privileges and can view the Ops Manager Installation Dashboard, you can access the debug endpoint.
+The debug endpoint is a web page that provides information useful in troubleshooting. If you have superuser privileges and can view the Ops Manager Installation Dashboard, you can access the debug endpoint.
 
-In a browser, open the URL:
+* In a browser, open the URL:
 
-'https://<Ops_Manager_IP_address>/debug'
+ `https://<Ops_Manager_IP_address>/debug`
 
 The debug endpoint offers three links:
 
-* Files allows you to view the YAML files that Ops Manager uses to configure itself. The most important, installation.yml, provides networking settings and describes the microbosh component, which is Ops Manager itself.
-* Components describes the components, including microbosh, in detail.
-* Rails log provides a condensed view of production.log, which records the history of your Ops Manager installation. See the next section to learn how to explore other useful logs.
+* *Files* allows you to view the YAML files that Ops Manager uses to configure products that you install. The most important YAML file, `installation.yml`, provides networking settings and describes `microbosh`. In this case, `microbosh` is the VM whose BOSH Director component is used by Ops Manager to perform installations and updates of Elastic Runtime and other products.
+* *Components* describes the components in detail.
+* *Rails log* shows errors thrown by the VM where the Ops Manager web application (a Rails application) is running, as recorded in the `production.log` file. See the next section to learn how to explore other useful logs.
 
 ## <a id='view_in_terminal'></a>Viewing the web application and BOSH failure logs in a terminal ##
 
-Information in log files can help you diagnose problems. For access to these files, run the BOSH Director in a terminal.
+You can obtain diagnostic information from "under the hood" of the Operations Manager by logging into the VM where it is running.
 
-Note: To do this, you must know your ova import credentials—that is, the username and password used to import the Pivotal CF `.ova` file into vCenter.
+Before you begin, write down:
 
-1. Open a terminal or a vSphere console.
-1. Connect to the Pivotal CF installation VM with SSH with your ova import username.
-`ssh <ova_import_username>@<Pivotal_CF_VM_IP_address>`
+* The IP address of the Pivotal CF VM shown in the `Settings` tab of the vmware vSphere tile.
+* Your ova import credentials—that is, the username and password used to import the Pivotal CF `.ova` file into vCenter.
+
+Now complete the following steps:
+
+1. Open a terminal.
+1. Connect to the Pivotal CF installation VM with SSH with your ova import username:
+
+ `ssh <ova_import_username>@<Pivotal_CF_VM_IP_address>`
 1. Enter your ova import password when prompted.
-1. Change directories to the home directory of the web application.
-`cd /home/tempest-web/tempest/web/`
+1. Change directories to the home directory of the web application:
+
+ `cd /home/tempest-web/tempest/web/`
 1. You are now in a position to explore whether things are as they should be within the web application. This is a basic troubleshooting procedure.
 
-One important point to verify is that BOSH is successfully installed, because if it has not, you are unable to install Elastic Runtime or any products like databases and messaging services.
+**Note:** you can perform a similar procedure in a vSphere console.
+
+You can also verify that the `microbosh` component is successfully installed. This is important because a successful microbosh installation is required to install Elastic Runtime and any products like databases and messaging services.
 
 1. Change directories to the BOSH installation log home:
-`cd /var/tempest/workspaces/default/deployments/micro`
-1. You may want to begin by running a tail command on the `current` log.
-`cd /var/tempest/workspaces/default/deployments/micro`
+
+ `cd /var/tempest/workspaces/default/deployments/micro`
+1. You may want to begin by running a tail command on the `current` log:
+
+ `cd /var/tempest/workspaces/default/deployments/micro`
 
 If you are unable to resolve an issue by viewing configurations, exploring logs, or reviewing common problems, you can troubleshoot further by running BOSH diagnostic commands with the BOSH Command-Line Interface (CLI).
 
 ## <a id='common_probs'></a>Common Problems ##
 
-An install or an update can fail for many reasons. Fortunately, the system tends to heal or work around hardware or network faults quickly. By the time you click the `Install` or `Apply Changes` button again, the problem may be resolved.
+Compare evidence that you have gathered to the problem descriptions below. If your problem is covered, try the recommended remediation procedures.
 
-Here is an example of output from a failed attempt to install Pivotal Analytics.
-
-<pre class="terminal">
-	Try no. 0 succeeded.
-	{"type": "step_finished", "id": "bosh.deploying.pax-825125730cc730555807"}
-	{"type": "step_started", "id": "bosh.checking.pax-825125730cc730555807"}
-	Exited with 1.
-</pre>
-
-Here, failure occurred when a VM died during deploy, but that would be hard to guess from the generic error `Exited with 1`. In cases where a failure is not accompanied by useful information, it’s a good idea to click the `Install` and `Apply Changes` button. Even doing so repeatedly does no harm.
-
-In other cases, the system does provide informative evidence. See if the evidence matches one of the problem descriptions below, and if it does, try the troubleshooting instructions for that problem.
 
 ### <a id='reinstall_bosh'></a>BOSH does not reinstall ###
 
@@ -193,10 +190,3 @@ To remove the Elastic Runtime dependency, change the value of this field to `0`.
 ### <a id='out_of_disk_space'></a>Out of Disk Space Error ###
 
 Pivotal CF displays an `Out of Disk Space` error if log files expand to fill all available disk space. If this happens, rebooting the Pivotal CF installation VM will clear the tmp directory of these log files and resolve the error.
-
-## <a id='runtime'></a>Troubleshooting Elastic Runtime ##
-
-It is possible for the Pivotal CF installation to succeed with respect to BOSH, but fail due to an unrelated issue. When diagnosing other problems, consider the following:
-
- * Networking issues preventing communication between CF components and CF NATS
- * Routing issues. For example, Pivotal CF tries to push an application as part of the post-installation testing. If the Pivotal CF VM is unable to route traffic to the CF router, this task fails.

@@ -3,11 +3,19 @@
 title: Pivotal CF Troubleshooting Guide
 ---
 
-This guide provides help with diagnosing and resolving issues encountered during a Pivotal CF install. We begin with general principles and heuristics, and go on to describe specific known problems.
+This guide provides help with diagnosing and resolving issues encountered
+during a Pivotal CF install.
+We begin with general principles and heuristics, and go on to describe specific
+known problems.
 
-An install or update can fail for many reasons. Fortunately, the system tends to heal or work around hardware or network faults quickly. By the time you click the `Install` or `Apply Changes` button again, the problem may be resolved.
+An install or update can fail for many reasons.
+Fortunately, the system tends to heal or work around hardware or network faults
+quickly.
+By the time you click the `Install` or `Apply Changes` button again, the
+problem may be resolved.
 
-Here is an example of output from a failed attempt to add the Pivotal Analytics product to a existing Pivotal CF instance.
+Here is an example of output from a failed attempt to add the Pivotal Analytics
+product to a existing Pivotal CF instance.
 
 <pre class="terminal">
    Try no. 0 succeeded.
@@ -16,15 +24,32 @@ Here is an example of output from a failed attempt to add the Pivotal Analytics 
     Exited with 1.
 </pre>
 
-The failure occurred when a VM died during deploy, but that would be hard to guess from the generic error `Exited with 1`. In cases like this, where a failure is not accompanied by useful information, it’s a good idea to click the `Install` or `Apply Changes` button. Even doing so repeatedly does no harm.
+The failure occurred when a VM died during deploy, but that would be hard to
+guess from the generic error `Exited with 1`.
+In cases like this, where a failure is not accompanied by useful information,
+it’s a good idea to click the `Install` or `Apply Changes` button.
+Even doing so repeatedly does no harm.
 
-When the system _does_ provide informative evidence, review the [Common Problems](#common_probs) section at the end of this guide to see if your problem is covered there.
+When the system _does_ provide informative evidence, review the [Common Problems](#common_probs) section at the end of this guide to see if your
+problem is covered there.
 
-Besides whether products install successfully or not, an important area to consider when troubleshooting is communication between VMs deployed by Pivotal CF. Depending on what products you install, communication takes the form of messaging, routing, or both. If they go wrong, an installation can fail. For example, in an Elastic Runtime installation the Pivotal CF VM tries to push a test application to the cloud during post-installation testing. The installation fails if the resulting traffic cannot be routed to the HA Proxy load balancer.
+Besides whether products install successfully or not, an important area to
+consider when troubleshooting is communication between VMs deployed by Pivotal
+CF.
+Depending on what products you install, communication takes the form of
+messaging, routing, or both.
+If they go wrong, an installation can fail.
+For example, in an Elastic Runtime installation the Pivotal CF VM tries to push
+a test application to the cloud during post-installation testing.
+The installation fails if the resulting traffic cannot be routed to the HA
+Proxy load balancer.
 
 ## <a id='debug'></a>Viewing the debug endpoint ##
 
-The debug endpoint is a web page that provides information useful in troubleshooting. If you have superuser privileges and can view the Ops Manager Installation Dashboard, you can access the debug endpoint.
+The debug endpoint is a web page that provides information useful in
+troubleshooting.
+If you have superuser privileges and can view the Ops Manager Installation
+Dashboard, you can access the debug endpoint.
 
 * In a browser, open the URL:
 
@@ -32,34 +57,51 @@ The debug endpoint is a web page that provides information useful in troubleshoo
 
 The debug endpoint offers three links:
 
-* *Files* allows you to view the YAML files that Ops Manager uses to configure products that you install. The most important YAML file, `installation.yml`, provides networking settings and describes `microbosh`. In this case, `microbosh` is the VM whose BOSH Director component is used by Ops Manager to perform installations and updates of Elastic Runtime and other products.
+* *Files* allows you to view the YAML files that Ops Manager uses to configure
+products that you install.
+The most important YAML file, `installation.yml`, provides networking settings
+and describes `microbosh`.
+In this case, `microbosh` is the VM whose BOSH Director component is used by
+Ops Manager to perform installations and updates of Elastic Runtime and other
+products.
 * *Components* describes the components in detail.
-* *Rails log* shows errors thrown by the VM where the Ops Manager web application (a Rails application) is running, as recorded in the `production.log` file. See the next section to learn how to explore other useful logs.
+* *Rails log* shows errors thrown by the VM where the Ops Manager web
+application (a Rails application) is running, as recorded in the
+`production.log` file.
+See the next section to learn how to explore other useful logs.
 
 ## <a id='view_in_terminal'></a>Viewing the web application and BOSH failure logs in a terminal ##
 
-You can obtain diagnostic information from "under the hood" of the Operations Manager by logging into the VM where it is running.
+You can obtain diagnostic information from "under the hood" of the Operations
+Manager by logging into the VM where it is running.
 
 Before you begin, write down:
 
-* The IP address of the Pivotal CF VM shown in the `Settings` tab of the vmware vSphere tile.
-* Your ova import credentials—that is, the username and password used to import the Pivotal CF `.ova` file into vCenter.
+* The IP address of the Pivotal CF VM shown in the `Settings` tab of the VMware
+vSphere tile.
+* Your ova import credentials -- that is, the username and password used to
+import the Pivotal CF `.ova` file into vCenter.
 
 Now complete the following steps:
 
 1. Open a terminal.
-1. Connect to the Pivotal CF installation VM with SSH with your ova import username:
+1. Connect to the Pivotal CF installation VM with SSH with your ova import
+username:
 
  `ssh <ova_import_username>@<Pivotal_CF_VM_IP_address>`
 1. Enter your ova import password when prompted.
 1. Change directories to the home directory of the web application:
 
  `cd /home/tempest-web/tempest/web/`
-1. You are now in a position to explore whether things are as they should be within the web application. This is a basic troubleshooting procedure.
+1. You are now in a position to explore whether things are as they should be
+within the web application.
+This is a basic troubleshooting procedure.
 
-**Note:** you can perform a similar procedure in a vSphere console.
+**Note:** you can perform a similar procedure in a vSphere Console.
 
-You can also verify that the `microbosh` component is successfully installed. This is important because a successful microbosh installation is required to install Elastic Runtime and any products like databases and messaging services.
+You can also verify that the `microbosh` component is successfully installed.
+This is important because a successful microbosh installation is required to
+install Elastic Runtime and any products like databases and messaging services.
 
 1. Change directories to the BOSH installation log home:
 
@@ -68,32 +110,59 @@ You can also verify that the `microbosh` component is successfully installed. Th
 
  `cd /var/tempest/workspaces/default/deployments/micro`
 
-If you are unable to resolve an issue by viewing configurations, exploring logs, or reviewing common problems, you can troubleshoot further by running BOSH diagnostic commands with the BOSH Command-Line Interface (CLI).
+If you are unable to resolve an issue by viewing configurations, exploring
+logs, or reviewing common problems, you can troubleshoot further by running
+BOSH diagnostic commands with the BOSH Command-Line Interface (CLI).
 
 ## <a id='common_probs'></a>Common Problems ##
 
-Compare evidence that you have gathered to the problem descriptions below. If your problem is covered, try the recommended remediation procedures.
-
+Compare evidence that you have gathered to the problem descriptions below.
+If your problem is covered, try the recommended remediation procedures.
 
 ### <a id='reinstall_bosh'></a>BOSH does not reinstall ###
 
-It is sometimes helpful to reinstall BOSH for troubleshooting purposes. However, if Pivotal CF does not detect any changes, BOSH does not reinstall. To force a reinstall of BOSH, select **VMware vSphere > Resource Sizes** and change a resource value. For example, you could bump the amount of RAM by 1.
+It is sometimes helpful to reinstall BOSH for troubleshooting purposes.
+However, if Pivotal CF does not detect any changes, BOSH does not reinstall.
+To force a reinstall of BOSH, select **VMware vSphere > Resource Sizes** and
+change a resource value.
+For example, you could bump the amount of RAM by 1.
 
  <%= image_tag("troubleshooting/rsc_sizes.png") %>
 
+### <a id='bosh_install'></a>BOSH automated installation fails ###
+
+Before starting a Cloud Foundry deployment, a vSphere cluster must be set up
+and configured.
+
+If vSphere DRS (Distributed Resource Scheduler) is enabled for the cluster, the
+Automation level must be set to **Partially automated** or **Fully automated**.
+
+If the Automation level is set to **Manual**, BOSH automated installation will
+fail with a 'power\_on\_vm' error when BOSH attempts to create virtual VMs.
+
+<%= image_tag("troubleshooting/drs_automation_level.png") %>
+
 ### <a id='net-settings'></a>Cannot connect to the OVF via a browser ###
 
-If you deployed the OVF file but cannot connect to it via a browser, check that the network settings you entered in the wizard are correct.
+If you deployed the OVF file but cannot connect to it via a browser, check that
+the network settings you entered in the wizard are correct.
 
-1. Access the Pivotal CF installation VM using the vSphere console. If your network settings are misconfigured, you will not be able to SSH into the installation VM.
+1. Access the Pivotal CF installation VM using the vSphere Console.
+If your network settings are misconfigured, you will not be able to SSH into
+the installation VM.
 
-1. Log in using the credentials you provided when you imported the Pivotal CF .ova in vCenter.
+1. Log in using the credentials you provided when you imported the Pivotal CF
+.ova in vCenter.
 
-1. Confirm that the network settings are correct by checking that the ADDRESS, NETMASK, GATEWAY, and DNS-NAMESERVERS entries are correct in `/etc/network/interfaces`.
+1. Confirm that the network settings are correct by checking that the ADDRESS,
+NETMASK, GATEWAY, and DNS-NAMESERVERS entries are correct in
+`/etc/network/interfaces`.
 
-1. If any of the settings are wrong, run `sudo vi /etc/network/interfaces` and correct the wrong entries.
+1. If any of the settings are wrong, run `sudo vi /etc/network/interfaces` and
+correct the wrong entries.
 
-1. In vSphere, navigate to the **Summary** tab for the VM and confirm that the network name is correct.
+1. In vSphere, navigate to the **Summary** tab for the VM and confirm that the
+network name is correct.
 
  <%= image_tag("troubleshooting/network_settings.png") %>
 
@@ -103,19 +172,27 @@ If you deployed the OVF file but cannot connect to it via a browser, check that 
 
 ### <a id='time_out'></a>Creating bound missing VMs times out ###
 
-This task happens immediately following package compilation, but before job assignment to agents. For example:
+This task happens immediately following package compilation, but before job
+assignment to agents.
+For example:
 
 <pre class="terminal">
 cloud_controller/0: Timed out pinging to f690db09-876c-475e-865f-2cece06aba79 after 600 seconds (00:10:24)
 </pre>
 
-This is most likely a NATS issue with the VM in question. To identify a NATS issue, inspect the agent log for the VM. Since the BOSH director is unable to reach the BOSH agent, you must access the VM another way. You will likely also be unable to access the VM using TCP period (i.e. no SSH). In that case, access the VM using the vSphere Console.
+This is most likely a NATS issue with the VM in question.
+To identify a NATS issue, inspect the agent log for the VM.
+Since the BOSH director is unable to reach the BOSH agent, you must access the
+VM another way.
+You will likely also be unable to access the VM using TCP period (i.e. no SSH).
+In that case, access the VM using the vSphere Console.
 
 To diagnose:
 
-1. Access the VM using the vSphere console and log in.
+1. Access the VM using the vSphere Console and log in.
 
-1. Navigate to the **Credentials** tab of the **Elastic Runtime** tile and locate the VM in question to find the **VM credentials**.
+1. Navigate to the **Credentials** tab of the **Elastic Runtime** tile and
+locate the VM in question to find the **VM credentials**.
 
 1. Become root.
 
@@ -123,31 +200,40 @@ To diagnose:
 
 1. Open the file `current`.
 
-1. First, determine whether the BOSH agent and director have successfully completed a handshake, represented in the logs as a “ping-pong”:
+1. First, determine whether the BOSH agent and director have successfully
+completed a handshake, represented in the logs as a “ping-pong”:
 
  <pre class="terminal">
  2013-10-03_14:35:48.58456 #[608] INFO: Message: {"method"=>"ping", "arguments"=>[],      "reply_to"=>"director.f4b7df14-cb8f-4214-b668-1660944090e4.19719508-e0dd-4f53-b755-58b6336058ab"}
  2013-10-03_14:35:48.60182 #[608] INFO: reply_to:   director.f4b7df14-cb8f-4214-b668-1660944090e4.19719508-e0dd-4f53-b755-58b6336058ab: payload: {:value=>"pong"}
  </pre>
 
- This handshake must complete for the agent to receive instructions from the director.
+ This handshake must complete for the agent to receive instructions from the
+director.
 
-1. If you do not see the handshake, look for another line near the beginning of the file, prefixed `INFO: loaded new infrastructure settings`. For example:
+1. If you do not see the handshake, look for another line near the beginning of
+the file, prefixed `INFO: loaded new infrastructure settings`.
+For example:
 
  <pre class="terminal">
 2013-10-03_14:35:21.83222 #[608] INFO: loaded new infrastructure settings: {"vm"=>{"name"=>"vm-4d80ede4-b0a5-4992-aea6-1c6a0386e18e", "id"=>"vm-360"}, "agent_id"=>"56aea4ef-6aa9-4c39-8019-7024c1cfdde4", "networks"=>{"default"=>{"ip"=>"192.168.86.19", "netmask"=>"255.255.255.0", "cloud_properties"=>{"name"=>"VMNetwork"}, "default"=>["dns", "gateway"], "dns"=>["192.168.86.2", "192.168.86.17"], "gateway"=>"192.168.86.2", "dns_record_name"=>"0.nats.default.cf-d7293430724a2c421061.microbosh", "mac"=>"00:50:56:9b:71:67"}}, "disks"=>{"system"=>0, "ephemeral"=>1, "persistent"=>{}}, "ntp"=>[], "blobstore"=>{"provider"=>"dav", "options"=>{"endpoint"=>"http://192.168.86.17:25250", "user"=>"agent", "password"=>"agent"}}, "mbus"=>"nats://nats:nats@192.168.86.17:4222", "env"=>{"bosh"=>{"password"=>"$6$40f9977ca2abd9d9$v2AIebPPYZflT6B265FkOigsR/8Wt0BiPsS2GDq2BpJoI5cPjWjRK5HJyq3gTZH7zK4i4tQ9K4rvvC/8ADZHW0"}}}
  </pre>
 
-This is a JSON blob of key/value pairs representing the expected infrastructure for the BOSH agent. For this issue, the following section is the most important:
+This is a JSON blob of key/value pairs representing the expected infrastructure
+for the BOSH agent.
+For this issue, the following section is the most important:
 
 `"mbus"=>"nats://nats:nats@192.168.86.17:4222"`
 
-This key/value pair represents where the agent expects the NATS server to be. One diagnostic tactic is to try pinging this NATS IP address from the VM to determine whether you are experiencing routing issues.
+This key/value pair represents where the agent expects the NATS server to be.
+One diagnostic tactic is to try pinging this NATS IP address from the VM to
+determine whether you are experiencing routing issues.
 
 ### <a id='RSA-cert'></a>Install exits with a creates/updates/deletes app failure or with a 403 ###
 
 **Scenario 1:**
-Your Pivotal CF install exits with the following 403 error when you attempt to log in to the Developer Console:
+Your Pivotal CF install exits with the following 403 error when you attempt to
+log in to the Developer Console:
 
 <pre>
 {"type": "step_finished", "id": "console.deploy"}
@@ -165,7 +251,8 @@ Your Pivotal CF install exits with a `creates/updates/deletes an app (FAILED - 1
      Connection refused - connect(2)
 </pre>
 
-In either of the above scenarios, ensure that you have correctly entered your domains in wildcard format:
+In either of the above scenarios, ensure that you have correctly entered your
+domains in wildcard format:
 
 1. Browse to the Operations Manager interface IP.
 
@@ -173,15 +260,23 @@ In either of the above scenarios, ensure that you have correctly entered your do
 
 1. Select **HA Proxy** and click **Generate Self-Signed RSA Certificate**.
 
-1. Enter your system and app domains in wildcard format, as well as optionally any custom domains, and click **Save**. Refer to **Elastic Runtime > Cloud Controller** for explanations of these domain values.
+1. Enter your system and app domains in wildcard format, as well as optionally
+any custom domains, and click **Save**.
+Refer to **Elastic Runtime > Cloud Controller** for explanations of these
+domain values.
 
  <%= image_tag('rsa_cert.png') %>
 
 ### <a id='runtime_depend'></a>Install fails when Gateway instances > 0 ###
 
-If you configure the number of Gateway instances to be greater than zero for a given product, you create a dependency on Elastic Runtime for that product installation. If you attempt to install a product tile with an Elastic Runtime dependency before installing Elastic Runtime, the install fails.
+If you configure the number of Gateway instances to be greater than zero for a
+given product, you create a dependency on Elastic Runtime for that product
+installation.
+If you attempt to install a product tile with an Elastic Runtime dependency before installing Elastic Runtime, the install fails.
 
-To change the number of Gateway instances, click **Set up now** on the product tile, then select **Settings > Resource sizes > INSTANCES** and change the value next to the product Gateway job.
+To change the number of Gateway instances, click **Set up now** on the product
+tile, then select **Settings > Resource sizes > INSTANCES** and change the
+value next to the product Gateway job.
 
  <%= image_tag("troubleshooting/gateway_inst.png") %>
 
@@ -189,4 +284,7 @@ To remove the Elastic Runtime dependency, change the value of this field to `0`.
 
 ### <a id='out_of_disk_space'></a>Out of Disk Space Error ###
 
-Pivotal CF displays an `Out of Disk Space` error if log files expand to fill all available disk space. If this happens, rebooting the Pivotal CF installation VM will clear the tmp directory of these log files and resolve the error.
+Pivotal CF displays an `Out of Disk Space` error if log files expand to fill
+all available disk space.
+If this happens, rebooting the Pivotal CF installation VM will clear the tmp
+directory of these log files and resolve the error.

@@ -3,23 +3,35 @@
 title: Advanced Troubleshooting with the BOSH CLI
 ---
 
-Recall that you started configuring your first install in the Operations Manager by clicking the `VMware vSphere` tile. This configuration is for the VM that Operations Manager uses to perform all subsequent installs and updates. A process on that VM called BOSH Director does the work. To perform advanced troubleshooting, you can log into BOSH Director to perform diagnostic commands in the BOSH Command-Line Interface (CLI).
+_This page assumes you are running cf v6 and that you have tried to resolve your issue by viewing configurations, exploring logs, and reviewing common problems as described in the Troubleshooting Guide._
 
-If you are unable to resolve an issue by viewing configurations, exploring logs, or reviewing common problems, the BOSH CLI can help you troubleshoot in more depth.
+To perform advanced troubleshooting, log into the BOSH Director.
+The BOSH Director is a process that runs on the VM that Ops Manager deploys on the first install of the `VMware vSphere` tile.
+Ops Manager uses BOSH Director to perform all subsequent installs and updates.
+Diagnostic commands in the BOSH Director have access to information about your entire Pivotal CF installation.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**Note:** Do not manually modify the deployment manifest.
-Operations Manager will overwrite manual changes to this manifest. In addition, manually changing the manifest may cause future deployments to fail.
+In the BOSH Director you run diagnostic commands using the BOSH Command-Line Interface (CLI).
+Alternatively, you can obtain and run an Open Source BOSH CLI separately from the one available in Pivotal CF.
+
+**Note:** Do not manually modify the deployment manifest.
+Operations Manager overwrites manual changes to this manifest. In addition, manually changing the manifest may cause future deployments to fail.
 
   1. From the procedures described below, decide what information you need from the Operations Manager Installation Dashboard, and collect that information.
   1. Verify that no alerts are flashing in Operations Manager that indicate installations or updates in progress.
   1. Verify that no BOSH processes are running on the Pivotal CF VM.
   1. Log out of the Operations Manager.
 
-An alternative for those with the requisite skills is to obtain and run an Open Source BOSH CLI separately from the one available in Pivotal CF.
-
 ## <a id='prepare'></a>Preparing to use the BOSH CLI ##
 
-Using the BOSH CLI requires fairly lengthy preparation.
+This section guides you through preparing to use the BOSH CLI. You will complete the following tasks:
+
+1. Gather the information necessary to complete this task from the Ops Manager interface.
+1. SSH into the Pivotal CF VM.
+1. Log into the BOSH Director.
+1. Target your deployment.
+1. Select a product deployment to troubleshoot.
+
+### <a id='info'></a>Gather information ###
 
 Before you begin, write down:
 
@@ -27,6 +39,8 @@ Before you begin, write down:
 * Your ova import credentials—that is, the username and password used to import the Pivotal CF `.ova` file into vCenter.
 * The IP address shown for the "Ops Manager" job in the `Status` tab of the VMware vSphere tile—this is in fact the IP address of the VM where BOSH Director is running.
 * The BOSH Director credentials, shown on the `Credentials` tab of the VMware vSphere tile.
+
+### <a id='ssh'></a>SSH into Pivotal CF ###
 
 First, connect to the VM where the Operations Manager web application is running:
 
@@ -38,33 +52,57 @@ First, connect to the VM where the Operations Manager web application is running
 
 **Note:** you can perform a similar procedure in a vSphere console.
 
-Then log into BOSH Director:
+### <a id='log-in'></a>Log into the BOSH Director ###
 
-1. Set the `BUNDLE_GEMFILE` variable to point to the BOSH gemfile for the web application:
+Set the `BUNDLE_GEMFILE` variable to point to the BOSH gemfile for the web application:
 
  `export BUNDLE_GEMFILE=/home/tempest-web/tempest/web/bosh.Gemfile`
+
+
+**Note:** An alternative is to prepend `BUNDLE_GEMFILE=./bosh.Gemfile` to all BOSH commands.
+
+### <a id='target'></a>Target your deployment ###
+
 1. Point BOSH to your Ops Manager:
 
  `bundle exec bosh target <Ops_Manager_IP_Address>`
 1. Log in using the BOSH Director credentials.
 
-**Note:** An alternative to Step 1 is to prepend `BUNDLE_GEMFILE=./bosh.Gemfile` to all BOSH commands.
+### <a id='product'></a>Select a product deployment to troubleshoot ###
 
-Continue by setting BOSH Director to apply CLI commands to the deployment you want to troubleshoot. Here, "deployment" means a particular installation of a particular product. Put another way, each tile in your Operations Manager Installation Dashboard corresponds to a deployment, which is in turn described by a YAML file.
+You can think of your Pivotal CF installation as a collection of instances of
+products.
+Each instance is called a _deployment_ of the product, which could be Elastic
+Runtime, MySQL, or a product or service that you imported and installed.
+Each deployment is described by a YAML file.
 
-* An Elastic Runtime installation is described by a file whose name has the form `cf-<20-character_random_string>.yml`
-* A MySQL Dev installation is described by a file whose name has the form`cf_services-<20-character_random_string>.yml`
-* Other installations are described by files whose names have the form `<20-character_random_string>.yml`
+You can only troubleshoot one deployment at a time.
+This is a two-step process:
 
-To identify the YAML file that describes your deployment, grep for the appropriate filename.
+1. Identify the YAML file that describes the deployment you want to troubleshoot.
 
-* This command identifies Elastic Runtime deployments:
+1. Set BOSH director to run CLI commands against the YAML file you have just identified.
 
- `ls -al /var/tempest/workspaces/default/deployments/ | grep cf-*.yml`
+To identify the YAML file that describes a deployment, take advantage of these file naming conventions:
 
-Where there are more than one installations of the same product, use the one whose release version, as specified in the YAML file, matches what is shown on the Operations Manager tile. Now you know which filename to use for the final step of preparation for using the BOSH CLI.
+* Elastic Runtime: `cf-<20-character_random_string>.yml`
+* MySQL Dev: `cf_services-<20-character_random_string>.yml`
+* Other deployments: `<20-character_random_string>.yml`
 
-* Set BOSH director to run CLI commands against the deployment whose YAML file you have just identified:
+For example, this command identifies Elastic Runtime deployments:
+
+ `find /var/tempest/workspaces/default/deployments -name cf-*.yml`
+
+Where there is more than one installation of the same product:
+
+1. Open the YAML files for all installations in a text editor.
+
+1. Note the release number shown on the product tile in Operations Manager.
+
+1. Identify the YAML file which specifies the same release version as the product tile.
+
+Now you know the filename of the YAML file that describes the deployment you want to troubleshoot.
+Set BOSH Director to apply CLI commands to that file:
 
  `bundle exec bosh deployment /var/tempest/workspaces/default/deployments/<deployment_filename>.yml`
 

@@ -5,14 +5,14 @@ title: Advanced Troubleshooting with the BOSH CLI
 
 _This page assumes you are running cf v6._
 
-**Note**: Before working with this guide, try to resolve your issue by viewing configurations, exploring logs, and reviewing common problems as described in the [Troubleshooting Guide](./troubleshooting.html).
+**Note**: Before proceeding, try to resolve your issue by viewing configurations, exploring logs, and reviewing common problems as described in the [Troubleshooting Guide](./troubleshooting.html).
 
 To perform advanced troubleshooting, log into the BOSH Director.
 The BOSH Director runs on the VM that Ops Manager deploys on the first install of the `VMware vSphere` tile.
 Ops Manager uses the BOSH Director to perform all subsequent installs and updates.
-BOSH Director diagnostic commands have access to information about your entire Pivotal CF installation.
 
-In the BOSH Director you run diagnostic commands using the BOSH Command-Line Interface (CLI).
+BOSH Director diagnostic commands have access to information about your entire Pivotal CF installation.
+Run these commands using the BOSH Command-Line Interface (CLI).
 Alternatively, you can obtain and run an Open Source BOSH CLI separately from the one available in Pivotal CF.
 
 **Note:** Do not manually modify the deployment manifest.
@@ -37,9 +37,17 @@ This section guides you through preparing to use the BOSH CLI. You will complete
 Before you begin, write down:
 
 * The IP address of the Pivotal CF VM shown in the `Settings` tab of the VMware vSphere tile.
+
+  <%= image_tag("pcf_ip.png") %>
+
 * Your ova import credentials—that is, the username and password used to import the Pivotal CF `.ova` file into vCenter.
 * The IP address shown for the "Ops Manager" job in the `Status` tab of the VMware vSphere tile—this is in fact the IP address of the VM where BOSH Director is running.
+
+	<%= image_tag("ops_mgr_job_ip.png") %>
+
 * The BOSH Director credentials, shown on the `Credentials` tab of the VMware vSphere tile.
+
+    <%= image_tag("bosh_creds.png") %>
 
 ### <a id='ssh'></a>SSH into Pivotal CF ###
 
@@ -57,7 +65,7 @@ First, connect to the VM where the Operations Manager web application is running
 
 Set the `BUNDLE_GEMFILE` variable to point to the BOSH gemfile for the web application:
 
- `export BUNDLE_GEMFILE=/home/tempest-web/tempest/web/bosh.Gemfile`
+  `export BUNDLE_GEMFILE=/home/tempest-web/tempest/web/bosh.Gemfile`
 
 
 **Note:** An alternative is to prepend `BUNDLE_GEMFILE=./bosh.Gemfile` to all BOSH commands.
@@ -66,7 +74,7 @@ Set the `BUNDLE_GEMFILE` variable to point to the BOSH gemfile for the web appli
 
 1. Target your Ops Manager web application using the BOSH Director:
 
- `bundle exec bosh target <Ops_Manager_IP_Address>`
+  `bundle exec bosh target <Ops_Manager_IP_Address>`
 1. Log in using the BOSH Director credentials.
 
 ### <a id='product'></a>Select a product deployment to troubleshoot ###
@@ -82,7 +90,7 @@ This is a two-step process:
 
 1. Identify the YAML file that describes the deployment you want to troubleshoot.
 
-1. Set BOSH director to run CLI commands against the YAML file you have just identified.
+1. Set the BOSH director to run CLI commands against the YAML file you have just identified.
 
 You identify the YAML file that describes a deployment by its filename.
 For example, this command identifies Elastic Runtime deployments:
@@ -91,9 +99,28 @@ For example, this command identifies Elastic Runtime deployments:
 
 The table below shows the naming conventions for deployment files.
 
-* Elastic Runtime: `cf-<20-character_random_string>.yml`
-* MySQL Dev: `cf_services-<20-character_random_string>.yml`
-* Other deployments: `<20-character_random_string>.yml`
+<style type="text/css">
+.table {font-size:12px;color:#333333;width:50%;border-width: 1px;border-color: #729ea5;border-collapse: collapse;}
+.table th {font-size:12px;background-color:#acc8cc;border-width: 1px;padding: 8px;border-style: solid;border-color: #729ea5;text-align:center;}
+.table tr {background-color:#d4e3e5;}
+.table td {font-size:12px;border-width: 1px;padding: 8px;border-style: solid;border-color: #729ea5;}
+.table tr:hover {background-color:#ffffff;}
+</style>
+
+<table border="1" class="table" >
+<tr>
+  <th>Product</th><th>Deployment Filename Convention</th>
+</tr>
+<tr>
+  <td>Elastic Runtime</td><td>cf-&lt;20-character_random_string&gt;.yml</td>
+</tr>
+<tr>
+  <td>MySQL Dev</td><td>cf_services-&lt;20-character_random_string&gt;.yml</td>
+</tr>
+<tr>
+  <td>Other</td><td>&lt;20-character_random_string&gt;.yml</td>
+</tr>
+</table>
 
 **Note**: Where there is more than one installation of the same product,
 note the release number shown on the product tile in Operations Manager.

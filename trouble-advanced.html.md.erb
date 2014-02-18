@@ -29,6 +29,7 @@ This section guides you through preparing to use the BOSH CLI. You will complete
 1. Gather the information necessary to complete this task from the Ops Manager interface.
 1. SSH into the Pivotal CF VM.
 1. Log into the BOSH Director.
+1. Verify that no BOSH processes are running on the Pivotal CF VM.
 1. Target your deployment.
 1. Select a product deployment to troubleshoot.
 
@@ -36,11 +37,10 @@ This section guides you through preparing to use the BOSH CLI. You will complete
 
 Before you begin, write down:
 
-* The IP address of the Pivotal CF VM shown in the `Settings` tab of the VMware vSphere tile.
-
-  <%= image_tag("pcf_ip.png") %>
+* The IP address of the Pivotal CF VM shown in the URL field of your browser.
 
 * Your ova import credentials—that is, the username and password used to import the Pivotal CF `.ova` file into vCenter.
+
 * The IP address shown for the "Ops Manager" job in the `Status` tab of the VMware vSphere tile—this is in fact the IP address of the VM where BOSH Director is running.
 
 	<%= image_tag("ops_mgr_job_ip.png") %>
@@ -67,8 +67,20 @@ Set the `BUNDLE_GEMFILE` variable to point to the BOSH gemfile for the web appli
 
   `export BUNDLE_GEMFILE=/home/tempest-web/tempest/web/bosh.Gemfile`
 
-
 **Note:** An alternative is to prepend `BUNDLE_GEMFILE=./bosh.Gemfile` to all BOSH commands.
+
+### <a id='processes'></a>Verify that no BOSH processes are running on the Pivotal CF VM ###
+
+For example, you can use `grep' with the `ps` command to make sure that no BOSH processes are still running:
+
+<pre class="terminal">
+	$ ps -efx | grep bosh
+	  501 43436 92921   0  3:37PM ttys015    0:00.00 grep bosh
+</pre>
+
+It is probably not a good idea to proceed further with troubleshooting until any
+BOSH processes have completed or you have ended them.
+You must decide whether to end them or not based on the situation.
 
 ### <a id='target'></a>Target Ops Manager ###
 

@@ -1,0 +1,104 @@
+---
+title: Using Ops Manager Resurrector
+---
+
+The Ops Manager Resurrector increases Elastic Runtime availability by:
+
+- Reacting to hardware failure and network disruptions by restarting virtual
+machines on active, stable hosts.
+- Detecting operating system failures by continuously monitoring virtual
+machines and restarting them as required.
+- Continuously monitoring the BOSH Agent running on each virtual machine and
+restarting the VMs as required.
+
+Ops Manager Resurrector continuously monitors the status of all virtual machines
+in an Elastic Runtime deployment.
+Additionally, the Resurrector monitors the BOSH Agent on each VM.
+If either the VM or the BOSH Agent fail, Resurrector restarts the virtual
+machine on another active host.
+
+To avoid potential conflicts, if you enable the Ops Manager Resurrector on a
+Pivotal CF deployment, you should exclude the VMs in the deployment from vSphere
+High Availability.
+
+**Note**: The Ops Manager Resurrector cannot protect the virtual machine running
+Ops Manager.
+Pivotal recommends you use vSphere High Availability to protect the Ops Manager
+VM.
+
+## Excluding Virtual Machines from vSphere High Availability ##
+
+To enable vSphere High Availability on the Ops Manager VM but exclude the other
+VMs in the Pivotal CF deployment, you must:
+
+* Enable vSphere High Availability for the entire cluster containing the
+Pivotal CF deployment.
+* Disable vSphere High Availability on all the VMs in the Pivotal CF deployment
+except the VM running Ops Manager.
+
+### Enabling vSphere High Availability ###
+
+To enable vSphere High Availability:
+
+1. Launch the vSphere Management Console.
+
+1. Right-click the cluster that contains the Pivotal CF deployment and select
+**Edit Settings**.
+
+1. Check the **Turn on vSphere High Availability** checkbox.
+
+    <%= image_tag("images/resurrector/enable-ha.jpg") %>
+
+1. Click **OK** to enable vSphere High Availability on the cluster.
+
+### Excluding Specific VMs from vSphere High Availability ###
+
+To exclude all VMs in a Pivotal CF deployment except the Ops Manager VM from
+vSphere High Availability:
+
+1. Launch the vSphere Management Console.
+
+1. Right-click the Pivotal CF cluster and select **Edit Settings**.
+
+1. Under vSphere High Availability, select **VM Monitoring**.
+
+1. In the VM Monitoring Status pane, select **VM Monitoring Only**.
+
+    <%= image_tag("images/resurrector/vm-monitoring.jpg") %>
+
+1. In the Virtual Machine Settings pane, change the VM Monitoring setting of
+each of the VMs in the Pivotal CF deployment, except for the Ops Manager VM, to
+**Disabled**.
+
+    <%= image_tag("images/resurrector/disabled.jpg") %>
+
+1. Click **OK** to disable vSphere High Availability on every VM in the Pivotal
+CF deployment except the Ops Manager VM.
+
+## Enabling Ops Manager Resurrector ##
+
+To enable the Ops Manager Resurrector:
+
+1. Log into the Pivotal CF Ops Manager web interface.
+
+1. On the Product Dashboard, select **Ops Manager Director for VMware vSphere**.
+
+    <%= image_tag("images/resurrector/vmware.jpg") %>
+
+1. In the left navigation menu, select **System Settings**.
+
+    <%= image_tag("images/resurrector/system-settings.jpg") %>
+
+1. Check **Enable VM resurrector plugin**. Click **Save**.
+
+    <%= image_tag("images/resurrector/resurrector.jpg") %>
+
+1. Click **Apply Changes**.
+
+    <%= image_tag("images/resurrector/apply-changes.jpg") %>
+
+1. When complete, a “Changes Applied” message appears.
+
+    <%= image_tag("images/resurrector/changes-applied.jpg") %>
+
+1. Click **Close** or **Return to Product Dashboard**. Ops Manager Resurrector is now enabled.

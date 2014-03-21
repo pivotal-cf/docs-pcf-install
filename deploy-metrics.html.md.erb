@@ -1,0 +1,101 @@
+---
+title: Deploying Pivotal Ops Metrics (Beta)
+---
+
+_Note: This is an experimental feature and is subject to change in future
+releases._
+
+The Pivotal Ops Metrics tool is a JMX extension for Elastic Runtime.
+Pivotal Ops Metrics collects and exposes system data from Cloud Foundry
+components via a JMX endpoint.
+Use this system data to monitor your installation and assist in troubleshooting.
+
+The Pivotal Ops Metrics tool is composed of two virtual machines: the JMX
+Provider and a VM that governs compilation.
+
+Deploy Pivotal Ops Metrics using the Pivotal CF Operations Manager as follows:
+
+## <a id="add-tile"></a>Adding the Pivotal Ops Metrics Product ##
+
+See [Adding and Importing Products](http://docs.gopivotal.com/pivotalcf/customizing/add-delete.html#add-import).
+
+## <a id="configure"></a>Configuring Pivotal Ops Metrics ##
+
+1. On the Installation Dashboard, click the **Pivotal Ops Metrics** tile.
+
+    <%= image_tag("images/metrics/metrics-tile.png") %>
+
+    Note the orange bar on the **Pivotal Ops Metrics** tile.
+    This indicates the product requires configuration.
+
+1. Create a username and password.
+JMX clients use these credentials to connect to the JMX Provider.
+
+1. **(Optional)** Check **Enable SSL**.
+Enabling SSL requires JMX clients to use SSL to connect to the JMX Provider.
+If SSL is not enabled, JMX clients can connect to the JMX Provider without SSL
+credentials.
+
+    <%= image_tag("images/metrics/enable-ssl.png") %>
+
+    If you check **Enable SSL**, you must also provide an SSL certificate and
+    private key.
+    There are two ways to provide an SSL certificate and private key:
+    * If you are using a signed certificate, paste an X.509 certificate in the
+    **Certificate PEM** field and a PKCS#1 private key in the **Private Key**
+    field.
+    * If you want to use SSL but do not want to use a signed certificate, you
+    must:
+        * Generate a self-signed certificate on the server
+        * Import the self-signed certificate to a trust store on the client
+        * Start jConsole (or your monitoring tool) with the trust store
+    
+    Once you have provided an SSL certificate and private key, click **Save**.
+
+    <%= image_tag("images/metrics/created.png") %>
+
+1. In the Pending Changes view, click **Apply Changes** to install Pivotal Ops
+Metrics.
+
+    <%= image_tag("images/metrics/apply-changes-1.png") %>
+
+1. When complete, a “Changes Applied” message appears.
+Click **Return to Product Dashboard**.
+
+1. Click the **Pivotal Ops Metrics** tile and select the **Status** tab.
+
+1. Record the IP address of the JMX Provider.
+**Note**: After installation, your JMX client connects to this IP address at
+port 44444 using the credentials you supplied.
+
+    <%= image_tag("images/metrics/jmx-ip.png") %>
+
+1. Return to the **Installation Dashboard**.
+Click the **Ops Manager Director for VMware vSphere** tile and select **Health Monitor**.
+
+1. In the **Metrics IP address** field, enter the IP address of the JMX
+Provider.
+Click **Save**.
+
+    <%= image_tag("images/metrics/metrics-ip.png") %>
+
+1. Return to the **Installation Dashboard**.
+Click the **Pivotal Elastic Runtime** tile and select **Resource Sizes**.
+
+1. Change the number of **Instances** for the **Collector** job from 0 to 1.
+Click **Save**.
+
+    <%= image_tag("images/metrics/collector.png") %>
+
+1. In the Pending Changes view, click **Apply Changes**.
+
+    <%= image_tag("images/metrics/apply-changes-2.png") %>
+
+1. When complete, a “Changes Applied” message appears.
+Click **Return to Product Dashboard**.
+Pivotal Ops Metrics is now installed and configured.
+
+Once installed and configured, metrics for Cloud Foundry components
+automatically report to the JMX endpoint.
+Your JMX client uses the credentials supplied to connect to the IP address of
+the Pivotal Ops Metrics JMX Provider at port 44444.

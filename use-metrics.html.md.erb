@@ -1,0 +1,165 @@
+---
+title: Using Pivotal Ops Metrics (Beta)
+---
+
+_Note: This is an experimental feature and is subject to change in future
+releases._
+
+Pivotal Ops Metrics is a Java Management Extensions (JMX) tool for Elastic
+Runtime.
+To help you monitor your installation and assist in troubleshooting, Pivotal Ops
+Metrics collects and exposes system data from Cloud Foundry components via a JMX
+endpoint.
+
+## <a id="cc"></a>Cloud Controller Metrics ##
+
+Pivotal Ops Metrics reports the number of Cloud Controller API requests
+completed and the requests sent but not completed.
+
+The number of requests sent but not completed represents the pending activity in
+your system, and can be higher under load.
+This number will vary over time, and the range it can vary over depends on
+specifics of your environment such as hardware, OS, processor speeds, load, etc.
+In any given environment, though, you can establish a typical range of values
+and maximum for this number.
+
+Use the Cloud Controller metrics to ensure the Cloud Controller is processing
+API requests in a timely manner.
+If the pending activity in your system increases significantly past the typical
+maximum and stays at an elevated level, Cloud Controller requests may be failing
+and additional troubleshooting may be necessary.
+
+The following table shows the name of the Cloud Controller metric, what the
+metric represents, and the metric type (data type).
+
+<table border="1" class="nice" >
+<tr>
+  <th><strong>METRIC NAME</strong></th>
+  <th><strong>DEFINITION</strong></th>
+  <th><strong>METRIC TYPE (DATA TYPE)</strong></th>
+</tr>
+<tr>
+  <td>cc.requests.completed</td><td>Number of Cloud Controller API requests completed since this instance of Cloud Controller started</td><td>Counter (Integer)</td>
+</tr>
+<tr>
+  <td>cc.requests.outstanding</td><td>Number of Cloud Controller API requests made but not completed since this instance of Cloud Controller started</td><td>Counter (Integer)</td>
+</tr>
+</table>
+
+See the [Cloud Controller](../concepts/architecture/cloud-controller.html) topic for more
+information about the Cloud Controller.
+
+## <a id="router"></a>Router Metrics ##
+
+Pivotal Ops Metrics reports the number of sent requests and the number of
+completed requests for each Cloud Foundry component.
+
+The difference between these two metrics is the number of requests made to a
+component but not completed, and represents the pending activity for that
+component.
+The number for each component can vary over time, and is typically higher under
+load.
+In any given environment, though, you can establish a typical range of values
+and maximum for this number for each component.
+
+Use these metrics to ensure the Router is passing requests to other components
+in a timely manner.
+If the pending activity for a particular component increase significantly past
+the typical maximum and stays at an elevated level, additional troubleshooting
+of that component may be necessary.
+If the pending activity for most or all components increases significantly and
+stays at elevated values, troubleshooting of the router may be necessary.
+
+The following table shows the name of the Router metric, what the metric
+represents, and the metric type (data type).
+
+<table border="1" class="nice" >
+<tr>
+  <th><strong>METRIC NAME</strong></th>
+  <th><strong>DEFINITION</strong></th>
+  <th><strong>METRIC TYPE (DATA TYPE)</strong></th>
+</tr>
+<tr>
+  <td>router.requests<br />[component=c]</td><td>Number of requests the router has received for component <strong>c</strong> since this instance of the router has started<br /><strong>c</strong> can be Cloud Controller or DEA</td><td>Counter (Integer)</td>
+</tr>
+<tr>
+  <td>router.responses<br />[status=s,component=c]</td><td>Number of requests completed by component <strong>c</strong> since this instance of the router has started<br /><strong>c</strong> can be Cloud Controller or DEA<br/><strong>s</strong> is http status family: 2xx, 3xx, 4xx, 5xx, and other</td><td>Counter (Integer)</td>
+</tr>
+</table>
+
+See the [Router](../concepts/architecture/router.html) topic for more information about the
+Router.
+
+## <a id="dea"></a>Droplet Execution Agent Metrics ##
+
+Pivotal Ops Metrics reports four data values for each Droplet Execution Agent
+(DEA).
+
+Use these metrics to ensure your system has enough disk space and memory to
+deploy and run your applications.
+For example, if `available_disk_ratio` or `available_memory_ratio` drop too
+low, the Cloud Controller will be unable to makes reservations for a new
+application, and attempts to deploy that application will fail.
+
+The following table shows the name of the DEA metric, what the metric
+represents, and the metric type (data type).
+
+<table border="1" class="nice" >
+<tr>
+  <th><strong>METRIC NAME</strong></th>
+  <th><strong>DEFINITION</strong></th>
+  <th><strong>METRIC TYPE (DATA TYPE)</strong></th>
+</tr>
+<tr>
+  <td>available_disk_ratio</td><td>Percentage of disk available for allocation by future applications/staging requests</td><td>Gauge (Float, 0-1)</td>
+</tr>
+<tr>
+  <td>available_memory_ratio</td><td>Percentage of memory available for allocation by future applications/staging requests</td><td>Gauge (Float, 0-1)</td>
+</tr>
+<tr>
+  <td>mem_free_bytes</td><td>Current amount of memory free on the DEA</td><td>Gauge (Integer)</td>
+</tr>
+<tr>
+  <td>mem_used_bytes</td><td>Current amount of memory actually used, not just allocated, on the DEA</td><td>Gauge (Integer)</td>
+</tr>
+</table>
+
+See the [Droplet Execution Agent](../concepts/architecture/execution-agent.html) topic for more
+information about Droplet Execution Agents.
+
+## <a id="cc"></a>Virtual Machine Metrics ##
+
+Pivotal Ops Metrics reports data for each virtual machine (VM) in a deployment.
+Use these metrics to monitor the health of your Virtual Machines.
+
+The following table shows the name of the Virtual Machine metric, what the
+metric represents, and the metric type (data type).
+
+<table border="1" class="nice" >
+<tr>
+  <th><strong>METRIC NAME</strong></th>
+  <th><strong>DEFINITION</strong></th>
+  <th><strong>METRIC TYPE (DATA TYPE)</strong></th>
+</tr>
+<tr>
+  <td>system.mem.percent</td><td>Percentage of memory used on the VM</td><td>Gauge (Float, 0-100)</td>
+</tr>
+<tr>
+  <td>system.swap.percent</td><td>Percentage of swap used on the VM</td><td>Gauge (Float, 0-100)</td>
+</tr>
+<tr>
+  <td>system.disk.ephemeral.percent</td><td>Percentage of ephemeral disk used on the VM</td><td>Gauge (Float, 0-100)</td>
+</tr>
+<tr>
+  <td>system.disk.system.percent</td><td>Percentage of system disk used on the VM</td><td>Gauge (Float, 0-100)</td>
+</tr>
+<tr>
+  <td>system.cpu.sys</td><td>Amount of CPU spent in system processes</td><td>Gauge (Float)</td>
+</tr>
+<tr>
+  <td>system.cpu.user</td><td>Amount of CPU spent in user processes</td><td>Gauge (Float)</td>
+</tr>
+<tr>
+  <td>system.cpu.wait</td><td>Amount of CPU spent in waiting processes</td><td>Gauge (Float)</td>
+</tr>
+</table>

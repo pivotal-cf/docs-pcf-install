@@ -1,0 +1,101 @@
+---
+title: Using SSL with a Self-Signed Certificate
+---
+
+Secure Socket Layer (SSL) is a standard protocol for establishing an encrypted
+link between a server and a client.
+To communicate over SSL, a client needs to trust the SSL certificate of the
+server.
+
+There are two kinds of SSL certificates: signed and self-signed.
+
+* **Signed**: A Certificate Authority (CA) is a trusted third party that
+verifies your identity and certificate request, then sends you a digitally
+signed certificate for your secure server.
+Client computers automatically trust signed certificates.
+
+* **Self-signed**: Your own server generates a self-signed certificate.
+Clients do not automatically trust self-signed certificates.
+To communicate over SSL with a server providing a self-signed certificate, a
+client must be explicitly configured to trust the certificate.
+
+Clients keep all trusted certificates in a special kind of keystore called a
+truststore.
+To configure a client to trust a self-signed certificate, you must import the
+self-signed certificate to a truststore on the client.
+
+Follow these steps to use SSL with a self-signed certificate:
+
+1. [Generate](#generate) the self-signed certificate on the server.
+1. [Import](#import) the self-signed certificate to a truststore on the client.
+1. [Start](#start) jConsole or other monitoring tool on the client with the truststore.
+
+## <a id="generate"></a>Generating a Self-Signed Certificate ##
+
+To generate a self-signed certificate on your server:
+
+1. In Pivotal Ops Manager, click on the **Pivotal Ops Metrics** tile.
+1. Check **Enable SSL**.
+1. Click **Generate Self-Signed RSA Certificate**.
+
+    <%= image_tag("images/ssl/generate-ssl.png") %>
+
+1. Enter your system and application domains in wildcard format.
+Optionally, also add any custom domains in wildcard format.
+Click **Generate.**
+
+    <%= image_tag("images/ssl/generate.png") %>
+
+1. Select and copy the certificate.
+
+    <%= image_tag("images/ssl/copy.png") %>
+
+1. Paste the certificate into a text file and save as `ops-metrics.cer`.
+
+## <a id="import"></a>Importing the Self-signed Certificate to a Truststore ##
+
+To import the self-signed certificate on your client:
+
+1. Copy `ops-metrics.cer` from your server to your client.
+
+1. Navigate to the directory on the client where you copied the saved
+certificate.
+
+1. Run the keytool command:
+
+    <pre class='terminal'>
+    $ keytool -import -alias ops-metrics-ssl -file ops-metrics.cer -keystore localhost.truststore
+    </pre>
+
+    This command imports the certificate with an alias of `ops-metrics-ssl` to
+    the truststore `localhost.truststore`.
+
+    If `localhost.truststore` already exists, a prompt for the password appears.
+    If `localhost.truststore` does not exist, you must create a new password for
+    it.
+
+1. Verify the details of the imported certificate.
+
+## <a id="start"></a>Starting a Monitoring Tool with the Truststore ##
+
+Once you have imported the self-signed certificate to the `localhost.truststore`
+truststore on the client, you must instruct your monitoring tool to use the
+truststore.
+
+On a command line, start your monitoring tool with the location and password of
+the truststore:
+
+* Pass the location of `localhost.truststore` to the monitoring tool using
+the `javax.net.ssl.trustStore` property.
+
+* Pass the truststore password using the `javax.net.ssl.trustStorePassword`
+property.
+
+Example starting jConsole:
+
+<pre class='terminal'>
+$ jconsole -J-Djavax.net.ssl.trustStore=PATH-TO-TRUSTSTORE/localhost.truststore -J-Djavax.net.ssl.trustStorePassword=TRUSTSTORE-PASSWORD
+</pre>
+
+Once started with these parameters, your monitoring tool communicates with your
+server through the SSL connection.

@@ -1,0 +1,53 @@
+---
+title: Troubleshooting Ops Manager for VMware vSphere
+---
+
+This guide provides help with diagnosing and resolving issues that are specific to Pivotal CF deployments on VMware vSphere.
+
+For infrastructure-agnostic troubleshooting help, refer to the [Pivotal CF Troubleshooting Guide](./troubleshooting.html).
+
+## <a id='common_probs'></a>Common Problems ##
+
+Compare evidence that you have gathered to the problem descriptions below.
+If your problem is covered, try the recommended remediation procedures.
+
+### <a id='bosh_install'></a>BOSH automated installation fails ###
+
+Before starting a Elastic Runtime deployment, a vSphere cluster must be set up
+and configured.
+
+If vSphere DRS (Distributed Resource Scheduler) is enabled for the cluster, the
+Automation level must be set to **Partially automated** or **Fully automated**.
+
+If the Automation level is set to **Manual**, BOSH automated installation will
+fail with a 'power\_on\_vm' error when BOSH attempts to create virtual VMs.
+
+<%= image_tag("troubleshooting/drs_automation_level.png") %>
+
+### <a id='net-settings'></a>Cannot connect to the OVF via a browser ###
+
+If you deployed the OVF file but cannot connect to it via a browser, check that
+the network settings you entered in the wizard are correct.
+
+1. Access the Pivotal CF installation VM using the vSphere Console.
+If your network settings are misconfigured, you will not be able to SSH into
+the installation VM.
+
+1. Log in using the credentials you provided when you imported the Pivotal CF
+.ova in vCenter.
+
+1. Confirm that the network settings are correct by checking that the ADDRESS,
+NETMASK, GATEWAY, and DNS-NAMESERVERS entries are correct in
+`/etc/network/interfaces`.
+
+1. If any of the settings are wrong, run `sudo vi /etc/network/interfaces` and
+correct the wrong entries.
+
+1. In vSphere, navigate to the **Summary** tab for the VM and confirm that the
+network name is correct.
+
+    <%= image_tag("troubleshooting/network_settings.png") %>
+
+1. If the network name is wrong, right click on the VM, select **Edit Settings > Network adapter 1**, and select the correct network.
+
+1. Reboot the installation VM.

@@ -1,0 +1,91 @@
+---
+title: Deploying Operations Manager in vCHS and vCloud
+---
+
+_This topic assumes that you want to deploy Pivotal CF Operations Manager on VMware vCloud or on VMware vCloud Hybrid Service (vCHS)._
+
+vCloud Director is a web UI that you use to manage your cloud environment.
+Pivotal CF Ops Manager (PCF) is a web application that runs on a virtual machine.
+This topic explains how to use vCloud Director to deploy PCF as a vApp in your virtual data center.
+
+Refer to the [Known Issues](../pcf-release-notes/p1-v1.1/opsmanager_ki.html) topic before getting started. _Is there a relevant Known Issues topic?_
+
+1. Collect the networking information you will need to configure your PCF vAPP:
+  + The IP address where you the PCF interface to be available
+  + The netmask, default gateway, DNS server, and NTP server for the network
+  + The name of the virtual data center where you want PCF to run
+
+1. Download Pivotal CF Operations Manager from [Pivotal Network]
+(https://network.gopivotal.com/products/pivotal-cf). _Check with Releng to make sure right thing is there._
+
+    The downloaded file is a tar archive.
+    Unpack the archive and verify that after unpacking, you have both an **ova** file and a **vmdk** file.
+
+1. Log into vCloud Director.
+
+1. Navigate to the **My Organization's Catalogs** view and click the "plus" icon to create a new catalog.
+
+    <%= image_tag("pcf_vcloud_00.png") %><br />
+
+1. Enter a name for the new catalog and click **Next**.
+
+1. Select a storage type and click **Next**.
+
+1. Specify sharing (if needed) and click **Next**.
+
+1. Review your settings and click **Finish**, or **Back** if you need to make corrections.
+
+1. Navigate to the **vApp Templates** tab for your new catalog and click the "upload" icon.
+
+    <%= image_tag("pcf_vcloud_02.png") %><br />
+
+1. Select **Local file** and browse to your **ova** file.
+
+    <%= image_tag("pcf_vcloud_03a.png") %><br />
+
+1. Enter the name you want to give your PCF vApp, a description (if desired), and click **Upload**.
+
+    <%= image_tag("pcf_vcloud_03b.png") %><br />
+
+    **Note**: Upload should take a few minutes since vCloud Director first transfers the vApp Template (the OVF package) to a staging environment,
+    and then uploads the it to your catalog. If the upload appears to complete too quickly, you may have not have uploaded the correct file. Verify that you started with both an **ova** and a **vmdk** file as described in Step 3.
+
+1.  Navigate to the **Home** view and click the **Add vApp from Catalog** icon.
+
+    <%= image_tag("pcf_vcloud_07.png") %><br />
+
+1.  Select your PCF vApp and click **Next**.
+
+    <%= image_tag("pcf_vcloud_09.png") %><br />
+
+1.  Enter the name of your PCF vApp, select the virtual data center where the vApp should run, and click **Next**.
+
+	<%= image_tag("pcf_vcloud_11.png") %><br />
+
+1.  Choose a storage policy, note its name, and click **Next**.
+
+	<%= image_tag("pcf_vcloud_12.png") %><br />
+
+1.  Set the network mapping **Destination** to the appropriate value, set **IP allocation** to `Static — Manual`, note the gateway and netmask values shown, and click **Next**.
+
+    <%= image_tag("pcf_vcloud_13.png") %><br />
+
+1.  Enter the desired networking information, set an admin password for the PCF vApp, note the admin username shown, and click **Next**.
+
+    **Note**: The IP Address you enter will be the location of the Pivotal CF Operations Manager interface.
+
+	<%= image_tag("pcf_vcloud_14.png") %><br />
+
+1.  Review the hardware specifications of the virtual machine, change them if desired, and click **Next**.
+
+1.  In the **Ready to Complete** dialog, check the **Power on after deployment** checkbox and click **Finish**.
+
+1.  Navigate to the **Home** view to verify that your PCF vApp is being created.
+
+    <%= image_tag("pcf_vcloud_17.png") %><br />
+
+    Once the VM boots, the interface is available at the IP address you specified.
+
+ **Note**: It is normal to experience a brief delay before the interface is accessible while the web server and VM start up.
+
+[Return to the Getting Started Guide](../getstarted/index.html)

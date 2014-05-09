@@ -2,25 +2,170 @@
 title: Deploying Operations Manager to vCHS and vCloud
 ---
 
-Refer to this topic for help deploying Ops Manager to vCHS or vCloud. For help deploying Ops Manager to VMware vSphere, see the [Deploying Operations Manager to vSphere](./deploying-vm.html) topic.
+Refer to this topic for help deploying Ops Manager to vCHS or vCloud.
+For help deploying Ops Manager to VMware vSphere, see the [Deploying Operations Manager to vSphere](./deploying-vm.html) topic.
 
-The following procedure steps you through using the vCloud Director interface to deploy Ops Manager as a vApp in a virtual data
-center (vDC).
+If you are deploying Elastic Runtime to vCHS, or you are deploying to vCloud but
+need access to Elastic Runtime from outside your firewall, you must first
+configure your virtual data center resources.
 
-1. Download Pivotal CF Operations Manager for vCHS or Pivotal CF Operations Manager for vCloud from [Pivotal Network]
-(https://network.gopivotal.com/products/pivotal-cf).
+If you are deploying Elastic Runtime to vCloud and no one will access your
+Elastic Runtime instance from outside your firewall, you can skip [Configuring vCHS / vCLOUD Virtual Data Center Resources](#configuring) and proceed to
+[Deploying Ops Manager](#deploying).
+
+## <a id='configuring'></a>Configuring vCHS / vCLOUD Virtual Data Center Resources ##
+
+When you deploy Elastic Runtime to vCloud or vCHS, you install the Elastic
+Runtime components on a private network.
+You give these components internal IP addresses, not publicly routable ones.
+
+When internal VMs need to access public IP addresses, Elastic Runtime maps the
+internal addresses to a public address using source NAT (SNAT).
+
+Similarly, when an external machine tries to connect to Elastic Runtime, it
+connects to a public IP address.
+Connecting this public IP address to the Elastic Runtime HA Proxy private
+address using destination NAT (DNAT) can fail, due to limitations in the way
+iptables rules process Elastic Runtime wildcard domains.
+
+To work around the iptables rules processing limitations, do one of the
+following:
+
+* Connect the Elastic Runtime public IP to the HA Proxy private IP using a
+vShield Edge load balancer.
+* Use split-brain DNS, with an internal DNS server resolving the wildcard domain
+for internal VMs to the HA Proxy private IP.
+
+### Configuring vShield Edge ###
+
+To configure the vShield Edge load balancer:
+
+1. Open the vShield Edge Gateway Services interface
+1. Set a rule to allow VMs to connect to the Internet
+1. Set a rule to allow inbound SSH
+1. Set up inbound connectivity to Elastic Runtime
+
+For more information on configuring edge gateway services, see the [VMware vCloud Director](http://pubs.vmware.com/vcd-51/index.jsp#com.vmware.vcloud.admin.doc_51/GUID-99A1DA05-AF6B-4F22-842E-92394B50F9A8.html) documentation.
+
+#### Open the vShield Edge Gateway Services Interface ####
+
+1. Log into the vCloud Director interface.
+
+1. In the top navigation bar, click **Administration**.
+
+1. Select **Cloud Resources > Virtual Datacenters**, then click the link for your virtual datacenter.
+
+1. Select the **Edge Gateways** tab.
+
+1. Select the gateway you want to configure, then click the gear icon and select **Edge Gateway Services**.
+
+    <%= image_tag("vcloud-vchs/select-edge.png") %>
+
+#### Allow VMs to Connect to the Internet ####
+
+To allow software installation, connections to the vCloud API, and connectivity
+between VMs, you must grant your private network VMs Internet access.
+
+To do this:
+
+1. Configure an SNAT rule allowing outbound connections to the public IP address
+of your Elastic Runtime instance.
+
+    <%= image_tag("vcloud-vchs/snat-1.png") %>
+
+1. Set up a firewall rule allowing outbound traffic from all internal IP
+addresses to all IP external addresses.
+
+    <%= image_tag("vcloud-vchs/firewall.png") %>
+
+#### Allow Inbound SSH ####
+
+To allow you to SSH into the Ops Manager VM from an external device, create a
+connection between the public IP address of your Elastic Runtime instance and
+the private IP address of your Ops Manager.
+
+To do this:
+
+1. Create a destination NAT (DNAT) rule with the following configuration:
+    * Applied on: Select your external network
+    * Original (External) IP/range: Enter the public IP address of your Elastic Runtime instance
+    * Protocol: Select **TCP & UDP**
+    * Original Port: Select **22**
+    * Translated (Internal) IP/range: Enter the private IP address of your Ops Manager
+    * Translated port: **22**
+
+1. Create a firewall rule allowing inbound traffic from the public IP address of
+your Elastic Runtime instance to the private IP address of your Ops Manager.
+
+#### Set up inbound connectivity to Elastic Runtime ####
+
+1. In the edge gateway **Configure Services** screen, select the **Load
+Balancer** tab.
+
+1. Click **Pool Servers**, then click **Add**.
+
+    <%= image_tag("vcloud-vchs/pool.png") %>
+
+1. Name the pool **Load Balancer to Elastic Runtime**.
+
+1. In the **Configure Service** step, enable the pool to support HTTP port 80
+and HTTPS port 443.
+
+    <%= image_tag("vcloud-vchs/ports.png") %>
+
+1. In the **Configure Health-Check** step, enter Monitor Port **80** for HTTP
+and **443** for HTTPS.
+For both HTTP and HTTPS, change the Mode to **TCP**.
+
+    <%= image_tag("vcloud-vchs/health-check.png") %>
+
+1. In the **Manage Members** step, click **Add**.
+Enter the IP address of the HA Proxy VM.
+
+    <%= image_tag("vcloud-vchs/member.png") %>
+
+1. Click **Finish**.
+
+1. Click **Virtual Servers**.
+
+    <%= image_tag("vcloud-vchs/virtual-servers.png") %>
+
+1. Click **Add**.
+
+1. Complete the new virtual server form with the following information:
+    * Name: Load Balancer
+    * Applied On: Select your external network
+    * IP Address: Enter the public IP address of your Elastic Runtime instance
+    * Pool: Select the **Load Balancer to Elastic Runtime** pool
+    * Services: Enable HTTP on port 80, and HTTPS on port 443
+
+1. Click **OK** to complete
+
+    <%= image_tag("vcloud-vchs/complete.png") %>
+
+## <a id='deploying'></a>Deploying Ops Manager ##
+
+The following procedure guides you through using the vCloud Director interface
+to deploy Ops Manager as a vApp in a virtual data center (vDC).
+
+1. Download Pivotal CF Operations Manager for vCHS or Pivotal CF Operations
+Manager for vCloud from [Pivotal Network](https://network.gopivotal.com/products/pivotal-cf).
 
 1. Log into vCHS or vCloud.
 
-1. Access the vCloud Director in the virtual data center where you want to deploy Ops Manager.
+1. Access the vCloud Director interface in the virtual data center where you
+want to deploy Ops Manager.
 
-    **Note**: The vCloud Director Web Console only supports 32-bit browsers, including Firefox.
-It does not support Chrome.
-Refer to Article 2034554 in the [VMware Knowledge Base](http://kb.vmware.com/selfservice/microsites/searchEntry.do) for more information about browser versions that the vCloud Director supports.
+    **Note**: The vCloud Director Web Console only supports 32-bit browsers,
+    including Firefox.
+    It does not support Chrome.
+    Refer to Article 2034554 in the [VMware Knowledge Base](http://kb.vmware.com/selfservice/microsites/searchEntry.do) for more
+    information about browser versions that the vCloud Director supports.
 
-1. Navigate to **Catalogs > My Organization's Catalogs** and select a catalog or click the **Add** icon to create a new catalog.
+1. Navigate to **Catalogs > My Organization’s Catalogs** and select a catalog or
+click **Add** to create a new catalog.
 
-    <%= image_tag("pcf_vcloud_00.png") %><br />
+    <%= image_tag("vcloud-vchs/pcf-vcloud-00.png") %><br />
 
     If you are creating a new catalog:
      + Enter a name for the new catalog and click **Next**.
@@ -28,62 +173,67 @@ Refer to Article 2034554 in the [VMware Knowledge Base](http://kb.vmware.com/sel
      + Specify sharing (if needed) and click **Next**.
      + Review your settings and click **Finish**.
 
-1. Navigate to the **vApp Templates** tab for your catalog and click the "upload" icon.
+1. Navigate to the **vApp Templates** tab for your catalog and click **Upload**.
 
-    <%= image_tag("pcf_vcloud_02.png") %><br />
+    <%= image_tag("vcloud-vchs/pcf-vcloud-02.png") %><br />
 
-    **Note**: The first time you upload software to vCloud Director, you are required to install
-  the **Client Integration Plug-in** and restart all browsers.
+    **Note**: The first time you upload software to vCloud Director, you are
+    required to install the **Client Integration Plug-in** and restart all
+    browsers.
 
 1. Select **Local file** and browse to your **ova** file.
 
-    <%= image_tag("pcf_vcloud_03a.png") %><br />
+    <%= image_tag("vcloud-vchs/pcf-vcloud-03a.png") %><br />
 
-1. Enter a name for your Ops Manager vApp, enter a description (optional), and click **Upload**.
+1. Enter a name for your Ops Manager vApp, enter a description (optional), and
+click **Upload**.
 
-    <%= image_tag("pcf_vcloud_03b.png") %><br />
+    <%= image_tag("vcloud-vchs/pcf-vcloud-03b.png") %><br />
 
-    vCloud Director transfers the vApp Template (the OVF package) to a staging environment,
-    and then uploads it to your catalog.
+    vCloud Director transfers the vApp Template (the OVF package) to a staging
+    environment, then uploads it to your catalog.
 
-1.  Navigate to the **Home** view and click the **Add vApp from Catalog** icon.
+1. Navigate to the **Home** view and click **Add vApp from Catalog**.
 
-    <%= image_tag("pcf_vcloud_07.png") %><br />
+    <%= image_tag("vcloud-vchs/pcf-vcloud-07.png") %><br />
 
-1.  Select your Ops Manager vApp and click **Next**.
+1. Select your Ops Manager vApp and click **Next**.
 
-    <%= image_tag("pcf_vcloud_09.png") %><br />
+    <%= image_tag("vcloud-vchs/pcf-vcloud-09.png") %><br />
 
-1. 	Check the "I agree" checkbox to accept licenses and click **Next**.
+1. Check the "I agree" checkbox to accept licenses and click **Next**.
 
-1.  Enter the name of your Ops Manager vApp, select the virtual data center where the vApp should run, and click **Next**.
+1. Enter the name of your Ops Manager vApp, select the virtual data center where
+the vApp should run, and click **Next**.
 
-	<%= image_tag("pcf_vcloud_11.png") %><br />
+	<%= image_tag("vcloud-vchs/pcf-vcloud-11.png") %><br />
 
-1.  Choose a storage policy and click **Next**. Changing the name of the Virtual Machine and Computer Name is allowed but not usually necessary.
+1. Choose a storage policy and click **Next**.
 
-	<%= image_tag("pcf_vcloud_12.png") %><br />
+	<%= image_tag("vcloud-vchs/pcf-vcloud-12.png") %><br />
 
-1.  Set the network mapping **Destination** to the network name from Step 1, set **IP allocation** to `Static — Manual`, and click **Next**.
+1. Set the network mapping **Destination** to the network name, set **IP
+allocation** to `Static — Manual`, and click **Next**.
 
-    <%= image_tag("pcf_vcloud_13.png") %><br />
+    <%= image_tag("vcloud-vchs/pcf-vcloud-13.png") %><br />
 
-    **Note**: The gateway and netmask shown in the dialog should match the ones you collected in Step 1.
+1. Enter the desired networking information, set an admin password for the Ops
+Manager vApp, and click **Next**.
 
-1.  Enter the desired networking information, set an admin password for the Ops Manager vApp and click **Next**.
+    **Note**: The order of items in this screen may differ.
 
-	<%= image_tag("pcf_vcloud_14.png") %><br />
+	<%= image_tag("vcloud-vchs/pcf-vcloud-14.png") %><br />
 
-1.  Review the hardware specifications of the virtual machine and click **Next**.
+1. Review the hardware specifications of the virtual machine and click **Next**.
 
-1.  In the **Ready to Complete** dialog, check the **Power on after deployment** checkbox and click **Finish**.
+1. In the **Ready to Complete** dialog, check the **Power on vApp After This
+Wizard is Finished** checkbox and click **Finish**.
 
-1.  Navigate to the **Home** view to verify that your Ops Manager vApp is being created.
+1. Navigate to the **Home** view to verify that your Ops Manager vApp is being
+created.
 
-    <%= image_tag("pcf_vcloud_17.png") %><br />
+    <%= image_tag("vcloud-vchs/pcf-vcloud-17.png") %><br />
 
-1. Once the VM boots, verify that Ops Manager is available:
-  + If the vDC is in a private network, at the external IP address routed to the IP address you entered
-  + Otherwise, at the IP address you entered
+1. Once the VM boots, verify that Ops Manager is available.
 
 [Return to the Getting Started Guide](../getstarted/index.html)

@@ -2,64 +2,88 @@
 title: Backing Up Pivotal CF
 ---
 
-Refer to this topic for help backing up the contents of critical databases and backing up and restoring your Pivotal CF installation settings. Pivotal recommends that you back up your installation frequently.
+Refer to this topic for help backing up the contents of critical databases and
+backing up and restoring your Pivotal CF installation settings. Pivotal
+recommends that you back up your installation frequently.
 
-**Note**: Contact Pivotal Support for help restoring your Pivotal CF installation from the backups you created.
+**Note**: Contact Pivotal Support for help restoring your Pivotal CF
+installation from the backups you created.
 
 ## <a id='settings'></a>Back up and Restore Installation Settings ##
 
-It is important to back up your installation settings by exporting frequently. Always export an installation before importing a new one. Import an installation to restore your settings or to share your settings with another user.
+It is important to back up your installation settings by exporting frequently.
+Always export an installation before importing a new one.
+Import an installation to restore your settings or to share your settings with
+another user.
 
- **Note**: Exporting your installation only backs up your installation settings. It does not back up your VMs.
+**Note**: Exporting your installation only backs up your installation settings.
+It does not back up your VMs.
 
 ### <a id='export'></a>Exporting an installation ###
 
-From the Product Dashboard, select **Actions > Export installation**. This option is only available after you have deployed at least one time.
+From the Product Dashboard, select **Actions > Export installation**.
+This option is only available after you have deployed at least one time.
 
-**Export installation** exports the current Pivotal CF installation with all of its assets. When you export an installation, the exported file contains references to the installation IP addresses. It also contains the base VM images and necessary packages. As a result, an export can be very large (as much as 5 GB or more).
+**Export installation** exports the current Pivotal CF installation with all of
+its assets.
+When you export an installation, the exported file contains references to the
+installation IP addresses.
+It also contains the base VM images and necessary packages.
+As a result, an export can be very large (as much as 5 GB or more).
 
 ### <a id='import'></a>Importing an installation ###
 
 From the Product Dashboard, select **Actions > Import installation**.
 
-**Import installation** imports an existing Pivotal CF installation with all of its assets. When you import an installation, the prior installation will disappear and be replaced by the newly imported one.
+**Import installation** imports an existing Pivotal CF installation with all of
+its assets.
+When you import an installation, the prior installation will disappear and be
+replaced by the newly imported one.
 
 ## <a id='encrypt-key'></a>Back Up the Cloud Controller DB Encryption Key ##
 
-From the Product Dashboard, select **Pivotal Elastic Runtime > Credentials** and locate the Cloud Controller section. Record the Cloud Controller DB encryption credentials. You must provide these credentials if you contact Pivotal Support for help restoring your installation.
+From the Product Dashboard, select **Pivotal Elastic Runtime > Credentials**
+and locate the Cloud Controller section.
+Record the Cloud Controller DB encryption credentials.
+You must provide these credentials if you contact Pivotal Support for help
+restoring your installation.
 
 <%= image_tag("db-key.png") %>
 
 ## <a id='databases'></a>Back Up Critical Databases ##
 
-Refer to this section for help backing up and restoring databases associated with your
-Pivotal CF installation. You must restore the contents of these databases in order to
-have a functional restored PaaS. Once you have restored these databases, you must
-manually redeploy all apps.
+Refer to this section for help backing up and restoring databases associated
+with your Pivotal CF installation.
+You must restore the contents of these databases in order to have a functional
+restored PaaS.
+Once you have restored these databases, you must manually redeploy all apps.
 
-There are several critical data stores within your Elastic Runtime deployment. You will
-back up each of them in turn. They are:
+Your Elastic Runtime deployment contains several critical data stores.
+You will back up each of them in turn.
+They are:
 
 * Cloud Controller Database
 * UAA Database
 * Console Database
 * The NFS Server
 
-### <a id='manifest'></a>Locate the BOSH Deployment Manifest ###
+### <a id='manifest'></a>Download the BOSH Deployment Manifest ###
 
-1. Ensure that you have installed [Ruby and the BOSH CLI Ruby gem](http://docs.cloudfoundry.org/bosh/deploy-microbosh.html#cli) on a machine outside the Pivotal CF system.
-1. In Ops Manager, browse to **Ops Manager Director for VMware vSphere > Status > Ops Manager Director** and note the IP address. This is the BOSH director IP address.
+1. Install Ruby and the [BOSH CLI Ruby gem](http://docs.cloudfoundry.org/bosh/bosh-cli.html) on a machine outside your
+Pivotal CF system deployment.
+1. In Ops Manager, browse to **Ops Manager Director > Status > Ops Manager Director** and note the IP address.
+This is the BOSH director IP address.
 
     <%= image_tag("director-ip.png") %>
 
-1. In Ops Manager, browse to **Ops Manager Director for VMware vSphere > Credentials > Ops Manager** and note the Director credentials.
+1. In Ops Manager, browse to **Ops Manager Director > Credentials > Ops Manager** and note the Director credentials.
 
     <%= image_tag("director-creds.png") %>
 
 1. Target the BOSH director using the address and credentials you noted:
 
     ```
-    $bosh target 172.16.66.17
+    $ bosh target 172.16.66.17
     Target set to `microbosh-3ac4e7a1faf8752dd349'
     Your username: director
     Enter password: ********************
@@ -70,53 +94,71 @@ back up each of them in turn. They are:
 1. Locate the name of the current BOSH deployment:
 
     ```
-    $bosh deployments
-    +------------------------------+--------------+-------------------------------+
-    | Name                         | Release(s)   | Stemcell(s)                   |
-    +------------------------------+--------------+-------------------------------+
-    | cf-3931915d61abfc6d8ced      | cf/155.2-dev | bosh-vsphere-esxi-ubuntu/1471 |
-    +------------------------------+--------------+-------------------------------+
-    | p-mysql-1e136692e37b3ec1f942 | cf-mysql/5   | bosh-vsphere-esxi-ubuntu/1471 |
-    +------------------------------+--------------+-------------------------------+
+	$ bosh deployments
+	+-------------------------+--------------------------------+-------------------------------+
+	| Name                    | Release(s)                     | Stemcell(s)                   |
+	+-------------------------+--------------------------------+-------------------------------+
+	| cf-bee19d9c7d2f0c4fce8a | cf/170                         | bosh-vsphere-esxi-ubuntu/2366 |
+	|                         | push-console-release/23        |                               |
+	|                         | runtime-verification-errands/2 |                               |
+	+-------------------------+--------------------------------+-------------------------------+
 
-    Deployments total: 2
+	Deployments total: 1
     ```
-1. Download and save the BOSH deployment manifest. You need this manifest to locate information about your databases. The manifest shares the name of the current BOSH deployment.
+1. Use `bosh download manifest DEPLOYMENT-NAME LOCAL-SAVE-NAME` to download and
+save the current BOSH deployment manifest.
+You need this manifest to locate information about your databases.
+The DEPLOYMENT-NAME is the name of the current BOSH deployment.
+Use `cf.yml` as the LOCAL-SAVE-NAME.
 
- ```
- $bosh download manifest cf-3931915d61abfc6d8ced cf.yml
+Example:
+
+```
+$ bosh download manifest cf-bee19d9c7d2f0c4fce8a cf.yml
  Deployment manifest saved to `cf.yml'
- ```
+```
+
 ### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
 
-1. Open the `cf.yml` file you just downloaded and replace the `director_uuid: ignore` line with the UUID value that `bosh status` returns:
+1. Run `bosh status` and record the UUID.
+
+    Example:
 
     ```
-    $bosh status
-	Config
-	             /Users/pivotal/.bosh_config
+    $ bosh status
+    Config
+                 /Users/pivotal/.bosh_config
+    Director
+      Name       microbosh-vcloud-b340a7ecc329a7573fd7
+      URL        https://192.240.155.231:25555
+      Version    1.2524.0 (release:0501e461 bosh:0501e461)
+      User       director
+      UUID       5467db1e-1f2f-4558-b950-cd3c357d65c4
+      CPI        vcloud
+      dns        enabled (domain_name: microbosh)
+      compiled_package_cache disabled
+      snapshots  disabled
 
-	Director
-	  Name       microbosh-0ca855952693d7b6893d
-	  URL        https://10.0.0.123:25555
-	  Version    1.1868.0 (release:f6942381 bosh:f6942381)
-	  User       director
-	  UUID       f8823621-e2bc-45b9-9224-0c4c55d5b7d2
-	  CPI        vsphere
-	  dns        enabled (domain_name: microbosh)
-	  compiled_package_cache disabled
-	  snapshots  disabled
-	```
-	In this example, the line in `cf.yml` should now read:
-	`director_uuid: f8823621-e2bc-45b9-9224-0c4c55d5b7d2`
+    Deployment
+      not set
+    ```
 
-1. Set `cf.yml` as your deployment manifest:
+1. Open the downloaded `cf.yml` file in a text editor. Replace the value for
+`director_uuid:` with the UUID found by running `bosh status`.
 
-    `$bosh deployment cf.yml`
+    For this example, `cf.yml` includes the line:
+
+    ```
+    director_uuis: 5467db1e-1f2f-4558-b950-cd3c357d65c4
+    ```
+
+1. Use `bosh deployment cf.yml` to set the `cf.yml` file as your deployment
+manifest.
 
 1. Stop the Cloud Controller process:
 
-	First, run the following command. Ensure that each section reports `No changes`.
+	First, run the following command.
+	Ensure that each section reports `No changes`.
 
 	```
 	$ bosh stop cloud_controller
@@ -144,11 +186,17 @@ back up each of them in turn. They are:
 	Properties
 	No changes
     ```
-    **Note**: If the `bosh stop cloud_controller` command indicates that changes are pending, terminate the backup process and contact Pivotal Support. Proceeding with the deployment if there are pending changes will apply any enqueued changes, possibly putting your installation in a bad state. Backups are only supported with a clean installation.
+    **Note**: If the `bosh stop cloud_controller` command indicates that
+    changes are pending, terminate the backup process and contact Pivotal
+    Support.
+    Proceeding with the deployment if there are pending changes will apply any
+    enqueued changes, possibly putting your installation in a bad state.
+    Backups are only supported with a clean installation.
 
-    If the output indicates that there are no changes, run the `--force` version of the same command:
+    If the output indicates that there are no changes, run the `--force`
+    version of the same command:
 
-    `$ bosh stop cloud_controller --force`
+    `bosh stop cloud_controller --force`
 
 1. In `cf.yml`, locate the ccdb component and note the address and password:
 
@@ -167,11 +215,12 @@ back up each of them in turn. They are:
 
     `pg_dump -h 172.16.78.25 -U admin -p 2544 ccdb > ccdb.sql`
 
-    **Note**: Ensure that the `pg dump` client version is the same as the version on the server.
+    **Note**: Ensure that the `pg dump` client version is the same as the
+    version on the server.
 
 ### <a id='uaadb'></a>Back Up the UAA Database ###
 
-1. In `cf.yml`, locate the uaa component and note the address and password:
+1. In `cf.yml`, locate the `uaadb` component and note the address and password:
 
     ```
     uaadb:
@@ -186,7 +235,7 @@ back up each of them in turn. They are:
 
 1. Dump the data from the UAADB and save it:
 
-`pg_dump -h 172.16.78.30 -U root -p 2544 uaa > uaa.sql`
+    `pg_dump -h 172.16.78.30 -U root -p 2544 uaa > uaa.sql`
 
 ### <a id='consoledb'></a>Back Up the Console Database ###
 
@@ -205,7 +254,7 @@ back up each of them in turn. They are:
 
 1. Dump the data from the Console DB and save it:
 
-`pg_dump -h 172.16.78.33 -U root -p 2544 console > console.sql`
+    `pg_dump -h 172.16.78.33 -U root -p 2544 console > console.sql`
 
 ### <a id='nfs'></a>Back Up the NFS Server ###
 
@@ -226,12 +275,15 @@ back up each of them in turn. They are:
 
 1. SSH into the NFS server VM and create a TAR file:
 
-`$ ssh vcap@10.0.0.10 'cd /var/vcap/store && tar cz shared' > nfs.tar.gz`
+    `ssh vcap@10.0.0.10 'cd /var/vcap/store && tar cz shared' > nfs.tar.gz`
 
-**Note**: The TAR file you create to back up the NFS server might be very large. To estimate the size of the TAR file before you create it, run the following command:
+    **Note**: The TAR file you create to back up the NFS server might be very
+    large.
+    To estimate the size of the TAR file before you create it, run the
+    following command:
 
-`tar -cf - /dir/to/archive/ | wc -c`
+    `tar -cf - /dir/to/archive/ | wc -c`
 
 ### <a id='cc-start'></a>Start Cloud Controller ###
 
-Run `$ bosh start cloud_controller` to restart the Cloud Controller.
+Run `bosh start cloud_controller` to restart the Cloud Controller.

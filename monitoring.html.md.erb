@@ -6,51 +6,85 @@ This topic covers monitoring essentials and suggestions.
 
 ## <a id="interface"></a>Monitoring VMs Using the Ops Manager Interface ##
 
-Refer to the **Status** tab in the Elastic Runtime product tile for monitoring information. Each job represents an Elastic Runtime component running on a VM that Ops Manager deployed.
+Click on any product tile, then select the **Status** tab to view monitoring
+information.
+Each job represents a component running on a VM deployed by Ops Manager.
 
  <%= image_tag("status-tab.png") %>
 
 In particular, note the following columns:
 
-* **CID**: Uniquely identifies the VM in vSphere.
-* **Load Avg15**: The average load over 15 minutes.
+* **CID**: Uniquely identifies the VM.
+* **Load Avg15**: CPU load average over 15 minutes.
+* **Ephem. Disk**: Ephermeral disk space usage.
+* **Pers. Disk**: Persistent disk space usage.
 
-## <a id="monitor_vm"></a>Monitoring Disk Space Usage with vSphere Alarms##
+Monitoring disk space usage for the Operations Manager VM and the NFS Server VM is particularly important.
 
-It's a good idea to monitor disk space usage, especially for certain VMs.
+### <a id="ops-manager"></a>Operations Manager VM Disk Space ###
 
-The vSphere server provides alarms that monitor that VMs, as well as clusters, hosts, datacenters, datastores, networks, and licensing.
-To view preconfigured alarms (including disk usage alarms) related to a particular VM:
-
-1. In the vSphere client, select the VM you want to monitor.
-1. Click `Alarms` at the bottom left of the client window.
-1. If the VM starts to run out of disk space, an alarm appears in the bottom panel.
-
-Two VMs to consider watching are the Operations Manager VM and the NFS server VM.
-The following sections explain what to do if these VMs start to run out of disk space.
-
-### <a id="monitor_ops_mgr"></a>Ensuring that the Operations Manager VM has enough disk space ###
+The Operations Manager VM is the VM where the Ops Manager web application runs.
 
 The Operations Manager VM stores its logs in a directory named `/tmp`.
-Over time, the logs can get big enough to cause the VM to run out of disk space.
-If the VM starts to run out of disk space, restart the VM to clear the log entries out of `/tmp`.
+Over time, the logs can get big enough to cause the VM to run out of disk
+space.
+To prevent the VM from running out of disk space, restart the VM to clear the
+log entries out of `/tmp`.
 
-An alternative to watching for alarms is to set up a cron job that clears logs from /tmp on a regular basis.
-
-**Note**: The Operations Manager VM is the VM where the Ops Manager web application runs.
-You deployed this VM using the VM Template in vSphere.
-
-### <a id="monitor_nfs"></a>Ensuring that the NFS Server VM has enough disk space ###
+### <a id="nfs"></a>NFS Server VM Disk Space ###
 
 The NFS Server VM is the blob store where Elastic Runtime uploads applications.
-The default size of the blob store is 100 Gigabytes, but if enough (or large enough) applications are uploaded, the VM can run out of disk space.
+The default size of the blob store is 100 Gigabytes.
 
-If the VM starts to run out of disk space:
+If the NFS Server VM is low on available disk space:
 
-1. Select the NFS Server VM in the Resources tab of the Elastic Runtime tile in Ops Manager.
-1. Allocate more disk space to the VM.
+1. In Ops Manager, click the **Pivotal Elastic Runtime** tile.
 
-## <a id="monitor_advanced"></a>More Advanced Monitoring ##
+1. Select the **Status** tab.
 
-Watching for the preconfigured alarms in the vSphere client may not be a good solution for your ing needs.
-You might want to configure your own custom alarms, or monitor factors other than disk space usage, such as operating system performance.
+1. On the **Settings** tab, select **Resource sizes**.
+
+1. Allocate more disk space to the NFS Server VM.
+
+1. Click **Save**.
+
+1. Click **Apply changes**.
+
+## <a id="vsphere"></a>Monitoring with vSphere ##
+
+VMware vSphere Server provides alarms that monitor VMs, as well as clusters,
+hosts, datacenters, datastores, networks, and licensing.
+To view preconfigured alarms, including disk usage alarms, related to a
+particular VM:
+
+1. In the vSphere client, select the VM you want to monitor.
+1. At the bottom left of the client window, click **Alarms**.
+1. If a VM starts to run out of disk space, an alarm appears in the bottom
+panel.
+
+## <a id="vchs"></a>Monitoring with vCloud Hybrid Service ##
+
+Use [vCenter Operations Manager](http://www.vmware.com/products/vcenter-operations-manager) and [vCenter Hyperic](http://www.vmware.com/products/vcenter-hyperic) to monitor Pivotal CF deployed on VMware vCloud Hybrid Service (vCHS):
+
+* vCenter Operations Manager provides performance data.
+* vCenter Hyperic provides data on application availability.
+
+Monitor the following processes and services on the vCD cells to provide
+availability metrics:
+
+<table border="1" class="nice" >
+<tr>
+  <th><strong>PROCESSES</strong></th>
+  <th><strong>SERVICES</strong></th>
+</tr>
+<tr>
+  <td>vmware-vcd-watchdog</td><td>vmware-guestd</td>
+</tr>
+<tr>
+  <td>vmware-vcd-log-collection-agent
+</td><td>vmware-vcd-watchdog</td>
+</tr>
+<tr>
+  <td>privband</td><td>vmware-vcd-cell</td>
+</tr>
+</table>

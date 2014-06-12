@@ -5,83 +5,58 @@ title: Advanced Troubleshooting with the BOSH CLI
 
 _This page assumes you are running cf v6._
 
-**Note**: Before proceeding, try to resolve your issue by viewing configurations, exploring logs, and reviewing common problems as described in the [Troubleshooting Guide](./troubleshooting.html).
+You must log into the BOSH Director and run specific commands using the BOSH Command-Line Interface (CLI) to perform advanced troubleshooting.
 
-To perform advanced troubleshooting, log into the BOSH Director.
 The BOSH Director runs on the VM that Ops Manager deploys on the first install of the Ops Manager Director tile.
-Ops Manager uses the BOSH Director to perform all subsequent installs and updates.
-
 BOSH Director diagnostic commands have access to information about your entire Pivotal CF installation.
-Run these commands using the BOSH Command-Line Interface (CLI).
 Alternatively, you can obtain and run an Open Source BOSH CLI separately from the one available in Pivotal CF.
 
-**Note:** Do not manually modify the deployment manifest.
-Operations Manager overwrites manual changes to this manifest. In addition, manually changing the manifest may cause future deployments to fail.
-
-  1. From the procedures described below, decide what information you need from the Operations Manager Installation Dashboard, and collect that information.
-  1. Verify that no alerts are flashing in Operations Manager that indicate installations or updates in progress.
-  1. Log out of the Operations Manager.
+**Note**: For more troubleshooting information, refer to the [Troubleshooting Guide](./troubleshooting.html).
 
 ## <a id='prepare'></a>Preparing to use the BOSH CLI ##
 
-This section guides you through preparing to use the BOSH CLI. You will complete the following tasks:
-
-1. Gather the information necessary to complete this task from the Ops Manager interface.
-1. SSH into the Pivotal CF VM.
-1. Log into the BOSH Director.
-1. Verify that no BOSH processes are running on the Pivotal CF VM.
-1. Target your deployment.
-1. Select a product deployment to troubleshoot.
+This section guides you through preparing to use the BOSH CLI.
 
 ### <a id='info'></a>Gather Information ###
 
-Before you begin, write down:
+Before you begin the troubleshooting process, collect the information you need from the Ops Manager interface. You must log out of the Ops Manager interface to use the BOSH CLI.
 
-* The IP address of the Pivotal CF VM shown in the URL field of your browser.
+1. Browse to the Ops Manager interface. Ensure that there are no installations or updates in progress.
 
-* Your ova import credentials—that is, the username and password used to import the Pivotal CF `.ova` file into vCenter.
+1. Select **Ops Manager Director > Status**.
 
-* The IP address shown for the "Ops Manager Director" job in the `Status` tab of the Ops Manager Director tile. This is the IP address of the VM where BOSH Director is running.
+1. Note the IP address for the Ops Manager Director job. This is the IP address of the VM where BOSH Director is running.
 
 	<%= image_tag("ops-mgr-job-ip.png") %>
 
-* The BOSH Director credentials, shown on the `Credentials` tab of the Ops Manager Director tile.
+1. Select the **Credentials** tab.
+
+1. Note the BOSH Director credentials.
 
     <%= image_tag("bosh-creds.png") %>
 
-### <a id='ssh'></a>SSH into Pivotal CF ###
+1. Log out of Ops Manager.
 
-First, connect to the VM where the Operations Manager web application is running:
+### <a id='ssh'></a>SSH into Ops Manager ###
+
+To connect to the VM where the Operations Manager web application runs:
 
 1. Open a terminal.
-1. Connect to the Pivotal CF installation VM with SSH with your ova import username:
+1. SSH to the Ops Manager installation VM with your vCenter or vCHS username and the Ops Manager IP address:
 
     `ssh <ova_import_username>@<Pivotal_CF_VM_IP_address>`
 
-1. Enter your ova import password when prompted.
+1. Enter your vCenter or vCHS password when prompted.
 
 ### <a id='log-in'></a>Log into the BOSH Director ###
 
-Set the `BUNDLE_GEMFILE` variable to point to the BOSH gemfile for the web application:
+1. Set the `BUNDLE_GEMFILE` environment variable to point to the BOSH gemfile for the Ops Manager interface:
 
-  `export BUNDLE_GEMFILE=/home/tempest-web/tempest/web/bosh.Gemfile`
+    `export BUNDLE_GEMFILE=/home/tempest-web/tempest/web/bosh.Gemfile`
 
-**Note:** An alternative is to prepend `BUNDLE_GEMFILE=./bosh.Gemfile` to all BOSH commands.
+    **Note:** An alternative is to prepend `BUNDLE_GEMFILE=./bosh.Gemfile` to all BOSH commands.
 
-### <a id='processes'></a>Verify that no BOSH processes are running on the Pivotal CF VM ###
-
-For example, you can use `grep` with the `ps` command to make sure that no BOSH processes are still running:
-
-<pre class="terminal">
-	$ ps -efx | grep bosh
-	  501 43436 92921   0  3:37PM ttys015    0:00.00 grep bosh
-</pre>
-
-It is probably not a good idea to proceed further with troubleshooting until all
-BOSH processes have completed or you have ended them.
-Whether and how to end a process or job depends on what you are doing with your Pivotal CF installation.
-
-### <a id='target'></a>Target Ops Manager ###
+1. Verify that no BOSH processes are running on the Ops Manager VM. You should not proceed with troubleshooting until all BOSH processes have completed or you have ended them.
 
 1. Target your Ops Manager web application using the BOSH Director:
 
@@ -91,27 +66,21 @@ Whether and how to end a process or job depends on what you are doing with your 
 
 ### <a id='product'></a>Select a Product Deployment to Troubleshoot ###
 
-Your Pivotal CF installation is essentially a collection of instances of
-products.
-Each instance is a _deployment_ of the product and is described by a YAML file.
-The product could be Elastic Runtime, MySQL, or any other service that you
-imported and installed.
+When you import and install a product using Ops Manager, you deploy an instance of the product described by a YAML file.
+ Examples of available products include Elastic Runtime, MySQL, or any other service that you imported and installed.
 
-You can only troubleshoot one deployment at a time.
-This is a two-step process:
+To select a product deployment to troubleshoot:
 
 1. Identify the YAML file that describes the deployment you want to troubleshoot.
 
-1. Set the BOSH director to run CLI commands against the YAML file you have just identified.
+    You identify the YAML file that describes a deployment by its filename.
+    For example, this command identifies Elastic Runtime deployments:
 
-You identify the YAML file that describes a deployment by its filename.
-For example, this command identifies Elastic Runtime deployments:
+    `find /var/tempest/workspaces/default/deployments -name cf-*.yml`
 
- `find /var/tempest/workspaces/default/deployments -name cf-*.yml`
+    The table below shows the naming conventions for deployment files.
 
-The table below shows the naming conventions for deployment files.
-
-<table border="1" class="nice" >
+    <table border="1" class="nice" >
 <tr>
   <th>Product</th><th>Deployment Filename Convention</th>
 </tr>
@@ -126,10 +95,12 @@ The table below shows the naming conventions for deployment files.
 </tr>
 </table>
 
-**Note**: Where there is more than one installation of the same product,
-note the release number shown on the product tile in Operations Manager.
-Then, from the YAML files for that product, find the one that specifies
-the same release version as the product tile.
+    **Note**: Where there is more than one installation of the same product,
+    note the release number shown on the product tile in Operations Manager.
+    Then, from the YAML files for that product, find the one that specifies
+    the same release version as the product tile.
+
+1. Set the BOSH director to run CLI commands against the YAML file you have just identified.
 
 Now you know the filename of the YAML file that describes the deployment you want to troubleshoot.
 Set the BOSH Director to apply CLI commands to that file with the bosh deployment command:
@@ -140,13 +111,19 @@ For example:
 
  `bosh deployment cf-cca18e39287264623408.yml`
 
-## <a id='bosh_cli'></a>Overview of the BOSH CLI ##
+## <a id='bosh_cli'></a>BOSH CLI Commands for Troubleshooting##
 
 Three BOSH CLI commands are helpful in troubleshooting. All provide output that is scoped to the current deployment.
 
-* `bosh cck` (Cloudcheck) detects differences between the world that Director expects and the actual state of the world
+* `bosh cck` detects differences between the world that Director expects and the actual state of the world
 * `bosh vms` provides an overview of the virtual machines BOSH is managing
 * `bosh ssh` provides simplified access to the VM, including the ability to run `sudo`
+
+The remainder of this topic explains the commands and provides examples.
+
+### <a id='bosh_cck'></a>bosh cck (Cloudcheck) ###
+
+This command attempts to detect any differences between the world the director expects for this deployment and the actual state of the world. For each difference it detects, `bosh cck` offers a potential resolution. The examples below show how `bosh cck` responds in a different scenario.
 
 These commands respond by identifying one or more of five possible actions you can take:
 
@@ -155,12 +132,6 @@ These commands respond by identifying one or more of five possible actions you c
 * `Reassociate VM with corresponding instance`: If you believe that the VM is correctly associated with the job, and that the BOSH DB is in error, this is a good option.
 * `Recreate VM using last known apply spec`: Destroy the server and have BOSH recreate it from the deployment manifest the installer provides. If the machine is corrupted, this is the best option.
 * `Delete VM reference (DANGEROUS!)`: Select this option only if you know that the BOSH database has a stale reference causing it to expect that an agent should be running on this machine. Once you delete the VM reference, you can no longer control the machine using BOSH.
-
-The remainder of this topic explains the commands and provides examples.
-
-### <a id='bosh_cck'></a>bosh cck (Cloudcheck) ###
-
-This command attempts to detect any differences between the world the director expects for this deployment and the actual state of the world. For each difference it detects, `bosh cck` offers a potential resolution. The examples below show how `cloudcheck` responds in a different scenario.
 
 #### <a id='unresponsive_agent'></a>Unresponsive Agent ####
 
@@ -277,6 +248,7 @@ To use `bosh ssh`:
 
 1. Run `bosh ssh dea/0 --public_key ~/.ssh/id_rsa.pub` to SSH into the first DEA machine. To SSH into a different machine, substitute the coordinates you retrieve from `bosh vms`.
 
-1. You are prompted to create a password for the temporary user `bosh ssh` creates. You will use temporary user later if you need to run `sudo -i`.
+1. You are prompted to create a password for the temporary user `bosh ssh` creates. You use this temporary user later if you need to run `sudo -i`.
 
 Pivotal CF saves the public key choice for subsequent executions of `bosh ssh`.
+

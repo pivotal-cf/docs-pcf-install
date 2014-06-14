@@ -1,4 +1,3 @@
-#encoding: utf-8
 ---
 title: Advanced Troubleshooting with the BOSH CLI
 ---
@@ -13,68 +12,91 @@ Alternatively, you can obtain and run an Open Source BOSH CLI separately from th
 
 **Note**: For more troubleshooting information, refer to the [Troubleshooting Guide](./troubleshooting.html).
 
-## <a id='prepare'></a>Preparing to use the BOSH CLI ##
+## <a id='prepare'></a>Prepare to Use the BOSH CLI ##
 
 This section guides you through preparing to use the BOSH CLI.
 
-### <a id='info'></a>Gather Information ###
+### <a id='gather'></a>Gather Information ###
 
-Before you begin the troubleshooting process, collect the information you need from the Ops Manager interface. You must log out of the Ops Manager interface to use the BOSH CLI.
+Before you begin troubleshooting with the BOSH CLI, collect the information you need from the Ops Manager interface. You must log out of the Ops Manager interface to use the BOSH CLI.
 
-1. Browse to the Ops Manager interface. Ensure that there are no installations or updates in progress.
+1. Open the Ops Manager interface. Ensure that there are no installations or updates in progress.
 
-1. Select **Ops Manager Director > Status**.
+1. Click the **Ops Manager Director** tile and select the **Status** tab.
 
-1. Note the IP address for the Ops Manager Director job. This is the IP address of the VM where BOSH Director is running.
+1. Record the IP address for the Ops Manager Director job. This is the IP address of the VM where the BOSH Director runs.
 
 	<%= image_tag("ops-mgr-job-ip.png") %>
 
 1. Select the **Credentials** tab.
 
-1. Note the BOSH Director credentials.
+1. Record the BOSH Director credentials.
 
     <%= image_tag("bosh-creds.png") %>
+
+1. Return to the **Installation Dashboard**.
+
+1. If you want to troubleshoot a job VM for any other product, you will need the credentials for the VM. To obtain these credentials:
+    * Click the product tile
+    * Select the **Credentials** tab
+    * Record the **VM credentials** for the job VM
 
 1. Log out of Ops Manager.
 
 ### <a id='ssh'></a>SSH into Ops Manager ###
 
-To connect to the VM where the Operations Manager web application runs:
+Use SSH to connect to the Ops Manager web application VM. You will need the credentials used to import the Pivotal CF .ova or .ovf file into your virtualization system.
 
-1. Open a terminal.
-1. SSH to the Ops Manager installation VM with your vCenter or vCHS username and the Ops Manager IP address:
+To SSH into the Ops Manager VM:
 
-    `ssh <ova_import_username>@<Pivotal_CF_VM_IP_address>`
+1. From a command line, run `ssh USERNAME@OPS-MANAGER-IP-ADDRESS`.
 
-1. Enter your vCenter or vCHS password when prompted.
+1. Enter the password when prompted.
+
+    Example:
+
+    <pre class='terminal'>
+    $ ssh admin@10.0.0.6
+    Password: ***********
+    </pre>
 
 ### <a id='log-in'></a>Log into the BOSH Director ###
 
 1. Set the `BUNDLE_GEMFILE` environment variable to point to the BOSH gemfile for the Ops Manager interface:
 
-    `export BUNDLE_GEMFILE=/home/tempest-web/tempest/web/bosh.Gemfile`
-
-    **Note:** An alternative is to prepend `BUNDLE_GEMFILE=./bosh.Gemfile` to all BOSH commands.
+    <pre class='terminal'>
+    $ export BUNDLE_GEMFILE=/home/tempest-web/tempest/web/bosh.Gemfile
+    </pre>
 
 1. Verify that no BOSH processes are running on the Ops Manager VM. You should not proceed with troubleshooting until all BOSH processes have completed or you have ended them.
 
-1. Target your Ops Manager web application using the BOSH Director:
+1. From a command line, run `ssh USERNAME@OPS-MANAGER-IP-ADDRESS`.
 
-    `bundle exec bosh target <Ops_Manager_IP_Address>`
+1. Run `bundle exec bosh target OPS-MANAGER-IP-ADDRESS` to target your Ops Manager VM using the BOSH CLI.
 
 1. Log in using the BOSH Director credentials.
+
+    Example:
+
+    <pre class='terminal'>
+    $ bundle exec bosh target 10.0.0.6
+    Target set to 'Ops Manager'
+    Your username: director
+    Enter password: *****
+    Logged in as 'director'
+    </pre>
 
 ### <a id='product'></a>Select a Product Deployment to Troubleshoot ###
 
 When you import and install a product using Ops Manager, you deploy an instance of the product described by a YAML file.
- Examples of available products include Elastic Runtime, MySQL, or any other service that you imported and installed.
+Examples of available products include Elastic Runtime, MySQL, or any other service that you imported and installed.
 
 To select a product deployment to troubleshoot:
 
 1. Identify the YAML file that describes the deployment you want to troubleshoot.
 
     You identify the YAML file that describes a deployment by its filename.
-    For example, this command identifies Elastic Runtime deployments:
+    For example, to identify Elastic Runtime deployments, run:
 
     `find /var/tempest/workspaces/default/deployments -name cf-*.yml`
 
@@ -96,119 +118,61 @@ To select a product deployment to troubleshoot:
 </table>
 
     **Note**: Where there is more than one installation of the same product,
-    note the release number shown on the product tile in Operations Manager.
-    Then, from the YAML files for that product, find the one that specifies
-    the same release version as the product tile.
+    record the release number shown on the product tile in Operations Manager.
+    Then, from the YAML files for that product, find the deployment that
+    specifies the same release version as the product tile.
 
-1. Set the BOSH director to run CLI commands against the YAML file you have just identified.
+1. Run `bundle exec bosh deployment DEPLOYMENT-FILENAME.yml` to instruct the BOSH Director to apply CLI commands against the deployment described by the YAML file you identified.
 
-Now you know the filename of the YAML file that describes the deployment you want to troubleshoot.
-Set the BOSH Director to apply CLI commands to that file with the bosh deployment command:
+    Example:
 
- `bosh deployment <deployment_filename>.yml`
+    <pre class='terminal'>
+    $ bundle exec bosh deployment /var/tempest/workspaces/default/deployments/cf-cca18e39287264623408.yml
+    </pre>
 
-For example:
+## <a id='cli'></a>Use the BOSH CLI for Troubleshooting##
 
- `bosh deployment cf-cca18e39287264623408.yml`
+Many of the BOSH CLI commands are useful in troubleshooting. Three particularly useful BOSH CLI commands:
 
-## <a id='bosh_cli'></a>BOSH CLI Commands for Troubleshooting##
+* **VMS**: Lists all VMs in a deployment
+* **CCK**: Cloud consistency check and interactive repair
+* **SSH**: Start an interactive session or execute commands with a VM
 
-Three BOSH CLI commands are helpful in troubleshooting. All provide output that is scoped to the current deployment.
+### <a id='vms'></a>BOSH VMS ###
 
-* `bosh cck` detects differences between the world that Director expects and the actual state of the world
-* `bosh vms` provides an overview of the virtual machines BOSH is managing
-* `bosh ssh` provides simplified access to the VM, including the ability to run `sudo`
+`bosh vms` provides an overview of the virtual machines BOSH is managing as part of the current deployment.
 
-The remainder of this topic explains the commands and provides examples.
+When troubleshooting an issue with your deployment, `bosh vms` may show a VM in an **unknown** state. Run [bosh cck](#cck) on VMs in an **unknown** state to have BOSH attempt to diagnose the problem.
 
-### <a id='bosh_cck'></a>bosh cck (Cloudcheck) ###
+You can also use `bosh vms` to identify VMs in your deployment, then use [bosh ssh](#ssh) to SSH into an identified VM for further troubleshooting.
 
-This command attempts to detect any differences between the world the director expects for this deployment and the actual state of the world. For each difference it detects, `bosh cck` offers a potential resolution. The examples below show how `bosh cck` responds in a different scenario.
-
-These commands respond by identifying one or more of five possible actions you can take:
-
-* `Reboot VM`: **In most cases, try this first**. The error could be transient.
-* `Ignore problem`: Do nothing. You might want to ignore the problem in order to run `bosh ssh` and attempt troubleshooting on the machine. If performing other steps continually brings the machine to this state, you could have a configuration problem that will be hard to detect without looking at the agent logs.
-* `Reassociate VM with corresponding instance`: If you believe that the VM is correctly associated with the job, and that the BOSH DB is in error, this is a good option.
-* `Recreate VM using last known apply spec`: Destroy the server and have BOSH recreate it from the deployment manifest the installer provides. If the machine is corrupted, this is the best option.
-* `Delete VM reference (DANGEROUS!)`: Select this option only if you know that the BOSH database has a stale reference causing it to expect that an agent should be running on this machine. Once you delete the VM reference, you can no longer control the machine using BOSH.
-
-#### <a id='unresponsive_agent'></a>Unresponsive Agent ####
-
-<pre class="terminal">
-	$ bosh cck
-	ccdb/0 (vm-3e37133c-bc33-450e-98b1-f86d5b63502a) is not responding:
-
-	- Ignore problem
-	- Reboot VM
-	- Recreate VM using last known apply spec
-	- Delete VM reference (DANGEROUS!)
-</pre>
-
-#### <a id='missing_vm'></a>Missing VM ####
-
-<pre class="terminal">
-	$ bosh cck
-	VM with cloud ID `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' missing:
-
-	- Ignore problem
-	- Recreate VM using last known apply spec
-	- Delete VM reference (DANGEROUS!)
-</pre>
-
-#### <a id='unbound_instancevm'></a>Unbound Instance VM ####
-
-<pre class="terminal">
-	$ bosh cck
-	VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' reports itself as `ccdb/0' but does not have a bound instance:
-
-	- Ignore problem
-	- Delete VM (unless it has persistent disk)
-	- Reassociate VM with corresponding instance
-</pre>
-
-#### <a id='out_of_sync'></a>Out of Sync VM ####
-
-<pre class="terminal">
-	$ bosh cck
-	VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' is out of sync: expected `cf-d7293430724a2c421061: ccdb/0', got `cf-d7293430724a2c421061: nats/0':
-
-	- Ignore problem
-	- Delete VM (unless it has persistent disk)
-</pre>
-
-### <a id='bosh_vms'></a>bosh vms ###
-
-This command provides an overview of the virtual machines BOSH is managing as part of the current deployment. When you are experiencing issues, `bosh vms` may show VMs in an `unknown` state. If that happens, run `bosh cck` to attempt to diagnose the problem.
-
-Additionally, you can use `bosh vms` to identify which VMs are available for you to `bosh ssh` into for further troubleshooting.
-
-<pre class="terminal">
-	$ bosh vms
-	Deployment `cf-d7293430724a2c421061'
+<pre class='terminal'>
+	$ bundle exec bosh vms
+	Deployment `cf-66987630724a2c421061'
 
 	Director task 99
 
 	Task 99 done
 
 	+----------------------+---------+--------------------+---------------+
-	| Job/index        	| State   | Resource Pool  	| IPs           |
+	| Job/index            | State   | Resource Pool      | IPs           |
 	+----------------------+---------+--------------------+---------------+
-	| ccdb/0           	| running | ccdb           	| 192.168.86.22 |
-	| cloud_controller/0    | running | cloud_controller  | 192.168.86.23 |
-	| collector/0      	| running | collector      	| 192.168.86.25 |
-	| consoledb/0      	| running | consoledb      	| 192.168.86.29 |
-	| dea/0            	| running | dea            	| 192.168.86.47 |
-	| health_manager/0 	| running | health_manager 	| 192.168.86.20 |
-	| loggregator/0    	| running | loggregator    	| 192.168.86.31 |
-	| loggregator_router/0  | running | loggregator_router| 192.168.86.32 |
-	| nats/0           	| running | nats           	| 192.168.86.19 |
-	| nfs_server/0     	| running | nfs_server     	| 192.168.86.21 |
-	| router/0         	| running | router         	| 192.168.86.16 |
-	| saml_login/0     	| running | saml_login     	| 192.168.86.28 |
-	| syslog/0         	| running | syslog         	| 192.168.86.24 |
-	| uaa/0            	| running | uaa            	| 192.168.86.27 |
-	| uaadb/0          	| running | uaadb          	| 192.168.86.26 |
+	| unknown/unknown 	   | running | push-console    	  | 192.168.86.13 |
+	| unknown/unknown	   | running | smoke-tests     	  | 192.168.86.14 |
+	| cloud_controller/0   | running | cloud_controller   | 192.168.86.23 |
+	| collector/0      	   | running | collector      	  | 192.168.86.25 |
+	| consoledb/0      	   | running | consoledb      	  | 192.168.86.29 |
+	| dea/0            	   | running | dea            	  | 192.168.86.47 |
+	| health_manager/0 	   | running | health_manager     | 192.168.86.20 |
+	| loggregator/0    	   | running | loggregator    	  | 192.168.86.31 |
+	| loggregator_router/0 | running | loggregator_router | 192.168.86.32 |
+	| nats/0               | running | nats           	  | 192.168.86.19 |
+	| nfs_server/0     	   | running | nfs_server     	  | 192.168.86.21 |
+	| router/0         	   | running | router         	  | 192.168.86.16 |
+	| saml_login/0     	   | running | saml_login     	  | 192.168.86.28 |
+	| syslog/0             | running | syslog         	  | 192.168.86.24 |
+	| uaa/0            	   | running | uaa            	  | 192.168.86.27 |
+	| uaadb/0          	   | running | uaadb          	  | 192.168.86.26 |
 	+----------------------+---------+--------------------+---------------+
 
 	VMs total: 15
@@ -219,26 +183,84 @@ Additionally, you can use `bosh vms` to identify which VMs are available for you
 	Task 100 done
 
 	+-----------------+---------+---------------+---------------+
-	| Job/index   	| State   | Resource Pool | IPs       	|
+	| Job/index       | State   | Resource Pool | IPs       	|
 	+-----------------+---------+---------------+---------------+
 	| mysql_gateway/0 | running | mysql_gateway | 192.168.86.52 |
-	| mysql_node/0	| running | mysql_node	| 192.168.86.53   |
+	| mysql_node/0	  | running | mysql_node	| 192.168.86.53 |
 	+-----------------+---------+---------------+---------------+
 
 	VMs total: 2
 </pre>
 
-You can also run this command with arguments to retrieve additional information:
+`bosh vms` supports the following arguments:
 
- - `--details`: Returns detailed VM information (Cloud ID, Agent ID, Resurrection Enabled?)
+* `--details`: Report also includes Cloud ID, Agent ID, and whether or not the BOSH Resurrector has been enabled for each VM
 
- - `--vitals`: Returns VM vitals information (Load, CPU, Memory Usage, Swap Usage, Disk Usage)
+* `--vitals`: Report also includes Load, CPU, Memory Usage, Swap Usage, System Disk Usage, Ephemeral Disk Usage, and Persistent Disk Usage for each VM
 
-Refer to the **Status** tab of the **Elastic Runtime** product tile to view information similar to the `bosh vms` output.
+* `--dns`: Report also includes the DNS A record for each VM
 
-### <a id='bosh_ssh'></a>bosh ssh ###
+**Note**: The **Status** tab of the **Elastic Runtime** product tile displays information similar to the `bosh vms` output.
 
-This command simplifies the process of accessing the VM using SSH. `bosh ssh` also gives you `sudo` access.
+### <a id='cck'></a>BOSH CCK ###
+
+`bosh cck` attempts to detects differences between the VM state database maintained by the BOSH Director and the actual state of the VMs. For each difference detected, `bosh cck` offers repair options:
+
+* `Reboot VM`: Instructs BOSH to reboot a VM. Rebooting can resolve many transient errors.
+* `Ignore problem`: Instructs BOSH to do nothing. You may want to ignore a problem in order to run `bosh ssh` and attempt troubleshooting directly on the machine.
+* `Reassociate VM with corresponding instance`: Updates the BOSH Director state database. Use this option if you believe that the BOSH Director state database is in error and that a VM is correctly associated with a job.
+* `Recreate VM using last known apply spec`: Instructs BOSH to destroy the server and recreate it from the deployment manifest the installer provides. Use this option if a VM is corrupted.
+* `Delete VM reference`: If a VM reference exists in the BOSH Director state database, BOSH expects to find an agent running on the VM. Use this option only if you know this reference is in error. Once you delete the VM reference, BOSH can no longer control the VM.
+
+Example scenarios:
+
+#### <a id='unresponsive-agent'></a>Unresponsive Agent ####
+
+<pre class='terminal'>
+	$ bundle exec bosh cck
+	ccdb/0 (vm-3e37133c-bc33-450e-98b1-f86d5b63502a) is not responding:
+
+	- Ignore problem
+	- Reboot VM
+	- Recreate VM using last known apply spec
+	- Delete VM reference (DANGEROUS!)
+</pre>
+
+#### <a id='missing-vm'></a>Missing VM ####
+
+<pre class='terminal'>
+	$ bundle exec bosh cck
+	VM with cloud ID `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' missing:
+
+	- Ignore problem
+	- Recreate VM using last known apply spec
+	- Delete VM reference (DANGEROUS!)
+</pre>
+
+#### <a id='unbound-instance-vm'></a>Unbound Instance VM ####
+
+<pre class='terminal'>
+	$ bundle exec bosh cck
+	VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' reports itself as `ccdb/0' but does not have a bound instance:
+
+	- Ignore problem
+	- Delete VM (unless it has persistent disk)
+	- Reassociate VM with corresponding instance
+</pre>
+
+#### <a id='out-of-sync-vm'></a>Out of Sync VM ####
+
+<pre class='terminal'>
+	$ bundle exec bosh cck
+	VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' is out of sync: expected `cf-d7293430724a2c421061: ccdb/0', got `cf-d7293430724a2c421061: nats/0':
+
+	- Ignore problem
+	- Delete VM (unless it has persistent disk)
+</pre>
+
+### <a id='ssh'></a>BOSH SSH ###
+
+Use `bosh ssh` to SSH into the VMs in your deployment.
 
 To use `bosh ssh`:
 
@@ -246,9 +268,14 @@ To use `bosh ssh`:
 
 1. Accept the defaults.
 
-1. Run `bosh ssh dea/0 --public_key ~/.ssh/id_rsa.pub` to SSH into the first DEA machine. To SSH into a different machine, substitute the coordinates you retrieve from `bosh vms`.
+1. Run `bundle exec bosh vms` to identify VMs in your deployment.
 
-1. You are prompted to create a password for the temporary user `bosh ssh` creates. You use this temporary user later if you need to run `sudo -i`.
+1. Using the **Job/index** of the VM you want to access, run `bundle exec bosh ssh JOB/INDEX --public_key ~/.ssh/id_rsa.pub`.
 
-Pivotal CF saves the public key choice for subsequent executions of `bosh ssh`.
+    Example:
 
+    <pre class='terminal'>
+    $ bundle exec bosh ssh dea/0 --public_key ~/.ssh/id_rsa.pub
+    </pre>
+
+1. You may be prompted to create a password for the temporary user `bosh ssh` creates. Use these credentials if you need sudo access in this session.

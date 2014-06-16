@@ -1,57 +1,77 @@
 ---
-title: Monitoring Pivotal CF
+title: Monitoring VMs in Pivotal CF
 ---
 
-This topic covers monitoring Pivotal CF essentials and suggestions.
+This topic covers strategies for monitoring VM status and performance in Pivotal CF.
 
 ## <a id="interface"></a>Monitoring VMs Using the Ops Manager Interface ##
 
-Click on any product tile, then select the **Status** tab to view monitoring
+Click any product tile and select the **Status** tab to view monitoring
 information.
-Each job represents a component running on a VM deployed by Ops Manager.
+
 
  <%= image_tag("status-tab.png") %>
 
-In particular, note the following columns:
+The columns display the following information:
 
-* **CID**: Uniquely identifies the VM.
-* **Load Avg15**: CPU load average over 15 minutes.
-* **Ephem. Disk**: Ephermeral disk space usage.
-* **Pers. Disk**: Persistent disk space usage.
+<table border="1" class="nice" >
+<tr>
+	<th>VM Data Point</th><th>Details</th>
+</tr>
+<tr>
+  <td><strong>Job</strong></td><td>Each job represents a component running on one or more VMs that Ops Manager deployed.</td>
+</tr>
+<tr>
+  <td><strong>Index</strong></td><td>For jobs that run across multiple VMs, the <strong>index</strong> value indicates the order in which the job VMs were deployed. For jobs that run on only one VM, the VM has an <strong>index</strong> value of 0.</td>
+</tr>
+<tr>
+  <td><strong>IPs</strong></td><td>IP address of the job VM.</td>
+</tr>
+<tr>
+  <td><strong>CID</strong></td><td>Uniquely identifies the VM.</td>
+</tr>
+<tr>
+  <td><strong>Load Avg15</strong></td><td>CPU load average over 15 minutes.</td>
+</tr>
+<tr>
+  <td><strong>CPU</strong></td><td>Current CPU usage.</td>
+</tr>
 
-Monitoring disk space usage for the Operations Manager VM and the NFS Server VM
-is particularly important.
+<tr>
+  <td><strong>Memory</strong></td><td>Current memory usage.</td>
+</tr>
+<tr>
+  <td><strong>Swap</strong></td><td>Swap file percentage.</td>
+</tr>
+<tr>
+  <td><strong>System disk</strong></td><td>System disk space usage.</td>
+</tr>
+<tr>
+  <td><strong>Ephem. Disk</strong></td><td>Ephemeral disk space usage.</td>
+</tr>
+<tr>
+	<td><strong>Pers. Disk</strong></td><td>Persistent disk space usage.</td>
+</tr>
+<tr>
+	<td><strong>Logs</strong></td><td>Download link for the most recent log files.</td>
+</tr>
+</table>
 
 ### <a id="ops-manager"></a>Operations Manager VM Disk Space ###
 
-The Operations Manager VM is the VM where the Ops Manager web application runs.
+The Ops Manager stores its logs on the Ops Manager VM in the `/tmp` directory.
 
-The Operations Manager VM stores its logs in a directory named `/tmp`.
-Over time, the logs can get big enough to cause the VM to run out of disk
-space.
-To prevent the VM from running out of disk space, restart the VM to clear the
-log entries out of `/tmp`.
-
-### <a id="nfs"></a>NFS Server VM Disk Space ###
-
-The NFS Server VM is the blob store where Elastic Runtime uploads applications.
-The default size of the blob store is 100 Gigabytes.
-
-If the NFS Server VM is low on available disk space:
-
-1. In Ops Manager, click the **Pivotal Elastic Runtime** tile.
-
-1. Select the **Status** tab.
-
-1. On the **Settings** tab, select **Resource sizes**.
-
-1. Allocate more disk space to the NFS Server VM.
-
-1. Click **Save**.
-
-1. Click **Apply changes**.
+**Note**: The logs collect over time and do not self-delete. To prevent the VM from running out of disk space, restart the VM to clear the
+log entries from `/tmp`.
 
 ## <a id="vsphere"></a>Monitoring in vSphere ##
+
+To monitor VMs using the vSphere client:
+
+1. Connect to a vCenter Server instance using the vSphere client.
+1. Navigate to the **Hosts And Clusters** or **VMs And Templates** inventory view.
+1. In the inventory tree, select a virtual machine.
+1. Select the **Performance** tab from the content pane on the right.
 
 VMware vSphere Server provides alarms that monitor VMs, as well as clusters,
 hosts, datacenters, datastores, networks, and licensing.
@@ -66,16 +86,16 @@ panel.
 ## <a id="vchs"></a>Monitoring in vCloud Hybrid Service (vCHS) ##
 
 [vCenter Operations Manager](http://www.vmware.com/products/vcenter-operations-manager) collects
-performance data from virtual machines and disk drives in a deployment.
+performance data from the virtual machines and disk drives in a deployment.
 
 [vCenter Hyperic](http://www.vmware.com/products/vcenter-hyperic) specifically
 monitors operating systems, middleware, and applications.
 
 Use vCenter Operations Manager and vCenter Hyperic to monitor the following
-services on the vCloud Director cells (servers) in your Pivotal CF deployment:
+services on the vCloud Director cells in your Pivotal CF deployment:
 
-* vmware-vcd-watchdog: Watchdog service for the cell.
-* vmware-guestd: VMware Tools service. Provides heartbeat, shutdown, restart,
+* **vmware-vcd-watchdog**: Watchdog service for the cell.
+* **vmware-guestd**: VMware Tools service. Provides heartbeat, shutdown, restart,
 and custom script execution functionality.
-* vmware-vcd-log-collection-agent: Log collection service for the cell.
-* vmware-vcd-cell: vCloud services for the cell.
+* **vmware-vcd-log-collection-agent**: Log collection service for the cell.
+* **vmware-vcd-cell**: vCloud services for the cell.

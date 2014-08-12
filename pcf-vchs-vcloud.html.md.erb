@@ -1,75 +1,36 @@
 ---
-title: Deploying Operations Manager to vCHS and vCloud
+title: Deploying Operations Manager to vCHS and vCD
 ---
 
-Refer to this topic for help deploying Ops Manager to vCHS or vCloud.
-For help deploying Ops Manager to VMware vSphere, see the [Deploying Operations Manager to vSphere](./deploying-vm.html) topic.
+This topic is a prerequisite to [Configuring Ops Manager Director for vCHS and vCloud](./vchs-vcloud-config.html)
 
-If you are deploying Elastic Runtime to vCHS, or you are deploying to vCloud but
-need access to Elastic Runtime from outside your firewall, you must first
-configure your virtual data center resources.
+## <a id='configuring'></a>Configuring NAT Ruless ##
 
-If you are deploying Elastic Runtime to vCloud and no one will access your
-Elastic Runtime instance from outside your firewall, you can skip [Configuring vCHS/vCloud Virtual Data Center Resources](#configuring) and proceed to
-[Deploying Ops Manager](#deploying).
+Elastic Runtime accesses the Internet using a source NAT rule (SNAT).
 
-## <a id='configuring'></a>Configuring vCHS/vCloud Virtual Data Center Resources ##
+Elastic Runtime's API endpoint, which is fronted by HA Proxy, instance requires a destination NAT (DNAT) to forward traffic from a public IP. Ops Manager also requires a DNAT rule to connect to it from a public IP.
 
-When you deploy Elastic Runtime to vCloud or vCHS, you install the Elastic
-Runtime components on a private network.
-You give these components internal IP addresses, not publicly routable ones.
+You need at least two public IP addresses for your virtual datacenter. One designated for Ops Manager and one for Elastic Runtime.
 
-When internal VMs need to access public IP addresses, Elastic Runtime maps the
-internal addresses to a public address using source NAT (SNAT).
-
-Similarly, when an external machine tries to connect to Elastic Runtime, it
-connects to a public IP address.
-Connecting this public IP address to the Elastic Runtime HA Proxy private
-address using destination NAT (DNAT) can fail, due to limitations in the way the 
-iptables rules process Elastic Runtime wildcard domains.
-
-To work around the iptables rules processing limitations, do one of the
-following:
-
-* Connect the Elastic Runtime public IP to the HA Proxy private IP using a
-vShield Edge load balancer.
-* Use split-brain DNS, with an internal DNS server resolving the wildcard domain
-for internal VMs to the HA Proxy private IP.
+NAT rules are configured in the vShield Edge interface which will be described next.
 
 ### Configuring vShield Edge ###
 
-To configure the vShield Edge load balancer:
+Follow these steps to configure vShield NAT rules. For more informationedge gateway services, see the [VMware vCloud Director](http://pubs.vmware.com/vcd-51/index.jsp#com.vmware.vcloud.admin.doc_51/GUID-99A1DA05-AF6B-4F22-842E-92394B50F9A8.html) documentation.
 
-1. [Open](#open) the vShield Edge Gateway Services interface
-1. Set a rule to [allow VMs to connect to the Internet](#connect)
-1. Set a rule to [allow inbound SSH](#ssh)
-1. Set up [inbound connectivity](#er) to Elastic Runtime
+#### Open the vShield Edge Gateway Services Interface ####
 
-For more information on configuring edge gateway services, see the [VMware vCloud Director](http://pubs.vmware.com/vcd-51/index.jsp#com.vmware.vcloud.admin.doc_51/GUID-99A1DA05-AF6B-4F22-842E-92394B50F9A8.html) documentation.
+1. Log into vCHS and click on Gateways
 
-#### <a id='open'></a>Open the vShield Edge Gateway Services Interface ####
-
-1. Log into the vCloud Director interface.
-
-1. In the top navigation bar, click **Administration**.
-
-1. Select **Cloud Resources > Virtual Datacenters**, then click the link for your virtual datacenter.
-
-1. Select the **Edge Gateways** tab.
+1. Click on Manage Advanced Gateway Settings on the right hand side
 
 1. Select the gateway you want to configure, then click the gear icon and select **Edge Gateway Services**.
 
     <%= image_tag("vcloud-vchs/select-edge.png") %>
 
-#### <a id='connect'></a>Allow VMs to Connect to the Internet ####
+#### <a id='connect'></a>Creating an SNAT and Firewall Rule ####
 
-To allow software installation, connections to the vCloud API, and connectivity
-between VMs, you must grant your private network VMs Internet access.
-
-To do this:
-
-1. Configure an SNAT rule allowing outbound connections to the public IP address
-of your Elastic Runtime instance.
+1. Configure an SNAT rule allowing outbound connections through Ops Manager public IP address. Using the Elastic Runtime IP address can be problematic for DNS resolution.
 
     <%= image_tag("vcloud-vchs/snat-1.png") %>
 
@@ -78,26 +39,29 @@ addresses to all IP external addresses.
 
     <%= image_tag("vcloud-vchs/firewall.png") %>
 
-#### <a id='ssh'></a>Allow Inbound SSH ####
+#### <a id='ssh'></a>Allow Inbound SSH for Ops Manager ####
 
-To allow you to SSH into the Ops Manager VM from an external device, create a
-connection between the public IP address of your Elastic Runtime instance and
-the private IP address of your Ops Manager.
-
-To do this:
+You may need to SSH to your Ops Manager VM which requires a DNAT rule.
 
 1. Create a destination NAT (DNAT) rule with the following configuration:
     * Applied on: Select your external network
-    * Original (External) IP/range: Enter the public IP address of your Elastic Runtime instance
+    * Original (External) IP/range: Enter the public IP address for Ops Manager
     * Protocol: Select **TCP & UDP**
     * Original Port: Select **22**
     * Translated (Internal) IP/range: Enter the private IP address of your Ops Manager
     * Translated port: **22**
 
-1. Create a firewall rule allowing inbound traffic from the public IP address of
-your Elastic Runtime instance to the private IP address of your Ops Manager.
+1. Create a firewall rule allowing inbound traffic from the public IP to the private IP address of your Ops Manager.
 
-#### <a id='er'></a>Set up inbound connectivity to Elastic Runtime ####
+#### <a id='ssh'></a>Allow Inbound Web Traffic for Ops Manager ####
+
+Repeat the steps above for ports 80, and 443 for the same public address.
+
+#### <a id='ssh'></a>Allow Inbound Web Traffic for Elastic Runtime ####
+
+Repeat the steps above for ports 80, and 443 for the Elastic Runtime public IP address.
+
+#### <a id='er'></a>Set up Network Rules for Elastic Runtime DNS Resolution ####
 
 1. In the edge gateway **Configure Services** screen, select the **Load
 Balancer** tab.
@@ -143,7 +107,7 @@ Enter the IP address of the HA Proxy VM.
 
     <%= image_tag("vcloud-vchs/complete.png") %>
 
-## <a id='deploying'></a>Deploying Ops Manager to vCHS or vCD ##
+## <a id='deploying'></a>Deploying Ops Manager to vCHS ##
 
 The following procedure guides you through deploying Ops Manager as a vApp on vCHS or vCloud Director. Refer to the [Known Issues](../pcf-release-notes/p1-v1.2/opsmanager_ki.html) topic before getting started.
 
@@ -216,7 +180,7 @@ click **Upload**.
 
 ### <a id='deploying-from-catalog'></a>Deploying Ops Manager ##
 
-After adding the Ops Manager vApp to your cloud in either vCHS or vCD you can finish the set up and deploy as follows:
+After adding the Ops Manager vApp to your cloud you can finish the set up and deploy as follows:
 
 1. Check the "I agree" checkbox to accept licenses and click **Next**.
 

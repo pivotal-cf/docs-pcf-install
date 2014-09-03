@@ -4,7 +4,9 @@ title: Pivotal CF Troubleshooting Guide
 ---
 
 This guide provides help with diagnosing and resolving issues encountered
-during a Pivotal CF install. For help troubleshooting issues that are specific to Pivotal CF deployments on VMware vSphere, refer to the the topic on [Troubleshooting Ops Manager for VMware vSphere](./troubleshooting-vsphere.html).
+during a Pivotal CF install. 
+For help troubleshooting issues that are specific to Pivotal CF deployments on 
+VMware vSphere, refer to the the topic on [Troubleshooting Ops Manager for VMware vSphere](./troubleshooting-vsphere.html).
 
 An install or update can fail for many reasons.
 Fortunately, the system tends to heal or work around hardware or network faults.
@@ -75,25 +77,21 @@ To troubleshoot specific Elastic Runtime components by viewing their log files, 
 
 The contents of the log directory vary depending on which component you view. For example, the DEA log directory contains subdirectories for the `dea_logging_agent`, `dea_next`, `monit`, and `warden` processes. To view the standard error stream for `warden`, download the DEA logs and open `dea.0.job > warden > warden.stderr.log`.
 
-## <a id='view_in_terminal'></a>Viewing the Web Application and BOSH Failure Logs in a Terminal ##
+##<a id='view_in_terminal'></a>Viewing Web Application and BOSH Failure Logs in a Terminal Window ##
 
-You can obtain diagnostic information from "under the hood" of the Operations
-Manager by logging into the VM where it is running.
+You can obtain diagnostic information from the Operations Manager by logging 
+in to the VM where it is running. To log in to the Operations Manager VM, you need the following information: 
 
-Before you begin, record:
+* The IP address of the Pivotal CF VM shown in the `Settings` tab of the Ops 
+Manager Director tile.
+* Your **import credentials**. Import credentials are the username and password 
+used to import the Pivotal CF `.ova` or `.ovf` file into your virtualization 
+system.
 
-* The IP address of the Pivotal CF VM shown in the `Settings` tab of the Ops Manager Director tile.
-* Your import credentials -- that is, the username and password used to
-import the Pivotal CF `.ova` or `.ovf` file into your virtualization system.
+Complete the following steps to log in to the Operations Manager VM:
 
-Now complete the following steps:
-
-1. Open a terminal.
-1. Connect to the Pivotal CF installation VM with SSH with your import
-username:
-
-    `ssh <import_username>@<Pivotal_CF_VM_IP_address>`
-
+1. Open a terminal window.
+1. Run `ssh <import_username>@<Pivotal_CF_VM_IP_address>` to connect to the the Pivotal CF installation VM.
 1. Enter your import password when prompted.
 1. Change directories to the home directory of the web application:
 
@@ -101,11 +99,10 @@ username:
 
 1. You are now in a position to explore whether things are as they should be
 within the web application.
-This is a basic troubleshooting procedure.
 
-    You can also verify that the `microbosh` component is successfully installed.
-This is important because a successful microbosh installation is required to
-install Elastic Runtime and any products like databases and messaging services.
+    You can also verify that the `microbosh` component is successfully 
+installed.
+A successful MicroBOSH installation is required to install Elastic Runtime and any products like databases and messaging services.
 
 1. Change directories to the BOSH installation log home:
 
@@ -115,12 +112,11 @@ install Elastic Runtime and any products like databases and messaging services.
 
     `cd /var/tempest/workspaces/default/deployments/micro`
 
-If you are unable to resolve an issue by viewing configurations, exploring
+    If you are unable to resolve an issue by viewing configurations, exploring
 logs, or reviewing common problems, you can troubleshoot further by running
 BOSH diagnostic commands with the BOSH Command-Line Interface (CLI).
 
-<p class="note"><strong>Note</strong>: Do not manually modify the deployment manifest.
-Operations Manager will overwrite manual changes to this manifest.
+<p class="note"><strong>Note</strong>: Do not manually modify the deployment manifest. Operations Manager will overwrite manual changes to this manifest.
 In addition, manually changing the manifest may cause future deployments to
 fail.</p>
 
@@ -133,9 +129,9 @@ If your problem is covered, try the recommended remediation procedures.
 
 It is sometimes helpful to reinstall BOSH for troubleshooting purposes.
 However, if Pivotal CF does not detect any changes, BOSH does not reinstall.
-To force a reinstall of BOSH, select **Ops Manager Director > Resource Sizes** and
-change a resource value.
-For example, you could bump the amount of RAM by 1.
+To force a reinstall of BOSH, select **Ops Manager Director > Resource Sizes** 
+and change a resource value.
+For example, you could increase the amount of RAM by 1.
 
 ### <a id='time_out'></a>Creating bound missing VMs times out ###
 
@@ -150,9 +146,9 @@ cloud_controller/0: Timed out pinging to f690db09-876c-475e-865f-2cece06aba79 af
 This is most likely a NATS issue with the VM in question.
 To identify a NATS issue, inspect the agent log for the VM.
 Since the BOSH director is unable to reach the BOSH agent, you must access the
-VM another way.
-You will likely also be unable to access the VM using TCP period (i.e. no SSH).
-In that case, access the VM using your virtualization console.
+VM using another method.
+You will likely also be unable to access the VM using TCP.
+In this case, access the VM using your virtualization console.
 
 To diagnose:
 

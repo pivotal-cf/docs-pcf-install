@@ -4,8 +4,8 @@ title: Pivotal CF Troubleshooting Guide
 ---
 
 This guide provides help with diagnosing and resolving issues encountered
-during a Pivotal CF install. 
-For help troubleshooting issues that are specific to Pivotal CF deployments on 
+during a Pivotal CF install.
+For help troubleshooting issues that are specific to Pivotal CF deployments on
 VMware vSphere, refer to the the topic on [Troubleshooting Ops Manager for VMware vSphere](./troubleshooting-vsphere.html).
 
 An install or update can fail for many reasons.
@@ -15,7 +15,7 @@ problem may be resolved.
 
 Some failures produce only generic errors like `Exited with 1`.
 In cases like this, where a failure is not accompanied by useful information,
-it’s a good idea to click the `Install` or `Apply Changes` button.
+it's a good idea to click the `Install` or `Apply Changes` button.
 Even doing so repeatedly does no harm.
 
 When the system _does_ provide informative evidence, review the [Common Problems](#common_probs) section at the end of this guide to see if your
@@ -56,8 +56,7 @@ products.
 * *Rails log* shows errors thrown by the VM where the Ops Manager web
 application (a Rails application) is running, as recorded in the
 `production.log` file.
-See the next section to learn how to explore other useful logs.
-
+See the next section to learn how to explore other logs.
 
 ## <a id='component_logs'></a>Viewing Logs for Elastic Runtime Components ##
 
@@ -79,13 +78,13 @@ The contents of the log directory vary depending on which component you view. Fo
 
 ##<a id='view_in_terminal'></a>Viewing Web Application and BOSH Failure Logs in a Terminal Window ##
 
-You can obtain diagnostic information from the Operations Manager by logging 
-in to the VM where it is running. To log in to the Operations Manager VM, you need the following information: 
+You can obtain diagnostic information from the Operations Manager by logging
+in to the VM where it is running. To log in to the Operations Manager VM, you need the following information:
 
-* The IP address of the Pivotal CF VM shown in the `Settings` tab of the Ops 
+* The IP address of the Pivotal CF VM shown in the `Settings` tab of the Ops
 Manager Director tile.
-* Your **import credentials**. Import credentials are the username and password 
-used to import the Pivotal CF `.ova` or `.ovf` file into your virtualization 
+* Your **import credentials**. Import credentials are the username and password
+used to import the Pivotal CF `.ova` or `.ovf` file into your virtualization
 system.
 
 Complete the following steps to log in to the Operations Manager VM:
@@ -99,8 +98,8 @@ Complete the following steps to log in to the Operations Manager VM:
 
 1. You are now in a position to explore whether things are as they should be
 within the web application.
-
-    You can also verify that the `microbosh` component is successfully 
+<br /><br />
+    You can also verify that the `microbosh` component is successfully
 installed.
 A successful MicroBOSH installation is required to install Elastic Runtime and any products like databases and messaging services.
 
@@ -127,9 +126,9 @@ If your problem is covered, try the recommended remediation procedures.
 
 ### <a id='reinstall_bosh'></a>BOSH does not reinstall ###
 
-It is sometimes helpful to reinstall BOSH for troubleshooting purposes.
+You might want to reinstall BOSH for troubleshooting purposes.
 However, if Pivotal CF does not detect any changes, BOSH does not reinstall.
-To force a reinstall of BOSH, select **Ops Manager Director > Resource Sizes** 
+To force a reinstall of BOSH, select **Ops Manager Director > Resource Sizes**
 and change a resource value.
 For example, you could increase the amount of RAM by 1.
 
@@ -265,3 +264,69 @@ Manager fails at the "Verifying app push" step.
 
 To resolve this issue, correct the DNS settings in the Pivotal CF Virtual
 Machine properties.
+
+##<a id='console-logs'></a>Viewing Developer Console Logs in a Terminal Window ##
+
+The [Developer Console](../console/dev-console.html) provides a graphical user
+interface to help manage organizations, users, applications, and spaces.
+
+When troubleshooting Developer Console performance, you might want to view the
+Developer Console application logs.
+To view the Developer Console application logs, follow these steps:
+
+1. Run `cf login -a api.MY-SYSTEM-DOMAIN -u admin` from a command line to log
+into Pivotal CF using the UAA Administrator credentials. In Pivotal Ops Manager,
+refer to **Pivotal Elastic Runtime > Credentials** for these credentials.
+
+    <pre class='terminal'>
+    $ cf login -a api.example.com -u admin
+    API endpoint: api.example.com
+
+    Password>******
+    Authenticating...
+    OK
+    </pre>
+
+1. Run `cf target -o system -s console` to target the `system` org and the
+`console` space.
+
+    <pre class='terminal'>
+    $ cf target -o system -s console
+    </pre>
+
+1. Run `cf logs console` to tail the Developer Console logs.
+
+    <pre class='terminal'>
+    $ cf logs console
+    Connected, tailing logs for app console in org system / space console as
+    admin...
+    </pre>
+
+###<a id='changing-log-level'></a>Changing Logging Levels for the Developer Console ##
+
+The Developer Console recognizes the `LOG_LEVEL` environment variable.
+The `LOG_LEVEL` environment variable allows you to determine the severity level
+of messages reported in the Developer Console log files.
+
+By default, `LOG_LEVEL` is set to `info`.
+The logs show more verbose messaging when you set the `LOG-LEVEL` to `debug`.
+
+From a terminal widow, run `cf set-env console LOG_LEVEL` with the desired severity level to change the Developer Console `LOG_LEVEL`.
+
+<pre class='terminal'>
+$ set-env console LOG_LEVEL debug
+</pre>
+
+You can set `LOG_LEVEL` to one of six different severity levels:
+
+1. `unknown`
+1. `fatal`
+1. `error`
+1. `warn`
+1. `info`
+1. `debug`
+
+Once set, the Developer Console log files only include messages at the set
+severity level and above.
+For example, if you set `LOG_LEVEL` to `fatal`, the log includes `fatal` and
+`unknown` level messages only.

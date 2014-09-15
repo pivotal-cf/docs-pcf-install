@@ -1,0 +1,90 @@
+---
+title: Connecting Elastic Runtime to LDAP
+---
+
+This topic describes connecting Elastic Runtime to LDAP by integrating the Cloud
+Foundry User Account and Authentication server with LDAP.
+
+The Cloud Foundry User Account and Authentication
+([UAA](https://github.com/cloudfoundry/uaa/tree/develop)) server provides
+identity management for Elastic Runtime in three ways:
+
+* Issues tokens for use by client applications when they act on behalf of
+Elastic Runtime users
+* Authenticates users with their Elastic Runtime credentials
+* Acts as an SSO service using Elastic Runtime or other credentials
+
+You can integrate the UAA with a Lightweight Directory Access Protocol (LDAP)
+server.
+Connecting Elastic Runtime to LDAP allows the UAA to authenticate users using
+LDAP search and bind operations.
+
+##<a id='configure'></a>Configuring the LDAP Endpoint ##
+
+To integrate the UAA with LDAP, configure Elastic Runtime with your LDAP
+endpoint information as follows:
+
+1. Log into the Pivotal CF Ops Manager web interface.
+
+1. On the Product Dashboard, select **Pivotal Elastic Runtime**.
+
+    <%=image_tag("uaa/er-tile.png")%>
+
+1. In the left navigation menu, select **LDAP Config**.
+
+1. Enter the following LDAP endpoint configuration information:
+    * **LDAP Server URL**: A URL pointing to the LDAP server.
+This must include one of the following protocols:
+        * `ldap://`: This specifies that the LDAP server uses an unencrypted
+		connection.
+        * `ldaps://`: This specifies that the LDAP server uses SSL for an
+		encrypted connection and requires that the LDAP server holds a trusted
+		certificate or that you import a trusted certificate to the JVM
+		truststore.
+    * **LDAP Credentials**: The distinguished name and password for binding to
+	the LDAP Server.
+    * **LDAP Search Base**: The starting point for searching in the LDAP
+	directory tree.
+	Example: `ou=cloud,dc=example,dc=com`
+    * **LDAP Search Filter**: A string that expresses the search criteria for
+	the filter.
+	Use `{0}` to indicate where the username should be inserted in the search
+	filter string.
+	If you are unsure of what string to provide, use `cn={0}`.
+    * **LDAP Server SSL Cert**: The server certificate to trust for self-signed
+	certificates.
+    * **LDAP Server SSL Cert AltName**: The `AltName` of the self-signed SSL
+	certificate.
+    * **Email Attribute**: The name of the attribute that contains the user
+	email address.
+	The default value is `mail`.
+
+        <%=image_tag("uaa/ldap-config.png")%>
+
+1. Click **Save**.
+
+1. Click the **Installation Dashboard** link to return to the Installation
+Dashboard.
+
+1. On the Installation Dashboard, click **Apply Changes**.
+
+    <%=image_tag("uaa/apply-changes.png")%>
+
+##<a id='clients'></a>UAA Clients ##
+
+In addition to any clients defined by LDAP, UAA installs default clients defined
+in the `uaa.yml` file on the UAA VM.
+
+UAA installs the following clients:
+
+* admin
+* autoscaling_service
+* cc_service_broker_client
+* cf
+* cloud_controller
+* login
+* portal
+* system_passwords
+
+You can override the default UAA clients installed by editing the `uaa.yml` file
+on the UAA VM.

@@ -6,28 +6,30 @@ This guide provides help with diagnosing and resolving issues that are specific 
 
 For infrastructure-agnostic troubleshooting help, refer to the [Pivotal CF Troubleshooting Guide](./troubleshooting.html).
 
-## <a id='common_probs'></a>Common Problems ##
+## <a id='common_probs'></a>Common Issues ##
 
-Compare evidence that you have gathered to the problem descriptions below.
-If your problem is covered, try the recommended remediation procedures.
+The following sections list common issues you might encounter and possible resolutions.
 
-### <a id='bosh_install'></a>BOSH automated installation fails ###
+### <a id='vcenter-setting'></a> Pivotal CF Installation Fails ###
 
-Before starting a Elastic Runtime deployment, a vSphere cluster must be set up
-and configured.
+If you modify the vCenter Statistics Interval Duration setting from its default setting of 5 minutes, the Pivotal CF installation might fail at the MicroBOSH or BOSH deployment stage. Run an rb stack trace and search for an invoke method failure in `adapter_stub.rb` that has the following error message: `The specified parameter is not correct, interval`. 
 
-If vSphere DRS (Distributed Resource Scheduler) is enabled for the cluster, the
-Automation level must be set to **Partially automated** or **Fully automated**.
+To resolve this issue, launch vCenter, navigate to **Administration > vCenter Server Settings > Statistics**, and reset vCenter Statistics Interval Duration setting to 5 minutes.
 
-If the Automation level is set to **Manual**, BOSH automated installation will
-fail with a 'power\_on\_vm' error when BOSH attempts to create virtual VMs.
+### <a id='bosh_install'></a>BOSH Automated Installation Fails ###
+
+Before starting a Elastic Runtime deployment, you must set up and configure a vSphere cluster.
+
+If you enable vSphere DRS (Distributed Resource Scheduler) for the cluster, you must set the Automation level to **Partially automated** or **Fully automated**.
+
+If you set the Automation level to **Manual**, the BOSH automated installation will fail with a `power_on_vm` error when BOSH attempts to create virtual VMs.
 
 <%= image_tag("troubleshooting/drs_automation_level.png") %>
 
-### <a id='net-settings'></a>Ops Manager loses its IP address after HA or reboot ###
+### <a id='net-settings'></a>Ops Manager Loses Its IP Address After HA or Reboot ###
 
 Ops Manager can lose its IP address and use DHCP due to an issue in the open source version of VMware Tools.
-To solve this problem you must log in to the Ops Manager VM and edit `/etc/network/interfaces` as follows:
+To resolve this issue you must log in to the Ops Manager VM and edit `/etc/network/interfaces` as follows:
 
 <pre class='terminal'>
 # This file describes the network interfaces available on your system
@@ -56,7 +58,7 @@ dns-nameservers 10.70.0.3
 
 After editing the file run `sudo /etc/init.d/networking restart`. The interfaces files will be overwritten on reboot.
 
-### <a id='net-settings'></a>Cannot connect to the OVF via a browser ###
+### <a id='net-settings'></a>Cannot Connect to the OVF Via a Browser ###
 
 If you deployed the OVF file but cannot connect to it via a browser, check that
 the network settings you entered in the wizard are correct.
@@ -83,3 +85,5 @@ network name is correct.
 1. If the network name is wrong, right click on the VM, select **Edit Settings > Network adapter 1**, and select the correct network.
 
 1. Reboot the installation VM.
+
+

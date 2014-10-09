@@ -58,7 +58,17 @@ application (a Rails application) is running, as recorded in the
 `production.log` file.
 See the next section to learn how to explore other logs.
 
-## <a id='component_logs'></a>Viewing Logs for Elastic Runtime Components ##
+## <a id='tips'> </a>Logging Tips ##
+
+### <a id='starting'> </a>Identifying Where to Start ###
+
+This section contains general tips for locating where a particular problem is called out in the log files. Refer to the later sections for tips regarding specific logs (such as those for Elastic Runtime Components).
+
+* Start with the largest and most recently updated files in the job log
+* Identify logs that contain 'err' in the name
+* Scan the file contents for a "failed" or "error" string
+
+### <a id='component_logs'></a>Viewing Logs for Elastic Runtime Components ###
 
 To troubleshoot specific Elastic Runtime components by viewing their log files, browse to the Ops Manager interface and follow the procedure below.
 
@@ -76,7 +86,7 @@ To troubleshoot specific Elastic Runtime components by viewing their log files, 
 
 The contents of the log directory vary depending on which component you view. For example, the DEA log directory contains subdirectories for the `dea_logging_agent`, `dea_next`, `monit`, and `warden` processes. To view the standard error stream for `warden`, download the DEA logs and open `dea.0.job > warden > warden.stderr.log`.
 
-##<a id='view_in_terminal'></a>Viewing Web Application and BOSH Failure Logs in a Terminal Window ##
+###<a id='view_in_terminal'></a>Viewing Web Application and BOSH Failure Logs in a Terminal Window ###
 
 You can obtain diagnostic information from the Operations Manager by logging
 in to the VM where it is running. To log in to the Operations Manager VM, you need the following information:
@@ -118,6 +128,75 @@ BOSH diagnostic commands with the BOSH Command-Line Interface (CLI).
 <p class="note"><strong>Note</strong>: Do not manually modify the deployment manifest. Operations Manager will overwrite manual changes to this manifest.
 In addition, manually changing the manifest may cause future deployments to
 fail.</p>
+
+##<a id='console-logs'></a>Viewing Developer Console Logs in a Terminal Window ##
+
+The [Developer Console](../console/dev-console.html) provides a graphical user
+interface to help manage organizations, users, applications, and spaces.
+
+When troubleshooting Developer Console performance, you might want to view the
+Developer Console application logs.
+To view the Developer Console application logs, follow these steps:
+
+1. Run `cf login -a api.MY-SYSTEM-DOMAIN -u admin` from a command line to log
+in to Pivotal CF using the UAA Administrator credentials. In Pivotal Ops
+Manager, refer to **Pivotal Elastic Runtime > Credentials** for these
+credentials.
+
+    <pre class='terminal'>
+    $ cf login -a api.example.com -u admin
+    API endpoint: api.example.com
+
+    Password>******
+    Authenticating...
+    OK
+    </pre>
+
+1. Run `cf target -o system -s console` to target the `system` org and the
+`console` space.
+
+    <pre class='terminal'>
+    $ cf target -o system -s console
+    </pre>
+
+1. Run `cf logs console` to tail the Developer Console logs.
+
+    <pre class='terminal'>
+    $ cf logs console
+    Connected, tailing logs for app console in org system / space console as
+    admin...
+    </pre>
+
+###<a id='changing-log-level'></a>Changing Logging Levels for the Developer Console ##
+
+The Developer Console recognizes the `LOG_LEVEL` environment variable.
+The `LOG_LEVEL` environment variable allows you to filter the messages
+reported in the Developer Console log files by severity level. The Developer
+Console defines severity levels using the Ruby standard library [Logger class](http://www.ruby-doc.org/stdlib-1.9.3/libdoc/logger/rdoc/Logger.html).
+
+By default, the Developer Console `LOG_LEVEL` is set to `info`.
+The logs show more verbose messaging when you set the `LOG_LEVEL` to `debug`.
+
+To change the Developer Console `LOG_LEVEL`, run `cf set-env console LOG_LEVEL` with the desired severity level.
+
+<pre class='terminal'>
+$ set-env console LOG_LEVEL debug
+</pre>
+
+You can set `LOG_LEVEL` to one of the six severity levels defined by the Ruby
+Logger class:
+
+* **Level 5**: `unknown` -- An unknown message that should always be logged
+* **Level 4**: `fatal` -- An unhandleable error that results in a program crash
+* **Level 3**: `error` -- A handleable error condition
+* **Level 2**: `warn` -- A warning
+* **Level 1**: `info` -- General information about system operation
+* **Level 0**: `debug` -- Low-level information for developers
+
+Once set, the Developer Console log files only include messages at the set
+severity level and above.
+For example, if you set `LOG_LEVEL` to `fatal`, the log includes `fatal` and
+`unknown` level messages only.
 
 ## <a id='common_probs'></a>Common Problems ##
 
@@ -283,71 +362,3 @@ Manager fails at the "Verifying app push" step.
 To resolve this issue, correct the DNS settings in the Pivotal CF Virtual
 Machine properties.
 
-##<a id='console-logs'></a>Viewing Developer Console Logs in a Terminal Window ##
-
-The [Developer Console](../console/dev-console.html) provides a graphical user
-interface to help manage organizations, users, applications, and spaces.
-
-When troubleshooting Developer Console performance, you might want to view the
-Developer Console application logs.
-To view the Developer Console application logs, follow these steps:
-
-1. Run `cf login -a api.MY-SYSTEM-DOMAIN -u admin` from a command line to log
-in to Pivotal CF using the UAA Administrator credentials. In Pivotal Ops
-Manager, refer to **Pivotal Elastic Runtime > Credentials** for these
-credentials.
-
-    <pre class='terminal'>
-    $ cf login -a api.example.com -u admin
-    API endpoint: api.example.com
-
-    Password>******
-    Authenticating...
-    OK
-    </pre>
-
-1. Run `cf target -o system -s console` to target the `system` org and the
-`console` space.
-
-    <pre class='terminal'>
-    $ cf target -o system -s console
-    </pre>
-
-1. Run `cf logs console` to tail the Developer Console logs.
-
-    <pre class='terminal'>
-    $ cf logs console
-    Connected, tailing logs for app console in org system / space console as
-    admin...
-    </pre>
-
-###<a id='changing-log-level'></a>Changing Logging Levels for the Developer Console ##
-
-The Developer Console recognizes the `LOG_LEVEL` environment variable.
-The `LOG_LEVEL` environment variable allows you to filter the messages
-reported in the Developer Console log files by severity level. The Developer
-Console defines severity levels using the Ruby standard library [Logger class](http://www.ruby-doc.org/stdlib-1.9.3/libdoc/logger/rdoc/Logger.html).
-
-By default, the Developer Console `LOG_LEVEL` is set to `info`.
-The logs show more verbose messaging when you set the `LOG_LEVEL` to `debug`.
-
-To change the Developer Console `LOG_LEVEL`, run `cf set-env console LOG_LEVEL` with the desired severity level.
-
-<pre class='terminal'>
-$ set-env console LOG_LEVEL debug
-</pre>
-
-You can set `LOG_LEVEL` to one of the six severity levels defined by the Ruby
-Logger class:
-
-* **Level 5**: `unknown` -- An unknown message that should always be logged
-* **Level 4**: `fatal` -- An unhandleable error that results in a program crash
-* **Level 3**: `error` -- A handleable error condition
-* **Level 2**: `warn` -- A warning
-* **Level 1**: `info` -- General information about system operation
-* **Level 0**: `debug` -- Low-level information for developers
-
-Once set, the Developer Console log files only include messages at the set
-severity level and above.
-For example, if you set `LOG_LEVEL` to `fatal`, the log includes `fatal` and
-`unknown` level messages only.

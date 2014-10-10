@@ -2,7 +2,56 @@
 title: Deploying Operations Manager to vCloud Air and vCD
 ---
 
-This topic is a prerequisite to [Configuring Ops Manager Director for vCloud Air and vCloud](./vchs-vcloud-config.html)
+This topic is a prerequisite to [Configuring Ops Manager Director for vCloud Air and vCloud](./vchs-vcloud-config.html).
+
+This topic describes how to configure the vCloud Air Edge Gateways Configure Services window (confirm this UI) and install Ops Manager for your Elastic Runtime environment.
+
+
+## <a id='requirements'></a>Minimum Resource Requirements ## 
+
+Before you...
+
+(user sets and/or checks these where?)
+
+* Disk space: 120GB
+* Memory: 60GB
+* Permissions: A permission level that allows you to power VMs on and off (Administrator?) (so PCF can power VMs on/off in the background)
+* Public IP addresses: Two public IP addresses. See Configuring NAT Rules.
+* vCPU cores: 28
+
+## <a id='accessing'></a>Accessing the Edge Gateways Configure Services Window ##
+
+This section describes how to access the Edge Gateways Configure Services window for your datacenter.
+
+1. From the VMWare vCloud Air dashboard, click your virtual datacenter name in the **Virtual Data Centers** region.
+1. On the **Virtual Data Center Details** page, click **Manage Catalogs in vCloud Director**.
+1. On the dashboard for your virtual datacenter, click **Administration**. The Virtual Datacenters page appears.
+1. Select your virtual datacenter.
+1. Select the **Edge Gateways** tab and select your virtual datacenter.
+1. Select the gear icon and choose the **Edge Gateway Services** action. The **Configure Services** window displays for your virtual datacenter.
+
+## <a id='config-overview'></a>Overview of Configuring the Edge Gateways Configure Services Window ##
+
+(change bad title)
+
+1. **DCHP**: Configure any DHCP rules.
+1. **NAT**: Create one SNAT and three DNAT rules.
+1. **Firewall**: Create corresponding firewalls for the SNAT and DNAT rules.
+1. **Static Routing**: Select the **Enable static routing** checkbox.
+1. **VPN**: (Optional) Configure VPN settings.
+1. **Load Balancer**: Add and configure a Load Balancer.
+
+
+
+(Alternate version)
+1. **DCHP**: Configure any DHCP rules.
+1. **NAT** and **Firewall**: Create one SNAT and three DNAT rules and corresponding firewalls for these rules. 
+    See Configuring NAT Rules.
+1. **Static Routing**: Select the **Enable static routing** checkbox.
+1. **VPN**: (Optional) Configure VPN settings.
+1. **Load Balancer**: Add and configure a Load Balancer.
+    Set up Network Rules for Elastic Runtime DNS Resolution
+
 
 ## <a id='configuring'></a>Configuring NAT Rules ##
 
@@ -19,6 +68,8 @@ NAT rules are configured in the vShield Edge interface which will be described n
 Follow these steps to configure vShield NAT rules. For more information about edge gateway services, see the [VMware vCloud Director](http://pubs.vmware.com/vcd-51/index.jsp#com.vmware.vcloud.admin.doc_51/GUID-99A1DA05-AF6B-4F22-842E-92394B50F9A8.html) documentation.
 
 #### Open the vShield Edge Gateway Services Interface ####
+
+(this section not necessary if user accessing the Configure Services window)
 
 1. Log into vCloud Air and click **Gateways**.
 
@@ -55,11 +106,11 @@ You may need to SSH to your Ops Manager VM which requires a DNAT rule.
 
 #### <a id='ssh'></a>Allow Inbound Web Traffic for Ops Manager ####
 
-Repeat the steps above for ports 80, and 443 for the same public address.
+Repeat the steps above for ports 80 and 443 for the same public address.
 
 #### <a id='ssh'></a>Allow Inbound Web Traffic for Elastic Runtime ####
 
-Repeat the steps above for ports 80, and 443 for the Elastic Runtime public IP address.
+Repeat the steps above for ports 80 and 443 for the Elastic Runtime public IP address.
 
 #### <a id='er'></a>Set up Network Rules for Elastic Runtime DNS Resolution ####
 
@@ -73,7 +124,7 @@ Balancer** tab.
 1. Name the pool **Load Balancer to Elastic Runtime**.
 
 1. In the **Configure Service** step, enable the pool to support HTTP port 80
-and HTTPS port 443.
+and HTTPS port 443. We recommend using the default balancing method, **Round Robin**.
 
     <%= image_tag("vcloud-vchs/ports.png") %>
 
@@ -84,8 +135,9 @@ For both HTTP and HTTPS, change the Mode to **TCP**.
     <%= image_tag("vcloud-vchs/health-check.png") %>
 
 1. In the **Manage Members** step, click **Add**.
-Enter the IP address of the HAProxy VM.
+Enter the IP address of the HAProxy VM and specify the HTTP and HTTPS port values.
 
+(add new member.png)
     <%= image_tag("vcloud-vchs/member.png") %>
 
 1. Click **Finish**.

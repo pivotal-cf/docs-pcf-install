@@ -1,0 +1,138 @@
+---
+title: Configuring Network Segmentation in Ops Manager
+---
+
+The network segmentation strategy you choose determines network traffic
+separation, and can have a significant impact on the security and performance of
+your deployment.
+
+Network traffic within a Pivotal CF deployment takes one of three forms:
+
+* **Management traffic**: Traffic connecting Pivotal CF to vCenter, as well as
+standalone SSH connections and vSphere client connections.
+This traffic may contain sensitive data.
+* **Operations traffic**: Traffic to and from the Ops Manager Director
+associated with dynamic memory migration and storage operations.
+This traffic may contain the contents of the virtual machine dynamic memory or
+storage information from VMs.
+* **Production traffic**: Traffic to and from product VMs.
+
+You can choose one of the following network segmentation strategies:
+
+* Full: Traffic forms separated by network
+* Partial: Management and operations traffic separated from production traffic
+* Single: All traffic on the same network
+
+##<a id='full'></a>Full Network Segmentation ##
+
+<p class='note'><strong>Note</strong>: We recommend using full network segmentation in production environments because it provides the most security.</p>
+
+With full network segmentation, you install vCenter, the Ops Manager Director,
+and your products to different networks to separate management, operations, and
+production traffic.
+
+**Advantages**
+
+* Most secure because it separates the local network from the Internet and
+isolates each network traffic form to its own segment
+* Best performance because it allocates hosts to separate networks, which
+results in the least local traffic
+
+**Disadvantages**
+
+* Most difficult network strategy to configure and manage
+
+###Configuring Full Network Segmentation ###
+
+1. In vSphere, create three networks. For this example, call them network **A**, **B**, and **C**.
+1. Install your vCenter on network A.
+1. Deploy Ops Manager Director on network B. In the Ops Manager Director configuration interface, configure the Director as follows:
+    * Click **Create Network**. Click **Add**. Add a network that maps to
+	network A.
+    * Click **Create Network**. Click **Add**. Add a network that maps to
+	network B.
+    * Click **Assign Network**. Click the **Infrastructure Network** drop-down
+	menu and select the network that you created that maps to network A.
+    * Click the **Deployment Network** drop-down menu and select the network
+	that you created that maps to network B.
+
+    <%=image_tag("netseg/assign-ab.png")%>
+
+1. Install any other products on network C.
+1. Ensure that network C can route to the IP address of the Ops Manager Director on the network you created that maps to network B.
+
+[Return to the Getting Started Guide](../getstarted/index.html)
+
+##<a id='partial'></a>Partial Network Segmentation ##
+
+With partial network segmentation, you install vCenter on one network and the
+Ops Manager Director and products on another.
+This separates management traffic from operations and production traffic.
+
+**Advantages**
+
+* Easier to configure and manage than the "Full Segmentation" strategy
+* More secure than the "Single Network" strategy
+* Better performance than the "Single Network" strategy
+
+**Disadvantages**
+
+* More difficult to configure and manage than the "Single Network" strategy
+* Less secure than the "Full Segmentation" strategy
+* Less performant than the "Full Segmentation" strategy
+
+###Configuring Partial Network Segmentation ###
+
+1. In vSphere, create two networks. For this example, call them networks **A**
+and **B**.
+1. Install your vCenter on network A.
+1. Deploy Ops Manager Director on network B. In the Ops Manager Director configuration interface, configure the Director as follows:
+    * Click **Create Network**. Click **Add**. Add a network that maps to
+	network A.
+    * Click **Create Network**. Click **Add**. Add a network that maps to
+	network B.
+    * Click **Assign Network**. Click the **Infrastructure Network** drop-down
+	menu and select the network that you created that maps to network A.
+    * Click the **Deployment Network** drop-down menu and select the network
+	that you created that maps to network B.
+
+    <%=image_tag("netseg/assign-ab.png")%>
+
+1. Install any other products on network B.
+
+[Return to the Getting Started Guide](../getstarted/index.html)
+
+##<a id='single'></a>Single Network ##
+
+With a single network, you deploy vCenter, the Ops Manager Director, and all
+products to the same network.
+
+<p class='note'><strong>Note</strong>: Production environments typically require higher security than this strategy provides.</p>
+
+**Advantages**
+
+* Easiest network strategy to configure and manage
+
+**Disadvantages**
+
+* Least secure because it does not separate the local network from the Internet
+and does not isolate the different network traffic forms
+* Poor performance because all hosts on the same network results in a maximum amount of local traffic
+
+###Configuring for a Single Network ###
+
+1. In vSphere, create one network. For this example, call it network **A**.
+1. Install your vCenter on network A.
+1. Deploy Ops Manager Director on network A. In the Ops Manager Director configuration interface, configure the Director as follows:
+    * Click **Create Network**. Click **Add**. Add a network that maps to
+	network A.
+    * Click **Assign Network**. Click the **Infrastructure Network** drop-down
+	menu and select the network that you created that maps to network A.
+    * Click the **Deployment Network** drop-down menu and select the network
+	that you created that maps to network A.
+
+    <%=image_tag("netseg/assign-aa.png")%>
+
+1. Install any other products on network A.
+
+[Return to the Getting Started Guide](../getstarted/index.html)

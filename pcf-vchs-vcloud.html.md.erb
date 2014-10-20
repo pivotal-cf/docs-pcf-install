@@ -1,34 +1,66 @@
 ---
-title: Deploying Operations Manager to vCloud Air and vCD
+title: Deploying Operations Manager to vCloud Air and vCloud
 ---
 
-This topic is a prerequisite to [Configuring Ops Manager Director for vCloud Air and vCloud](./vchs-vcloud-config.html)
+This topic is a prerequisite to [Configuring Ops Manager Director for vCloud Air and vCloud](./vchs-vcloud-config.html).
 
-## <a id='configuring'></a>Configuring NAT Rules ##
+This topic describes how to configure the vCloud or vCloud Air Edge Gateways Configure Services screen and install Ops Manager for your Elastic Runtime environment.
 
-Elastic Runtime accesses the Internet using a source NAT rule (SNAT).
 
-Elastic Runtime's API endpoint, which is fronted by HA Proxy, instance requires a destination NAT (DNAT) to forward traffic from a public IP. Ops Manager also requires a DNAT rule to connect to it from a public IP.
+## <a id='requirements'></a>Minimum Requirements ##
 
-You need at least two public IP addresses for your virtual datacenter. One designated for Ops Manager and one for Elastic Runtime.
+Ensure that your vCloud or vCloud Air environment meets or exceeds the following minimum settings:
 
-NAT rules are configured in the vShield Edge interface which will be described next.
+* Disk space: 120GB
+* Memory: 60GB
+* Two public IP addresses: One for Elastic Runtime and one for Ops Manager. See [Configuring NAT Rules](#configuring).
+* vCPU cores: 28
 
-### Configuring vShield Edge ###
+You must also have virtual infrastructure administrator privileges to enable Elastic Runtime to automatically power VMs on and off. For more information about user privileges, refer to the "User Privileges by Role" section in the [VMware vCloud Air User's Guide](http://www.vmware.com/pdf/vchs_users_guide.pdf).
 
-Follow these steps to configure vShield NAT rules. For more information about edge gateway services, see the [VMware vCloud Director](http://pubs.vmware.com/vcd-51/index.jsp#com.vmware.vcloud.admin.doc_51/GUID-99A1DA05-AF6B-4F22-842E-92394B50F9A8.html) documentation.
+## <a id='access-interface'></a>Accessing the vShield Edge Gateway Services Interface ##
 
-#### Open the vShield Edge Gateway Services Interface ####
+Follow these steps to access the vCloud or vCloud Air Edge Gateways Configure Services screen. For more information about edge gateway services, see the [VMware vCloud Director](http://pubs.vmware.com/vcd-51/index.jsp#com.vmware.vcloud.admin.doc_51/GUID-99A1DA05-AF6B-4F22-842E-92394B50F9A8.html) documentation.
 
-1. Log into vCloud Air and click **Gateways**.
+1. Log into vCloud or vCloud Air.
 
-1. Click **Manage Advanced Gateway Settings** on the right side.
+1. Click the **Gateways** tab and your virtual datacenter on the Gateways page.
+    The **Gateways > Gateways Details** page appears.
+
+1. Click **Manage Advanced Gateway Settings** on the right side of the Gateways > Gateways Details page.
+    The **vCloud Director > Administration > Edge Gateways** page appears.
 
 1. Select the gateway you want to configure, then click the gear icon and select **Edge Gateway Services**.
 
     <%= image_tag("vcloud-vchs/select-edge.png") %>
 
-#### <a id='connect'></a>Creating an SNAT and Firewall Rule ####
+    The **Configure Services** screen for your virtual datacenter displays with the following tabs:
+    * **DHCP**
+    * **NAT**
+    * **Firewall**
+    * **Static Routing**
+    * **VPN**
+    * **Load Balancer**
+
+    <%= image_tag("vcloud-vchs/config-services.png") %>
+
+    <p class="note"><strong>Note</strong>: The following sections describe how to perform the minimum configuration steps&#8212;specifically, this is setting up NAT rules, firewalls, static routing, and a load balancer. Ensure that you configure the Edge Gateways <strong>Configure Services</strong> screen with any additional settings that your environment requires.</p>
+
+## <a id='configuring'></a>Configuring NAT Rules ##
+
+Elastic Runtime accesses the Internet using a source NAT rule (SNAT).
+
+Elastic Runtime's API endpoint, which is fronted by HAProxy, requires a destination NAT (DNAT) to forward traffic from a public IP. Ops Manager also requires a DNAT rule to connect to it from a public IP.
+
+You need at least two public IP addresses for your virtual datacenter for inbound traffic, one designated for Ops Manager and one for Elastic Runtime.
+
+vCloud or vCloud Air evaluates NAT rules in the order you list them in, from top to bottom, on the **NAT** tab of the Edge Gateways **Configure Services** screen. The image is an example of the configured SNAT rule and a DNAT rule.
+
+<%= image_tag("vcloud-vchs/nat-example.png") %>
+
+The following sections describe how to configure the single SNAT and three DNAT rules that Elastic Runtime requires and their corresponding firewalls on the **NAT** tab.
+
+### <a id='snat-om'></a>Create SNAT and Firewall Rules ###
 
 1. Configure an SNAT rule allowing outbound connections through Ops Manager public IP address. Using the Elastic Runtime IP address can be problematic for DNS resolution.
 
@@ -39,9 +71,9 @@ addresses to all IP external addresses.
 
     <%= image_tag("vcloud-vchs/firewall.png") %>
 
-#### <a id='ssh'></a>Allow Inbound SSH for Ops Manager ####
+### <a id='dnat-ssh-om'></a>Allow Inbound SSH for Ops Manager ###
 
-You may need to SSH to your Ops Manager VM which requires a DNAT rule.
+To enable inbound traffic over SSH to your Ops Manager VM, you must first create a DNAT rule.
 
 1. Create a destination NAT (DNAT) rule with the following configuration:
     * Applied on: Select your external network
@@ -53,15 +85,20 @@ You may need to SSH to your Ops Manager VM which requires a DNAT rule.
 
 1. Create a firewall rule allowing inbound traffic from the public IP to the private IP address of your Ops Manager.
 
-#### <a id='ssh'></a>Allow Inbound Web Traffic for Ops Manager ####
+### <a id='dnat-om'></a>Allow Inbound Web Traffic for Ops Manager ###
 
-Repeat the steps above for ports 80, and 443 for the same public address.
+Repeat the steps above for ports 80 and 443 for the same public address.
 
-#### <a id='ssh'></a>Allow Inbound Web Traffic for Elastic Runtime ####
+### <a id='dnat-er'></a>Allow Inbound Web Traffic for Elastic Runtime ###
 
-Repeat the steps above for ports 80, and 443 for the Elastic Runtime public IP address.
+Repeat the steps above for ports 80 and 443 for the Elastic Runtime public IP address.
 
-#### <a id='er'></a>Set up Network Rules for Elastic Runtime DNS Resolution ####
+
+## <a id='sr'></a>Setting up Static Routing ###
+
+Select the **Enable static routing** checkbox.
+
+## <a id='er'></a>Setting up Network Rules for Elastic Runtime DNS Resolution ##
 
 1. In the edge gateway **Configure Services** screen, select the **Load
 Balancer** tab.
@@ -69,11 +106,12 @@ Balancer** tab.
 1. Click **Pool Servers**, then click **Add**.
 
     <%= image_tag("vcloud-vchs/pool.png") %>
+	
+    The **Add Load Balancer Member Pool** wizard appears.
 
 1. Name the pool **Load Balancer to Elastic Runtime**.
 
-1. In the **Configure Service** step, enable the pool to support HTTP port 80
-and HTTPS port 443.
+1. In the **Configure Service** step, enable the pool to support HTTP port **80** and HTTPS port **443**. We recommend using the default balancing method, **Round Robin**.
 
     <%= image_tag("vcloud-vchs/ports.png") %>
 
@@ -84,7 +122,8 @@ For both HTTP and HTTPS, change the Mode to **TCP**.
     <%= image_tag("vcloud-vchs/health-check.png") %>
 
 1. In the **Manage Members** step, click **Add**.
-Enter the IP address of the HA Proxy VM.
+Enter the IP address of the HAProxy VM.
+Specify **80** for the HTTP port values and **443** for the HTTPS port values.
 
     <%= image_tag("vcloud-vchs/member.png") %>
 
@@ -101,43 +140,33 @@ Enter the IP address of the HA Proxy VM.
     * Applied On: Select your external network
     * IP Address: Enter the public IP address of your Elastic Runtime instance
     * Pool: Select the **Load Balancer to Elastic Runtime** pool
-    * Services: Enable HTTP on port 80, and HTTPS on port 443
-
-1. Click **OK** to complete
+    * Services: Enable HTTP on port **80** with a Persistence Method of **None**, and HTTPS on port **443** with a Persistence Method of **Session Id**
+    * Enabled: Select this checkbox
 
     <%= image_tag("vcloud-vchs/complete.png") %>
 
-## <a id='deploying'></a>Deploying Ops Manager to vCloud Air ##
+1. Click **OK** to complete.
 
-The following procedure guides you through deploying Ops Manager as a vApp on vCloud Air or vCloud Director. Refer to the [Known Issues](../pcf-release-notes/p1-v1.2/opsmanager_ki.html) topic before getting started.
 
-<p class="note"><strong>Note</strong>: The vCloud Director Web Console (also on vCloud Air) only supports 32-bit browsers, including Firefox. It does not support Chrome. Refer to <a href="http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2034554">Article 2034554</a> in the VMware Knowledge Base for more information about browser versions that the vCloud Director supports.</p>
+## <a id='deploying'></a>Deploying Ops Manager to vCloud or vCloud Air ##
 
-### <a id='choosing-vapp-on-vchs'></a>Locating Ops Manager on vCloud Air Public Catalog ##
+The following procedures guide you through uploading and deploying Ops Manager as a vApp on vCloud or vCloud Air. Refer to the [Known Issues](../pcf-release-notes/p1-v1.2/opsmanager_ki.html) topic before getting started.
 
-1. Log into vCloud Air.
 
-1. Choose the vDC env you want to deploy PCF
+<p class="note"><strong>Note</strong>: vCloud and vCloud Air use the vCloud Director Web Console, which only supports 32-bit browsers like Firefox. It does not support Chrome. Refer to <a href="http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2034554">Article 2034554</a> in the VMware Knowledge Base for more information about browser versions that the vCloud Director supports.</p>
 
-1. Click the link to open the vCD UI.
 
-1. In the vDC UI, Navigate to **Catalogs > Public Catalog**.
+### <a id='uploading-to-vcd'></a>Upload Ops Manager ##
 
-1. Select **Pivotal Ops Manager vApp** from the Public Catalog.
+You must either upload the Ops Manager vApp into your catalog or use a vApp that your cloud administrator uploaded to your organization's catalog.
 
-    <%= image_tag("vcloud-vchs/pcf-vchs-pub-catalog.png") %><br />
 
-1. Click **Add to Cloud**.
+<p class="note"><strong>Note</strong>: The first time you upload software to vCloud Director, you must install the <strong>Client Integration Plug-in</strong> and restart all browsers. If the plug-in does not work and you continue to receive a message prompting you to download it, check the plug-in permissions for your browsers.</p>
 
-    <%= image_tag("vcloud-vchs/vchs-catalog-add.png") %><br />
 
-### <a id='uploading-to-vcd'></a>Uploading Ops Manager to vCD ##
+1. Download Pivotal CF Operations Manager for vCloud Air and vCloud Director from [Pivotal Network](https://network.pivotal.io/products/pivotal-cf).
 
-If you are not using vCloud Air, you must either upload the Ops Manager vApp into your catalog or use a vApp that was uploaded by a vCD administrator in your organization's catalog.
-
-1. Download Pivotal CF Operations Manager for vCloud Air/vCloud from [Pivotal Network](https://network.pivotal.io/products/pivotal-cf).
-
-1. Log into vCloud.
+1. Log into vCloud Director.
 
 1. Navigate to **Catalogs > My Organization’s Catalogs** and select a catalog or
 click **Add** to create a new catalog.
@@ -154,20 +183,16 @@ click **Add** to create a new catalog.
 
     <%= image_tag("vcloud-vchs/pcf-vcloud-02.png") %><br />
 
-    <p class="note"><strong>Note</strong>: The first time you upload software to vCloud Director, you are
-    required to install the <strong>Client Integration Plug-in</strong> and restart all
-    browsers.</p>
-
-1. Select **Local file** and browse to your **ova** file.
+1. Select **Local file** and browse to your `.ovf` file.
 
     <%= image_tag("vcloud-vchs/pcf-vcloud-03a.png") %><br />
 
-1. Enter a name for your Ops Manager vApp, enter a description (optional), and
+1. Enter a name for your Ops Manager vApp, enter a description, and
 click **Upload**.
 
     <%= image_tag("vcloud-vchs/pcf-vcloud-03b.png") %><br />
 
-    vCloud Director transfers the vApp Template (the OVF package) to a staging
+    vCloud Director transfers the OVF package to a staging
     environment, then uploads it to your catalog.
 
 1. Navigate to the **Home** view and click **Add vApp from Catalog**.
@@ -178,11 +203,13 @@ click **Upload**.
 
     <%= image_tag("vcloud-vchs/pcf-vcloud-09.png") %><br />
 
-### <a id='deploying-from-catalog'></a>Deploying Ops Manager ##
+1. Complete the **Add vApp from Catalog** wizard, changing the default settings as necessary for your environment. See [Complete the vApp Wizard and Deploy Ops Manager](#deploying-from-catalog) for more information.	
 
-After adding the Ops Manager vApp to your cloud you can finish the set up and deploy as follows:
+### <a id='deploying-from-catalog'></a>Complete the vApp Wizard and Deploy Ops Manager ##
 
-1. Check the "I agree" checkbox to accept licenses and click **Next**.
+After adding the Ops Manager vApp to your vCloud Director you can finish the set up and deploy as follows:
+
+1. Check the **I agree** checkbox to accept licenses and click **Next**.
 
 1. Enter the name of your Ops Manager vApp, select the virtual data center where
 the vApp should run, and click **Next**.
@@ -201,10 +228,14 @@ allocation** to `Static — Manual`, and click **Next**.
 1. Enter the desired networking information, set an admin password for the Ops
 Manager vApp, and click **Next**.
 
-    <p class="note"><strong>Note</strong>: The order of the items on your screen may vary from the order
-    shown here.</p>
-
 	<%= image_tag("vcloud-vchs/pcf-vcloud-14.png") %><br />
+
+    <p class="note"><strong>Note</strong>: The order of the items on your screen may vary from the order shown in this image.</p>
+
+    The following list contains tips on entering specific networking information:
+    * **DNS**: If you are unsure of your Pivotal Ops Manager DNS, you can the Google Public DNS value **8.8.8.8**. For more information, refer to the [Using Google Public DNS](https://developers.google.com/speed/public-dns/docs/using) topic.
+    * **Default Gateway**: On the vCloud Air or vCloud Dashboard, click the **Gateways** tab and copy the **GATEWAY IP** value.	
+    * **IP Address**: Navigate to the **My Clouds > VMs** page, locate the Pivotal Ops Manager VM, and copy the IP address from **IP Address** column. If this column does not display, click the **Customize Columns** icon on the right side to set your column display preferences.
 
 1. Review the hardware specifications of the virtual machine and click **Next**.
 
@@ -216,7 +247,8 @@ created.
 
     <%= image_tag("vcloud-vchs/pcf-vcloud-17.png") %><br />
 
-1. Once the VM boots, the interface is available at the IP address you
-specified.
+1. Once the VM boots, the Ops Manager login screen displays at the IP address you specified.
+
+    <%= image_tag("vcloud-vchs/pcf-om-login.png") %><br />
 
 [Return to the Getting Started Guide](../getstarted/index.html)

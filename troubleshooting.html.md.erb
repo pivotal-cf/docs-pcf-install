@@ -32,7 +32,7 @@ a test application to the cloud during post-installation testing.
 The installation fails if the resulting traffic cannot be routed to the HA
 Proxy load balancer.
 
-## <a id='debug'></a>Viewing the debug Endpoint ##
+## <a id='debug'></a>Viewing the Debug Endpoint ##
 
 The debug endpoint is a web page that provides information useful in
 troubleshooting.
@@ -58,7 +58,17 @@ application (a Rails application) is running, as recorded in the
 `production.log` file.
 See the next section to learn how to explore other logs.
 
-## <a id='component_logs'></a>Viewing Logs for Elastic Runtime Components ##
+## <a id='tips'> </a>Logging Tips ##
+
+### <a id='starting'> </a>Identifying Where to Start ###
+
+This section contains general tips for locating where a particular problem is called out in the log files. Refer to the later sections for tips regarding specific logs (such as those for Elastic Runtime Components).
+
+* Start with the largest and most recently updated files in the job log
+* Identify logs that contain 'err' in the name
+* Scan the file contents for a "failed" or "error" string
+
+### <a id='component_logs'></a>Viewing Logs for Elastic Runtime Components ###
 
 To troubleshoot specific Elastic Runtime components by viewing their log files, browse to the Ops Manager interface and follow the procedure below.
 
@@ -76,7 +86,7 @@ To troubleshoot specific Elastic Runtime components by viewing their log files, 
 
 The contents of the log directory vary depending on which component you view. For example, the DEA log directory contains subdirectories for the `dea_logging_agent`, `dea_next`, `monit`, and `warden` processes. To view the standard error stream for `warden`, download the DEA logs and open `dea.0.job > warden > warden.stderr.log`.
 
-##<a id='view_in_terminal'></a>Viewing Web Application and BOSH Failure Logs in a Terminal Window ##
+###<a id='view_in_terminal'></a>Viewing Web Application and BOSH Failure Logs in a Terminal Window ###
 
 You can obtain diagnostic information from the Operations Manager by logging
 in to the VM where it is running. To log in to the Operations Manager VM, you need the following information:
@@ -118,152 +128,6 @@ BOSH diagnostic commands with the BOSH Command-Line Interface (CLI).
 <p class="note"><strong>Note</strong>: Do not manually modify the deployment manifest. Operations Manager will overwrite manual changes to this manifest.
 In addition, manually changing the manifest may cause future deployments to
 fail.</p>
-
-## <a id='common_probs'></a>Common Problems ##
-
-Compare evidence that you have gathered to the problem descriptions below.
-If your problem is covered, try the recommended remediation procedures.
-
-### <a id='reinstall_bosh'></a>BOSH does not reinstall ###
-
-You might want to reinstall BOSH for troubleshooting purposes.
-However, if Pivotal CF does not detect any changes, BOSH does not reinstall.
-To force a reinstall of BOSH, select **Ops Manager Director > Resource Sizes**
-and change a resource value.
-For example, you could increase the amount of RAM by 1.
-
-### <a id='time_out'></a>Creating bound missing VMs times out ###
-
-This task happens immediately following package compilation, but before job
-assignment to agents.
-For example:
-
-<pre class="terminal">
-cloud_controller/0: Timed out pinging to f690db09-876c-475e-865f-2cece06aba79 after 600 seconds (00:10:24)
-</pre>
-
-This is most likely a NATS issue with the VM in question.
-To identify a NATS issue, inspect the agent log for the VM.
-Since the BOSH director is unable to reach the BOSH agent, you must access the
-VM using another method.
-You will likely also be unable to access the VM using TCP.
-In this case, access the VM using your virtualization console.
-
-To diagnose:
-
-1. Access the VM using your virtualization console and log in.
-
-1. Navigate to the **Credentials** tab of the **Elastic Runtime** tile and
-locate the VM in question to find the **VM credentials**.
-
-1. Become root.
-
-1. Run `cd /var/vcap/bosh/log`.
-
-1. Open the file `current`.
-
-1. First, determine whether the BOSH agent and director have successfully
-completed a handshake, represented in the logs as a “ping-pong”:
-
-    <pre class="terminal">
-     2013-10-03\_14:35:48.58456 #[608] INFO: Message: {"method"=>"ping", "arguments"=>[],      "reply\_to"=>"director.f4b7df14-cb8f-4214-b668-1660944090e4.19719508-e0dd-4f53-b755-58b6336058ab"}
- 2013-10-03\_14:35:48.60182 #[608] INFO: reply\_to:   director.f4b7df14-cb8f-4214-b668-1660944090e4.19719508-e0dd-4f53-b755-58b6336058ab: payload: {:value=>"pong"}
-    </pre>
-
-    This handshake must complete for the agent to receive instructions from the
-director.
-
-1. If you do not see the handshake, look for another line near the beginning of
-the file, prefixed `INFO: loaded new infrastructure settings`.
-For example:
-
-     <pre class="terminal">
-      2013-10-03\_14:35:21.83222 #[608] INFO: loaded new infrastructure settings: {"vm"=>{"name"=>"vm-4d80ede4-b0a5-4992-aea6-1c6a0386e18e", "id"=>"vm-360"}, "agent\_id"=>"56aea4ef-6aa9-4c39-8019-7024c1cfdde4", "networks"=>{"default"=>{"ip"=>"192.168.86.19", "netmask"=>"255.255.255.0", "cloud\_properties"=>{"name"=>"VMNetwork"}, "default"=>["dns", "gateway"], "dns"=>["192.168.86.2", "192.168.86.17"], "gateway"=>"192.168.86.2", "dns\_record\_name"=>"0.nats.default.cf-d7293430724a2c421061.microbosh", "mac"=>"00:50:56:9b:71:67"}}, "disks"=>{"system"=>0, "ephemeral"=>1, "persistent"=>{}}, "ntp"=>[], "blobstore"=>{"provider"=>"dav", "options"=>{"endpoint"=>"http://192.168.86.17:25250", "user"=>"agent", "password"=>"agent"}}, "mbus"=>"nats://nats:nats@192.168.86.17:4222", "env"=>{"bosh"=>{"password"=>"$6$40f9977ca2abd9d9$v2AIebPPYZflT6B265FkOigsR/8Wt0BiPsS2GDq2BpJoI5cPjWjRK5HJyq3gTZH7zK4i4tQ9K4rvvC/8ADZHW0"}}}
-     </pre>
-
-This is a JSON blob of key/value pairs representing the expected infrastructure
-for the BOSH agent.
-For this issue, the following section is the most important:
-
-`"mbus"=>"nats://nats:nats@192.168.86.17:4222"`
-
-This key/value pair represents where the agent expects the NATS server to be.
-One diagnostic tactic is to try pinging this NATS IP address from the VM to
-determine whether you are experiencing routing issues.
-
-### <a id='RSA-cert'></a>Install exits with a creates/updates/deletes app failure or with a 403 ###
-
-**Scenario 1:**
-Your Pivotal CF install exits with the following 403 error when you attempt to
-log in to the Developer Console:
-
-<pre>
-{"type": "step_finished", "id": "console.deploy"}
-
-/home/tempest-web/tempest/web/vendor/bundle/ruby/1.9.1/gems/mechanize-2.7.2/lib/mechanize/http/agent.rb:306:in `fetch': 403 => Net::HTTPForbidden for https://login.api.x.y/oauth/authorizeresponse_type=code&client_id=portal&redirect_uri=https%3... -- unhandled response (Mechanize::ResponseCodeError)
-</pre>
-
-**Scenario 2:**
-Your Pivotal CF install exits with a `creates/updates/deletes an app (FAILED - 1)` error message with the following stack trace:
-
-<pre>
-1) App CRUD creates/updates/deletes an app
-   Failure/Error: Unable to find matching line from backtrace
-   CFoundry::TargetRefused:
-     Connection refused - connect(2)
-</pre>
-
-In either of the above scenarios, ensure that you have correctly entered your
-domains in wildcard format:
-
-1. Browse to the Operations Manager interface IP.
-
-1. Click the **Elastic Runtime** tile.
-
-1. Select **HAProxy** and click **Generate Self-Signed RSA Certificate**.
-
-1. Enter your system and app domains in wildcard format, as well as optionally
-any custom domains, and click **Save**.
-Refer to **Elastic Runtime > Cloud Controller** for explanations of these
-domain values.
-
- <%= image_tag('rsa_cert.png') %>
-
-### <a id='runtime_depend'></a>Install fails when Gateway instances > 0 ###
-
-If you configure the number of Gateway instances to be greater than zero for a
-given product, you create a dependency on Elastic Runtime for that product
-installation.
-If you attempt to install a product tile with an Elastic Runtime dependency
-before installing Elastic Runtime, the install fails.
-
-To change the number of Gateway instances, click the product
-tile, then select **Settings > Resource sizes > INSTANCES** and change the
-value next to the product Gateway job.
-
-To remove the Elastic Runtime dependency, change the value of this field to `0`.
-
-### <a id='out_of_disk_space'></a>Out of Disk Space Error ###
-
-Pivotal CF displays an `Out of Disk Space` error if log files expand to fill
-all available disk space.
-If this happens, rebooting the Pivotal CF installation VM clears the tmp
-directory of these log files and resolves the error.
-
-### <a id='vsphere_fails'></a>Installing Ops Manager Director fails ###
-If the DNS information for the Pivotal CF VM is incorrectly specified when
-deploying the Pivotal CF .ova file, installing Ops Manager Director fails at the "Installing Micro BOSH" step.
-
-To resolve this issue, correct the DNS settings in the Pivotal CF Virtual
-Machine properties.
-
-### <a id='elastic_runtime_fails'></a>Installing Elastic Runtime fails ###
-
-If the DNS information for the Pivotal CF VM becomes incorrect after Ops Manager Director has been installed, installing Elastic Runtime with Pivotal Operations
-Manager fails at the "Verifying app push" step.
-
-To resolve this issue, correct the DNS settings in the Pivotal CF Virtual
-Machine properties.
 
 ##<a id='console-logs'></a>Viewing Developer Console Logs in a Terminal Window ##
 
@@ -333,3 +197,176 @@ Once set, the Developer Console log files only include messages at the set
 severity level and above.
 For example, if you set `LOG_LEVEL` to `fatal`, the log includes `fatal` and
 `unknown` level messages only.
+
+## <a id='common_probs'></a>Common Issues ##
+
+Compare evidence that you have gathered to the descriptions below.
+If your issue is covered, try the recommended remediation procedures.
+
+### <a id='reinstall_bosh'></a>BOSH Does Not Reinstall ###
+
+You might want to reinstall BOSH for troubleshooting purposes.
+However, if Pivotal CF does not detect any changes, BOSH does not reinstall.
+To force a reinstall of BOSH, select **Ops Manager Director > Resource Sizes**
+and change a resource value.
+For example, you could increase the amount of RAM by 1.
+
+### <a id='time_out'></a>Creating Bound Missing VMs Times Out ###
+
+This task happens immediately following package compilation, but before job
+assignment to agents.
+For example:
+
+<pre class="terminal">
+cloud_controller/0: Timed out pinging to f690db09-876c-475e-865f-2cece06aba79 after 600 seconds (00:10:24)
+</pre>
+
+This is most likely a NATS issue with the VM in question.
+To identify a NATS issue, inspect the agent log for the VM.
+Since the BOSH director is unable to reach the BOSH agent, you must access the
+VM using another method.
+You will likely also be unable to access the VM using TCP.
+In this case, access the VM using your virtualization console.
+
+To diagnose:
+
+1. Access the VM using your virtualization console and log in.
+
+1. Navigate to the **Credentials** tab of the **Elastic Runtime** tile and
+locate the VM in question to find the **VM credentials**.
+
+1. Become root.
+
+1. Run `cd /var/vcap/bosh/log`.
+
+1. Open the file `current`.
+
+1. First, determine whether the BOSH agent and director have successfully
+completed a handshake, represented in the logs as a “ping-pong”:
+
+    <pre class="terminal">
+    2013-10-03\_14:35:48.58456 #[608] INFO: Message: {"method"=>"ping", "arguments"=>[],
+"reply\_to"=>"director.f4b7df14-cb8f.19719508-e0dd-4f53-b755-58b6336058ab"}
+
+    2013-10-03\_14:35:48.60182 #[608] INFO: reply\_to:   director.f4b7df14-cb8f.19719508-e0dd-4f53-b755-58b6336058ab:
+payload: {:value=>"pong"}
+    </pre>
+
+    This handshake must complete for the agent to receive instructions from the
+director.
+
+1. If you do not see the handshake, look for another line near the beginning of
+the file, prefixed `INFO: loaded new infrastructure settings`.
+For example:
+
+    <pre class="terminal">
+    2013-10-03\_14:35:21.83222 #[608] INFO: loaded new infrastructure settings:
+{"vm"=>{"name"=>"vm-4d80ede4-b0a5-4992-aea6a0386e18e", "id"=>"vm-360"},
+"agent\_id"=>"56aea4ef-6aa9-4c39-8019-7024ccfdde4",
+"networks"=>{"default"=>{"ip"=>"192.168.86.19",
+"netmask"=>"255.255.255.0", "cloud\_properties"=>{"name"=>"VMNetwork"},
+"default"=>["dns", "gateway"],
+"dns"=>["192.168.86.2", "192.168.86.17"], "gateway"=>"192.168.86.2",
+"dns\_record\_name"=>"0.nats.default.cf-d729343071061.microbosh",
+"mac"=>"00:50:56:9b:71:67"}}, "disks"=>{"system"=>0, "ephemeral"=>1,
+"persistent"=>{}}, "ntp"=>[], "blobstore"=>{"provider"=>"dav",
+"options"=>{"endpoint"=>"http://192.168.86.17:25250",
+"user"=>"agent", "password"=>"agent"}},
+"mbus"=>"nats://nats:nats@192.168.86.17:4222",
+"env"=>{"bosh"=>{"password"=>"$6$40ftQ9K4rvvC/8ADZHW0"}}}
+     </pre>
+
+This is a JSON blob of key/value pairs representing the expected infrastructure
+for the BOSH agent.
+For this issue, the following section is the most important:
+
+`"mbus"=>"nats://nats:nats@192.168.86.17:4222"`
+
+This key/value pair represents where the agent expects the NATS server to be.
+One diagnostic tactic is to try pinging this NATS IP address from the VM to
+determine whether you are experiencing routing issues.
+
+### <a id='RSA-cert'></a>Install Exits With a Creates/Updates/Deletes App Failure or With a 403 Error###
+
+**Scenario 1:**
+Your Pivotal CF install exits with the following 403 error when you attempt to
+log in to the Developer Console:
+
+<pre>
+{"type": "step_finished", "id": "console.deploy"}
+
+/home/tempest-web/tempest/web/vendor/bundle/ruby/1.9.1/gems/mechanize-2.7.2/lib/mechanize/http/agent.rb:306:in
+`fetch': 403 => Net::HTTPForbidden for https://login.api.x.y/oauth/authorizeresponse_type=code&client_id=portal&redirect_uri=https%3...
+-- unhandled response (Mechanize::ResponseCodeError)
+</pre>
+
+**Scenario 2:**
+Your Pivotal CF install exits with a `creates/updates/deletes an app (FAILED - 1)` error message with the following stack trace:
+
+<pre>
+1) App CRUD creates/updates/deletes an app
+   Failure/Error: Unable to find matching line from backtrace
+   CFoundry::TargetRefused:
+     Connection refused - connect(2)
+</pre>
+
+In either of the above scenarios, ensure that you have correctly entered your
+domains in wildcard format:
+
+1. Browse to the Operations Manager interface IP.
+
+1. Click the **Elastic Runtime** tile.
+
+1. Select **HAProxy** and click **Generate Self-Signed RSA Certificate**.
+
+1. Enter your system and app domains in wildcard format, as well as optionally
+any custom domains, and click **Save**.
+Refer to **Elastic Runtime > Cloud Controller** for explanations of these
+domain values.
+
+ <%= image_tag('rsa_cert.png') %>
+
+### <a id='runtime_depend'></a>Install Fails When Gateway Instances Exceed Zero ###
+
+If you configure the number of Gateway instances to be greater than zero for a
+given product, you create a dependency on Elastic Runtime for that product
+installation.
+If you attempt to install a product tile with an Elastic Runtime dependency
+before installing Elastic Runtime, the install fails.
+
+To change the number of Gateway instances, click the product
+tile, then select **Settings > Resource sizes > INSTANCES** and change the
+value next to the product Gateway job.
+
+To remove the Elastic Runtime dependency, change the value of this field to `0`.
+
+### <a id='out_of_disk_space'></a>Out of Disk Space Error ###
+
+Pivotal CF displays an `Out of Disk Space` error if log files expand to fill
+all available disk space.
+If this happens, rebooting the Pivotal CF installation VM clears the tmp
+directory of these log files and resolves the error.
+
+### <a id='vsphere_fails'></a>Installing Ops Manager Director Fails ###
+If the DNS information for the Pivotal CF VM is incorrectly specified when
+deploying the Pivotal CF .ova file, installing Ops Manager Director fails at the "Installing Micro BOSH" step.
+
+To resolve this issue, correct the DNS settings in the Pivotal CF Virtual
+Machine properties.
+
+### <a id='elastic_runtime_fails'></a>Installing Elastic Runtime Fails ###
+
+If the DNS information for the Pivotal CF VM becomes incorrect after Ops Manager Director has been installed, installing Elastic Runtime with Pivotal Operations
+Manager fails at the "Verifying app push" step.
+
+To resolve this issue, correct the DNS settings in the Pivotal CF Virtual
+Machine properties.
+
+## <a id='common_probs_firewalls'></a>Common Issues Caused by Firewalls ##
+
+This section describes various issues you might encounter when installing 
+Elastic Runtime in an environment that uses a strong firewall.
+
+### <a id='DNS_fails'></a>Firewall Blocks Access to xip.io ###
+
+If you use [xip.io](http://xip.io/) to test your DNS configuration in an environment with a strong firewall, the firewall might prevent Elastic Runtime from accessing `*.xip.io` and the tests will fail without warning. Check the logs for error messages regarding DNS failures and use the appropriate DNS commands for your OS to verify that Elastic Runtime can correctly resolve DNS entries.

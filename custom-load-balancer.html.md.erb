@@ -2,20 +2,42 @@
 title: Using Your Own Load Balancer
 ---
 
-Pivotal CF uses HAProxy as the default load balancer for SSL termination.
 This guide describes how to use your own load balancer and forward traffic to
-the Elastic Runtime router IP.
+your Elastic Runtime router IP address.
 
-1. Deploy a Pivotal CF Installation virtual machine.
+Pivotal CF deploys with a single instance of HAProxy for use in lab and test
+environments.
+Production environments should use a highly-available customer-provided load
+balancing solution that does the following:
+
+* Provides load balancing to each of the Pivotal CF Router IPs
+* Supports SSL termination with wildcard DNS location
+* Adds appropriate `x-forwarded-for` and `x-forwarded-proto` HTTP headers to
+incoming requests
+* (**Optional**) Supports WebSockets
+
+<p class='note'><strong>Note</strong>: Application logging with <a href="../devguide/services/log-management.html#loggregator">Loggregator</a> requires WebSockets. To use another logging service, see the <a href="../devguide/services/log-management.html#use">Using Third-Party Log Management Services</a> topic.</p>
+
+Follow the instructions below to use your own load balancer.
+
+##<a id='deploy'></a>Step 1: Deploy Pivotal CF Installation VM##
+
+Deploy a Pivotal CF Installation virtual machine.
 The procedure you follow depends on the IaaS you use:
-    * [Deploying Operations Manager to vSphere](../customizing/deploying-vm.html)
-    * [Deploying Operations Manager to vCloud Air and vCloud](../customizing/pcf-vchs-vcloud.html)
 
+* [Deploying Operations Manager to vSphere](../customizing/deploying-vm.html)
+* [Deploying Operations Manager to vCloud Air and vCloud](../customizing/pcf-vchs-vcloud.html)
 
-1. In your load balancer, register the IP addresses you assigned to Pivotal CF.
+##<a id='register'></a>Step 2: Register Pivotal CF IP Address##
 
-1. Configure your Pivotal Operations Manager and Ops Manager Director as described in [Getting Started with Pivotal CF](../getstarted/index.html), then add Elastic Runtime. Do not click
-**Install** after adding Elastic Runtime.
+In your load balancer, register the IP addresses you assigned to Pivotal CF.
+
+##<a id='configure'></a>Step 3: Configure Pivotal Ops Manager and Ops Manager Director##
+
+1. Configure your Pivotal Operations Manager and Ops Manager Director as
+described in [Getting Started with Pivotal CF](../getstarted/index.html), then
+add Elastic Runtime.
+Do not click **Install** after adding Elastic Runtime.
 
 1. In Pivotal Operations Manager, click the **Elastic Runtime** tile.
 
@@ -28,14 +50,18 @@ This field should be blank.
 
 1. If you are using a signed certificate from a known certificate authority,
 install the SSL Certificate on your load balancer.
-If you are not using a signed certificate, generate a self-signed RSA certificate as described in [Generate an RSA Certificate](../getstarted/index.html#generate-rsa-cert),
-then install this certificate on your load balancer.
+If you are not using a signed certificate, generate a self-signed RSA
+certificate as described in [Generate an RSA Certificate](../getstarted/index.html#generate-rsa-cert), then install this
+certificate on your load balancer.
 
 1. In the left column, select **Router IPs**.
 
-1. In the **Router IPs** field, enter the IP address(es) for Pivotal CF that you registered with your load balancer in Step 2. Save this change.
+1. In the **Router IPs** field, enter the IP address(es) for Pivotal CF that you
+registered with your load balancer in Step 2.
+Save this change.
 
     <%= image_tag("loadbalancer/add-router-1_3.png") %>
 
-1. Click **Install**. Complete installation of your selected products as described in the [Install Products](../getstarted/index.html#install)
-section of the Pivotal CF Getting Started Guide.
+1. Click **Install**.
+Complete installation of your selected products as described in the [Install Products](../getstarted/index.html#install) section of the Pivotal CF Getting
+Started Guide.

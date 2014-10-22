@@ -97,3 +97,14 @@ All communication between Pivotal CF VMs and vCenter or ESXi hosts routes throug
 * Ops Manager and MicroBOSH Director VMs require access to vCenter and all ESX through **port 443**. You must open this port in your firewall.
 
 * BOSH requires that you allocate a sufficent number of additonal dynmaic IP addresses when configuring a reserved IP range during installation. BOSH uses these IPs during installation to compile and deploy VMs, install Elastic Runtime, and connect to services. We recommend that you allocate at least 36 dynamic IP addresses when deploying Ops Manager and Elastic Runtime.
+
+### <a id='disk-attach'></a>Cannot Attach Disk During MicroBOSH Deploy to vCloud ###
+
+When attempting to attach a disk to a MicroBOSH VM, you might receive the following error:
+`The requested operation cannot be performed because disk XXXXXXXXX was not created properly.`
+
+Possible causes and recommendations:
+
+* The CPI uses the vCloud default storage profile for disks and VMs. If the account used during deployment lacks permission to access the default storage profile, attaching the disk might fail. The 0.5.2 version of the CPI resolves this issue; update your CPI if neceesary.
+
+* vCloud Director can incorrectly report a successful disk creation even if the operation fails, resulting in subsequent error messages. To resolve this issue, redeploy MicroBOSH.

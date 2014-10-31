@@ -56,7 +56,6 @@ Refer to this section for help backing up and restoring databases associated
 with your Pivotal CF installation.
 You must restore the contents of these databases in order to have a functional
 restored PaaS.
-Once you have restored these databases, you must manually redeploy all apps.
 
 Your Elastic Runtime deployment contains several critical data stores.
 You will back up each of them in turn.
@@ -117,6 +116,21 @@ Example:
 $ bosh download manifest cf-bee19d9c7d2f0c4fce8a cf.yml
  Deployment manifest saved to `cf.yml'
 ```
+## <a id='note on backing up'></a>A Note on Backing Up Databases: ##
+
+You will be running Postgres DB/PostgreSQL (psql) commands on the VMs upon which the databases reside. This requires using the client installed on the VM. To find the correct path to this client, gain root access using the VM user's password.
+
+`sudo su`
+ 
+Find the locally installed psql client.
+
+```
+root@f184799b-f085-4d3e-9e43-c5fcdb7ce639:~# find /var/vcap | grep 'bin/psql'
+
+/var/vcap/data/packages/postgres/5.1/bin/psql
+```
+
+Note that in the following backup steps the full path to the client must be used. 
 
 ### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
 
@@ -215,9 +229,6 @@ manifest.
 
     `pg_dump -h 172.16.78.25 -U admin -p 2544 ccdb > ccdb.sql`
 
-    <p class="note"><strong>Note</strong>: Ensure that the <code>pg dump</code> client version is the same as the
-    version on the server.</p>
-
 ### <a id='uaadb'></a>Back Up the UAA Database ###
 
 1. In `cf.yml`, locate the `uaadb` component and note the address and password:
@@ -283,7 +294,41 @@ manifest.
     following command:
 
     <code>tar -cf - /dir/to/archive/ | wc -c</code></p>
+	
+	<p class="note"><strong>Note</strong>: Use the <code>scp</code> command to move the TAR file to the client machine.
 
 ### <a id='cc-start'></a>Start Cloud Controller ###
 
 Run `bosh start cloud_controller` to restart the Cloud Controller.
+
+### <a id='runtime'></a>Back Up Pivotal MySQL Server ###
+
+<p class="note"><strong>Note</strong>: As of PCF 1.3, MySQL Server has been embedded in the Elastic Runtime tile that serves as the data store for the <code>app\_usage\_events</code> service.
+
+1. In Ops Manager, browse to **Pivotal Elastic Runtime > Status > MySQL Server** and note the CID. 
+
+    <%= image_tag("elastic_runtime.jpg") %>
+ 
+    <%= image_tag("mysql.jpg") %>
+
+2. Download and save the BOSH deployment manifest for MySQL Server. You need this manifest to locate information about your databases. Use the name you identified in the previous step.
+
+    ```
+    $ bosh download manifest p-mysql-1e136692e37b3ec1f942 mysql.yml
+
+    Deployment manifest saved to `mysql.yml'
+    ```
+
+3. In mysql.yml, locate the IP address and password for the MySQL node:
+
+    ```
+     mysql_node:
+          host: 172.16.78.60
+          admin_password: c0eeec42e465428312fd
+        services:
+        - name: p-mysql
+    ```
+
+4.  Dump the data from the p-mysql DB and save it:
+
+`$ mysqldump -u root -p -h 172.16.78.60 --all-databases > user_databases.sql`

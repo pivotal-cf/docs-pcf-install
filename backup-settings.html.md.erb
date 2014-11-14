@@ -8,10 +8,9 @@ recommends that you back up your installation frequently.
 
 <p class="note"><strong>Note</strong>: Contact Pivotal Support for help restoring your Pivotal CF installation from the backups you created.</p>
 
-## <a id='settings'></a>Back up and Restore Installation Settings ##
+## <a id='settings'></a>Backing Up and Restoring Installation Settings ##
 
-It is important to back up your installation settings by exporting frequently.
-Always export an installation before importing a new one.
+Pivotal recommends that you back up your installation settings by exporting frequently. Always export an installation before importing a new one.
 Import an installation to restore your settings or to share your settings with
 another user.
 
@@ -22,23 +21,15 @@ another user.
 From the Product Dashboard, select **Actions > Export installation**.
 This option is only available after you have deployed at least one time.
 
-**Export installation** exports the current Pivotal CF installation with all of
-its assets.
-When you export an installation, the exported file contains references to the
-installation IP addresses.
-It also contains the base VM images and necessary packages.
-As a result, an export can be very large (as much as 5 GB or more).
+**Export installation** exports the current Pivotal CF installation settings and assets. When you export an installation, the exported file contains references to the installation IP addresses. It also contains the base VM images and necessary packages. As a result, an export can be 5 GB or more.
 
 ### <a id='import'></a>Importing an Installation ###
 
 From the Product Dashboard, select **Actions > Import installation**.
 
-**Import installation** imports an existing Pivotal CF installation with all of
-its assets.
-When you import an installation, the prior installation will disappear and be
-replaced by the newly imported one.
+**Import installation** imports the settings and assets of an existing Pivotal CF installation. Importing an installation overwrites any existing installation.
 
-## <a id='encrypt-key'></a>Back Up the Cloud Controller DB Encryption Key ##
+## <a id='encrypt-key'></a>Backing Up the Cloud Controller DB Encryption Key ##
 
 From the Product Dashboard, select **Pivotal Elastic Runtime > Credentials**
 and locate the Cloud Controller section.
@@ -48,28 +39,12 @@ restoring your installation.
 
 <%= image_tag("db-key.png") %>
 
-## <a id='databases'></a>Back Up Critical Databases ##
-
-Refer to this section for help backing up and restoring databases associated
-with your Pivotal CF installation.
-You must restore the contents of these databases in order to have a functional
-restored PaaS.
-
-Your Elastic Runtime deployment contains several critical data stores.
-You will back up each of them in turn.
-They are:
-
-* Cloud Controller Database
-* UAA Database
-* Console Database
-* The NFS Server
-
-### <a id='manifest'></a>Download the BOSH Deployment Manifest ###
+## <a id='manifest'></a>Download the BOSH Deployment Manifest ##
 
 1. Install Ruby and the [BOSH CLI Ruby gem](http://docs.cloudfoundry.org/bosh/bosh-cli.html) on a machine outside your
 Pivotal CF system deployment.
 1. In Ops Manager, browse to **Ops Manager Director > Status > Ops Manager Director** and note the IP address.
-This is the BOSH director IP address.
+This is the BOSH Director IP address.
 
     <%= image_tag("director-ip.png") %>
 
@@ -77,7 +52,7 @@ This is the BOSH director IP address.
 
     <%= image_tag("director-creds.png") %>
 
-1. Target the BOSH director using the address and credentials you noted:
+1. Target the BOSH Director using the address and credentials you noted:
 
     ```
     $ bosh target 172.16.66.17
@@ -107,17 +82,29 @@ save the current BOSH deployment manifest.
 You need this manifest to locate information about your databases.
 The DEPLOYMENT-NAME is the name of the current BOSH deployment.
 Use `cf.yml` as the LOCAL-SAVE-NAME.
+<br /><br />
+    Example:
 
-Example:
+    ```
+    $ bosh download manifest cf-bee19d9c7d2f0c4fce8a cf.yml
+    Deployment manifest saved to `cf.yml'
+    ```
 
-```
-$ bosh download manifest cf-bee19d9c7d2f0c4fce8a cf.yml
- Deployment manifest saved to `cf.yml'
-```
+## <a id='databases'></a>Backing Up Critical Databases ##
 
-## <a id='note-on-backing-up'></a>A Note on Backing Up Databases ##
+Refer to this section for help backing up databases associated
+with your Pivotal CF installation.
 
-You will be running Postgres DB/PostgreSQL (psql) commands on the VMs upon which the databases reside. This requires using the client installed on the VM. To find the correct path to this client, gain root access using the VM user's password.
+Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore.
+You must back up each of them in turn.
+They are:
+
+* Cloud Controller Database
+* UAA Database
+* Console Database
+* The NFS Server
+
+To back up the databases, you run Postgres DB/PostgreSQL (psql) commands on the VMs containing the databases. This requires using the client installed on the VM. To find the correct path to this client, gain root access using the VM user's password.
 
 `sudo su`
 
@@ -129,7 +116,7 @@ root@f184799b-f085-4d3e-9e43-c5fcdb7ce639:~# find /var/vcap | grep 'bin/psql'
 /var/vcap/data/packages/postgres/5.1/bin/psql
 ```
 
-Note that in the following backup steps the full path to the client must be used.
+In the following backup steps, use the full path to the client.
 
 ### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
 
@@ -287,14 +274,11 @@ manifest.
 
     `ssh vcap@10.0.0.10 'cd /var/vcap/store && tar cz shared' > nfs.tar.gz`
 
-    <p class="note"><strong>Note</strong>: The TAR file you create to back up the NFS server might be very
-    large.
-    To estimate the size of the TAR file before you create it, run the
-    following command:
+    <p class="note"><strong>Note</strong>: The TAR file that you create to back up the NFS server might be large. To estimate the size of the TAR file before you create it, run the following command:
 
     <code>tar -cf - /dir/to/archive/ | wc -c</code></p>
 
-	<p class="note"><strong>Note</strong>: For consistency, Pivotal recommends that you operate from the VM and run the <code>scp</code> command to move the TAR file to the client machine. For example: <code>/var/vcap/data/packages/postgres/5.1/bin/pg_dump -U vcap -p 2544 ccdb > ccdb.sql</code> Then, exit the VM and run the following command locally. <code>scp vcap@[ccdb vm ip]:ccdb.sql</code>
+	<p class="note"><strong>Note</strong>: Pivotal recommends that you run commands like <code>pg_dump</code> and <code>tar</code> from the VM and run the <code>scp</code> command to move the results to the client machine. For example. run <code>/var/vcap/data/packages/postgres/5.1/bin/pg_dump -U vcap -p 2544 ccdb > ccdb.sql</code> on a VM, exit the VM, then run <code>scp vcap@[ccdb vm ip]:ccdb.sql</code> locally.</p>
 
 ### <a id='cc-start'></a>Start Cloud Controller ###
 
@@ -302,7 +286,7 @@ Run `bosh start cloud_controller` to restart the Cloud Controller.
 
 ### <a id='runtime'></a>Back Up Pivotal MySQL Server ###
 
-<p class="note"><strong>Note</strong>: As of PCF 1.3, MySQL Server has been embedded in the Elastic Runtime tile that serves as the data store for the <code>app\_usage\_events</code> service.
+<p class="note"><strong>Note</strong>: As of PCF 1.3, MySQL Server is embedded in the Elastic Runtime deploy that serves as the data store for the <code>app\_usage\_events</code> service.
 
 1. In Ops Manager, browse to **Pivotal Elastic Runtime > Status > MySQL Server** and note the CID.
 

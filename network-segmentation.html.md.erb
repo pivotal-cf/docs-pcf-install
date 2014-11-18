@@ -1,138 +1,134 @@
 ---
-title: Configuring Network Segmentation in Ops Manager
+title: Configuring Network Isolation Options in Ops Manager
 ---
 
-The network segmentation strategy you choose determines network traffic
-separation, and can have a significant impact on the security and performance of
-your deployment.
+This topic describes configuring different network isolation options in Ops Manager.
 
-Network traffic within a Pivotal CF deployment takes one of three forms:
+##<a id='prerequisites'></a>Prerequisites ##
 
-* **Management traffic**: Traffic connecting Pivotal CF to vCenter, as well as
-standalone SSH connections and vSphere client connections.
-This traffic may contain sensitive data.
-* **Operations traffic**: Traffic to and from the Ops Manager Director
-associated with dynamic memory migration and storage operations.
-This traffic may contain the contents of the virtual machine dynamic memory or
-storage information from VMs.
-* **Production traffic**: Traffic to and from product VMs.
+This topic assumes that you have deployed vCenter and created multiple networks.
 
-You can choose one of the following network segmentation strategies:
+##<a id='same-network'></a>Option 1: Installing Pivotal CF Products to a Common Network ##
 
-* Full: Traffic forms separated by network
-* Partial: Management and operations traffic separated from production traffic
-* Single: All traffic on the same network
+Deploy Ops Manager, Ops Manager Director, and all Pivotal CF products to a common network. The vCenter IP must be reachable on or from this network.
 
-##<a id='full'></a>Full Network Segmentation ##
+<p class='note'><strong>Note</strong>: Production environments typically require higher security than this option provides.</p>
 
-<p class='note'><strong>Note</strong>: We recommend using full network segmentation in production environments because it provides the most security.</p>
+The following image shows all Pivotal CF products and vCenter deployed to a common network.
 
-With full network segmentation, you install vCenter, the Ops Manager Director,
-and your products to different networks to separate management, operations, and
-production traffic.
+<%=image_tag("netseg/single-network.png")%>
 
-**Advantages**
+To configure your Pivotal CF deployment for the common network option:
 
-* Most secure because it separates the local network from the Internet and
-isolates each network traffic form to its own segment
-* Best performance because it allocates hosts to separate networks, which
-results in the least local traffic
+1. Log into the Pivotal CF Ops Manager web interface.
+1. On the Installation Dashboard, select **Ops Manager Director**.
+1. In the left navigation menu, select **Create Networks**.
+1. Click **Add**. Add a network that maps to a vCenter network.
 
-**Disadvantages**
+    The image shows an example network named A.
+    <%=image_tag("netseg/create-a.png")%>
 
-* Most difficult network strategy to configure and manage
+1. In the left navigation menu, click **Assign Networks**.
+1. Click the **Infrastructure Network** drop-down menu and select the network that you created in step 4.
+1. Click the **Deployment Network** drop-down menu and select the network that you created in step 4.
 
-###Configuring Full Network Segmentation ###
+    <%=image_tag("netseg/a-a.png")%>
 
-1. In vSphere, create three networks. For this example, call them network **A**, **B**, and **C**.
-1. Install your vCenter on network A.
-1. Deploy Ops Manager Director on network B. In the Ops Manager Director configuration interface, configure the Director as follows:
-    * Click **Create Network**. Click **Add**. Add a network that maps to
-	network A.
-    * Click **Create Network**. Click **Add**. Add a network that maps to
-	network B.
-    * Click **Assign Network**. Click the **Infrastructure Network** drop-down
-	menu and select the network that you created that maps to network A.
-    * Click the **Deployment Network** drop-down menu and select the network
-	that you created that maps to network B.
+1. Return to the Installation Dashboard.
+1. Perform the following steps for each Pivotal CF product, including Elastic Runtime:
+    1. On the Installation Dashboard, select the Pivotal CF product.
+    1. In the left navigation menu, click **Assign Networks**. Assign the product to the network that you created in step 4.
 
-    <%=image_tag("netseg/assign-ab.png")%>
+        The image shows an example network named A.
+        <%=image_tag("netseg/assign-a.png")%>
 
-1. Install any other products on network C.
-1. Ensure that network C can route to the IP address of the Ops Manager Director on the network you created that maps to network B.
+    1. Return to the Installation Dashboard.
 
-[Return to the Getting Started Guide](../getstarted/index.html)
+##<a id='two-networks'></a>Option 2: Installing All Pivotal CF Products to an Isolated Network ##
 
-##<a id='partial'></a>Partial Network Segmentation ##
+Deploy all Pivotal CF products to a Deployment Network. Ensure that you isolate this network from the Infrastructure Network that can reach your vCenter. This configuration provides a higher level of security than [Option 1](#same-network) by reducing the risk of a malicious attack at the IaaS level.
 
-With partial network segmentation, you install vCenter on one network and the
-Ops Manager Director and products on another.
-This separates management traffic from operations and production traffic.
+You must multihome Ops Manager Director to receive two IP addresses, one on each network. The following image shows vCenter in Network A, all Pivotal CF products in Network B, and Ops Manager Director multihomed in both networks.
 
-**Advantages**
+<%=image_tag("netseg/two-networks.png")%>
 
-* Easier to configure and manage than the "Full Segmentation" strategy
-* More secure than the "Single Network" strategy
-* Better performance than the "Single Network" strategy
+To configure your Pivotal CF deployment for an isolated network:
 
-**Disadvantages**
+1. Log into the Pivotal CF Ops Manager web interface.
+1. On the Installation Dashboard, select **Ops Manager Director**.
+1. In the left navigation menu, select **Create Networks**.
+1. Click **Add**. Add a network that maps to a vCenter network.
 
-* More difficult to configure and manage than the "Single Network" strategy
-* Less secure than the "Full Segmentation" strategy
-* Less performant than the "Full Segmentation" strategy
+    The image shows an example network named A.
+    <%=image_tag("netseg/create-a.png")%>
 
-###Configuring Partial Network Segmentation ###
+1. Add another network that maps to a different vCenter network.
 
-1. In vSphere, create two networks. For this example, call them networks **A**
-and **B**.
-1. Install your vCenter on network A.
-1. Deploy Ops Manager Director on network B. In the Ops Manager Director configuration interface, configure the Director as follows:
-    * Click **Create Network**. Click **Add**. Add a network that maps to
-	network A.
-    * Click **Create Network**. Click **Add**. Add a network that maps to
-	network B.
-    * Click **Assign Network**. Click the **Infrastructure Network** drop-down
-	menu and select the network that you created that maps to network A.
-    * Click the **Deployment Network** drop-down menu and select the network
-	that you created that maps to network B.
+    The image shows an example network named B.
+    <%=image_tag("netseg/create-b.png")%>
 
-    <%=image_tag("netseg/assign-ab.png")%>
+1. In the Ops Manager Director configuration interface, configure the Director to receive an IP address on both networks, as follows:
+    * In the left navigation menu, click **Assign Networks**. Click the **Infrastructure Network** drop-down
+		menu and select the network you created in step 4.
+    * Click the **Deployment Network** drop-down menu and select the network you
+		created in step 5.
 
-1. Install any other products on network B.
+    <%=image_tag("netseg/a-b.png")%>
 
-[Return to the Getting Started Guide](../getstarted/index.html)
+1. Return to the Installation Dashboard.
+1. Perform the following steps for each Pivotal CF product, including Elastic Runtime:
+    1. On the Installation Dashboard, select the Pivotal CF product.
+    1. In the left navigation menu, click **Assign Networks**. Assign the product to the Deployment Network.
 
-##<a id='single'></a>Single Network ##
+        The image shows an example network named B.
+        <%=image_tag("netseg/assign-b.png")%>
 
-With a single network, you deploy vCenter, the Ops Manager Director, and all
-products to the same network.
+    1. Return to the Installation Dashboard.
 
-<p class='note'><strong>Note</strong>: Production environments typically require higher security than this strategy provides.</p>
+##<a id='multiple'></a>Option 3: Installing Pivotal CF Products to Multiple Isolated Networks ##
 
-**Advantages**
+Deploy Pivotal CF products to multiple networks. Ensure that you isolate these networks from each other and from the Infrastructure Network that can reach your vCenter. This configuration provides a higher level of security than [Option 1](#same-network) and [Option 2](#two-networks) by reducing the risk of a malicious attack at both the IaaS and product levels.
 
-* Easiest network strategy to configure and manage
+You must multihome Ops Manager Director to receive two IP addresses, one on each of two networks. All other Pivotal CF products receive IP addresses on one or more separate networks. The following image shows vCenter in Network A, Ops Manager Director multihomed in Network A and Network B, and all other Pivotal CF products in Network C and Network D.
 
-**Disadvantages**
+<%=image_tag("netseg/multiple-networks.png")%>
 
-* Least secure because it does not separate the local network from the Internet
-and does not isolate the different network traffic forms
-* Poor performance because all hosts on the same network results in a maximum amount of local traffic
+To configure your Pivotal CF deployment for multiple isolated networks:
 
-###Configuring for a Single Network ###
+1. Log into the Pivotal CF Ops Manager web interface.
+1. On the Installation Dashboard, select **Ops Manager Director**.
+1. In the left navigation menu, select **Create Networks**.
+1. Click **Add**. Add a network that maps to a vCenter network.
 
-1. In vSphere, create one network. For this example, call it network **A**.
-1. Install your vCenter on network A.
-1. Deploy Ops Manager Director on network A. In the Ops Manager Director configuration interface, configure the Director as follows:
-    * Click **Create Network**. Click **Add**. Add a network that maps to
-	network A.
-    * Click **Assign Network**. Click the **Infrastructure Network** drop-down
-	menu and select the network that you created that maps to network A.
-    * Click the **Deployment Network** drop-down menu and select the network
-	that you created that maps to network A.
+    The image shows an example network named A.
+    <%=image_tag("netseg/create-a.png")%>
 
-    <%=image_tag("netseg/assign-aa.png")%>
+1. Add another network for the Ops Manager Director that maps to a different vCenter network.
 
-1. Install any other products on network A.
+    The image shows an example network named B.
+    <%=image_tag("netseg/create-b.png")%>
 
-[Return to the Getting Started Guide](../getstarted/index.html)
+1. Add a third network specifically for Elastic Runtime that maps to a different vCenter network. Ensure that this network can route to the Ops Manager Director IP address that you created in step 3.
+
+    The image shows an example network named C.
+    <%=image_tag("netseg/create-c.png")%>
+
+1. (**Optional**) Add additional networks for other products if you want to isolate them from the applications running in Elastic Runtime and from each other. Ensure that each network can route to the Ops Manager Director IP address.
+
+1. In the Ops Manager Director configuration interface, configure the Director to receive an IP address on the Infrastructure and Deployment networks, as follows:
+    * In the left navigation menu, click **Assign Networks**. Click the **Infrastructure Network** drop-down
+		menu and select the network you created in step 4.
+    * Click the **Deployment Network** drop-down menu and select the network you
+		created in step 5.
+
+    <%=image_tag("netseg/a-b.png")%>
+
+1. Return to the Installation Dashboard.
+1. Perform the following steps for each Pivotal CF product, including Elastic Runtime:
+    1. On the Installation Dashboard, select the Pivotal CF product.
+    1. In the left navigation menu, click **Assign Networks**. Assign the product to a network other than Infrastructure or Deployment.
+
+        The image shows an example network named C.
+        <%=image_tag("netseg/assign-c.png")%>
+
+    1. Return to the Installation Dashboard.

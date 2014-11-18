@@ -1,0 +1,160 @@
+---
+title: Deploying Operations Manager to AWS
+---
+
+Pivotal CF / Ops Manager for AWS is currently in alpha. This release is neither upgradeable, nor officially supported. Questions and feedback can be posted at <a href="http://goo.gl/forms/N7Pld5wDyb">http://goo.gl/forms/N7Pld5wDyb</a>.
+
+At present Pivotal CF / Ops Manager for AWS lacks support for the following components. Each will be fully supported in the final release.
+
+- Elastic Loab Balancer
+- RDS
+- S3
+
+## Install Pivotal CF Ops Manager Director ##
+
+1. Login to your AWS account.
+1. Navigate to the VPC Dashboard.
+1. Click **Start VPC Wizard**.
+
+    <%= image_tag("aws/vpc-step1.png") %>
+
+1. Select the second VPC Configuration (VPC with Public and Private Subnets)
+
+    <%= image_tag("aws/vpc-step2.png") %>
+
+1. Keep the defaults for your VPC and click **Create VPC**.
+
+    <%= image_tag("aws/vpc-step3.png") %>
+
+  
+
+1. Navigate to the EC2 Dashboard
+1. Click **Launch Instance**
+
+    <%= image_tag("aws/vpc-step4.png") %>
+
+1. Search for Community AMI named Pivotal CF and click **Select**.
+
+    <%= image_tag("aws/vpc-step5.png") %>
+
+1. Choose an m3.xlarge from the list of instance types.
+
+    <%= image_tag("aws/vpc-step6.png") %>
+
+1. Configure the instance to use your VPC, public subnet and subnet setting for its IP.
+
+    <%= image_tag("aws/vpc-step7.png") %>
+
+1. Click **Review and Launch**.
+
+1. Create a security group with the following protocols and ports.
+
+    <%= image_tag("aws/vpc-step8.png") %>
+
+1. Click **Review and Launch**.
+
+1. Review and click **Launch**.
+
+1. Navigate to the EC2 Dashboard.
+
+1. Navigate to the Instances page.
+
+1. Find the Public DNS of the instance you created.
+
+    <%= image_tag("aws/vpc-step9.png") %>
+
+1. Browse to the DNS address and create a username / password.
+
+    <%= image_tag("aws/vpc-step10.png") %>
+
+1. Click on the Ops Manager Director for AWS tile.
+
+    <%= image_tag("aws/vpc-step11.png") %>
+
+1. Enter your AWS information in the fields provided and click **Save**.
+
+    <%= image_tag("aws/vpc-step12.png") %>
+
+1. Click on Director Config and enter an NTP Server. Click **Save**.
+
+    <%= image_tag("aws/vpc-step13.png") %>
+
+1. Click on Create Network, enter network information based on the example below, and click **Save**.  Use the Private Subnet ID, the 10.0.0.2 VPC DNS server, the private subnet gateway (likely 10.1.0.1), and exclude Amazon IPs used at the bottom of the private range.
+
+    <%= image_tag("aws/vpc-step14.png") %>
+
+1. Click on Assign Networks and assign the Director to the network you created.
+
+    <%= image_tag("aws/vpc-step15.png") %>
+
+1. Return to the Installation Dashboard and click the Apply Changes button. Your installation of Ops Manager Director will begin.
+
+1. Once the changes are applied you should see the following:
+
+    <%= image_tag("aws/vpc-step16.png") %>
+
+## Installing Elastic Runtime ##
+
+1. Return to the AWS VPC Dashboard and navigate to the Elastic IPs page.
+
+1. Click **Allocate New Address**. Note: we will use this IP for PCF Elastic Runtime's HA Proxy instance. We have not deployed it yet, but we need to know the address to create an SSL certificate ahead of time.
+
+    <%= image_tag("aws/vpc-er-step1.png") %>
+
+1. Click **Allocate New Address**. Note: we will use this IP for PCF Elastic Runtime's HA Proxy instance. We have not deployed it yet, but we need to know the address to create an SSL certificate ahead of time.
+
+    <%= image_tag("aws/vpc-er-step1.png") %>
+
+1. Write down the Elastic IP address you allocated.
+
+1. Navigate to [Pivotal CF download page of Pivotal Network](https://network.pivotal.io/products/pivotal-cf).
+
+1. Download the Experimental Pivotal Elastic Runtime for AWS release.
+
+1. Navigate to the Pivotal CF Ops Manager Installation Dashbaord and click **Import Product**.
+
+    <%= image_tag("aws/vpc-er-step2.png") %>
+
+1. Import the Experimental Pivotal Elastic Runtime for AWS release you downloaded.
+
+1. Hover over the Pivotal Elastic Runtime product and click **Add**.
+
+    <%= image_tag("aws/vpc-er-step3.png") %>
+
+1. Click on the Elastic Runtime tile in the Installation Dashboard.
+
+    <%= image_tag("aws/vpc-er-step4.png") %>
+
+1. Navigate to the HAProxy form and enter a free IP address within your private Subnet.
+
+    <%= image_tag("aws/vpc-er-step5.png") %>
+
+1. Click on the Generate Self-Signed RSA Certificate link.
+
+1. Use the Elastic IP you wrote down to generate a wildcard domain. You can do this by using your own Domain registration service, or by using something like xip.io (recommended). Make sure to enter the domain with an asterix. For example: '*.54.122.3.11.xip.io'
+
+    <%= image_tag("aws/vpc-er-step6.png") %>
+
+1. Click **Trust Self-Signed Certificates** and **Save**.
+
+    <%= image_tag("aws/vpc-er-step7.png") %>
+
+1. Navigate to the Cloud Controller form and enter System and Application domains according to the wildcard domain you are using. Do not enter the domain with an asterix. For example: '54.122.3.11.xip.io'
+
+    <%= image_tag("aws/vpc-er-step8.png") %>
+
+1. Click **Save**.
+
+1. Navigate to the Lifecycle Errands form and uncheck the three Post-Install Errands.
+
+    <%= image_tag("aws/vpc-er-step9.png") %>
+
+1. Click **Save**.
+
+1. Return to the Installation Dashboard and click the Apply Changes button. Your installation of Ops Manager Director will begin.
+
+1. Once the changes are applied you should see the following:
+
+    <%= image_tag("aws/vpc-step16.png") %>
+
+[Return to the Getting Started Guide](../getstarted/index.html)

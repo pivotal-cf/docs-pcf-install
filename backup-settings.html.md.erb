@@ -32,71 +32,74 @@ As a result, an export can be 5 GB or more.
 
 ### <a id='import'></a>Importing an Installation ###
 
-From the Product Installation Dashboard, click the gear icon and select **Import installation settings**.
+1. From the Product Installation Dashboard, click the gear icon and select **Import installation settings**.
 
-<%= image_tag("action.png") %>
+    <%= image_tag("action.png") %>
+
+1. Browse to and select a Pivotal CF installation file, then click **Import**.
+
+    <%= image_tag("import-installation-file.png") %>
 
 **Import installation settings** imports the settings and assets of an existing
 Pivotal CF installation.
 Importing an installation overwrites any existing installation.
 
-## <a id='encrypt-key'></a>Backing Up the Cloud Controller DB Encryption Key ##
+## <a id='encrypt-key'></a>Backing Up the Cloud Controller DB Encryption Credentials ##
 
 From the Product Installation Dashboard, select **Pivotal Elastic Runtime > Credentials** and locate the Cloud Controller section.
 Record the Cloud Controller DB encryption credentials.
 You must provide these credentials if you contact Pivotal Support for help
 restoring your installation.
 
-<%= image_tag("db-key.png") %>
+<%= image_tag("ccdb-encrypt-creds.png") %>
 
 ## <a id='manifest'></a>Download the BOSH Deployment Manifest ##
 
 1. Install Ruby and the [BOSH CLI Ruby gem](http://docs.cloudfoundry.org/bosh/bosh-cli.html) on a machine outside your
 Pivotal CF system deployment.
-1. In Ops Manager, browse to **Ops Manager Director > Status > Ops Manager Director** and note the IP address.
-This is the BOSH Director IP address.
+1. From the Installation Dashboard in Ops Manager, select **Ops Manager Director > Status** and record the IP address listed for the Ops Manager Director.
+You access the BOSH Director using this IP address.
 
     <%= image_tag("director-ip.png") %>
 
-1. In Ops Manager, browse to **Ops Manager Director > Credentials > Ops Manager** and note the Director credentials.
+1. Click **Credentials** and record the Director credentials.
 
     <%= image_tag("director-creds.png") %>
 
-1. Target the BOSH Director using the address and credentials you noted:
+1. From a command line, target the BOSH Director using the IP address and credentials that you recorded:
 
     ```
-    $ bosh target 172.16.66.17
-    Target set to `microbosh-3ac4e7a1faf8752dd349'
+    $ bosh target 10.0.0.3
+    Target set to `microbosh-1234abcd1234abcd1234'
     Your username: director
     Enter password: ********************
     Logged in as `director'
     ```
     <p class="note"><strong>Note</strong>: If <code>bosh target</code> does not prompt you for your username and password, run <code>bosh login</code>.</p>
 
-1. Locate the name of the current BOSH deployment:
+1. Run `bosh deployments` to identify the name of the current BOSH deployment:
 
     ```
 	$ bosh deployments
-	+-------------------------+--------------------------------+-------------------------------+
-	| Name                    | Release(s)                     | Stemcell(s)                   |
-	+-------------------------+--------------------------------+-------------------------------+
-	| cf-bee19d9c7d2f0c4fce8a | cf/170                         | bosh-vsphere-esxi-ubuntu/2366 |
-	|                         | push-console-release/23        |                               |
-	|                         | runtime-verification-errands/2 |                               |
-	+-------------------------+--------------------------------+-------------------------------+
-
-	Deployments total: 1
+	+-----------------+--------------------------+-------------------------------------------------+
+	| Name            | Release(s)               | Stemcell(s)                                     |
+	+-----------------+--------------------------+-------------------------------------------------+
+	| cf-5678dcba5678 | cf-mysql/10              | bosh-vsphere-esxi-ubuntu-trusty-go_agent/2690.3 |
+	|                 | cf/183.2                 |                                                 |
+	|                 | push-console-release/207 |                                                 |
+	+-----------------+--------------------------+-------------------------------------------------+
     ```
-1. Use `bosh download manifest DEPLOYMENT-NAME LOCAL-SAVE-NAME` to download and
+
+1. Run `bosh download manifest DEPLOYMENT-NAME LOCAL-SAVE-NAME` to download and
 save the current BOSH deployment manifest.
 You need this manifest to locate information about your databases.
-The DEPLOYMENT-NAME is the name of the current BOSH deployment.
+Replace DEPLOYMENT-NAME with the name of the current BOSH deployment.
 Use `cf.yml` as the LOCAL-SAVE-NAME.
 <br /><br />
     Example:
 
     ```
-    $ bosh download manifest cf-bee19d9c7d2f0c4fce8a cf.yml
+    $ bosh download manifest cf-5678dcba5678 cf.yml
     Deployment manifest saved to `cf.yml'
     ```
 
@@ -115,48 +118,13 @@ You must back up each of the following:
 
 ### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
 
-1. Run `bosh status` and record the UUID.
-
-    Example:
-
-    ```
-    $ bosh status
-    Config
-                 /Users/pivotal/.bosh_config
-    Director
-      Name       microbosh-vcloud-b340a7ecc329a7573fd7
-      URL        https://192.240.155.231:25555
-      Version    1.2524.0 (release:0501e461 bosh:0501e461)
-      User       director
-      UUID       5467db1e-1f2f-4558-b950-cd3c357d65c4
-      CPI        vcloud
-      dns        enabled (domain_name: microbosh)
-      compiled_package_cache disabled
-      snapshots  disabled
-
-    Deployment
-      not set
-    ```
-
-1. Open the downloaded `cf.yml` file in a text editor. Replace the value for
-`director_uuid` with the UUID that you found by running `bosh status`.
-
-    For this example, `cf.yml` includes the line:
-
-    ```
-    director_uuid: 5467db1e-1f2f-4558-b950-cd3c357d65c4
-    ```
-
-1. Run `bosh deployment cf.yml` to set the `cf.yml` file as your deployment
-manifest.
-
-1. Run `bosh stop cloud_controller` to stop the Cloud Controller process. Ensure that each section reports `No changes`.
+1. Run `bosh stop cloud_controller-partition-default_az_guid` and `bosh stop cloud_controller_worker-partition-default_az_guid` to stop the Cloud Controller jobs. Ensure that each section reports `No changes`.
 
 	```
-	$ bosh stop cloud_controller
+	$ bosh stop cloud_controller-partition-default_az_guid
 	You are about to stop cloud_controller/0
-	Detecting changes in deployment...
-
+	Detecting deployment changes
+    ----------------------------
 	Releases
 	No changes
 
@@ -178,39 +146,34 @@ manifest.
 	Properties
 	No changes
     ```
-    <p class="note"><strong>Note</strong>: If the <code>bosh stop
-cloud_controller</code> command indicates that changes are pending, terminate
-	the backup process and contact Pivotal Support.
-    Proceeding with the deployment if there are pending changes will apply any
-    enqueued changes, possibly putting your installation in a bad state.
-    Backups are only supported with a clean installation.</p>
+    <p class="note"><strong>Note</strong>: If either of the <code>bosh stop cloud_controller-partition-default_az_guid</code> or <code>bosh stop cloud_controller_worker-partition-default_az_guid</code> commands indicate that changes are pending, terminate the backup process and contact Pivotal Support. Proceeding with the deployment if there are pending changes will apply any enqueued changes, possibly putting your installation in a bad state. Backups are only supported with a clean installation.</p>
 
-    If the output of the `bosh stop cloud_controller` command indicates that 
-	there are no changes, run the `--force` version of the same command:
+    If the output of the `bosh stop` commands indicate that there are no changes, run the commands again with the `--force` option:
 
-    `bosh stop cloud_controller --force`
+  * <code>bosh stop cloud\_controller-partition-default\_az_guid --force</code>
+  * <code>bosh stop cloud\_controller-partition-default\_az_guid --force</code>
 
-1. In `cf.yml`, locate the `ccdb` component and note the address and password:
+1. In `cf.yml`, locate the `ccdb` component and record the IP address and password:
 
     ```
     ccdb:
-	      address: 172.16.78.25
+	      address: 10.85.52.96
 	      port: 2544
 	      db_scheme: postgres
 	      roles:
 	      - tag: admin
 	        name: admin
-	        password: ****************
+	        password: baba1212baba1212
 	```
 
-1. SSH into the CCDB VM.
+1. SSH into the CCDB VM as the admin using the IP address and password recorded in the previous step.
 
-1. Use `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the CCDB VM.
+1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the CCDB VM.
 
     Example:
 
     ```
-    $ root@172.16.78.25:~# find /var/vcap | grep 'bin/psql'
+    $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
 
     /var/vcap/data/packages/postgres/5.1/bin/psql
     ```
@@ -220,26 +183,26 @@ cloud_controller</code> command indicates that changes are pending, terminate
     Example:
 
     ```
-    $ /var/vcap/data/packages/postgres/5.1/bin/psql/pg_dump -h 172.16.78.25 -U admin -p 2544 ccdb > ccdb.sql
+    $ /var/vcap/data/packages/postgres/5.1/bin/psql/pg_dump -h 10.85.52.96 -U admin -p 2544 ccdb > ccdb.sql
 ```
 
 1. Exit from the CCDB VM.
 
-1. Use `scp` to copy the exported database to your local machine.
+1. Run `scp` to copy the exported database to your local machine.
 
     Example:
 
     ```
-    $ scp vcap@172.16.78.25:ccdb.sql
+    $ scp vcap@10.85.52.96:ccdb.sql
     ```
 
 ### <a id='uaadb'></a>Back Up the UAA Database ###
 
-1. In `cf.yml`, locate the `uaadb` component and note the address and password:
+1. In `cf.yml`, locate the `uaadb` component and record the IP address and password:
 
     ```
     uaadb:
-          address: 172.16.78.30
+          address: 10.85.52.101
           port: 2544
           db_scheme: postgresql
           roles:
@@ -248,14 +211,14 @@ cloud_controller</code> command indicates that changes are pending, terminate
             password: ***************
     ```
 
-1. SSH into the UAA DB VM.
+1. SSH into the UAA DB VM as the admin using the IP address and password recorded in the previous step.
 
-1. Use `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the UAA DB VM.
+1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the UAA DB VM.
 
     Example:
 
     ```
-    $ root@172.16.78.30:~# find /var/vcap | grep 'bin/psql'
+    $ root@10.85.52.101:~# find /var/vcap | grep 'bin/psql'
 
     /var/vcap/data/packages/postgres/5.1/bin/psql
     ```
@@ -265,26 +228,26 @@ cloud_controller</code> command indicates that changes are pending, terminate
     Example:
 
     ```
-    $ /var/vcap/data/packages/postgres/5.1/bin/psql/pg_dump -h 172.16.78.30 -U root -p 2544 uaa > uaa.sql
+    $ /var/vcap/data/packages/postgres/5.1/bin/psql/pg_dump -h 10.85.52.101 -U root -p 2544 uaa > uaa.sql
 ```
 
 1. Exit from the UAA DB VM.
 
-1. Use `scp` to copy the exported database to your local machine.
+1. Run `scp` to copy the exported database to your local machine.
 
     Example:
 
     ```
-    $ scp vcap@172.16.78.30:uaa.sql
+    $ scp vcap@10.85.52.101:uaa.sql
     ```
 
 ### <a id='consoledb'></a>Back Up the Console Database ###
 
-1. In `cf.yml`, locate the `consoledb` component and note the address and password:
+1. In `cf.yml`, locate the `consoledb` component and record the IP address and password:
 
     ```
     consoledb:
-      address: 172.16.78.33
+      address: 10.85.52.104
       port: 2544
       db_scheme: postgresql
       roles:
@@ -293,14 +256,14 @@ cloud_controller</code> command indicates that changes are pending, terminate
         password: *****************
     ```
 
-1. SSH into the Console DB VM.
+1. SSH into the Console DB VM as the admin using the IP address and password recorded in the previous step.
 
-1. Use `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the Console DB VM.
+1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the Console DB VM.
 
     Example:
 
     ```
-	$ root@172.16.78.33:~# find /var/vcap | grep 'bin/psql'
+	$ root@10.85.52.104:~# find /var/vcap | grep 'bin/psql'
 
     /var/vcap/data/packages/postgres/5.1/bin/psql
     ```
@@ -310,16 +273,16 @@ cloud_controller</code> command indicates that changes are pending, terminate
     Example:
 
     ```
-    $ /var/vcap/data/packages/postgres/5.1/bin/psql/pg_dump -h 172.16.78.33 -U root -p 2544 console > console.sql
+    $ /var/vcap/data/packages/postgres/5.1/bin/psql/pg_dump -h 10.85.52.104 -U root -p 2544 console > console.sql
 	```
 
 1. Exit from the Console BD.
 
-1. Use `scp` to copy the exported database to your local machine.
+1. Run `scp` to copy the exported database to your local machine.
 
     Example:
     ```
-    $ scp vcap@172.16.78.33:console.sql
+    $ scp vcap@10.85.52.104:console.sql
     ```
 
 ### <a id='nfs'></a>Back Up the NFS Server ###
@@ -335,11 +298,11 @@ cloud_controller</code> command indicates that changes are pending, terminate
       port:
     ```
 
-1. In Ops Manager, browse to **Elastic Runtime > Credentials** and note the NFS Server credentials.
+1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the NFS Server credentials.
 
     <%= image_tag("nfs-creds.png") %>
 
-1. SSH into the NFS server VM and create a TAR file:
+1. SSH into the NFS server VM using the NFS Server and create a TAR file:
 
     `$ ssh vcap@10.0.0.10 'cd /var/vcap/store && tar cz shared' > nfs.tar.gz`
 
@@ -355,11 +318,9 @@ Run `bosh start cloud_controller` to restart the Cloud Controller.
 
 <p class="note"><strong>Note</strong>: As of PCF 1.3, the Elastic Runtime deploy contains an embedded MySQL Server that serves as the data store for the <code>app\_usage\_events</code> service.
 
-1. In Ops Manager, browse to **Pivotal Elastic Runtime > Status > MySQL Server** and note the CID.
+1. From the Installation Dashboard in Ops Manager, select **Pivotal Elastic Runtime**. Click **Status** and record the CID of **MySQL Server**.
 
-    <%= image_tag("elastic_runtime.jpg") %>
-
-    <%= image_tag("mysql.jpg") %>
+    <%= image_tag("mysql-cid.png") %>
 
 2. Download and save the BOSH deployment manifest for MySQL Server. You need this manifest to locate information about your databases.
 
@@ -373,7 +334,7 @@ Run `bosh start cloud_controller` to restart the Cloud Controller.
 
     ```
      mysql_node:
-          host: 172.16.78.60
+          host: 10.85.52.105
           admin_password: c0eeec42e465428312fd
         services:
         - name: p-mysql
@@ -381,4 +342,4 @@ Run `bosh start cloud_controller` to restart the Cloud Controller.
 
 4.  Dump the data from the p-mysql DB and save it:
 
-    `$ mysqldump -u root -p -h 172.16.78.60 --all-databases > user_databases.sql`
+    `$ mysqldump -u root -p -h 10.85.52.105 --all-databases > user_databases.sql`

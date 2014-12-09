@@ -58,32 +58,38 @@ vCloud or vCloud Air evaluates NAT rules in the order you list them in, from top
 
 <%= image_tag("vcloud-vchs/nat-example.png") %>
 
-The following sections describe how to configure the single SNAT and three DNAT rules that Elastic Runtime requires and their corresponding firewalls on the **NAT** tab.
+The following sections describe how to configure the single SNAT and three DNAT rules that Elastic Runtime requires.
 
-### <a id='snat-om'></a>Create SNAT and Firewall Rules ###
+### <a id='snat-dnat-om'></a>Create SNAT and DNAT Rules ###
 
-1. Configure an SNAT rule allowing outbound connections through Ops Manager public IP address. Using the Elastic Runtime IP address can be problematic for DNS resolution.
+To allow outbound connections through Ops Manager public IP address, you will configure an SNAT rule. To enable inbound traffic over SSH to your Ops Manager VM, you must first create a DNAT rule.
+
+<p class='note'><strong>Note</strong>: Using the Elastic Runtime IP address for outbound connections can be problematic for DNS resolution.</p>
+
+1. In the Edge Gateways **Configure Services** screen, select the **NAT** tab.
+
+1. Configure an SNAT rule:
 
     <%= image_tag("vcloud-vchs/snat-1.png") %>
 
-1. Set up a firewall rule allowing outbound traffic from all internal IP
+1. Create a destination NAT (DNAT) rule with the following configuration:
+	* Applied on: Select your external network
+	* Original (External) IP/range: Enter the public IP address for Ops Manager
+	* Protocol: Select **TCP & UDP**
+	* Original Port: Select **22**
+	* Translated (Internal) IP/range: Enter the private IP address of your Ops Manager
+	* Translated port: **22**
+
+### <a id='firewall-om'></a>Create firewall rules for SNAT and DNAT ###
+
+1. In the Edge Gateways **Configure Services** screen, select the **Firewall** tab.
+
+1. Create a SNAT firewall rule allowing outbound traffic from all internal IP
 addresses to all IP external addresses.
 
     <%= image_tag("vcloud-vchs/firewall.png") %>
 
-### <a id='dnat-ssh-om'></a>Allow Inbound SSH for Ops Manager ###
-
-To enable inbound traffic over SSH to your Ops Manager VM, you must first create a DNAT rule.
-
-1. Create a destination NAT (DNAT) rule with the following configuration:
-    * Applied on: Select your external network
-    * Original (External) IP/range: Enter the public IP address for Ops Manager
-    * Protocol: Select **TCP & UDP**
-    * Original Port: Select **22**
-    * Translated (Internal) IP/range: Enter the private IP address of your Ops Manager
-    * Translated port: **22**
-
-1. Create a firewall rule allowing inbound traffic from the public IP to the private IP address of your Ops Manager.
+1. Create a DNAT firewall rule allowing inbound traffic from the public IP to the private IP address of your Ops Manager.
 
 ### <a id='dnat-om'></a>Allow Inbound Web Traffic for Ops Manager ###
 
@@ -93,20 +99,19 @@ Repeat the steps above for ports 80 and 443 for the same public address.
 
 Repeat the steps above for ports 80 and 443 for the Elastic Runtime public IP address.
 
-
-## <a id='sr'></a>Setting up Static Routing ###
+## <a id='sr'></a>Setting up Static Routing ##
 
 Select the **Enable static routing** checkbox.
 
 ## <a id='er'></a>Setting up Network Rules for Elastic Runtime DNS Resolution ##
 
-1. In the edge gateway **Configure Services** screen, select the **Load
+1. In the Edge Gateways **Configure Services** screen, select the **Load
 Balancer** tab.
 
 1. Click **Pool Servers**, then click **Add**.
 
     <%= image_tag("vcloud-vchs/pool.png") %>
-	
+
     The **Add Load Balancer Member Pool** wizard appears.
 
 1. Name the pool **Load Balancer to Elastic Runtime**.
@@ -203,11 +208,11 @@ click **Upload**.
 
     <%= image_tag("vcloud-vchs/pcf-vcloud-09.png") %><br />
 
-1. Complete the **Add vApp from Catalog** wizard, changing the default settings as necessary for your environment. See [Complete the vApp Wizard and Deploy Ops Manager](#deploying-from-catalog) for more information.	
+1. Complete the **Add vApp from Catalog** wizard, changing the default settings as necessary for your environment. See [Complete the vApp Wizard and Deploy Ops Manager](#deploying-from-catalog) for more information.
 
 ### <a id='deploying-from-catalog'></a>Complete the vApp Wizard and Deploy Ops Manager ##
 
-After adding the Ops Manager vApp to your vCloud Director you can finish the set up and deploy as follows:
+After adding the Ops Manager vApp to your vCloud Director, you can finish the set up and deploy as follows:
 
 1. Check the **I agree** checkbox to accept licenses and click **Next**.
 
@@ -233,9 +238,9 @@ Manager vApp, and click **Next**.
     <p class="note"><strong>Note</strong>: The order of the items on your screen may vary from the order shown in this image.</p>
 
     The following list contains tips on entering specific networking information:
-    * **DNS**: If you are unsure of your Pivotal Ops Manager DNS, you can the Google Public DNS value **8.8.8.8**. For more information, refer to the [Using Google Public DNS](https://developers.google.com/speed/public-dns/docs/using) topic.
-    * **Default Gateway**: On the vCloud Air or vCloud Dashboard, click the **Gateways** tab and copy the **GATEWAY IP** value.	
-    * **IP Address**: Navigate to the **My Clouds > VMs** page, locate the Pivotal Ops Manager VM, and copy the IP address from **IP Address** column. If this column does not display, click the **Customize Columns** icon on the right side to set your column display preferences.
+    * **DNS**: If you are unsure of your Pivotal Ops Manager DNS, you can use the Google Public DNS value **8.8.8.8**. For more information, refer to the [Using Google Public DNS](https://developers.google.com/speed/public-dns/docs/using) topic.
+    * **Default Gateway**: On the vCloud Air or vCloud Dashboard, click the **Gateways** tab and copy the **GATEWAY IP** value.
+    * **IP Address**: Navigate to the **My Clouds > VMs** page, locate the Pivotal Ops Manager VM, and copy the IP address from the **IP Address** column. If this column does not display, click the **Customize Columns** icon on the right side to set your column display preferences.
 
 1. Review the hardware specifications of the virtual machine and click **Next**.
 

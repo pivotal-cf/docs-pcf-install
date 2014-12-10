@@ -15,8 +15,9 @@ Ensure that your vCloud or vCloud Air environment meets or exceeds the following
 * Memory: 60GB
 * Two public IP addresses: One for Elastic Runtime and one for Ops Manager. See [Configuring NAT Rules](#configuring).
 * vCPU cores: 28
+* Virtual infrastructure administrator privileges to enable Elastic Runtime to automatically power VMs on and off
 
-You must also have virtual infrastructure administrator privileges to enable Elastic Runtime to automatically power VMs on and off. For more information about user privileges, refer to the "User Privileges by Role" section in the [VMware vCloud Air User's Guide](http://www.vmware.com/pdf/vchs_users_guide.pdf).
+<p class="note"><strong>Note</strong>: For more information about user privileges, refer to the "User Privileges by Role" section in the <a href="http://www.vmware.com/pdf/vchs_users_guide.pdf">VMware vCloud Air User's Guide</a>.</p>
 
 ## <a id='access-interface'></a>Accessing the vShield Edge Gateway Services Interface ##
 
@@ -48,21 +49,24 @@ Follow these steps to access the vCloud or vCloud Air Edge Gateways Configure Se
 
 ## <a id='configuring'></a>Configuring NAT Rules ##
 
-Elastic Runtime accesses the Internet using a source NAT rule (SNAT).
+The following section describe how to configure your vCloud or vCloud Air Edge Gateway to ensure Elastic Runtime can access the web. To do this, you configure the single source NAT rule (SNAT) and three destination NAT (DNAT) rules that Elastic Runtime requires.
 
-Elastic Runtime's API endpoint, which is fronted by HAProxy, requires a destination NAT (DNAT) to forward traffic from a public IP. Ops Manager also requires a DNAT rule to connect to it from a public IP.
+* Elastic Runtime accesses the Internet using an SNAT rule.
 
-You need at least two public IP addresses for your virtual datacenter for inbound traffic, one designated for Ops Manager and one for Elastic Runtime.
+* Elastic Runtime's API endpoint, which is fronted by HAProxy, requires a DNAT rule to forward traffic from a public IP.
+
+* Ops Manager also requires a DNAT rule to connect to it from a public IP.
+
+You need at least two public IP addresses for your virtual datacenter for inbound traffic: one for Ops Manager and one for Elastic Runtime.
 
 vCloud or vCloud Air evaluates NAT rules in the order you list them in, from top to bottom, on the **NAT** tab of the Edge Gateways **Configure Services** screen. The image is an example of the configured SNAT rule and a DNAT rule.
 
 <%= image_tag("vcloud-vchs/nat-example.png") %>
 
-The following sections describe how to configure the single SNAT and three DNAT rules that Elastic Runtime requires.
 
 ### <a id='snat-dnat-om'></a>Create SNAT and DNAT Rules ###
 
-To allow outbound connections through Ops Manager public IP address, you will configure an SNAT rule. To enable inbound traffic over SSH to your Ops Manager VM, you must first create a DNAT rule.
+To allow outbound connections through Ops Manager public IP address, configure an SNAT rule. To enable inbound traffic over SSH to your Ops Manager VM, you must create a DNAT rule.
 
 <p class='note'><strong>Note</strong>: Using the Elastic Runtime IP address for outbound connections can be problematic for DNS resolution.</p>
 
@@ -80,7 +84,7 @@ To allow outbound connections through Ops Manager public IP address, you will co
 	* Translated (Internal) IP/range: Enter the private IP address of your Ops Manager
 	* Translated port: **22**
 
-### <a id='firewall-om'></a>Create firewall rules for SNAT and DNAT ###
+### <a id='firewall-om'></a>Create Firewall Rules for SNAT and DNAT ###
 
 1. In the Edge Gateways **Configure Services** screen, select the **Firewall** tab.
 
@@ -161,7 +165,7 @@ The following procedures guide you through uploading and deploying Ops Manager a
 <p class="note"><strong>Note</strong>: vCloud and vCloud Air use the vCloud Director Web Console, which only supports 32-bit browsers like Firefox. It does not support Chrome. Refer to <a href="http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2034554">Article 2034554</a> in the VMware Knowledge Base for more information about browser versions that the vCloud Director supports.</p>
 
 
-### <a id='uploading-to-vcd'></a>Upload Ops Manager ##
+### <a id='uploading-to-vcd'></a>Upload Ops Manager ###
 
 You must either upload the Ops Manager vApp into your catalog or use a vApp that your cloud administrator uploaded to your organization's catalog.
 
@@ -210,7 +214,7 @@ click **Upload**.
 
 1. Complete the **Add vApp from Catalog** wizard, changing the default settings as necessary for your environment. See [Complete the vApp Wizard and Deploy Ops Manager](#deploying-from-catalog) for more information.
 
-### <a id='deploying-from-catalog'></a>Complete the vApp Wizard and Deploy Ops Manager ##
+### <a id='deploying-from-catalog'></a>Complete the vApp Wizard and Deploy Ops Manager ###
 
 After adding the Ops Manager vApp to your vCloud Director, you can finish the set up and deploy as follows:
 

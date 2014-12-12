@@ -49,15 +49,15 @@ Follow these steps to access the vCloud or vCloud Air Edge Gateways Configure Se
 
 ## <a id='configuring'></a>Configuring NAT Rules ##
 
-The following section describe how to configure your vCloud or vCloud Air Edge Gateway to ensure Elastic Runtime can access the web. To do this, you configure the single source NAT rule (SNAT) and three destination NAT (DNAT) rules that Elastic Runtime requires.
+The following section describe how to configure your vCloud or vCloud Air Edge Gateway to ensure Elastic Runtime can access the web.
+
+To do this, you configure the single source NAT rule (SNAT) and three destination NAT (DNAT) rules that Elastic Runtime requires:
 
 * Elastic Runtime accesses the Internet using an SNAT rule.
 
 * Elastic Runtime's API endpoint, which is fronted by HAProxy, requires a DNAT rule to forward traffic from a public IP.
 
 * Ops Manager also requires a DNAT rule to connect to it from a public IP.
-
-You need at least two public IP addresses for your virtual datacenter for inbound traffic: one for Ops Manager and one for Elastic Runtime.
 
 vCloud or vCloud Air evaluates NAT rules in the order you list them in, from top to bottom, on the **NAT** tab of the Edge Gateways **Configure Services** screen. The image is an example of the configured SNAT rule and a DNAT rule.
 
@@ -66,7 +66,7 @@ vCloud or vCloud Air evaluates NAT rules in the order you list them in, from top
 
 ### <a id='snat-dnat-om'></a>Create SNAT and DNAT Rules ###
 
-To allow outbound connections through Ops Manager public IP address, configure an SNAT rule. To enable inbound traffic over SSH to your Ops Manager VM, you must create a DNAT rule.
+To allow outbound connections through Ops Manager public IP address, configure an SNAT rule. To enable inbound traffic over SSH to your Ops Manager VM, create a DNAT rule.
 
 <p class='note'><strong>Note</strong>: Using the Elastic Runtime IP address for outbound connections can be problematic for DNS resolution.</p>
 
@@ -74,9 +74,14 @@ To allow outbound connections through Ops Manager public IP address, configure a
 
 1. Configure an SNAT rule:
 
+	1. From the **Applied on** drop down menu, select the network where you want to apply the NAT rule.
+	1. In the **Original (Internal) source IP/range** field, enter the IP range/subnet mask.
+	1. In the **Translated (External) source IP/range** field, enter the Ops manager public IP.
+	1. Ensure the checkbox **Enabled** is checked.
+
     <%= image_tag("vcloud-vchs/snat-1.png") %>
 
-1. Create a destination NAT (DNAT) rule with the following configuration:
+1. Create a destination NAT (DNAT) rule by following the same procedure, using the following configuration:
 	* Applied on: Select your external network
 	* Original (External) IP/range: Enter the public IP address for Ops Manager
 	* Protocol: Select **TCP & UDP**

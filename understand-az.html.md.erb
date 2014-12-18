@@ -1,0 +1,36 @@
+---
+title: Understanding Availability Zones in Pivotal CF
+---
+
+PIvotal CF uses the concept of an Availability Zone (AZ), a construct also used by Amazon and OpenStack. However, Pivotal CF defines an AZ  as a set of hardware components that are physically separated from the hardware in any other AZ. By _physically separated we mean either of the following:
+
+* The AZ uses a distinct set of hardware from any other AZ. 
+    For example, a datacenter has multiple racks of server hardware. Each rack is an AZ, whether the hardware among the racks is similar or dissimilar.
+* The AZ uses a distinct set of hardware and is in a separate location from another AZ. 
+    The separate location might be a different area in the same datacenter or a different datacenter in another geographic area.
+
+Pivotal Elastic Runtime, in conjunction with Pivotal Ops Manager, manages the application instances that run in an AZ. When you run more than one instance of an application, Elastic Runtime balances the instances across all of the zones that you assign to the application. This distribution over multiple zones enables applications to be highly available and tolerant to infrastructure failure.
+
+## <a id="eraz-examples"></a>Example Scenario ##
+
+An operator assigns Availability Zones A1, A2, and A3 to an application. The following image shows that Elastic Runtime places two instances in A1, one in A2, and one in A3 when a developer runs four instances of the application.
+
+<%= image_tag("az_er_1.png") %>
+
+If A1 experiences a power outage or hardware failure, the two application instances running in A1 terminate. Because A2 and A3 are physically separated from A1, the application instances in these zones continue to run, as the following image shows.
+
+<%= image_tag("az_er_2.png") %>
+
+If A1 remains unavailable, Elastic Runtime balances new instances of the application across the remaining Availability Zones, as the following image shows.
+
+<%= image_tag("az_er_3.png") %>
+
+## <a id="config-az"></a>Configuring Availability Zones ##
+
+Only VMWare vSphere provides the cluster functionality that Pivotal CF Availability Zones require to operate. VMWare vCloud and vCloud Air products do not support clusters. This means that if your Ops Manager deployment integrates with vCloud or vCloud Air, you cannot use Pivotal CF AZ functionality.
+
+You configure an AZ with the Pivotal Ops Manager Director for VMWare vSphere and Elastic Runtime products. For more information, refer to the following topics: 
+
+* Steps 5-6 of [Configuring Ops Manager Director for VMWare vSphere](./customizing/vsphere-config.html) 
+* Step 3 of the Configure Elastic Runtime section in [Getting Started with Pivotal CF](./getstarted/index.html)
+

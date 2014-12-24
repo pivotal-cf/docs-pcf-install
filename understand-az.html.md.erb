@@ -1,17 +1,25 @@
 ---
-title: Understanding Availability Zones in Pivotal CF
+title: Understanding Availability Zones and Regions in Pivotal Cloud Foundry
 ---
 
-The Availability Zone (AZ) functionality in Pivotal CF enables applications to be highly available and tolerant to infrastructure failure by distributing app instances across various locations.
+The Availability Zone (AZ) functionality in Pivotal Cloud Foundry (PCF) enables applications to be highly available and tolerant to infrastructure failure by distributing app instances and redundant VMs across various infrastructure segments. 
 
-Pivotal CF defines an AZ as a unique set of hardware components that are physically separated from the hardware in any other AZ. Multiple Availability Zones can exist in the same datacenter or in different datacenters in various geographic regions.
+PCF uses the concepts of an _AZ_ and _region_ similar to how Amazon Web Services and OpenStack uses these constructs, and defines these terms as follows:
+
+* **AZ**: An AZ is a unique set of hardware components that are separated logically and generally also physically from any other AZ. A PCF operator assigns a VMWare vSphere cluster and resource pool to an AZ.
+
+<p class="note"><strong>Note</strong>: At present, the architecture of VMWare vCloud and vCloud Air supports the use of only one AZ. For these products, the AZ is the virtual data center than an operator accesses when configuring the <a href="./pcf-vchs-vcloud.html#access-interface">vShield Edge Gateway Services interface</a>. This means that if your Ops Manager deployment integrates with either of these products, PCF must place all software in the single AZ, the virtual data center.</p>
+
+* **Region**: A region correlates to either a single data center or to multiple data centers that are in close proximity and have very low latency network connections. A region includes a single PCF installation that an operator deploys to one or more Availability Zones.
+
+The image shows the difference in how PCF handles Availability Zones and regions in vSphere, vCloud, and vCloud Air. 
+
+<%= image_tag("vS_vC_vCA.png") %>
 
 You configure an AZ with the Pivotal Ops Manager Director for VMWare vSphere and Elastic Runtime products. For more information, refer to the following topics: 
 
 * Steps 5-6 of [Configuring Ops Manager Director for VMWare vSphere](./vsphere-config.html) 
 * Step 3 of the Configure Elastic Runtime section in [Getting Started with Pivotal CF](../getstarted/index.html#configure-er)
-
-<p class="note"><strong>Note</strong>: Only VMWare vSphere currently supports Pivotal CF AZ functionality. At present, if your Ops Manager deployment integrates with vCloud or vCloud Air, you cannot use Pivotal CF AZ functionality.</p>
 
 Pivotal Elastic Runtime manages the application instances that run in an AZ. When you run more than one instance of an application, Elastic Runtime balances the instances across all of the zones that you assign to the application.
 

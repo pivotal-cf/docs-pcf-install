@@ -34,15 +34,17 @@ As a result, an export can be 5 GB or more.
 
 1. From the Product Installation Dashboard, click the gear icon and select **Import installation settings**.
 
-1. Browse to and select a Pivotal CF installation file, then click **Import**.
+1. Browse to and select a Pivotal CF installation file.
+
+1. If the admin password has changed since the file was exported, you must select **Need to enter a decryption password?** before you click **Import** to prevent an error. Enter the original password that was used when the            installation was exported. If the admin password has not changed, you may skip this step.
 
     <%= image_tag("import-installation-file.png") %>
+
+1. Click **Import**.
 
 **Import installation settings** imports the settings and assets of an existing
 Pivotal CF installation.
 Importing an installation overwrites any existing installation.
-
-<p class="note"><strong>Note</strong>: When you export an installation file, Ops Manager encrypts the file with the Ops Manager admin password. When you import an installation file, Ops Manager attempts to decrypt the file using the current admin password. If the admin password has changed since the file was exported, you must select <strong>Need to enter a decryption password?</strong> before you click <strong>Import</strong> to prevent an error. Enter the original password that was used when the installation was exported.</p>
 
 ## <a id='encrypt-key'></a>Backing Up the Cloud Controller DB Encryption Credentials ##
 
@@ -148,26 +150,19 @@ You must back up each of the following:
     ```
     <p class="note"><strong>Note</strong>: If either of the <code>bosh stop cloud_controller-partition-default_az_guid</code> or <code>bosh stop cloud_controller_worker-partition-default_az_guid</code> commands indicate that changes are pending, terminate the backup process and contact Pivotal Support. Proceeding with the deployment if there are pending changes will apply any enqueued changes, possibly putting your installation in a bad state. Backups are only supported with a clean installation.</p>
 
-1. If the output of the `bosh stop` commands indicate that there are no changes, run the commands again with the `--force` option:
-  ```
-  bosh stop cloud\_controller-partition-default\_az_guid --force
-  bosh stop cloud\_controller-partition-default\_az_guid --force
-  ```
-
-1. In `cf.yml`, locate the `ccdb` component and record the IP address and password:
+1. In `cf.yml`, locate the `ccdb` component and record the IP address:
 
     ```
     ccdb:
 	      address: 10.85.52.96
 	      port: 2544
 	      db_scheme: postgres
-	      roles:
-	      - tag: admin
-	        name: admin
-	        password: baba1212baba1212
 	```
+1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the Cloud Controller Database credentials.
 
-1. SSH into the CCDB VM as the admin using the IP address and password recorded in the previous step.
+    <%= image_tag("ccdb-creds.png") %>
+
+1. SSH into the CCDB VM as the admin using the IP address and password recorded in the previous steps.
 
 1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the CCDB VM.
 
@@ -199,20 +194,19 @@ You must back up each of the following:
 
 ### <a id='uaadb'></a>Back Up the UAA Database ###
 
-1. In `cf.yml`, locate the `uaadb` component and record the IP address and password:
+1. In `cf.yml`, locate the `uaadb` component and record the IP address:
 
     ```
     uaadb:
           address: 10.85.52.101
           port: 2544
           db_scheme: postgresql
-          roles:
-          - tag: admin
-            name: root
-            password: ***************
     ```
+1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the UAA Database credentials.
 
-1. SSH into the UAA DB VM as the admin using the IP address and password recorded in the previous step.
+    <%= image_tag("uaadb-creds.png") %>
+
+1. SSH into the UAA DB VM as the admin using the IP address and password recorded in the previous steps.
 
 1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the UAA DB VM.
 
@@ -251,13 +245,12 @@ You must back up each of the following:
       address: 10.85.52.104
       port: 2544
       db_scheme: postgresql
-      roles:
-      - tag: admin
-        name: root
-        password: *****************
     ```
+1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the Console Database credentials.
 
-1. SSH into the Apps Manager DB VM as the admin using the IP address and password recorded in the previous step.
+    <%= image_tag("appsmgr-creds.png") %>
+
+1. SSH into the Apps Manager DB VM as the admin using the IP address and password recorded in the previous steps.
 
 1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the Apps Manager DB VM.
 
@@ -313,7 +306,12 @@ You must back up each of the following:
 
 ### <a id='cc-start'></a>Start Cloud Controller ###
 
-Run `bosh start cloud_controller` to restart the Cloud Controller.
+Run the following commands to restart the Cloud Controller.
+
+	```
+	bosh start <cloud controller job name>
+	bosh start <cloud controller worker job name>
+	```
 
 ### <a id='runtime'></a>Back Up Pivotal MySQL Server ###
 

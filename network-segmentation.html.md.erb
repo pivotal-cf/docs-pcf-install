@@ -2,7 +2,8 @@
 title: Configuring Network Isolation Options in Ops Manager
 ---
 
-This topic describes configuring different network isolation options in Ops Manager.
+This topic describes configuring different network isolation options in Ops
+Manager.
 
 ##<a id='prerequisites'></a>Prerequisites ##
 
@@ -10,11 +11,14 @@ This topic assumes that you have deployed vCenter and created multiple networks.
 
 ##<a id='same-network'></a>Option 1: Installing Pivotal CF Products to a Common Network ##
 
-Deploy Ops Manager, Ops Manager Director, and all Pivotal CF products to a common network. The vCenter IP must be reachable on or from this network.
+Deploy Ops Manager, Ops Manager Director, and all Pivotal CF products to a
+common network.
+The vCenter IP must be reachable on or from this network.
 
 <p class='note'><strong>Note</strong>: Production environments typically require higher security than this option provides.</p>
 
-The following image shows all Pivotal CF products and vCenter deployed to a common network.
+The following image shows all Pivotal CF products and vCenter deployed to a
+common network.
 
 <%=image_tag("netseg/single-network.png")%>
 
@@ -29,15 +33,18 @@ To configure your Pivotal CF deployment for the common network option:
     <%=image_tag("netseg/create-a.png")%>
 
 1. In the left navigation menu, click **Assign Networks**.
-1. Click the **Infrastructure Network** drop-down menu and select the network that you created in step 4.
-1. Click the **Deployment Network** drop-down menu and select the network that you created in step 4.
+1. Click the **Infrastructure Network** drop-down menu and select the network
+that you created in step 4.
+1. Click the **Deployment Network** drop-down menu and select the network that
+you created in step 4.
 
     <%=image_tag("netseg/a-a.png")%>
 
 1. Return to the Installation Dashboard.
 1. Perform the following steps for each Pivotal CF product, including Elastic Runtime:
     1. On the Installation Dashboard, select the Pivotal CF product.
-    1. In the left navigation menu, click **Assign Networks**. Assign the product to the network that you created in step 4.
+    1. In the left navigation menu, click **Assign Networks**. Assign the
+		product to the network that you created in step 4.
 
         The image shows an example network named A.
         <%=image_tag("netseg/assign-a.png")%>
@@ -46,9 +53,15 @@ To configure your Pivotal CF deployment for the common network option:
 
 ##<a id='two-networks'></a>Option 2: Installing All Pivotal CF Products to an Isolated Network ##
 
-Deploy all Pivotal CF products to a Deployment Network. Ensure that you isolate this network from the Infrastructure Network that can reach your vCenter. This configuration provides a higher level of security than [Option 1](#same-network) by reducing the risk of a malicious attack at the IaaS level.
+Deploy all Pivotal CF products to a Deployment Network.
+Ensure that you isolate this network from the Infrastructure Network that can
+reach your vCenter.
+This configuration provides a higher level of security than [Option 1](#same-network) by reducing the risk of a malicious attack at the IaaS level.
 
-You must multihome Ops Manager Director to receive two IP addresses, one on each network. The following image shows vCenter in Network A, all Pivotal CF products in Network B, and Ops Manager Director multihomed in both networks.
+You must configure Ops Manager Director to communicate on two networks, either
+through routing or by multihoming.
+For example, the following image shows vCenter in Network A, all Pivotal CF
+products in Network B, and Ops Manager Director multihomed in both networks.
 
 <%=image_tag("netseg/two-networks.png")%>
 
@@ -67,18 +80,21 @@ To configure your Pivotal CF deployment for an isolated network:
     The image shows an example network named B.
     <%=image_tag("netseg/create-b.png")%>
 
-1. In the Ops Manager Director configuration interface, configure the Director to receive an IP address on both networks, as follows:
-    * In the left navigation menu, click **Assign Networks**. Click the **Infrastructure Network** drop-down
-		menu and select the network you created in step 4.
-    * Click the **Deployment Network** drop-down menu and select the network you
-		created in step 5.
+1. In the Ops Manager Director configuration interface, configure the Director
+	to receive an IP address on both networks, as follows:
+    * In the left navigation menu, click **Assign Networks**. Click the
+		**Infrastructure Network** drop-down menu and select the network that
+		you created in step 4.
+    * Click the **Deployment Network** drop-down menu and select the network
+		that you created in step 5.
 
     <%=image_tag("netseg/a-b.png")%>
 
 1. Return to the Installation Dashboard.
 1. Perform the following steps for each Pivotal CF product, including Elastic Runtime:
     1. On the Installation Dashboard, select the Pivotal CF product.
-    1. In the left navigation menu, click **Assign Networks**. Assign the product to the Deployment Network.
+    1. In the left navigation menu, click **Assign Networks**.
+		Assign the product to the Deployment Network.
 
         The image shows an example network named B.
         <%=image_tag("netseg/assign-b.png")%>
@@ -87,9 +103,19 @@ To configure your Pivotal CF deployment for an isolated network:
 
 ##<a id='multiple'></a>Option 3: Installing Pivotal CF Products to Multiple Isolated Networks ##
 
-Deploy Pivotal CF products to multiple networks. Ensure that you isolate these networks from each other and from the Infrastructure Network that can reach your vCenter. This configuration provides a higher level of security than [Option 1](#same-network) and [Option 2](#two-networks) by reducing the risk of a malicious attack at both the IaaS and product levels.
+Deploy Pivotal CF products to multiple networks.
+Ensure that you isolate these networks from each other and from the
+Infrastructure Network that can reach your vCenter.
+This configuration provides a higher level of security than [Option 1](#same-network) and [Option 2](#two-networks) by reducing the risk of a
+malicious attack at both the IaaS and product levels.
 
-You must multihome Ops Manager Director to receive two IP addresses, one on each of two networks. All other Pivotal CF products receive IP addresses on one or more separate networks. The following image shows vCenter in Network A, Ops Manager Director multihomed in Network A and Network B, and all other Pivotal CF products in Network C and Network D.
+You must configure Ops Manager Director to communicate on two networks, either
+through routing or by multihoming.
+All other Pivotal CF products receive IP addresses on one or more separate
+networks.
+For example, the following image shows vCenter in Network A, Ops Manager
+Director multihomed in Network A and Network B, and all other Pivotal CF
+products in Network C and Network D.
 
 <%=image_tag("netseg/multiple-networks.png")%>
 
@@ -103,30 +129,41 @@ To configure your Pivotal CF deployment for multiple isolated networks:
     The image shows an example network named A.
     <%=image_tag("netseg/create-a.png")%>
 
-1. Add another network for the Ops Manager Director that maps to a different vCenter network.
+1. Add another network for the Ops Manager Director that maps to a different
+	vCenter network.
 
     The image shows an example network named B.
     <%=image_tag("netseg/create-b.png")%>
 
-1. Add a third network specifically for Elastic Runtime that maps to a different vCenter network. Ensure that this network can route to the Ops Manager Director IP address that you created in step 3.
+1. Add a third network specifically for Elastic Runtime that maps to a different
+	vCenter network.
+	Ensure that this network can route to the Ops Manager Director IP address
+	that you created in step 3.
 
     The image shows an example network named C.
     <%=image_tag("netseg/create-c.png")%>
 
-1. (**Optional**) Add additional networks for other products if you want to isolate them from the applications running in Elastic Runtime and from each other. Ensure that each network can route to the Ops Manager Director IP address.
+1. (**Optional**) Add additional networks for other products if you want to
+isolate them from the applications running in Elastic Runtime and from each
+other.
+Ensure that each network can route to the Ops Manager Director IP address.
 
-1. In the Ops Manager Director configuration interface, configure the Director to receive an IP address on the Infrastructure and Deployment networks, as follows:
-    * In the left navigation menu, click **Assign Networks**. Click the **Infrastructure Network** drop-down
-		menu and select the network you created in step 4.
-    * Click the **Deployment Network** drop-down menu and select the network you
-		created in step 5.
+1. In the Ops Manager Director configuration interface, configure the Director
+to receive an IP address on the Infrastructure and Deployment networks, as
+follows:
+    * In the left navigation menu, click **Assign Networks**.
+		Click the **Infrastructure Network** drop-down menu and select the
+		network that you created in step 4.
+    * Click the **Deployment Network** drop-down menu and select the network
+		that you created in step 5.
 
     <%=image_tag("netseg/a-b.png")%>
 
 1. Return to the Installation Dashboard.
 1. Perform the following steps for each Pivotal CF product, including Elastic Runtime:
     1. On the Installation Dashboard, select the Pivotal CF product.
-    1. In the left navigation menu, click **Assign Networks**. Assign the product to a network other than Infrastructure or Deployment.
+    1. In the left navigation menu, click **Assign Networks**.
+		Assign the product to a network other than Infrastructure or Deployment.
 
         The image shows an example network named C.
         <%=image_tag("netseg/assign-c.png")%>

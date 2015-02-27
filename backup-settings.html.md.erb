@@ -120,35 +120,95 @@ You must back up each of the following:
 
 ### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
 
-1. Run `bosh stop cloud_controller-partition-default_az_guid` and `bosh stop cloud_controller_worker-partition-default_az_guid` to stop the Cloud Controller jobs. Ensure that each section reports `No changes`.
+1. Download the BOSH manifest as instructed [above](http://docs.pivotal.io/pivotalcf/customizing/backup-settings.html#manifest).
 
-	```
-	$ bosh stop cloud_controller-partition-default_az_guid
-	You are about to stop cloud_controller/0
-	Detecting deployment changes
-    ----------------------------
-	Releases
-	No changes
+1. Run `bosh deployment <deployment manifest>` to set your deployment.
 
-	Compilation
-	No changes
-
-	Update
-	No changes
-
-	Resource pools
-	No changes
-
-	Networks
-	No changes
-
-	Jobs
-	No changes
-
-	Properties
-	No changes
     ```
-    <p class="note"><strong>Note</strong>: If either of the <code>bosh stop cloud_controller-partition-default_az_guid</code> or <code>bosh stop cloud_controller_worker-partition-default_az_guid</code> commands indicate that changes are pending, terminate the backup process and contact Pivotal Support. Proceeding with the deployment if there are pending changes will apply any enqueued changes, possibly putting your installation in a bad state. Backups are only supported with a clean installation.</p>
+    ○ → bosh deployment cf.yml
+    Deployment set to `/home/working_directory/cf.yml'
+    ```
+
+1. Run `bosh vms <deployment name>` to view all the VMs in your selected deployment. Note all the Cloud Controller VMs begin with **api**.
+
+    ```
+    ○ → bosh vms cf
+    Deployment `cf'
+
+    Director task 1430
+
+    Task 1430 done
+
+    +------------------------------------+---------+---------------+--------------+
+    | Job/index                          | State   | Resource Pool | IPs          |
+    +------------------------------------+---------+---------------+--------------+
+    | api_worker_z1/0                    | running | small_z1      | 10.10.xx.xx  |
+    | api_worker_z2/0                    | running | small_z2      | 10.10.xx.xx  |
+    | api_z1/0                           | running | large_z1      | 10.10.xx.xx  |
+    | api_z1/1                           | running | large_z1      | 10.10.xx.xx  |
+    | api_z2/0                           | running | large_z2      | 10.10.xx.xx  |
+    | api_z2/1                           | running | large_z2      | 10.10.xx.xx  |
+    | clock_global/0                     | running | medium_z1     | 10.10.xx.xx  |
+    | etcd_z1/0                          | running | medium_z1     | 10.10.xx.xx  |
+    | hm9000_z1/0                        | running | medium_z1     | 10.10.xx.xx  |
+    | loggregator_trafficcontroller_z1/0 | running | small_z1      | 10.10.xx.xx  |
+    | nats_z2/0                          | running | medium_z2     | 10.10.xx.xx  |
+    | router_z1/0                        | running | router_z1     | 10.10.xx.xx  |
+    | uaa_z2/0                           | running | medium_z2     | 10.10.xx.xx  |
+    +------------------------------------+---------+---------------+--------------+
+
+    VMs total: 13
+    ```
+
+1. Run `bosh -d <deployment manifest> stop <selected api>` for each Cloud Controller VM.
+Example:
+
+    ```
+    ○ → bosh -d cf.yml stop api_z2 1
+
+    Processing deployment manifest
+    ------------------------------
+
+    Processing deployment manifest
+    ------------------------------
+    You are about to stop api_z2/1
+
+    Processing deployment manifest
+    ------------------------------
+
+    Detecting deployment changes
+    ----------------------------
+    Stop api_z2/1? (type 'yes' to continue): yes
+
+    Performing `stop api_z2/1'...
+
+    Director task 1424
+      Started preparing deployment
+      Started preparing deployment > Binding deployment. Done (00:00:00)
+      Started preparing deployment > Binding releases. Done (00:00:00)
+      Started preparing deployment > Binding existing deployment. Done   (00:00:01)
+      Started preparing deployment > Binding resource pools. Done (00:00:00)
+      Started preparing deployment > Binding stemcells. Done (00:00:00)
+      Started preparing deployment > Binding templates. Done (00:00:00)
+      Started preparing deployment > Binding properties. Done (00:00:00)
+      Started preparing deployment > Binding unallocated VMs. Done (00:00:00)
+      Started preparing deployment > Binding instance networks. Done (00:00:00)
+         Done preparing deployment (00:00:01)
+
+      Started preparing package compilation > Finding packages to compile. Done     (00:00:00)
+
+      Started preparing dns > Binding DNS. Done (00:00:00)
+
+      Started preparing configuration > Binding configuration. Done (00:00:13)
+
+    Task 1424 done
+
+    Started		2015-02-25 17:52:23 UTC
+    Finished	2015-02-25 17:52:37 UTC
+    Duration	00:00:14
+
+    api_z2/1 has been stopped
+    ```
 
 1. In `cf.yml`, locate the `ccdb` component and record the IP address:
 
@@ -194,7 +254,7 @@ You must back up each of the following:
 
 ### <a id='uaadb'></a>Back Up the UAA Database ###
 
-1. In `cf.yml`, locate the `uaadb` component and record the IP address:
+1. In the BOSH deployment manifest, locate the `uaadb` component and record the IP address:
 
     ```
     uaadb:
@@ -238,7 +298,7 @@ You must back up each of the following:
 
 ### <a id='consoledb'></a>Back Up the Apps Manager Database ###
 
-1. In `cf.yml`, locate the `consoledb` component and record the IP address and password:
+1. In the BOSH deployment manifest, locate the `consoledb` component and record the IP address and password:
 
     ```
     consoledb:
@@ -281,7 +341,7 @@ You must back up each of the following:
 
 ### <a id='nfs'></a>Back Up the NFS Server ###
 
-1. In `cf.yml`, locate the `nfs_server` component and note the address:
+1. In the BOSH deployment manifest, locate the `nfs_server` component and note the address:
 
     ```
     nfs_server:
@@ -306,12 +366,56 @@ You must back up each of the following:
 
 ### <a id='cc-start'></a>Start Cloud Controller ###
 
-Run the following commands to restart the Cloud Controller.
+Run the `bosh start <selected api>` command for each stopped api to restart the Cloud Controller.
 
-	```
-	bosh start <cloud controller job name>
-	bosh start <cloud controller worker job name>
-	```
+```
+○ → bosh start api_z2 1
+
+Processing deployment manifest
+------------------------------
+
+Processing deployment manifest
+------------------------------
+You are about to start api_z2/1
+
+Processing deployment manifest
+------------------------------
+
+Detecting deployment changes
+----------------------------
+Start api_z2/1? (type 'yes' to continue): yes
+
+Performing `start api_z2/1'...
+
+Director task 1428
+  Started preparing deployment
+  Started preparing deployment > Binding deployment. Done (00:00:00)
+  Started preparing deployment > Binding releases. Done (00:00:00)
+  Started preparing deployment > Binding existing deployment. Done (00:00:01)
+  Started preparing deployment > Binding resource pools. Done (00:00:00)
+  Started preparing deployment > Binding stemcells. Done (00:00:00)
+  Started preparing deployment > Binding templates. Done (00:00:00)
+  Started preparing deployment > Binding properties. Done (00:00:00)
+  Started preparing deployment > Binding unallocated VMs. Done (00:00:00)
+  Started preparing deployment > Binding instance networks. Done (00:00:00)
+     Done preparing deployment (00:00:01)
+
+  Started preparing package compilation > Finding packages to compile. Done (00:00:01)
+
+  Started preparing dns > Binding DNS. Done (00:00:00)
+
+  Started preparing configuration > Binding configuration. Done (00:00:13)
+
+  Started updating job api_z2 > api_z2/1 (canary)^@. Done (00:01:44)
+
+Task 1428 done
+
+Started		2015-02-25 17:54:28 UTC
+Finished	2015-02-25 17:56:27 UTC
+Duration	00:01:59
+
+api_z2/1 has been started
+```
 
 ### <a id='runtime'></a>Back Up Pivotal MySQL Server ###
 

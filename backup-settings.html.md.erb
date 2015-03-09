@@ -15,7 +15,7 @@ Always export an installation before importing a new one.
 Import an installation to restore your settings or to share your settings with
 another user.
 
-<p class="note"><strong>Note</strong>: Exporting your installation only backs up your installation settings. It does not back up your VMs.</p>
+<p class="note"><strong>Note</strong>: Exporting your installation only backs up your installation settings. It does not back up your VMs or any external MySQL databases that you have configured on the Ops Manager <a href="./vsphere-config.html"><strong>Director Config</strong> page</a>.</p>
 
 ### <a id='export'></a>Exporting an Installation ###
 
@@ -117,6 +117,7 @@ You must back up each of the following:
 * UAA Database
 * Apps Manager Database
 * The NFS Server
+* Pivotal MySQL Server
 
 ### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
 
@@ -369,6 +370,39 @@ Example:
 
     <code>tar -cf - /dir/to/archive/ | wc -c</code></p>
 
+
+### <a id='runtime'></a>Back Up Pivotal MySQL Server ###
+
+<p class="note"><strong>Note</strong>: The Elastic Runtime deploy contains an embedded MySQL Server that serves as the data store for the Application Usage Events, Notifications, and Autoscaler services.</p>
+
+1. From the Installation Dashboard in Ops Manager, select **Pivotal Elastic Runtime**. Click **Status** and record the CID of **MySQL Server**.
+
+    <%= image_tag("mysql-cid.png") %>
+
+2. Download and save the BOSH deployment manifest for MySQL Server. You need this manifest to locate information about your databases.
+
+    ```
+    $ bosh download manifest p-mysql-1e136692e37b3ec1f942 mysql.yml
+
+    Deployment manifest saved to `mysql.yml'
+    ```
+
+3. In mysql.yml, locate the IP address and password for the MySQL node:
+
+    ```
+     mysql_node:
+          host: 10.85.52.105
+          admin_password: c0eeec42e465428312fd
+        services:
+        - name: p-mysql
+    ```
+
+4.  Dump the data from the p-mysql DB and save it:
+
+    `$ mysqldump -u root -p -h 10.85.52.105 --all-databases > user_databases.sql`
+
+<p class="note"><strong>Note</strong>: Contact Pivotal Support for help restoring your Pivotal CF installation from the backups that you create.</p>
+
 ### <a id='cc-start'></a>Start Cloud Controller ###
 
 Run `bosh start SELECTED-VM` for each stopped API VM to restart the Cloud Controller. For information on how to review stopped VMs, refer to the [Back Up the Cloud Controller Database](http://docs.pivotal.io/pivotalcf/customizing/backup-settings.html#ccdb) section.
@@ -422,6 +456,7 @@ Finished	2015-02-25 17:56:27 UTC
 Duration	00:01:59
 
 api_z2/1 has been started
+<<<<<<< HEAD
 </pre>
 
 ### <a id='runtime'></a>Back Up Pivotal MySQL Server ###
@@ -455,3 +490,6 @@ api_z2/1 has been started
     `$ mysqldump -u root -p -h 10.85.52.105 --all-databases > user_databases.sql`
 
 <p class="note"><strong>Note</strong>: Contact Pivotal Support for help restoring your Pivotal CF installation from the backups that you create.</p>
+=======
+```
+>>>>>>> 675aa286e1f5a533988acabc61da49df9b749fac

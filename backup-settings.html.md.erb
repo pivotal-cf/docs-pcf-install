@@ -120,19 +120,19 @@ You must back up each of the following:
 
 ### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
 
-1. Download the BOSH manifest as instructed [above](http://docs.pivotal.io/pivotalcf/customizing/backup-settings.html#manifest).
+1. Download the BOSH manifest as instructed in the [Download the BOSH Manifest](http://docs.pivotal.io/pivotalcf/customizing/backup-settings.html#manifest) section.
 
-1. Run `bosh deployment <deployment manifest>` to set your deployment.
+1. Run `bosh deployment DEPLOYMENT-MANIFEST` to set your deployment.
 
-    ```
-    ○ → bosh deployment cf.yml
+    <pre class="terminal">
+    $ bosh deployment cf.yml
     Deployment set to `/home/working_directory/cf.yml'
-    ```
+    </pre>
 
-1. Run `bosh vms <deployment name>` to view all the VMs in your selected deployment. Note all the Cloud Controller VMs begin with **api**.
+1. Run `bosh vms DEPLOYMENT-NAME` to view all the VMs in your selected deployment. Notice that all the Cloud Controller VMs begin with _api_.
 
-    ```
-    ○ → bosh vms cf
+    <pre class="terminal">
+    $ bosh vms cf
     Deployment `cf'
 
     Director task 1430
@@ -158,13 +158,13 @@ You must back up each of the following:
     +------------------------------------+---------+---------------+--------------+
 
     VMs total: 13
-    ```
+    </pre>
 
-1. Run `bosh -d <deployment manifest> stop <selected api>` for each Cloud Controller VM.
+1. Run `bosh -d DEPLOYMENT-MANIFEST stop SELECTED-VM` for each Cloud Controller VM.
 Example:
 
-    ```
-    ○ → bosh -d cf.yml stop api_z2 1
+    <pre class="terminal">
+    $ bosh -d cf.yml stop api_z2 1
 
     Processing deployment manifest
     ------------------------------
@@ -208,39 +208,44 @@ Example:
     Duration	00:00:14
 
     api_z2/1 has been stopped
-    ```
+    </pre>
 
 1. In `cf.yml`, locate the `ccdb` component and record the IP address:
 
-    ```
+    <pre class="terminal">
     ccdb:
 	      address: 10.85.52.96
 	      port: 2544
 	      db_scheme: postgres
-	```
+	</pre>
 1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the Cloud Controller Database credentials.
 
     <%= image_tag("ccdb-creds.png") %>
 
 1. SSH into the CCDB VM as the admin using the IP address and password recorded in the previous steps.
 
+    <pre class="terminal">
+    $ ssh vcap@10.85.52.96
+	Password:***********
+    </pre>
+	
 1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the CCDB VM.
 
     Example:
 
-    ```
+    <pre class="terminal">
     $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
 
     /var/vcap/data/packages/postgres/5.1/bin/psql
-    ```
+    </pre>
 
 1. Run `pg_dump` from the locally installed psql client to export the database:
 
     Example:
 
-    ```
+    <pre class="terminal">
     $ /var/vcap/data/packages/postgres/5.1/bin/psql/pg_dump -h 10.85.52.96 -U admin -p 2544 ccdb > ccdb.sql
-```
+    </pre>
 
 1. Exit from the CCDB VM.
 
@@ -248,9 +253,9 @@ Example:
 
     Example:
 
-    ```
+    <pre class="terminal">
     $ scp vcap@10.85.52.96:ccdb.sql
-    ```
+    </pre>
 
 ### <a id='uaadb'></a>Back Up the UAA Database ###
 
@@ -366,10 +371,12 @@ Example:
 
 ### <a id='cc-start'></a>Start Cloud Controller ###
 
-Run the `bosh start <selected api>` command for each stopped api to restart the Cloud Controller.
+Run `bosh start SELECTED-VM` for each stopped API VM to restart the Cloud Controller. For information on how to review stopped VMs, refer to the [Back Up the Cloud Controller Database](http://docs.pivotal.io/pivotalcf/customizing/backup-settings.html#ccdb) section.
 
-```
-○ → bosh start api_z2 1
+The following example demonstrates starting a cloud controller API:
+
+<pre class="terminal">
+$ bosh start api_z2 1
 
 Processing deployment manifest
 ------------------------------
@@ -415,7 +422,7 @@ Finished	2015-02-25 17:56:27 UTC
 Duration	00:01:59
 
 api_z2/1 has been started
-```
+</pre>
 
 ### <a id='runtime'></a>Back Up Pivotal MySQL Server ###
 

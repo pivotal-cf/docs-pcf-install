@@ -1,0 +1,218 @@
+---
+title: Configuring AWS for PCF
+---
+
+This topic describes how to configure the AWS components that you need to run Pivotal Cloud Foundry (PCF) on Amazon Web Services (AWS).
+
+<p class="note"><strong>Note</strong>: PCF for AWS functionality works only in the “us-east-1” region. You cannot deploy PCF to any other region. </p>
+
+## <a id='pcfaws-key-pairs'></a>Step 1: Create Two Key Pairs ##
+
+We recommend creating one key pair to access your AWS instances and another key pair to access your AWS EC2 MicroBOSH instance that manages your deployment.
+
+1. Login to your AWS account and select **EC2**  to access the [EC2 Dashboard](https://console.aws.amazon.com/ec2/).
+1. Select **Key Pairs**, click **Create Key Pair**, and name it `pcf`. 
+1. Create a second key pair and give it a name. For example, `ops_mgr`.
+
+The private keys `pcf.pem` and `ops_mgr.pem` download automatically. Ensure that you add both private keys to your local SSH keys directory. Refer to the [AWS Documentation](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html).
+
+## <a id='pcfaws-vpc'></a>Step 2: Create a VPC ##
+
+1. Navigate to the [VPC Dashboard](https://console.aws.amazon.com/vpc/).
+1. Click **Start VPC Wizard**.
+
+    <%= image_tag("TBD.png") %>
+
+1. Select **VPC with Public and Private Subnets** and click **Select**.
+    <%= image_tag("TBD.png") %>
+
+1. Specify the following details for your VPC:
+    **IP CIDR block**: Enter `10.0.0/16`.
+    Enter a VPC name.
+    **Public subnet**: Enter `10.0.0/24`.
+    Set both **Availability Zone** fields to an available **us-east-1** region value. You must set both subnets to the same AZ, such as **us-east-1a**. 
+    **Public subnet name**: Enter `Public subnet`.
+    **Private subnet**: Enter `10.0.0/24”.
+    **Private subnet name**: Enter `Private subnet`.
+    **Instance type**: Select **m1.small**.
+    Select the `pcf` SSH key you created for **Key Pair name**.
+    **Enable DNS hostnames**: Click `Yes`.
+    **Hardware tenancy**: Select `Default`.
+    Click **Create VPC**.
+
+    <%= image_tag("TBD.png") %>
+
+
+## <a id='pcfaws-'></a>Step 3: Configure the Pivotal Ops Manager AMI ##
+
+1. Return to the [EC2 Dashboard](https://console.aws.amazon.com/ec2/)
+1. Click **AMIs**, locate the public image ami-ccd18aa4, and click **Launch**.
+
+    <p class=”note”><strong>Note</strong>: If you cannot locate the AMI, ensure that you have set your AWS Management Console to the **US East (N. Virginia)** region.</p>
+
+    <%= image_tag("TBD.png") %>
+
+1. Choose **m3.large** for your instance type and click **Next: Configure Instance Details**.
+
+    <%= image_tag("TBD.png") %>
+
+1. Configure the following for your instance:
+    **Network**: Select the VPC you created.
+    **Subnet**: Select your public subnet instance.
+    **Auto-assign for Public IP**: Select **Enable**.
+    For all other fields, accept the default values.
+
+    <%= image_tag("TBD.png") %>
+
+1. Click **Next: Add Storage** and adjust the **Size (GiB)** value. 
+The default persistent disk value is 50 GB. We recommend increasing this value to a minimum of 100 GB.
+
+    <%= image_tag("TBD.png") %>
+
+1. Click **Next: Tag Instance** and **Next: Configure Security Group**. 
+1. Select **Create a new security group** and enter a security group name.
+1. Click **Add Rule** and configure the security group with the following rules:
+
+TBD TABLE
+
+    The image shows an example security group configuration.
+
+    <%= image_tag("TBD.png") %>
+
+1. Click **Review and Launch** and confirm the instance launch details.
+1. Click **Launch**.
+1. Select the `pcf` key pair, confirm that you have access to the private key file, and click **Launch Instances**.
+
+    <%= image_tag("TBD.png") %>
+
+1. Click **View Instances** to access the **Instances** page on the [EC2 Dashboard](https://console.aws.amazon.com/ec2/).
+
+
+## <a id='pcfaws-lb-cname'></a>Step 4: Prepare a Load Balancer and a Wildcard DNS Record ##
+
+To ensure that AWS caches the correct IP address during DNS resolution, you must create the following:
+A load balancer with your domain, a HTTP listener, and other basic information. 
+A CNAME wildcard DNS record.
+
+You finish setting up the load balancer with a HTTPS listener and SSL certification information when you configure Elastic Runtime. For more information, see the “Generate a Self-Signed Certificate” and “Finalize the Load Balancer Setup” sections of the _Configure Elastic Runtime for AWS_ topic. 
+
+1. On the EC2 Dashboard, click **Load Balancers**.
+1. Click **Create Load Balancer** and configure a load balancer with the following information:
+    Enter a load balancer name.
+    **Create LB Inside**: Select the Pivotal CF VPC you created in Create a VPC. 
+    Click **Add** to define a HTTP listener. Set both protocol fields to **HTTP** and set both port fields to `80`.
+    Click **Continue**.
+
+    <%= image_tag("TBD.png") %>
+
+1. Select **TCP** in **Ping Protocol** on the **Configure Health Check** page and ensure that the **Ping Port** value is `80`. Click **Continue**.
+
+    <%= image_tag("TBD.png") %>
+
+1. Click **Select Subnet**, select the public subnet you configured in Create a VPC, and click **Continue**.
+
+1. Click **Assign Security Groups**, select the security group you configured in Configure the Pivotal Ops Manager AMI, and click **Continue**.
+
+    <%= image_tag("TBD.png") %>
+
+1. Accept the defaults on the **Add EC2 Instances** page and click **Continue**. 
+
+    <p class=”note”><strong>Note</strong>: Do not add instances to the Load Balancer in this step. You add them on the Resource Config page of Ops Manager Director.</p>
+
+1. Accept the defaults on the **Add Tags** page and click **Continue**.
+1. Review and confirm the load balancer details, and click **Create**. 
+1. Create a CNAME wildcard record with your DNS provider to point to the load balancer domain.
+
+## <a id='pcfaws-nat'></a>Step 5: Configure the NAT Instance ###
+
+1. On the EC2 Dashboard, select the NAT instance, which has an instance type of **m1.small**.
+1. From the **Actions** menu, select **Networking****>****Change Security Groups**.
+1. Change the NAT security group to the security group you created in Configure the Pivotal Ops Manager AMI, and click **Assign Security Groups**.
+
+    <%= image_tag("TBD.png") %>
+
+## <a id='pcfaws-dns-address'></a>Step 6: Record the Ops Manager Instance Public DNS Address ##
+
+Locate and record the public DNS address of your Ops Manager instance. You need this DNS address anytime you want to access Ops Manager using a browser. 
+
+1. On the **Instances** page of the EC2 Dashboard, sort the **Instance Type** column to find the **m3.large** instance that you created in Configure the Pivotal Ops Manager AMI.
+1. Record this value for the next part of this procedure, which is launching Ops Manager in a browser and continuing the configuration process.
+
+    <%= image_tag("TBD.png") %>
+
+## <a id='pcfaws-s3'></a>Step 7: Create an S3 Bucket ##
+
+1. Navigate to the S3 Dashboard. 
+1. Use the wizard to create a S3 bucket.
+1. Record the bucket name. You need this information for the **Director Config** page of the Ops Manager Director tile.
+
+<p class=”note”><strong>Note</strong>: You must have an empty S3 blobstore bucket when you install or reinstall PCF for AWS.</p>
+
+## <a id='pcfaws-rds-subnets'></a>Step 8: Set up Subnets for RDS ##
+
+You must create two new subnets to enable the RDS MySQL database. You create this database in the next step.
+
+1. Navigate to the VPC Dashboard and click **Subnets**. 
+1. Click **Create Subnet** and enter the following information:
+    
+    First subnet:
+    **Name tag**: `rds-1`
+    **VPC**: Select your Pivotal CF VPC.
+    **Availability Zone**: Select one of the available AZs.
+    **CIDR block**: Define a unique network range, such as `10.0.20.0/25`.
+
+    Second subnet:
+    **Name tag**: `rds-2`
+    **VPC**: Select your Pivotal CF VPC.
+    **Availability Zone**: Select a different AZ than what you specified in rds-1.
+    **CIDR block**: Define a unique network range, such as `10.0.30.0/25`.
+
+1. On the VPC Dashboard, click **Internet Gateways** and ensure that your VPC has an attached internet gateway.
+    AWS automatically creates and attaches an internet gateway to your default VPC instance.
+
+1. Create a RDS Subnet Group for the two RDS subnets. 
+    Navigate to the RDS Dashboard, click **Subnet Groups****>****Create DB Subnet Group**.
+    Enter a name and description.
+    **VPC ID**: Select your Pivotal CF VPC.
+    **Availability Zone** and **Subnet ID**: Choose the AZ and subnet for `rds-1` and click **Add**. Repeat this process to add rds-2 to the group.
+    Click **Create**. 
+
+    The image shows a completed subnet group.
+
+    <%= image_tag("TBD.png") %>
+
+    <p class=”note”><strong>Note</strong>: On the Subnet Group dashboard page, you might need to refresh the page to view the new group.</p>
+
+## <a id='pcfaws-mysql-rds'></a>Step 9: Create a MySQL Database using AWS RDS ##
+
+Create a MySQL database. You can use the AWS RDS functionality available on the RDS Dashboard to create this database.
+
+<p class=”note”><strong>Note</strong>: You must have an empty MySQL database when you install or reinstall PCF for AWS.</p>
+
+This step provides the information for the Host, Port, Username, Password, and Database fields on the **Director Config** page of the Ops Manager Director tile.
+
+1. Navigate to the RDS Dashboard. Click **Instances****>****Launch DB Instance** to launch the wizard.
+
+1. Select **MySQL**.
+
+1. Select **Yes** to create a database for production environments. Click **Next Step**.
+
+1. Specify the following database details:
+    **DB Instance Class**: Select **db.t2.medium - 2 vCPU, 4 GiB RAM**. Selecting this value automatically defines a general purpose SSD with 5 GB of allocated storage. 
+    **Multi-AZ Deployment**: Select **Yes**.
+    Enter a **DB Instance Identifier**, **Master Username**, and **Master Password**.
+
+    <p class=”note”><strong>Note</strong>: Record the username and password that you entered. You need this later when configuring the Ops Manager **Director Config** page in the Ops Manager Director tile.</p>
+
+1. Configure advanced settings:
+    **VPC**: Select your Pivotal CF VPC. This action also automatically populates **Subnet Group**.
+    **Publicly Accessible**: No
+    **VPC Security Groups**: Select the security group you created in Configure the Pivotal Ops Manager AMI.
+Enter a **Database Name**. 
+
+    <p class=”note”><strong>Note</strong>: Record the database name and port displayed on this page, which you need later when configuring the **Director Config** page in the Ops Manager Director tile.</p>
+
+1. Click **Launch DB Instance**. The instance generation process might take several minutes.
+
+
+[Return to the Getting Started Guide](../getstarted/index.html)

@@ -1,0 +1,109 @@
+---
+title: Configuring Ops Manager Director for AWS
+---
+
+This topic describes how to configure the Pivotal Cloud Foundry Operations Manager components that you need to run Pivotal Cloud Foundry (PCF) on Amazon Web Services (AWS). Before following this procedure, you must complete all steps in the _Configuring AWS for PCF_ topic.
+
+<p class="note"><strong>Note</strong>: PCF for AWS functionality works only in the “us-east-1” region. You cannot deploy PCF to any other region. </p>
+
+## <a id='pcfaws-om-access'></a>Step 1: Access Ops Manager ##
+
+We recommend creating one key pair to access your AWS instances and another key pair to access your AWS EC2 MicroBOSH instance that manages your deployment.
+
+1. Use the public DNS address of your Ops Manager instance to launch Ops Manager in a browser. See Record the Ops Manager Instance Public DNS Address.
+1. Enter a username and password and accept the EULA to create an admin user.
+
+    <p class=”note”><strong>Note</strong>: On your first login attempt, an error message that the connection is untrusted appears because you are attempting to connect securely to a website with a self-signed certificate. Add Ops Manager as an exception to bypass this message on subsequent logins.</p>
+
+    <%= image_tag("TBD.png") %>
+
+## <a id='pcfaws-om-awsconfig'></a>Step 2: AWS Config Page ##
+
+1. Click the **Ops Manager Director for AWS** tile.
+
+    <%= image_tag("TBD.png") %>
+
+1. Select **AWS Config**. 
+1. Enter your **Access Key ID** and **AWS Secret Key** information. To retrieve your AWS key information, refer to the [Obtain AWS Credentials](http://bosh.io/docs/deploy-microbosh-to-aws.html) section of the _Deploying MicroBOSH to AWS_ topic.
+1. **VPC ID**: Enter your Pivotal CF VPC.
+1. **Security Group Name**: Enter the security group that you defined in Configure the Pivotal Ops Manager AMI.
+1. Paste the contents of the second key file into the **SSH Private Key** field.
+1. Click **Save**.
+
+    <%= image_tag("TBD.png") %>
+
+## <a id='pcfaws-om-dirconfig'></a>Step 3: Director Config Page ##
+
+1. Select **Director Config **. 
+1. Enter at least two of the following NTP servers in the **NTP Servers (comma delimited)** field, separated by a comma:
+    * 0.amazon.pool.ntp.org
+    * 1.amazon.pool.ntp.org
+    * 2.amazon.pool.ntp.org
+    * 3.amazon.pool.ntp.org
+
+1. Click **Enable VM Resurrector Plugin** to enable the Ops Manager Resurrector functionality and increase Elastic Runtime availability.
+
+    For more information, see the introduction and Limitation sections of the [Using Ops Manager Resurrector on VMware vSphere](pivotalcf/customizing/resurrector.html) topic. 
+
+1. Select **Amazon S3** for **Blobstore Location** and complete the associated fields:
+    * **Bucket Name**: Enter the bucket name you defined in the “Create a S3 Bucket” section of the _Configuring PCF for AWS_ topic.
+    * **Access Key** and **Secret Key**: Enter your **Access Key ID** and **AWS Secret Key** information. To retrieve your AWS key information, refer to the [Obtain AWS Credentials](http://bosh.io/docs/deploy-microbosh-to-aws.html) section of the _Deploying MicroBOSH to AWS_ topic.
+
+1. Select **External MySQL Database** for **Database Location** and complete the associated fields. 
+
+    The details page for your RDS instance contains values required for these fields. The table lists the database instance field name with its equivalent field on the Director Config page. On the RDS Dashboard, click **Instances**, then click the arrow to the left of your instance to display this page. 
+
+TBD TABLE
+
+1. Enter the password that you defined in Create a MySQL Database using AWS RDS of the Configuring PCF for AWS topic in **Password**.
+1. Click **Save**.
+
+    <%= image_tag("TBD.png") %>
+
+
+## <a id='pcfaws-om-az'></a>Step 4: Availability Zones Pages ##
+
+1. Click **Create Availability Zones**.
+1. Enter `us-east-1` in **Amazon Availability Zone** and click **Save**.
+1. Click **Assign Availability Zones**.
+1. Select **us-east-1** in **Singleton Availability Zone** and click **Save**.
+
+## <a id='pcfaws-om-networks'></a>Step 5: Networks Pages ###
+
+1. Click **Create Networks**. 
+1. Enter a unique name for this network.
+1. Enter your private VPC ID in **VPC Subnet ID**. This ID displays on the **Subnets** page of the **VPC Dashboard**. 
+1. **Subnet (CIDR Range)**: Enter `10.0.1.0/24`.
+1. **Excluded IP Ranges**: Exclude Amazon IPs used at the bottom of the private range. Enter `10.0.1.1-10.0.1.10`.
+1. **DNS**: Enter `10.0.0.2`.
+1. **Gateway**: Enter `10.0.1.1`.
+1. Click **Save**.
+
+    <p class=”note”><strong>Note</strong>: When you save this form, a verification error displays because the PCF security group blocks ICMP. You can ignore this error.</p>
+
+    <%= image_tag("TBD.png") %>
+
+1. Select **Assign Networks** and assign the Director to the network you created in the previous step.
+
+    <%= image_tag("TBD.png") %>
+
+## <a id='pcfaws-om-lb'></a>Step 6: Define Your Load Balancer on the Resource Config Page ##
+
+1. Click **Resource Config**.
+1. **ELB Name**: Enter the name that you defined for your load balancer in Prepare a Load Balancer and a Wildcard DNS Record. 
+1. Click **Save**.
+
+    <%= image_tag("TBD.png") %>
+
+## <a id='pcfaws-om-complete'></a>Step 7: Complete the Ops Manager Director Installation ##
+
+1. Return to the **Installation Dashboard**.
+1. Click **Apply Changes**. An ICMP error message appears.
+1. Click **Ignore errors and start the install**. 
+
+    Ops Manager Director begins to install. The **Changes Applied** window displays when the installation successfully completes.
+
+    <%= image_tag("TBD.png") %>
+
+
+[Return to the Getting Started Guide](../getstarted/index.html)

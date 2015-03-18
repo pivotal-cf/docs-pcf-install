@@ -1,14 +1,14 @@
 ---
-title: Configuring Ops Manager Director for AWS
+title: Configuring Elastic Runtime for AWS
 ---
 
-This topic describes how to configure the Pivotal Elastic Runtime components that you need to run Pivotal Cloud Foundry (PCF) on Amazon Web Services (AWS). Before following this procedure, you must complete all steps in the _Configuring AWS for PCF_ and _Configuring Ops Manager_ for AWS topics.
+This topic describes how to configure the Pivotal Elastic Runtime components that you need to run Pivotal Cloud Foundry (PCF) on Amazon Web Services (AWS). 
 
-<p class="note"><strong>Note</strong>: PCF for AWS functionality works only in the “us-east-1” region. You cannot deploy PCF to any other region. </p>
+Before following this procedure, complete all steps in the [Configuring AWS for PCF](./pcf-aws-component-config.html) and [Configuring Ops Manager Director for AWS](./pcf-aws-om-config.html) topics.
+
+<p class="note"><strong>Note</strong>: PCF for AWS functionality works only in the us-east-1 region. You cannot deploy PCF to any other region. </p>
 
 ## <a id='pcfaws-er-om-add'></a>Step 1: Add Elastic Runtime to Ops Manager ##
-
-We recommend creating one key pair to access your AWS instances and another key pair to access your AWS EC2 MicroBOSH instance that manages your deployment.
 
 1. Click the Pivotal Network link on the left to add Elastic Runtime into Ops Manager. 
 
@@ -17,16 +17,16 @@ We recommend creating one key pair to access your AWS instances and another key 
 1. Navigate to the Pivotal CF Ops Manager Installation Dashboard.
 1. Hover your cursor over the Elastic Runtime product and click **Add**.
 
-    <%= image_tag("TBD.png") %>
+    <%= image_tag("pcfaws/TBD.png") %>
 
 1. Click the Elastic Runtime tile in the Installation Dashboard.
 
-    <%= image_tag("TBD.png") %>
+    <%= image_tag("pcfaws/TBD.png") %>
 
 ## <a id='pcfaws-er-az-networks'></a>Step 2: Assign Networks and Availability Zones ##
 
 1. Click **Assign Network**.
-1. Select the network you created in Create and Assign Network, and click **Save**.
+1. Select the network you created in the ["Networks Pages"](./pcf-aws-om-config.htm#pcfaws-om-networks)  section of the _Configuring Ops Manager Director for AWS_ topic, and click **Save**.
 1. Click **Assign Availability Zones**.
 1. Select the option button and checkbox to define the availability zone for singleton jobs and job balancing.
 1. Click **Save**.
@@ -38,68 +38,67 @@ We recommend creating one key pair to access your AWS instances and another key 
 1. Click the **Generate Self-Signed RSA Certificate** link to launch the RSA certificate wizard. 
 1. On the **Generate Self-Signed RSA Certificate** window, select a wildcard domain that you own and click **Generate**. The example in the image uses *.example.com.
 
-    <%= image_tag("TBD.png") %>
+    <%= image_tag("pcfaws/er_generate_sslrsacert.png") %>
 
 1. Elastic Runtime populates the **SSL Certificate** fields with RSA certificate and private key information.
 1. Click **Trust Self-Signed Certificates**.
 
-    <%= image_tag("TBD.png") %>
+    <%= image_tag("pcfaws/TBD.png") %>
 
 1. Click **Save**.
 
 ## <a id='pcfaws-er-lb'></a>Step 4: Finalize the Load Balancer Setup ##
 
-In this step, you complete your load balancer configuration that you began when setting up AWS components for PCF. For more information, see the “Prepare a Load Balancer and Wildcard DNS Record” section in the _Configure AWS for PCF_ topic.
+In this step, you complete your load balancer configuration that you began when setting up AWS components for PCF. For more information, see the [“Prepare a Load Balancer and Wildcard DNS Record”](./pcf-aws-component-config.html#pcfaws-lb-cname) section in the _Configure AWS for PCF_ topic.
 
 1. On the EC2 Dashboard, click **Load Balancers**.
-1. Select the load balancer you created in the “Prepare a Load Balancer and Wildcard DNS Record” section. The **Load balancer** details tabs display at the bottom of the page.
+1. Select the load balancer you created in the [“Prepare a Load Balancer and Wildcard DNS Record”](./pcf-aws-component-config.html#pcfaws-lb-cname) section of the _Configuring AWS for PCF_ topic. The **Load balancer** details tabs display at the bottom of the page.
 1. Select **Listeners**.
 
-    <%= image_tag("TBD.png") %>
+    <%= image_tag("pcfaws/TBD.png") %>
 
 1. Click **Edit** to define a second listener with the following values:
-    **Load Balancer Protocol**: **HTTPS**
-    **Load Balancer Port**: `443`
-    **Instance Protocol**: **HTTP**
-    **Instance Port**: `80`
+    * **Load Balancer Protocol**: **HTTPS**
+    * **Load Balancer Port**: `443`
+    * **Instance Protocol**: **HTTP**
+    * **Instance Port**: `80`
 
-
-    <%= image_tag("TBD.png") %>
+    <%= image_tag("pcfaws/TBD.png") %>
 
 1. Click **Change** in the **SSL Certificate** column.
 1. On the Select Certificate page, click **Upload and new SSL Certificate** and complete the following information:
-    Enter a **Certificate Name**.
-    **Private Key** and **Public Key Certificate**: Paste the RSA certificate and private key information from the **SSL Certificate** fields of the HAProxy page to the appropriate field.
+    * Enter a **Certificate Name**.
+    * **Private Key** and **Public Key Certificate**: Paste the RSA certificate and private key information from the **SSL Certificate** fields of the HAProxy page to the appropriate field.
 1. Click **Save**.
 
-    <%= image_tag("TBD.png") %>
+    <%= image_tag("pcfaws/er_lb_cert_details.png") %>
 
 ## <a id='pcfaws-er-clocon'></a>Step 5: Configure the Cloud Controller ###
 
 1. Click **Cloud Controller**. 
 1. Enter your domain name without the asterisk in the **System Domain** and **Apps Domain** fields; for example, `pivotalcf.com`. The image shows the correct format.
 
-    <%= image_tag("TBD.png") %>
+    <%= image_tag("pcfaws/er_clocon.png") %>
 
 1. Click **Save**.
 1. Click **Resource Config** and edit the following fields: 
-    **HAProxy**: Enter `0` in **Instances**.
-    **Router**: Enter the load balancer name in **ELB Name** that you created in Prepare a Load Balancer and a Wildcard DNS Record.
-    **Compilation**: Enter 1024 in **Ephemeral Disk**.
+    * **HAProxy**: Enter `0` in **Instances**.
+    * **Router**: Enter the load balancer name in **ELB Name** that you created in the [“Prepare a Load Balancer and Wildcard DNS Record”](./pcf-aws-component-config.html#pcfaws-lb-cname) section of the _Configuring AWS for PCF_ topic.
+    * **Compilation**: Enter 1024 in **Ephemeral Disk**.
 1. Click **Save**.
 
-The image shows the edited fields.
+    The image shows the edited fields.
 
-    <%= image_tag("TBD.png") %>
+    <%= image_tag("pcfaws/TBD.png") %>
 
 ## <a id='pcfaws-er-complete'></a>Step 6: Complete the Elastic Runtime Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation Dashboard. 
 1. Click **Apply Changes** to begin your installation of Elastic Runtime.
 
-The install process generally requires a minimum of 90 minutes to complete. The **Changes Applied** window displays when the installation process successfully completes, as the following image shows:
+    The install process generally requires a minimum of 90 minutes to complete. The image shows the **Changes Applied** window that displays when the installation process successfully completes.
 
-    <%= image_tag("TBD.png") %>
+    <%= image_tag("aws/vpc-step16.png") %>
 
 
-[Return to the Getting Started Guide](../getstarted/index.html)
+

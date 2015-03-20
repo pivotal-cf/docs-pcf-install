@@ -35,10 +35,13 @@ Before following this procedure, complete all steps in the [Configuring AWS for 
 1. Click the **Generate Self-Signed RSA Certificate** link to launch the RSA certificate wizard. 
 1. On the **Generate Self-Signed RSA Certificate** window, select a wildcard domain that you own and click **Generate**. The example in the image uses *.example.com.
 
-    <%= image_tag("pcfaws/er_generate_sslrsacert.png") %>
+    <%= image_tag("pcfaws/er_ssrsacert.png") %>
 
 1. Elastic Runtime populates the **SSL Certificate** fields with RSA certificate and private key information.
 1. Click **Trust Self-Signed Certificates**.
+
+    <%= image_tag("pcfaws/er_ipports_page.png") %>
+
 1. Click **Save**.
 
 ## <a id='pcfaws-er-lb'></a>Step 4: Finalize the Load Balancer Setup ##
@@ -46,31 +49,35 @@ Before following this procedure, complete all steps in the [Configuring AWS for 
 In this step, you complete your load balancer configuration that you began when setting up AWS components for PCF. For more information, see the [Prepare a Load Balancer and Wildcard DNS Record](./pcf-aws-component-config.html#pcfaws-lb-cname) section in the _Configure AWS for PCF_ topic.
 
 1. On the EC2 Dashboard, click **Load Balancers**.
-1. Select the load balancer you created in the [Prepare a Load Balancer and Wildcard DNS Record](./pcf-aws-component-config.html#pcfaws-lb-cname) section of the _Configuring AWS for PCF_ topic. The **Load balancer** details tabs display at the bottom of the page.
+1. Select the load balancer you created in the [Prepare a Load Balancer and Wildcard DNS Record](./pcf-aws-component-config.html#pcfaws-lb-cname) section of the _Configuring AWS for PCF_ topic. The **Load balancer** detail tabs display at the bottom of the page.
 1. Select **Listeners**.
 
-    <%= image_tag("pcfaws/TBD.png") %>
+    <%= image_tag("pcfaws/er_lb_add_listeners.png") %>
 
 1. Click **Edit** to define the following listeners:
-    * **Load Balancer Protocol**: **HTTPS**
+    * **Load Balancer Protocol**: **HTTPS (Secure HTTP)**
     * **Load Balancer Port**: `443`
     * **Instance Protocol**: **HTTP**
     * **Instance Port**: `80`
-    * **Load Balancer Protocol**: **SSL**
+    * **Load Balancer Protocol**: **SSL (Secure TCP)**
     * **Load Balancer Port**: `4443`
     * **Instance Protocol**: **TCP**
     * **Instance Port**: `80`
 
-    <%= image_tag("pcfaws/TBD.png") %>
+    When you click **Save**, AWS prompts you to enter SSL certificates for these listeners.
 
-1. Click **Change** in the **SSL Certificate** column for the HTTP listener.
+    <%= image_tag("pcfaws/er_lb_add_sslcert.png") %>
+
+1. Click **Change** in the **SSL Certificate** column for the HTTPS listener.
 1. On the Select Certificate page, click **Upload and new SSL Certificate** and complete the following information:
     * Enter a **Certificate Name**.
-    * **Private Key** and **Public Key Certificate**: Paste the RSA certificate and private key information from the **SSL Certificate** fields of the HAProxy page to the appropriate field.
-1. Repeat the above steps to add a SSL certificate to the SSL listener.
-1. Click **Save**.
+    * **Private Key** and **Public Key Certificate**: Paste the RSA certificate and private key information from the **SSL Certificate** fields of the IP and Ports page to the appropriate field.
+    * Click **Save**.
 
     <%= image_tag("pcfaws/er_lb_cert_details.png") %>
+
+1. Repeat the above steps to add a SSL certificate to the SSL listener.
+1. Click **Save** to complete the load balancer configuration.
 
 ## <a id='pcfaws-er-clocon'></a>Step 5: Configure the Cloud Controller ###
 
@@ -83,12 +90,14 @@ In this step, you complete your load balancer configuration that you began when 
 1. Click **Resource Config** and edit the following fields: 
     * **HAProxy**: Enter `0` in **Instances**.
     * **Router**: Enter the load balancer name in **ELB Name** that you created in the [Prepare a Load Balancer and Wildcard DNS Record](./pcf-aws-component-config.html#pcfaws-lb-cname) section of the _Configuring AWS for PCF_ topic.
-    * **Compilation**: Enter 1024 in **Ephemeral Disk**.
+
+    The images show the edited fields.
+
+    <%= image_tag("pcfaws/er_resourcespg_haproxy.png") %>
+
+    <%= image_tag("pcfaws/er_resourcespg_router.png") %>
+
 1. Click **Save**.
-
-    The image shows the edited fields.
-
-    <%= image_tag("pcfaws/TBD.png") %>
 
 ## <a id='pcfaws-er-complete'></a>Step 6: Complete the Elastic Runtime Installation ##
 

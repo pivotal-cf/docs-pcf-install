@@ -11,8 +11,6 @@ After you complete this procedure, follow the instructions in the [Configuring E
 
 ## <a id='pcfaws-om-access'></a>Step 1: Access Ops Manager ##
 
-We recommend creating one key pair to access your AWS instances and another key pair to access your AWS EC2 MicroBOSH instance that manages your deployment.
-
 1. Use the public DNS address of your Ops Manager instance to launch Ops Manager in a browser. See [Record the Ops Manager Instance Public DNS Address](./pcf-aws-component-config.html#pcfaws-dns-address).
 1. Enter a username and password and accept the EULA to create an admin user.
 
@@ -28,8 +26,11 @@ We recommend creating one key pair to access your AWS instances and another key 
 
 1. Select **AWS Config**. 
 1. Enter your **Access Key ID** and **AWS Secret Key** information. To retrieve your AWS key information, use the IAM credentials that you generated earlier. Refer to the [Obtain AWS Credentials](./pcf-aws-component-config.html#pcfaws-iam-user) section of the _Configuring AWS for PCF_ topic.
+
 1. **VPC ID**: Enter your Pivotal CF VPC.
-1. **Security Group Name**: Enter the security group that you defined in [Configure the Pivotal Ops Manager AMI](./pcf-aws-component-config.html#pcfaws-om-ami).
+1. **Security Group Name**: Enter `OpsManager`. 
+
+    For more information, refer to the [Configure a Security Group for Ops Manager](./pcf-aws-component-config.html#pcfaws-om-secgrp). 
 1. Choose **pcf** as the key pair name. 
 1. Paste the contents of the generated key file `pcf.pem` into the **SSH Private Key** field.
 1. Click **Save**.
@@ -51,13 +52,13 @@ We recommend creating one key pair to access your AWS instances and another key 
 
 1. Select **Amazon S3** for **Blobstore Location** and complete the associated fields:
     * **Bucket Name**: Enter the bucket name you defined in the [Create a S3 Bucket](./pcf-aws-component-config.html#pcfaws-s3) section of the _Configuring PCF for AWS_ topic.
-    * **Access Key** and **Secret Key**: Enter your **Access Key ID** and **AWS Secret Key** information. To retrieve your AWS key information, refer to the [Obtain AWS Credentials](http://bosh.io/docs/deploy-microbosh-to-aws.html#credentials) section of the _Deploying MicroBOSH to AWS_ topic.
+    * **Access Key** and **Secret Key**: Enter your **Access Key ID** and **AWS Secret Key** information. To retrieve your AWS key information, use the IAM credentials that you generated earlier. Refer to the [Obtain AWS Credentials](./pcf-aws-component-config.html#pcfaws-iam-user) section of the _Configuring AWS for PCF_ topic.
 
 1. Select **External MySQL Database** for **Database Location** and complete the associated fields. 
 
     The details page for your RDS instance contains values required for these fields. On the RDS Dashboard, click **Instances**, then click the arrow to the left of your instance to display this page. 
 
-     The table lists the database instance field name with its equivalent field on the Director Config page. 
+     The table lists the database instance field name with its equivalent field on the Director Config page, and also provides the values for the **Port** and **Database** fields. 
 
     <table border="1" class="nice" >
 <tr>
@@ -70,11 +71,11 @@ We recommend creating one key pair to access your AWS instances and another key 
 </tr>
 <tr>
   <td>Port</td>
-  <td>Port</td>
+  <td>Port, which is <code>3306</code>.</td>
 </tr>
 <tr>
   <td>DB Name</td>
-  <td>Database</td>
+  <td>Database, which is <code>bosh</code>.</td>
 </tr>
 <tr>
   <td>Username</td>
@@ -91,11 +92,22 @@ We recommend creating one key pair to access your AWS instances and another key 
 ## <a id='pcfaws-om-az'></a>Step 4: Availability Zones Pages ##
 
 1. Click **Create Availability Zones**.
-1. **Amazon Availability Zone**: Enter the name of the AWS AZ that contains the private subnet (10.0.1.0/24) for your VPC, such as us-east-1b. 
+1. **Amazon Availability Zone**: Enter the name of the AWS AZ that contains the private subnet (10.0.16.0/20) for your VPC, such as us-east-1b.
+
+    The images show where to find the **Availability Zone** name on the **Summary** tab of the VPC Subnets page, and entering this name on the **Create Availability Zones** page.
+
+    <%= image_tag("pcfaws/om_az_step4.png") %>
+
+    <%= image_tag("pcfaws/om_create_az.png") %>
+
     For more information, refer to the [Create a VPC](./pcf-aws-component-config.html#pcfaws-vpc) section of the _Configuring PCF for AWS_ topic. 
+
 1. Click **Save**.
 1. Click **Assign Availability Zones**.
 1. **Singleton Availability Zone**: Select the same AZ value that you specified for **Amazon Availability Zone**.
+
+    <%= image_tag("pcfaws/om_assign_az.png") %>
+
 1. Click **Save**.
 
 ## <a id='pcfaws-om-networks'></a>Step 5: Networks Pages ###
@@ -118,7 +130,15 @@ We recommend creating one key pair to access your AWS instances and another key 
     <%= image_tag("pcfaws/om_assign_networks.png") %>
 
 
-## <a id='pcfaws-om-complete'></a>Step 6: Complete the Ops Manager Director Installation ##
+## <a id='pcfaws-om-rscestem'></a>Step 7: Resource Config Page ##
+
+1. Click **Resource Config**.
+1. Adjust any instance values as necessary for your deployment, such as increasing the number of load balancer instances.
+1. Click **Save**.
+
+    <%= image_tag("pcfaws/om_resource_config.png") %>
+
+## <a id='pcfaws-om-complete'></a>Step 7: Complete the Ops Manager Director Installation ##
 
 1. Return to the **Installation Dashboard**.
 1. Click **Apply Changes**. An ICMP error message appears.

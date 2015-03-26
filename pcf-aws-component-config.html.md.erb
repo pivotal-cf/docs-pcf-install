@@ -6,7 +6,9 @@ This topic describes how to configure the AWS components that you need to run Pi
 
 After you complete this procedure, complete all steps in the [Configuring Ops Manager Director for AWS](./pcf-aws-om-config.html) and [Configuring Elastic Runtime for AWS](./pcf-aws-er-config.html) topics. 
 
-<p class="note"><strong>Note</strong>: PCF for AWS functionality works only in the us-east-1 region. You cannot deploy PCF to any other region. </p>
+<p class="note"><strong>Note</strong>: PCF for AWS functionality works only in the us-east-1 region. You cannot deploy PCF to any other region.</p>
+
+<p class="note"><strong>Note</strong>: PCF for AWS functionality currently does not support the Amazon EC2 Auto Recovery feature. Do not enable this feature for any of your instances. For more information about AWS instance monitoring and recovery, refer to the <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-recover.html">Auto Recovery documentation</a>.</p>
 
 ## <a id='pcfaws-iam-user'></a>Step 1: Create an IAM User for PCF ##
 
@@ -27,7 +29,7 @@ You must create an Amazon Identity and Access Management user (IAM) with the min
     <p class="note"><strong>Note</strong>: The <code>credentials.csv</code> contains the IDs for your user security access key and secret access key. Because you can manage the status of key pairs by deactivating and deleting them, be sure to keep the <code>credentials.csv</code> file for your currently active key pairs in a secure directory.</p>
 
 1. Click **Close**.
-1. On the User dashboard, click the pcf-user name field to access the user details page.
+1. On the User dashboard, click the user name to access the user details page.
 
     <%= image_tag("pcfaws/aws_iam_select_pcfuser.png") %>
 
@@ -184,7 +186,7 @@ The private keys `pcf.pem` and `ops_mgr.pem` download automatically. Ensure that
 
 1. Return to the EC2 Dashboard.
 1. Select **Security Groups****>****Create Security Group**.
-1. Enter a security group name and description: `Ops Manager`.
+1. Enter a security group name and description: `OpsManager`.
 1. Select the VPC to which to deploy Ops Manager.
 1. Click the **Inbound** tab and add rules for HTTP, HTTPS and SSH for your IP only, as the table and image show.
 
@@ -222,11 +224,11 @@ The private keys `pcf.pem` and `ops_mgr.pem` download automatically. Ensure that
 
     <%= image_tag("pcfaws/pcf_aws_secgrp_om.png") %>
 
-## <a id='pcfaws-om-ersecgrp'></a>Step 5: Configure a Security Group for Elastic Runtime ##
+## <a id='pcfaws-om-ersecgrp'></a>Step 5: Configure a Security Group for PCF VMs ##
 
 1. On the EC2 Dashboard, select **Security Groups****>****Create Security Group**.
-1. Enter a security group name and description: `Elastic Runtime`.
-1. Select the VPC to which to deploy Elastic Runtime.
+1. Enter a security group name and description: `pcfVMs`.
+1. Select the VPC to which to deploy the PCF VMs.
 1. Click the **Inbound** tab and add rules for all traffic from your public and private subnets to your private subnet, as the table and image show. 
     This rule configuration does the following:
     * Enables BOSH to deploy ERS and other services.
@@ -264,7 +266,7 @@ The private keys `pcf.pem` and `ops_mgr.pem` download automatically. Ensure that
 ## <a id='pcfaws-om-elbsecgrp'></a>Step 6: Configure a Security Group for the Elastic Load Balancer ##
 
 1. On the EC2 Dashboard, select **Security Groups****>****Create Security Group**.
-1. Enter a security group name and description: `PCF ELB`.
+1. Enter a security group name and description: `PCF_ELB_SecurityGroup`.
 1. Select the VPC to which to deploy the ELB.
 1. Click the **Inbound** tab and add rules to allow traffic to :80, :443, and :4443 from 0.0.0.0/0, as the table and image show.
 
@@ -307,7 +309,7 @@ The private keys `pcf.pem` and `ops_mgr.pem` download automatically. Ensure that
 ## <a id='pcfaws-om-natsecgrp'></a>Step 7: Configure a Security Group for the Outbound NAT ##
 
 1. On the EC2 Dashboard, select **Security Groups****>****Create Security Group**.
-1. Enter a security group name and description: `Outbound NAT`.
+1. Enter a security group name and description: `OutboundNAT`.
 1. Select the VPC to which to deploy the Outbound NAT.
 1. Click the **Inbound** tab and add a rule to allow all traffic from your VPCs, as the table and image show.
 
@@ -366,9 +368,7 @@ The private keys `pcf.pem` and `ops_mgr.pem` download automatically. Ensure that
 1. Return to the EC2 Dashboard.
 1. Click **AMIs**, locate the `pivotal-ops-manager` public image `ami-a8ea3c0`, and click **Launch**.
 
-    <p class="note"><strong>Note</strong>: If you cannot locate the AMI, ensure that you have set your AWS Management Console to the <strong>US East (N. Virginia)</strong> region.</p>
-
-TBD customers will have go to pivnet and file a ticket to get correct AMI
+    <p class="note"><strong>Note</strong>: If you cannot locate the AMI, ensure that you have set your AWS Management Console to the <strong>US East (N. Virginia)</strong> region. If you still cannot locate the AMI, log in to the <a href="https://network.pivotal.io">Pivotal Network</a> and file a support ticket.</p>
 
     <%= image_tag("pcfaws/pcf_aws_ami.png") %>
 
@@ -421,7 +421,7 @@ You finish setting up the load balancer with a HTTPS listener and SSL certificat
 
     <%= image_tag("pcfaws/create_lb.png") %>
 
-1. Select **TCP** in **Ping Protocol** on the **Configure Health Check** page. Ensure that the **Ping Port** value is `80` and set the **Health Check Interval` to 10 seconds. Click **Continue**.
+1. Select **TCP** in **Ping Protocol** on the **Configure Health Check** page. Ensure that the **Ping Port** value is `80` and set the **Health Check Interval** to 10 seconds. Click **Continue**.
 
     <%= image_tag("pcfaws/lb_health_check.png") %>
 
@@ -433,7 +433,7 @@ You finish setting up the load balancer with a HTTPS listener and SSL certificat
 
 1. Accept the defaults on the **Add EC2 Instances** page and click **Continue**. 
 
-    <p class="note"><strong>Note</strong>: Do not add instances to the Load Balancer in this step. You add them on the Resource Config page of the Ops Manager Director tile.</p>
+    <p class="note"><strong>Note</strong>: Do not add instances to the Load Balancer in this step. You add them on the [Resource Config page](./pcf-aws-om-config.html#pcfaws-om-rscestem) of the Ops Manager Director tile.</p>
 
 1. Accept the defaults on the **Add Tags** page and click **Continue**.
 1. Review and confirm the load balancer details, and click **Create**. 

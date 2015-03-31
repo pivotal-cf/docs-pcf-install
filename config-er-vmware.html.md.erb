@@ -1,0 +1,168 @@
+---
+title: Configure Elastic Runtime
+---
+
+1. Click the **Elastic Runtime** tile.
+
+    <%= image_tag("click-er.png") %>
+
+1. Select **Assign Networks**. Elastic Runtime runs on the network you select.
+
+    <%= image_tag("assign-networks-1_3.png") %>
+
+1. **(vSphere Only)** Select **Assign Availability Zones**. These are the
+Availability Zones that you [create](../customizing/vsphere-config.html#create-az) when configuring Ops
+Manager Director.
+    * Select an Availability Zone under **Place singleton jobs**. Ops Manager
+	runs any job with a single instance in this Availability Zone.
+	* Select one or more Availability Zones under **Balance other jobs**. Ops
+	Manager balances instances of jobs with more than one instance across the
+	Availability Zones that you specify.
+
+    <%= image_tag("availability-zones-1_3.png") %>
+
+1. In the left column, select **HAProxy**.
+
+1. The value you enter in the **HAProxy IPs** field depends on whether you are
+using your own load balancer or the HAProxy load balancer.
+    * **Your own load balancer**: Leave this field blank.
+    * **HAProxy load balancer**: Enter at least one HAProxy IP address. Point
+	your DNS to this address.
+
+    For more information, refer to the [Configuring PCF SSL 	Termination](../opsguide/ssl-term.html) topic.
+	For help understanding the Elastic Runtime architecture, refer to the
+	[Architecture](../concepts/architecture/) topic.
+
+    <%= image_tag("ha-proxy-1_3.png") %>
+
+1. <a id='generate-rsa-cert'></a>If you are using a signed **SSL Certificate**
+from a known certificate authority (CA), copy and paste its values for
+**Certificate PEM** and **Private Key PEM** into the appropriate text fields.
+If you have an **Intermediate CA** paste it in the same box below the
+Certificate PEM.
+Alternatively, complete the following two steps to generate self-signed RSA
+certificates.
+    * Check the **Trust Self-Signed Certificates** checkbox, then click
+	**Generate Self-Signed RSA Certificate**.
+    <%= image_tag("gen-ssl.png") %>
+    * Enter your system and app domains in wildcard format. Optionally, also add
+	any custom domains in wildcard format. Click **Generate**.
+
+    <%= image_tag("enter-ssl-domains.png") %>
+
+    <p class="note"><strong>Note</strong>: Wildcard DNS records only work for a
+	single domain name component or component fragment. For example,
+	<code>*.domain.com</code> works for <code>apps.domain.com</code> and
+	<code>system.domain.com</code>, but not <code>my.apps.domain.com</code> or
+	<code>my.system.domain.com</code>.</p>
+
+1. The **Certificate Key PEM** and **Private Key PEM** fields now contain
+certificate keys.
+Click **Save**.
+
+1. Select **Router IPs**.
+The value you enter in the **Router IPs** field depends on whether you are
+using your own load balancer or the HAProxy load balancer.
+    * **Your own load balancer**: Enter the IP address(es) for PCF that
+	you registered with your load balancer. Refer to the [Using Your Own Load Balancer](../customizing/custom-load-balancer.html) topic for help using your
+	own load balancer with PCF.
+    * **HAProxy load balancer**: Leave this field blank.
+
+1. Click **Save**.
+
+    <%= image_tag("router-ip-1_3.png") %>
+
+1. <a id="cloud-controller"></a>Select **Cloud Controller** and enter the system
+and application domains.
+    * The **System Domain** defines your target when you push apps to Elastic
+	Runtime.
+    * The **Apps Domain** defines where Elastic Runtime should serve your
+	apps.
+
+    <%= image_tag("cloud-controller-1_3.png") %>
+
+    <p class="note"><strong>Notes</strong>: You configured wildcard DNS records
+	for these domains in an earlier step. </p>
+
+1. Leave the **Cloud Controller DB encryption key** field blank unless:
+    * You deployed Elastic Runtime earlier
+    * You then stopped Elastic Runtime, or it crashed
+    * You are re-deploying Elastic Runtime with a backup of your Cloud
+	Controller database
+
+    Enter your Cloud Controller database encryption key only if these conditions
+	apply.
+	See [Backing Up Pivotal Cloud Foundry](../customizing/backup-settings.html) for more
+	information.
+
+1. Enter your intended maximum file upload size.
+
+1. **(Optional)** Check the **Disable Custom Buildpacks** checkbox.
+By default, the cf command line tool gives developers the option of using a
+custom buildpack when they deploy apps to Elastic Runtime.
+To do so, they use the `-b` option to provide a custom buildpack URL with the
+`cf push` command.
+The **Disable Custom Buildpacks** checkbox disables the `-b` option.
+For more information about custom buildpacks, refer to the
+[buildpacks](../buildpacks/) section of the PCF documentation.
+
+1. Click **Save**.
+
+1. **(Optional - Advanced)** If you are forwarding syslog messages via TCP to a
+RELP syslog server, complete this step.
+Select **External Endpoints**, enter the IP address and port of the syslog
+aggregator host, and click **Save**.
+
+    <%= image_tag("external-endpoints.png") %>
+
+    <p class="note"><strong>Note</strong>: The host must be reachable from the
+	Elastic Runtime network, accept TCP connections, and use the RELP protocol.
+	Ensure <code>syslogd</code> listens on external interfaces.</p>
+
+1. **(Optional - Advanced)** If you are using the VMware SSO appliance for
+integration with Active Directory, complete this step.
+Select **SSO Config**, enter the URL of an SSO appliance to connect to Active
+Directory servers in your organization, and click **Save**.
+
+    <%= image_tag("sso-config-1_3.png") %>
+
+1. **(Optional - Advanced)** If you are using the LDAP endpoint for UAA, you
+must configure Elastic Runtime with your LDAP endpoint information.
+See [Connecting Elastic Runtime to LDAP](../customizing/ldap-uaa.html) for more
+information.
+
+1. **(Optional)** Select **SMTP Config**, enter your reply-to and SMTP email
+information, and click **Save**.
+Apps Manager uses these settings to send invitations and confirmations to
+console users.
+These SMTP settings are required if you want to enable end-user
+self-registration.
+
+    <p class="note"><strong>Note</strong>: If you do not configure the SMTP
+	settings using this form, the administrator must create orgs and users using
+	the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating and Managing Users with
+		the cf CLI</a> for more information.</p>
+
+    <%= image_tag("smtp-1_3.png") %>
+
+1. Select **Lifecycle Errands**.
+By default, Ops Manager runs the **Run Smoke Tests** and **Push Console**
+errands after installing Elastic Runtime.
+See  [Understanding Lifecycle Errands](../packaging/lifecycle-errands.html) for
+more information.
+
+    <p class="note"><strong>Note</strong>: The Push Console errand also deploys
+	the usage service, which provides data on the count of instances and amount
+	of memory that apps consume. When the usage service starts for the first
+	time, it executes an API call to purge all application usage events from the
+	Cloud Controller Database. Subsequent Apps Manager and usage service deploys
+	do not trigger this API call, and do not purge application usage events.
+	</p>
+
+    <%= image_tag("lifecycle-errands-1_3.png") %>
+
+1. Select **Resource Config**, accept the defaults or make necessary changes,
+and click **Save**.
+
+1. Click the **Installation Dashboard** link to return to the Installation
+Dashboard.

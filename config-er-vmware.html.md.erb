@@ -1,5 +1,5 @@
 ---
-title: Configuring Elastic Runtime for vSphere and VCloud Air
+title: Configuring Elastic Runtime for vSphere and vCloud
 ---
 
 1. Click the **Elastic Runtime** tile.
@@ -21,31 +21,53 @@ Manager Director.
 
     <%= image_tag("availability-zones-vmware.png") %>
 
-1. Select **Root Filesystem**.
+1. Select **Root Filesystem**. This page specifies the default root filesystem, or stack, for apps pushed to your PCF instance.
+
+	<p class="note"><strong>Note</strong>: Choose the cflinuxfs2 stack unless you know you need the lucid64 stack. Support for the Lucid64 filesystem will be deprecated in a future Pivotal Cloud Foundry release. For more information, refer to the knowledge base article.</p>
+
+	The following buildpacks support the new cflinuxfs2 stack:
+	* NodeJS buildpack
+	* PHP buildpack
+	* Go buildpack
+	* Python buildpack
+    * Ruby buildpack
+
+	You should test custom buildpacks with the new stack to ensure compatibility.
+
+	Developers can override the default you specify using the cf CLI when they push their apps.
 
 	<%= image_tag("rootfs-er.png") %>
 
-1. Select **System Database Config**.
+1. Select **System Database Config**. By default, this page specifies that PCF uses an internal database for UAADB, ConsoleDB, CCDB, App Usage Events DB, Autoscaling and Notifications.
+
+	Alternatively, you can configure an external AWS RDS database. If you choose to use an external database, complete the associated fields with information obtained from AWS.
+
+	<p class="note"><strong>Note</strong>: Pivotal recommends that you accept the default internal database unless you require the functionality of AWS RDS.</p>
 
 	<%= image_tag("system-db.png") %>
 
-1. Select **File Storage Config**.
+1. Select **File Storage Config**. This page specifies whether to use an internal (NFS) or external (AWS S3) filestore.
 
 	<%= image_tag("file-storage.png") %>
 
 1. In the left column, select **IPs and Ports**.
 
+1. Select **Router IPs**. The value you enter in the **Router IPs** field depends on whether you are
+using your own load balancer or the HAProxy load balancer.
+	- **Your own load balancer**: Enter the IP address(es) for PCF that you registered with your load balancer. Refer to the [Using Your Own Load Balancer](../customizing/custom-load-balancer.html) topic for help using your own load balancer with PCF.
+    - **HAProxy load balancer**: Leave this field blank.
+
 1. The value you enter in the **HAProxy IPs** field depends on whether you are
 using your own load balancer or the HAProxy load balancer.
-    * **Your own load balancer**: Leave this field blank.
-    * **HAProxy load balancer**: Enter at least one HAProxy IP address. Point
+	- **Your own load balancer**: Leave this field blank.
+    - **HAProxy load balancer**: Enter at least one HAProxy IP address. Point
 	your DNS to this address.
 
     For more information, refer to the [Configuring PCF SSL 	Termination](../opsguide/ssl-term.html) topic.
 	For help understanding the Elastic Runtime architecture, refer to the
 	[Architecture](../concepts/architecture/) topic.
 
-    <%= image_tag("ha-proxy-1_3.png") %>
+    <%= image_tag("router-ip.png") %>
 
 1. <a id='generate-rsa-cert'></a>If you are using a signed **SSL Certificate**
 from a known certificate authority (CA), copy and paste its values for
@@ -72,19 +94,9 @@ certificates.
 certificate keys.
 Click **Save**.
 
-1. Select **Router IPs**.
-The value you enter in the **Router IPs** field depends on whether you are
-using your own load balancer or the HAProxy load balancer.
-    * **Your own load balancer**: Enter the IP address(es) for PCF that
-	you registered with your load balancer. Refer to the [Using Your Own Load Balancer](../customizing/custom-load-balancer.html) topic for help using your
-	own load balancer with PCF.
-    * **HAProxy load balancer**: Leave this field blank.
-
-1. Click **Save**.
-
     <%= image_tag("router-ip.png") %>
 
-1. Select **MySQL Proxy Config**.
+1. Select **MySQL Proxy Config**. This page was added to configure the mysql proxy connections that are necessary to run the internal MySQL db cluster that ships with the runtime tile in HA mode.
 
 	<%= image_tag("mysql-proxy.png") %>
 
@@ -180,7 +192,7 @@ more information.
 1. Select **Resource Config**, accept the defaults or make necessary changes,
 and click **Save**.
 
-1. Select **Stemcell**.
+1. Select **Stemcell**. this shows both the existent stemcell that comes with Ops Manager as well as allowing for a new stemcell import
 
 	<%= image_tag("stemcell.png") %>
 

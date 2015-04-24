@@ -1,0 +1,287 @@
+---
+title: Starting and Stopping PCF VMs on AWS
+---
+
+This topic describes starting and stopping the virtual machines (VMs) that make
+up a [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf)
+(PCF) deployment on Amazon Web Services (AWS).
+
+Amazon charges an hourly rate for every active VM instance.
+You can stop the PCF VMs to reduce the costs associated with your PCF
+deployment.
+
+## <a id='start'></a>Starting PCF Virtual Machines ##
+
+Dependencies between the components in your PCF deployment require that you
+start the VMs for those components in a specific order.
+Use the `bosh start` command to start the PCF virtual machines.
+
+In the order presented in the following table, run `bosh start VM NAME` for each
+component in your PCF deployment.
+
+<table border="1" class="nice">
+  <tr>
+    <th>Start Order</th>
+    <th>Component</th>
+    <th>VM NAME</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>NATS</td>
+    <td>nats-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>etcd</td>
+    <td>etcd_server-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>NFS Server</td>
+    <td>nfs_server-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Cloud Controller Database</td>
+    <td>ccdb-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>UAA Database</td>
+    <td>uaadb-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>Console Database</td>
+    <td>consoledb-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>Cloud Controller</td>
+    <td>cloud_controller-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>HAProxy</td>
+    <td>ha_proxy-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>9</td>
+    <td>Router</td>
+    <td>router-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>10</td>
+    <td>Health Manager</td>
+    <td>health_manager-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>11</td>
+    <td>Clock Global</td>
+    <td>clock_global-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>12</td>
+    <td>Cloud Controller Worker</td>
+    <td>cloud_controller_worker-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>13</td>
+    <td>UAA</td>
+    <td>uaa-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>14</td>
+    <td>Login</td>
+    <td>login-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>15</td>
+    <td>MySQL Proxy</td>
+    <td>mysql_proxy-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>16</td>
+    <td>MySQL Server</td>
+    <td>mysql-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>17</td>
+    <td>DEA</td>
+    <td>dea-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>18</td>
+    <td>Doppler Server</td>
+    <td>doppler-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>19</td>
+    <td>Loggregator Trafficcontroller</td>
+    <td>loggregator_trafficcontroller-partition-default_az_guid</td>
+  </tr>
+</table>
+
+For example, run `bosh start nats-partition-default_az_guid` to start the NATS
+virtual machine:
+
+```
+
+$ bosh start nats-partition-default_az_guid
+
+Processing deployment manifest
+------------------------------
+You are about to start nats-partition-default_az_guid/0
+
+Detecting deployment changes
+----------------------------
+Start nats-partition-default_az_guid/0? (type 'yes' to continue): yes
+
+Performing `start nats-partition-default_az_guid/0'...
+
+...
+
+Started updating job nats-partition-default_az_guid > nats-partition-default_az_guid/0 (canary). Done (00:00:43)
+
+Task 42 done
+
+nats-partition-default_az_guid/0 has been started
+
+```
+
+## <a id='stop'></a>Stopping PCF Virtual Machines ##
+
+Dependencies between the components in your PCF deployment require that you shut
+down the VMs for those components in a specific order.
+Use the `bosh stop` command to stop the PCF virtual machines.
+
+In the order presented in the following table, run `bosh stop VM NAME` for each
+component in your PCF deployment.
+
+<table border="1" class="nice">
+  <tr>
+    <th>Start Order</th>
+    <th>Component</th>
+    <th>VM NAME</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>Loggregator Trafficcontroller</td>
+    <td>loggregator_trafficcontroller-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Doppler Server</td>
+    <td>doppler-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>DEA</td>
+    <td>dea-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>MySQL Server</td>
+    <td>mysql-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>MySQL Proxy</td>
+    <td>mysql_proxy-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>Login</td>
+    <td>login-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>UAA</td>
+    <td>uaa-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>Cloud Controller Worker</td>
+    <td>cloud_controller_worker-partition-default_az_guid</td>
+  </tr>
+
+  <tr>
+    <td>9</td>
+    <td>Clock Global</td>
+    <td>clock_global-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>10</td>
+    <td>Health Manager</td>
+    <td>health_manager-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>11</td>
+    <td>Router</td>
+    <td>router-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>12</td>
+    <td>HAProxy</td>
+    <td>ha_proxy-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>13</td>
+    <td>Cloud Controller</td>
+    <td>cloud_controller-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>14</td>
+    <td>Console Database</td>
+    <td>consoledb-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>15</td>
+    <td>UAA Database</td>
+    <td>uaadb-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>164</td>
+    <td>Cloud Controller Database</td>
+    <td>ccdb-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>17</td>
+    <td>NFS Server</td>
+    <td>nfs_server-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>18</td>
+    <td>etcd</td>
+    <td>etcd_server-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>19</td>
+    <td>NATS</td>
+    <td>nats-partition-default_az_guid</td>
+  </tr>
+</table>
+
+For example, run `bosh stop loggregator_trafficcontroller-partition-default_az_guid` to stop the Loggregator
+Trafficcontroller virtual machine:
+
+```
+
+$ bosh stop loggregator_trafficcontroller-partition-default_az_guid
+
+Processing deployment manifest
+------------------------------
+You are about to stop loggregator_trafficcontroller-partition-default_az_guid/0
+
+Detecting deployment changes
+----------------------------
+Stop loggregator_trafficcontroller-partition-default_az_guid/0? (type 'yes' to continue): yes
+
+Performing `stop loggregator_trafficcontroller-partition-default_az_guid/0'...
+
+...
+
+Started updating job loggregator_trafficcontroller-partition-default_az_guid > loggregator_trafficcontroller-partition-default_az_guid/0 (canary). Done (00:00:37)
+
+loggregator_trafficcontroller-partition-default_az_guid/0 has been stopped
+```

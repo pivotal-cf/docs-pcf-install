@@ -222,20 +222,49 @@ you previously uploaded for the second listener.
 
 1. Click **Save**.
 
-## <a id='pcfaws-er-resource'></a>Step 8: (Optional) Configure SMTP ##
+## <a id='pcfaws-er-smtp'></a>Step 8: (Optional) Configure SMTP ##
 
-1. Select **SMTP Config**, enter your reply-to and SMTP email information, set
+Select **SMTP Config**, enter your reply-to and SMTP email information, set
 **SMTP Authentication Mechanism** to `none`, and click **Save**.
 Apps Manager uses these settings to send invitations and confirmations to
 console users.
-These SMTP settings are required if you want to enable end-user
-self-registration.
+These SMTP settings are required for the following: 
+
+* End-user self-registration
+* [Notifications with UI](#pcfaws-er-notifications)
 
 <p class="note"><strong>Note</strong>: If you do not configure the SMTP settings using this form, the administrator must create orgs and users using the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating and Managing Users with the cf CLI</a> for more information.</p>
 
 <%= image_tag("smtp.png") %>
 
-## <a id='pcfaws-er-resource'></a>Step 9: Configure Resources ##
+## <a id='pcfaws-er-errands'></a>Step 9: Configure Errands ##
+
+Errands automate a variety of *one-off* tasks involved in product installation. For Elastic Runtime, Ops Manager runs the following post-install errands by default. You can prevent a post-install errand from running by deselecting the checkbox.
+
+* **Push Console** deploys the Apps Manager, a GUI for managing apps, services, orgs, users, and spaces. If you deselect this, you must perform these functions through the cf CLI. For more information, see [Getting Started with the Apps Manager](./dev-console.html).
+
+* **Run Smoke Tests** verifies that your deployment can do the following:
+
+    * Push, scale, and delete apps
+    * Create and delete orgs and spaces
+    
+* **Push App Usage Service** deploys the Usage Service, a GUI providing data and analytics on the resources used by your apps.
+
+* **Notifications with UI** deploys an app that sends email notifications and a management GUI. 
+
+    <p id='pcfaws-er-notifications' class='note'><strong>Note</strong>: 
+        The notifications app requires that you <a href='#pcfaws-er-smtp'>configure SMTP</a>.
+    </p>
+
+* **Deploy CF Autoscaling App** enables your deployment to automatically scale the number of instances of an app in response to changes in its usage load. You must bind the Autoscaling service to the app.
+
+    <p class='note'><strong>Note</strong>: The autoscaling app requires the notifications app to send email alerts when scaling actions occur. 
+    </p>
+
+* **Register Autoscaling Service Broker** makes the autoscaling service available to your applications. Without this errand, the CF Autoscaling App will not be able to access your applications.
+
+
+## <a id='pcfaws-er-resource'></a>Step 10: Configure Resources ##
 
 Because you are using RDS, S3, and ELBs, you can turn off VMs that you do not
 need.
@@ -261,7 +290,7 @@ need.
 
 1. Click **Save**.
 
-## <a id='pcfaws-er-complete'></a>Step 10: Complete the Elastic Runtime Installation ##
+## <a id='pcfaws-er-complete'></a>Step 11: Complete the Elastic Runtime Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.

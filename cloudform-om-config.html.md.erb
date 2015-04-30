@@ -1,0 +1,131 @@
+---
+title: Configuring Ops Manager Director after Deploying PCF on AWS using CloudFormation
+---
+
+This topic describes how to configure the Ops Manager Director after deploying the CloudFormation template for [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Amazon Web
+Services (AWS).
+
+Before beginning this procedure, ensure that you have successfully completed all
+steps in the [Deploying the CloudFormation Template for PCF on AWS](./cloudform-template.html) topic.
+After you complete this procedure, follow the instructions in the [Installing Elastic Runtime after Deploying PCF on AWS using CloudFormation](./cloudform-er-config.html) topic.
+
+## <a id='outputs'></a>Step 1: Open the Outputs Tab in AWS Stacks ##
+
+In the Stacks dashboard of the [AWS Console](https://console.aws.amazon.com/), select the **pcf-stack** checkbox, then select the **Outputs** tab.
+
+<%= image_tag("cloudform/outputs.png") %>
+
+You use the information in the **Value** column of the **Outputs** tab to [access Ops Manager](#access-om), [configure the Ops Manager Director](#aws-config), and [configure Elastic Runtime](./cloudform-er-config.html).
+
+## <a id='access-om'></a>Step 2: Access Ops Manager ##
+
+1. In the **Outputs** tab in the AWS Console, **00OpsManDNS** specifies the public DNS name of your Ops Manager. Enter this public DNS name as a URL in a web browser.
+
+1. Log in with the **OpsMgrWebUID** and **OpsMgrWebPW** that you provided on the [Specify Parameters](./cloudform-template.html#parameters) page of the CloudFormation dashboard in AWS.
+
+    <%= image_tag("cloudform/login.png") %>
+
+## <a id='aws-config'></a>Step 3: AWS Config Page ##
+
+1. Click the **Ops Manager Director** tile.
+
+    <%= image_tag("cloudform/om-tile.png") %>
+
+1. Select **AWS Config** to open the **AWS Management Console Config** page.
+
+1. Complete the **AWS Management Console Config** page with information from the **Outputs** tab in the AWS Console:
+    * **Access Key ID**: Use **01AccessKeyID**.
+    * **AWS Secret Key**: Use **02AWSSecretKey**.
+    * **VPC ID**: Use **03VPCID**.
+    * **Security Group Name**: Click the link in **04SecurityGroupName**. Use
+		the **Group name** shown, not the **Group ID**.
+    * **Key Pair Name**: Use **05KeyPairName**.
+    * **SSH Private Key**: Open your pre-existing AWS key pair `.pem` file in a
+		text editor. Copy the contents of the `.pem` file and paste into the
+		**SSH Private Key** field.
+
+1. Click **Save**.
+
+    <%= image_tag("cloudform/aws-config.png") %>
+
+## <a id='director-config'></a>Step 4: Director Config Page ##
+
+1. Select **Director Config** to open the **Director Config** page.
+
+1. Enter at least two of the following NTP servers in the **NTP Servers (comma delimited)** field, separated by a comma:
+    * 0.amazon.pool.ntp.org
+    * 1.amazon.pool.ntp.org
+    * 2.amazon.pool.ntp.org
+    * 3.amazon.pool.ntp.org
+
+1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops
+Manager Resurrector functionality and increase Elastic Runtime availability.
+
+1. Complete the **Director Config** page with information from the **Outputs** tab in the AWS Console:
+    * **Blobstore Location**: Select the **Amazon S3** option.
+    * **Bucket Name**: Use **07OpsMgrBucketName**.
+    * **Access Key ID**: Use **08AccessKeyID**.
+    * **AWS Secret Key**: Use **09AWSSecretKey**.
+    * **Database Location**: Select the **External MySQL Database** option.
+    * **Host**: Use **10RDSHost**.
+    * **Port**: Use **11RDSPort**.
+    * **Username**: Use **12RDSUserID**.
+    * **Password**: Use **13RDSPassword**.
+    * **Database**: Use **14RDSDatabase**.
+
+1. Click **Save**.
+
+    <%= image_tag("cloudform/director-config.png") %>
+
+## <a id='az'></a>Step 5: Availability Zones Pages ##
+
+1. Select **Create Availability Zones**.
+
+1. Enter **15AmazonAvailabilityZone** from the **Outputs** tab in the AWS Console.
+
+1. Select **Assign Availability Zones**.
+
+1. Select the Availability Zone that you created in **Create Availability Zones**.
+
+1. Click **Save**.
+
+    <%= image_tag("cloudform/assign-az.png") %>
+
+## <a id='network'></a>Step 6: Network Pages ##
+
+1. Select **Create Networks**.
+
+1. Complete the **Create Networks** page with information from the **Outputs** tab in the AWS Console:
+    * **Name**: Use **16NetworkName**.
+    * **VPC Subnet ID**: Use **17VPCSubnetId**.
+    * **Subnet (CIDR Range)**: Use **18SubnetCIDRRange**.
+    * **Excluded IP Ranges**: Use **19ExcludedIPRanges**.
+    * **DNS**: Use **20DNS**.
+    * **Gateway**: Use **21Gateway**.
+
+1. Click **Save**.
+
+    <%= image_tag("cloudform/create-networks.png") %>
+
+1. Select **Assign Networks** and assign the Director to the network that you
+created in the **Create Networks** step.
+
+1. Click **Save**.
+
+    <%= image_tag("cloudform/assign-networks.png") %>
+
+## <a id='complete'></a>Step 7: Complete the Ops Manager Director Installation ##
+
+1. Click the **Installation Dashboard** link to return to the Installation
+Dashboard.
+
+1. Click **Apply Changes**. If the following ICMP error message appears, click
+**Ignore errors and start the install**.
+
+    <%= image_tag("cloudform/install-error.png") %>
+
+1. Ops Manager Director installs. The image shows the **Changes Applied** window
+that displays when the installation process successfully completes.
+
+    <%= image_tag("cloudform/ops-manager-complete.png") %>
+

@@ -11,15 +11,64 @@ After you complete this procedure, complete all steps in the [Configuring Ops Ma
 <p class="note"><strong>Note</strong>: PCF for AWS functionality currently does not support the Amazon EC2 Auto Recovery feature. Do not enable this feature for any of your instances.</p>
 <p class="note"><strong>Note</strong>: File a ticket with Amazon to ensure that your account can launch more than the default 20 instances. In the ticket, ask for a limit of <strong>50 t2.micro</strong> instances and <strong>20 c4.large</strong> instances in the <strong>US East (Northern Virginia)</strong> region. You can check the limits on your account by visiting the <a href="https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#Limits:">limits section</a> of the EC2 site on the AWS console.</p>
 
-## <a id='pcfaws-s3'></a>Step 1: Create S3 Buckets for Ops Manager and Elastic Runtime ##
+##<a id='overview'></a> Overview of Amazon Objects to Create ##
 
-<p class="note"><strong>Note</strong>: You must have two empty S3 blobstore buckets when you install or reinstall PCF for AWS.</p>
+<table border="1" class="nice">
+<tr>
+  <th><strong>Order</strong></th>
+  <th><strong>Object</strong></th>
+  <th><strong>Name</strong></th>
+  <th><strong>Notes</strong></th>
+  <th><strong>Dashboard</strong></th>
+</tr>
+<tr>
+  <td>1</td><td>S3 Bucket for Ops Manager</td><td>OPS_MANAGER_S3_BUCKET</td><td>Must be empty when you install or reinstall PCF.</td><td align="center"><%= image_tag("pcfaws/s3.png") %> <br>S3</td>
+</tr>
+<tr>
+  <td>2</td><td>S3 Bucket for Elastic Runtime</td><td>ELASTIC_RUNTIME_S3_BUCKET</td><td>Must be empty when you install or reinstall PCF.</td><td align="center"><%= image_tag("pcfaws/s3.png") %> <br>S3</td>
+</tr>
+<tr>
+  <td>3</td><td>IAM User for PCF </td><td>pcf-user</td><td><ul><li><a href="./policy-doc.html">Policy document</a></li><li><a href="#pcfaws-iam-user">Detailed instructions</a></li></ul></td><td align="center"><%= image_tag("pcfaws/iam.png") %> <br>Identity & Access Management</td>>
+</tr>
+<tr>
+  <td>4</td><td>Key Pair</td><td>pcf</td><td><ul><li>Use to access your AWS instances, the AWS EC2 MicroBOSH instance that manages your deployment, and your Ops Manager VM.</li><li>The private key <code>pcf.pem</code> downloads automatically. Ensure that you add the private key to your local SSH keys directory. Refer to the <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html">AWS Documentation</a>.</li></ul></td><td align="center"><%= image_tag("pcfaws/ec2.png") %> <br>EC2</td>
+</tr>
+<tr>
+  <td>5</td><td>VPC</td><td>2</td><td>1</td><td>1024</td>
+</tr>
+<tr>
+  <td>6</td><td>Security Group for Ops Manager</td><td>1</td><td>1</td><td>1024</td>
+</tr>
+<tr>
+  <td>7</td><td>Security Group for PCF VMs</td><td>1</td><td>1</td><td>1024</td>
+</tr>
+<tr>
+  <td>8</td><td>Security Group for the ELB</td><td>1</td><td>1</td><td>1024</td>
+</tr>
+<tr>
+  <td>9</td><td>Security Group for the Outbound NAT</td><td>1</td><td>1</td><td>4096</td>
+</tr>
+<tr>
+  <td>10</td><td>Security Group for MySQL</td><td>1</td><td>1</td><td>1024</td>
+</tr>
+<tr>
+  <td>11</td><td>Ops Manager AMI</td><td>1</td><td>1</td><td>1024</td>
+</tr>
+<tr>
+  <td>12</td><td>Load Balancer</td><td>1</td><td>1</td><td>1024</td>
+</tr>
+  <td>13</td><td>Wildcard DNS Record</td><td>0</td><td>1</td><td>1024</td>
+</tr>
+<tr>
+  <td>14</td><td>MySQL Database using AWS RDS</td><td>1</td><td>1</td><td>1024</td>
+</tr>
+<tr>
+  <td>15</td><td>Subnets for RDS</td><td>1</td><td>1</td><td>1024</td>
+</tr>
+</table>
 
-1. Navigate to the S3 Dashboard.
-1. Use the wizard to create two S3 buckets: one for Ops Manager (OPS\_MANAGER\_S3\_BUCKET) and one for Elastic Runtime (ELASTIC\_RUNTIME\_S3\_BUCKET).
-1. Record the bucket names. You need this information for the IAM policy in the next step and for configuring your product tiles.
 
-## <a id='pcfaws-iam-user'></a>Step 2: Create an IAM User for PCF ##
+## <a id='pcfaws-iam-user'></a>Create an IAM User for PCF ##
 
 You must create an Amazon Identity and Access Management user (IAM) with the minimal permissions necessary to run and install PCF.
 
@@ -52,99 +101,8 @@ You must create an Amazon Identity and Access Management user (IAM) with the min
     <%= image_tag("pcfaws/aws_iam_custom_policy.png") %>
 
 1. On the Review Policy page, enter `pcf-iam-policy` in **Policy Name**.
-1. Copy and paste the following text in the **Policy Document** field.
 
-    <p class="note"><strong>Note</strong>: Ensure that you edit the <code>S3_BUCKET_NAME</code> placeholder text with the bucket names that you define in the <a href="#pcfaws-s3">Create S3 Buckets</a> section.</p>
-
-    <pre class="code">
-
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-            "Effect": "Deny",
-            "Action": [
-                "iam:*"
-            ],
-            "Resource": [
-                "*"
-            ]
-        },
-        {
-            "Sid": "OpsMgrInfrastructureIaasConfiguration",
-            "Effect": "Allow",
-            "Action": [
-                "ec2:DescribeKeypairs",
-                "ec2:DescribeVpcs",
-                "ec2:DescribeSecurityGroups",
-                "ec2:DescribeAvalibilityZones",
-                "ec2:DescribeAccountAttributes"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "OpsMgrInfrastructureDirectorConfiguration",
-            "Effect": "Allow",
-            "Action": [
-                "s3:*"
-            ],
-            "Resource": [
-                "arn:aws:s3:::OPS_MANAGER_S3_BUCKET",
-			    "arn:aws:s3:::OPS_MANAGER_S3_BUCKET/*",
-			    "arn:aws:s3:::ELASTIC_RUNTIME_S3_BUCKET",
-			    "arn:aws:s3:::ELASTIC_RUNTIME_S3_BUCKET/*"
-            ]
-        },
-        {
-            "Sid": "OpsMgrInfrastructureAvilibilityZones",
-            "Effect": "Allow",
-            "Action": [
-                "ec2:DescribeAvailabilityZones"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "OpsMgrInfrastructureNetworks",
-            "Effect": "Allow",
-            "Action": [
-                "ec2:DescribeSubnets"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Sid": "DeployMicroBosh",
-            "Effect": "Allow",
-            "Action": [
-                "ec2:DescribeImages",
-                "ec2:RunInstances",
-                "ec2:DescribeInstances",
-                "ec2:TerminateInstances",
-                "ec2:RebootInstances",
-                "elasticloadbalancing:DescribeLoadBalancers",
-                "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                "ec2:DescribeAddresses",
-                "ec2:DisassociateAddress",
-                "ec2:AssociateAddress",
-                "ec2:CreateTags",
-                "ec2:DescribeVolumes",
-                "ec2:CreateVolume",
-                "ec2:AttachVolume",
-                "ec2:DeleteVolume",
-                "ec2:DetachVolume",
-                "ec2:CreateSnapshot",
-                "ec2:DeleteSnapshot",
-                "ec2:DescribeSnapshots",
-                "ec2:RegisterImage",
-                "ec2:DeregisterImage"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-
-
-    </pre>
+1. Copy and paste the text from [this topic](./policy-doc.html) in the **Policy Document** field.
 
 1. Ensure that the **Use autoformatting for policy editing** checkbox is selected.
 
@@ -158,17 +116,7 @@ You must create an Amazon Identity and Access Management user (IAM) with the min
 
     <%= image_tag("pcfaws/aws_iam_policies_list.png") %>
 
-## <a id='pcfaws-key-pair'></a>Step 3: Create Key Pair ##
-
-Create one key pair to access your AWS instances, the AWS EC2 MicroBOSH instance that manages your deployment, and your Ops Manager VM.
-
-1. Ensure that you have select **US East (Northern Virginia)** as your region.
-1. Select **EC2** to access the EC2 Dashboard.
-1. Select **Key Pairs**, click **Create Key Pair**, and name it `pcf`.
-
-The private key `pcf.pem` downloads automatically. Ensure that you add the private key to your local SSH keys directory. Refer to the [AWS Documentation](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html).
-
-## <a id='pcfaws-vpc'></a>Step 4: Create a VPC ##
+## <a id='pcfaws-vpc'></a>Create a VPC ##
 
 1. Navigate to the VPC Dashboard.
 1. Click **Start VPC Wizard**.

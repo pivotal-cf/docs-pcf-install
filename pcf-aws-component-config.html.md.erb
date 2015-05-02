@@ -17,11 +17,11 @@ The following table describes the objects you need to create using the AWS conso
 
 
 <dl>
- <dt><strong>Step 1: S3 Buckets for Ops Manager and Elastic Runtime</strong></dt><dd><strong>Dashboard</strong>: S3</dd><dd>OPS_MANAGER_S3_BUCKET</dd>  <dd>ELASTIC_RUNTIME_S3_BUCKET</dd><dd><p class="note">Note: Must be empty when you install or reinstall PCF.</p></dd>
+ <dt><strong>Step 1: S3 Buckets for Ops Manager and Elastic Runtime</strong></dt><dd><strong>Dashboard</strong>: S3</dd><dd>OPS_MANAGER_S3_BUCKET</dd>  <dd>ELASTIC_RUNTIME_S3_BUCKET</dd><dd>Must be empty when you install or reinstall PCF.</dd>
 
  <dt><strong>Step 2: IAM User for PCF</strong></dt><dd><strong>Dashboard</strong>: Identity & Access Management</dd><dd>Name: pcf-user</dd><dd><a href="./policy-doc.html">Policy document</a></dd><dd><a href="#pcfaws-iam-user">Details</a><br></dd>
 
- <dt><strong>Step 3: Key Pair</strong></dt><dd><strong>Dashboard</strong>: EC2</dd><dd>Name: pcf-user</dd><dd><p class="note"><strong>Note</strong>: Refer to the <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html">AWS Documentation</a> to add the private key locally.</p></dd>
+ <dt><strong>Step 3: Key Pair</strong></dt><dd><strong>Dashboard</strong>: EC2</dd><dd>Name: pcf-user</dd><dd>Refer to the <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html">AWS Documentation</a> to add the private key locally.</dd>
 
  <dt><strong>Step 4: VPC (Public and Private Subnets)</strong></dt><dd><strong>Dashboard</strong>: VPC</dd>
     <dd>IP CIDR block: 10.0.0.0/16</dd>
@@ -44,11 +44,11 @@ The following table describes the objects you need to create using the AWS conso
 
 <dt><strong>Step 9: Security Group for MySQL</strong></dt><dd><strong>Dashboard</strong>: EC2</dd><dd>Name: MySQL</dd><dd>Source: Custom IP, 10.0.0.0/16</dd><dd>All Traffic (0 - 65535)</dd><dd><a href="#pcfaws-om-mysqlsecgrp">Details</a></dd><dd><p class="note"><strong>Note</strong>: If you plan to use an internal database, you can skip this step. If you are using RDS you must configure a security group that enables the Ops Manager VM and Ops Manager Director VM to access the database.</p></dd>
 
-<dt><strong>Step 10: Launch an Ops Manager AMI</strong></dt><dd><strong>Dashboard</strong>: EC2</dd><dd><a href="#pcfaws-om-ami">Details</a></dd><dd><p class="note"><strong>Note</strong>: You can find the AMI ID in the <em>Ops Manager for AWS</em> PDF you downloaded from <a href="https://network.pivotal.io/products/pivotal-cf">Pivotal Network</a>.</p></dd>
+<dt><strong>Step 10: Launch an Ops Manager AMI</strong></dt><dd><strong>Dashboard</strong>: EC2</dd><dd><a href="#pcfaws-om-ami">Details</a></dd><dd>You can find the AMI ID in the <em>Ops Manager for AWS</em> PDF you downloaded from <a href="https://network.pivotal.io/products/pivotal-cf">Pivotal Network</a>.</dd>
 
 <dt><strong>Step 11: Load Balancer</strong></dt><dd><strong>Dashboard</strong>: EC2</dd><dd><strong>Name</strong>: pcf-aws-lb</dd><dd><a href="#pcfaws-lb-cname">Details</a></dd>
 
-<dt><strong>Step 12: NAT Instance</strong></dt><dd><strong>Dashboard</strong>: EC2</dd><dd><strong>Name</strong>: Outbound NAT</dd><dd><a href="#pcfaws-nat">Details</a></dd><dd><p class="note"><strong>Note</strong>: Change the NAT security group to the outbound NAT security group <a href="#pcfaws-om-natsecgrp">you created</a>.</p></dd>
+<dt><strong>Step 12: NAT Instance</strong></dt><dd><strong>Dashboard</strong>: EC2</dd><dd><strong>Name</strong>: Outbound NAT</dd><dd><a href="#pcfaws-nat">Details</a></dd><dd>Change the NAT security group to the outbound NAT security group <a href="#pcfaws-om-natsecgrp">you created</a>.</dd>
 
 <dt><strong>Step 13: Subnets for RDS</strong></dt><dd><strong>Dashboard</strong>: VPC</dd><dd><strong>Names</strong>: rds-1 and rds-2</dd><dd><a href="#pcfaws-rds-subnets">Details</a></dd>
 
@@ -349,10 +349,9 @@ You finish setting up the load balancer with a HTTPS listener and SSL certificat
     * Enter a load balancer name.
     * **Create LB Inside**: Select the pcf-vpc VPC you created in [Create a VPC](#pcfaws-vpc).
     * Ensure that the **Internal Load Balancer** checkbox is not selected. In a later step you specify a security group to limit inbound traffic to the load balancer.
-    * Click **Add** to define a HTTP listener. Set both protocol fields to **HTTP** and set both port fields to `80`.
-    * Click **Continue**.
+    * Click **Next**.
 
-    <%= image_tag("pcfaws/create_lb.png") %>
+    <%= image_tag("pcfaws/config_elb.png") %>
 
 1. Select **TCP** in **Ping Protocol** on the **Configure Health Check** page. Ensure that the **Ping Port** value is `80` and set the **Health Check Interval** to 10 seconds. Click **Continue**.
 
@@ -363,6 +362,8 @@ You finish setting up the load balancer with a HTTPS listener and SSL certificat
 1. Click **Assign Security Groups**, select the security group you configured in [Configure a Security Group for the Elastic Load Balancer](#pcfaws-om-elbsecgrp), and click **Continue**.
 
     <%= image_tag("pcfaws/lb_assign_sec_groups.png") %>
+
+ <%= image_tag("pcfaws/secure_listener.png") %>
 
 1. Accept the defaults on the **Add EC2 Instances** page and click **Continue**.
 

@@ -42,7 +42,7 @@ The following table describes the objects you need to create using the AWS conso
 
 <dt><strong>Step 8: Security Group for the Outbound NAT</strong></dt><dd><strong>Dashboard</strong>: EC2</dd><dd>Name: OutboundNAT</dd><dd>Source: Custom IP, 10.0.0.0/16</dd><dd>All Traffic (0 - 65535)</dd><dd><a href="#pcfaws-om-natsecgrp">Details</a></dd>
 
-<dt><strong>Step 9: Security Group for MySQL</strong></dt><dd><strong>Dashboard</strong>: EC2</dd><dd>Name: MySQL</dd><dd>Source: Custom IP, 10.0.0.0/16</dd><dd>All Traffic (0 - 65535)</dd><dd><a href="#pcfaws-om-mysqlsecgrp">Details</a></dd><dd><p class="note"><strong>Note</strong>: If you plan to use an internal database, you can skip this step. If you are using RDS you must configure a security group that enables the Ops Manager VM and Ops Manager Director VM to access the database.</p></dd>
+<dt><strong>Step 9: Security Group for MySQL</strong></dt><dd><strong>Dashboard</strong>: EC2</dd><dd>Name: MySQL</dd><dd>Source: Custom IP, 10.0.0.0/16</dd><dd>All Traffic (0 - 65535)</dd><dd><a href="#pcfaws-om-mysqlsecgrp">Details</a></dd><dd>If you plan to use an internal database, you can skip this step. If you are using RDS you must configure a security group that enables the Ops Manager VM and Ops Manager Director VM to access the database.</dd>
 
 <dt><strong>Step 10: Launch an Ops Manager AMI</strong></dt><dd><strong>Dashboard</strong>: EC2</dd><dd><a href="#pcfaws-om-ami">Details</a></dd><dd>You can find the AMI ID in the <em>Ops Manager for AWS</em> PDF you downloaded from <a href="https://network.pivotal.io/products/pivotal-cf">Pivotal Network</a>.</dd>
 
@@ -345,31 +345,33 @@ To ensure that AWS caches the correct IP address during DNS resolution, you must
 You finish setting up the load balancer with a HTTPS listener and SSL certification information when you configure Elastic Runtime. For more information, see the [Generate a Self-Signed Certificate](./pcf-aws-er-config.html#pcfaws-er-sslcert) and [Finalize the Load Balancer Setup](./pcf-aws-er-config.html#pcfaws-er-lb) sections of the _Configure Elastic Runtime for AWS_ topic.
 
 1. On the EC2 Dashboard, click **Load Balancers**.
-1. Click **Create Load Balancer** and configure a load balancer with the following information:
+1. Click **Define Load Balancer** and configure a load balancer with the following information:
     * Enter a load balancer name.
     * **Create LB Inside**: Select the pcf-vpc VPC you created in [Create a VPC](#pcfaws-vpc).
     * Ensure that the **Internal Load Balancer** checkbox is not selected. In a later step you specify a security group to limit inbound traffic to the load balancer.
-    * Click **Next**.
 
     <%= image_tag("pcfaws/config_elb.png") %>
 
-1. Select **TCP** in **Ping Protocol** on the **Configure Health Check** page. Ensure that the **Ping Port** value is `80` and set the **Health Check Interval** to 10 seconds. Click **Continue**.
+1. Under **Select Subnets**, select the public subnet you configured in [Create a VPC](#pcfaws-vpc), and click **Next**.
 
-    <%= image_tag("pcfaws/lb_health_check.png") %>
-
-1. Click **Select Subnet**, select the public subnet you configured in [Create a VPC](#pcfaws-vpc), and click **Continue**.
-
-1. Click **Assign Security Groups**, select the security group you configured in [Configure a Security Group for the Elastic Load Balancer](#pcfaws-om-elbsecgrp), and click **Continue**.
+1. On the **Assign Security Groups** page, select the security group you configured in [Configure a Security Group for the Elastic Load Balancer](#pcfaws-om-elbsecgrp), and click **Continue**.
 
     <%= image_tag("pcfaws/lb_assign_sec_groups.png") %>
 
- <%= image_tag("pcfaws/secure_listener.png") %>
+1. The **Configure Security Settings** page displays a security warning because your load balancer is not using a secure listener. You can ignore this warning. Click **Next**.
 
-1. Accept the defaults on the **Add EC2 Instances** page and click **Continue**.
+ 	<%= image_tag("pcfaws/secure_listener.png") %>
+
+1. Select **TCP** in **Ping Protocol** on the **Configure Health Check** page. Ensure that the **Ping Port** value is `80` and set the **Health Check Interval** to 10 seconds. Click **Next**.
+
+    <%= image_tag("pcfaws/lb_health_check.png") %>
+
+
+1. Accept the defaults on the **Add EC2 Instances** page and click **Next**.
 
     <p class="note"><strong>Note</strong>: AWS dynamically scales the number of load balancer instances, but you must associate the ELB with your routers. Configure this on the <a href="./pcf-aws-er-config.html#pcfaws-er-resource">Resource Config page</a> of the Elastic Runtime tile.</p>
 
-1. Accept the defaults on the **Add Tags** page and click **Continue**.
+1. Accept the defaults on the **Add Tags** page and click **Next**.
 1. Review and confirm the load balancer details, and click **Create**.
 1. [Create a CNAME wildcard record](../devguide/deploy-apps/domains-routes.html#subdomain-dns) with your DNS provider to point to the load balancer domain.
 1. Optionally, create an additional CNAME record with your DNS provider to map a host name such as 'pcf' or 'opsmng' to the public DNS of the Ops Manager AMI.

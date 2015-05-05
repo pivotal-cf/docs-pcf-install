@@ -15,7 +15,7 @@ After you complete this procedure, complete all steps in the [Configuring Ops Ma
 
 The following list describes the objects you need to create using the AWS console. Complete the steps in order. For more detailed information about a step, click the **Details** link.
 
-
+<br>
 <dl>
  <dt><strong>Step 1: S3 Buckets for Ops Manager and Elastic Runtime</strong></dt><dd><strong>Dashboard: S3</strong></dd><dd>OPS_MANAGER_S3_BUCKET</dd>  <dd>ELASTIC_RUNTIME_S3_BUCKET</dd><dd>Must be empty when you install or reinstall PCF.</dd><br>
 
@@ -44,7 +44,7 @@ The following list describes the objects you need to create using the AWS consol
 
 <dt><strong>Step 9: Security Group for MySQL</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Name: MySQL</dd><dd>Source: Custom IP, 10.0.0.0/16</dd><dd>All Traffic (0 - 65535)</dd><dd><a href="#pcfaws-om-mysqlsecgrp">Details</a></dd><br>
 
-<dt><strong>Step 10: Launch an Ops Manager AMI</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>You can find the AMI ID in the <em>Ops Manager for AWS</em> PDF you downloaded from <a href="https://network.pivotal.io/products/pivotal-cf">Pivotal Network</a>.</dd><dd><a href="#pcfaws-om-ami">Details</a></dd><br>
+<dt><strong>Step 10: Launch an Ops Manager AMI</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Find the AMI ID in the <em>Ops Manager for AWS</em> PDF on <a href="https://network.pivotal.io/products/pivotal-cf">Pivotal Network</a>.</dd><dd><a href="#pcfaws-om-ami">Details</a></dd><br>
 
 <dt><strong>Step 11: Load Balancer</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Name: pcf-aws-lb</dd><dd>LB Inside: pcf-vpc</dd><dd>Selected Subnet: public-az1</dd><dd>Security Group: PCF_ELB_SecurityGroup</dd><dd>Health Check: TCP Port 80</dd><dd>Instances: None</dd><dd><a href="#pcfaws-lb">Details</a></dd><br>
 
@@ -56,7 +56,17 @@ The following list describes the objects you need to create using the AWS consol
 
 <dt><strong>Step 14: RDS Subnet Group</strong></dt><dd><strong>Dashboard: VPC</strong></dd><dd>Name: PCF_RDSGroup</dd><dd><a href="#pcfaws-rds-subnet-group">Details</a></dd><br>
 
-<dt><strong>Step 15: MySQL Database using AWS RDS</strong></dt><dd><strong>Dashboard: VPC</strong></dd><dd>Name: bosh</dd><dd><a href="#pcfaws-mysql-rds">Details</a></dd>
+<dt><strong>Step 15: MySQL Database using AWS RDS</strong></dt><dd><strong>Dashboard: VPC</strong></dd><dd>Name: bosh</dd>
+<dd>DB Instance Class: db.m3.large - 2 vCPU, 7.5 GiB RAM</dd>
+<dd>Multi-AZ Deployment: Yes</dd>
+<dd>Allocated Storage: 100 GB</dd>
+<dd>DB Instance Identifier: pcf-bosh</dd>
+<dd>VPC: pcf-vpc</dd>
+<dd>Subnet Group: PCF_RDSGroup</dd>
+<dd>Publicly Accessible: No</dd>
+<dd>VPC Security Groups: MySQL</dd>
+<dd>Database Name: bosh</dd>
+<dd><a href="#pcfaws-mysql-rds">Details</a></dd>
 
 </dl>
 
@@ -406,8 +416,6 @@ Create a CNAME wildcard record with your DNS provider to point to the load balan
 <a id='pcfaws-rds-subnets'></a>
 ### Set up Subnets for RDS ###
 
-You must create two new subnets to enable the RDS MySQL database. You create this database in the next step.
-
 1. Navigate to the VPC Dashboard and click **Subnets**.
 1. Click **Create Subnet** and enter the following information for the first subnet:
     * **Name tag**: `rds-1`
@@ -447,11 +455,7 @@ You must create two new subnets to enable the RDS MySQL database. You create thi
 <a id='pcfaws-mysql-rds'></a>
 ### Create a MySQL Database using AWS RDS ###
 
-Create a MySQL database. You can use the AWS RDS functionality available on the RDS Dashboard to create this database.
-
 <p class="note"><strong>Note</strong>: You must have an empty MySQL database when you install or reinstall PCF for AWS.</p>
-
-This step provides the information for the Host, Port, Username, Password, and Database fields on the **Director Config** page of the Ops Manager Director tile.
 
 1. Navigate to the RDS Dashboard. Click **Instances****>****Launch DB Instance** to launch the wizard.
 
@@ -469,6 +473,8 @@ This step provides the information for the Host, Port, Username, Password, and D
 
     <p class="note"><strong>Note</strong>: Record the username and password that you entered. You need this later when configuring the <strong>Director Config</strong> page in the Ops Manager Director tile.</p>
 
+	<%= image_tag("pcfaws/db_details.png") %>
+
 1. Configure advanced settings:
     * **VPC**: Select pcf-vpc.
     * **Subnet Group**: Select the security group you created in [Set up Subnets for RDS](#pcfaws-rds-subnets).
@@ -476,6 +482,8 @@ This step provides the information for the Host, Port, Username, Password, and D
     * **VPC Security Groups**: Select the security group you created in [Configure a Security Group for MySQL](#pcfaws-om-mysqlsecgrp).
     * **Database Name**: Enter `bosh`.
     * Accept the default values for the remaining fields.
+
+	<%= image_tag("pcfaws/advanced_db_settings.png") %>
 
 1. Click **Launch DB Instance**. The instance generation process might take several minutes.
 

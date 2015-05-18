@@ -198,10 +198,31 @@ Refer to the following procedure for help configuring the [Pivotal Cloud Foundry
 
     <%= image_tag("smtp.png") %>
 
-1. Configure **Errands**.
+1. Configure **Errands.** Errands are scripts that Ops Manager runs to automate tasks for installing or uninstalling products. By default, Ops Manager runs the post-install errands listed below when you deploy Elastic Runtime. However, you can prevent a specific post-install errand from running by deselecting its checkbox on the **Errands** page.
+	<p class='note'><strong>Note</strong>: Several errands deploy apps that provide services for your deployment, such as Autoscaling and Notifications. Once one of these apps is running, deselecting the checkbox for the corresponding errand on a subsequent deployment does not stop the app.</p>
+	* **Push Console** deploys the Apps Manager, a dashboard for managing apps, services, orgs, users, and spaces. Until you deploy Apps Manager, you must perform these functions through the cf CLI. After Apps Manager has been deployed, we recommend deselecting the checkbox for this errand on subsequent Elastic Runtime deployments. For more information on the Apps Manager, see [Getting Started with the Apps Manager](../console/dev-console.html).
+	* **Run Smoke Tests** verifies that your deployment can do the following:
 
-<%= partial 'errands' %>
+	    * Push, scale, and delete apps
+	    * Create and delete orgs and spaces	    
+	* **Push App Usage Service** deploys the Usage Service, a dashboard that provides resource usage data and analytics for your apps.
+	* **Notifications with UI** deploys: 
 
+	    * An API for sending email notifications to your PCF platform users
+	    * A dashboard for users to manage notification subscriptions
+
+	    <p id='pcfaws-er-notifications' class='note'><strong>Note</strong>: 
+	        The Notifications app requires that you <a href='#smtp'>configure SMTP</a> with a username and password, even if <code>SMTP Authentication Mechanism</code> is set to none.
+	    </p>
+	* **Deploy CF Autoscaling App** enables your deployment to automatically scale the number of instances of an app in response to changes in its usage load. To enable Autoscaling for an app, you must also bind the Autoscaling service to it. For more information, see [Binding a Service Instance](../devguide/services/bind-service.html).
+
+	    <p class='note'><strong>Note</strong>: The Autoscaling app requires the Notifications app to send scaling action alerts by email. 
+	    </p>
+	* **Register Autoscaling Service Broker** makes the Autoscaling service available to your applications. Without this errand, you cannot bind the Autoscaling app to your apps.
+
+	<%= image_tag('errands.png') %>
+
+	
 1. Select **Resource Config**, accept the defaults or make necessary changes,
     and click **Save**.
 

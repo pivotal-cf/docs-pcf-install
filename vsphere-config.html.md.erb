@@ -24,47 +24,60 @@ for VMware vSphere product tile.
 	create and delete privileges for VMs and folders.</p>
 
 1. Select **Director Config**.
-	1. Enter a comma-delimited list of time server addresses.
-	1. If you have installed and configured the Ops Metrics product, enter the 	Metrics IP address.
-    1. Click **Enable VM Resurrector Plugin** to enable the Ops Manager 	Resurrector functionality and increase Elastic Runtime availability.
+  1. Enter a comma-delimited list of time server addresses.
+  1. If you have installed and configured the Ops Metrics product, enter the
+  Metrics IP address.
+  1. Click **Enable VM Resurrector Plugin** to enable the Ops Manager
+  Resurrector functionality and increase Elastic Runtime availability.
+  For more information, see the introduction and Limitation sections of the
+  [Using Ops Manager Resurrector on VMware vSphere](./resurrector.html) topic.
+  1. Pivotal recommends that you select **Internal** for your **Blobstore
+  Location**.
+  However, if you choose **Amazon S3** for your blobstore location, complete the
+  associated fields with information from your AWS installation.
+  To retrieve your AWS key information, refer to the [Obtain AWS
+  Credentials](http://bosh.io/docs/deploy-microbosh-to-aws.html) section of
+  the Deploying MicroBOSH to AWS topic.
+  1. Select a **Database Location**.
+  By default, Pivotal Cloud Foundry deploys and manages a database for you.
+  If you choose to use an **External MySQL Database**, complete the associated
+  fields with information obtained from your external MySQL Database provider.
+  1. **Max Threads** sets the maximum number of threads that the Ops Manager
+  Director can run simultaneously.
+  For vSphere, the default value is 32.
+  Leave the Max Threads field blank to use this default value.
+  Pivotal recommends that you use the default value unless doing so
+  results in rate limiting or errors on your IaaS.
+  1. Click **Save**.
 
-		For more information, see the introduction and Limitation sections of 		the [Using Ops Manager Resurrector on VMware vSphere](./resurrector.html) topic.
-	1. Pivotal recommends that you select **Internal** for your **Blobstore 	Location**. However, if you choose **Amazon S3** for your blobstore 	location, complete the associated fields with information from your AWS 	installation. To retrieve your AWS key information, refer to the [Obtain AWS 	Credentials](http://bosh.io/docs/deploy-microbosh-to-aws.html) section of 	the Deploying MicroBOSH to AWS topic.
-	1. Select a **Database Location**. The default option is to have Pivotal Cloud Foundry deploy and manage a database for you. If you choose to use an **External MySQL Database**, complete the associated fields with information obtained from your external MySQL Database provider.
-    1. **Max Threads** sets the maximum number of threads that the Ops Manager
-		Director can run simultaneously.
-		For vSphere, the default value is 32.
-		Leave the Max Threads field blank to use this default value.
-		Pivotal recommends that you use the default value unless doing so
-		results in rate limiting or errors on your IaaS.
-	1. Click **Save**.
-
-	 <%= image_tag("director-config.png") %>
+    <%= image_tag("director-config.png") %>
 
 1. <a id='create-az'></a>Select **Create Availability Zones**. Ops Manager
-Availability Zones correspond to your vCenter clusters and resource pools.
-<br /><br />
-	Having multiple Availability Zones allows you to provide high-availability
-	and load balancing to your applications.
-	When an application runs more than one instance of a job, Ops Manager
-	deterministically balances the instances across all of the Availability
-	Zones you assign to the application.
-<br /><br />
-	Use the following steps to create one or more Availability Zones for your
-	products to use:
+  Availability Zones correspond to your vCenter clusters and resource pools.
+  <br /><br />
+  Having multiple Availability Zones allows you to provide high-availability
+  and load balancing to your applications.
+  When an application runs more than one instance of a job, Ops Manager
+  deterministically balances the instances across all of the Availability
+  Zones you assign to the application.
+  <br /><br />
+  Use the following steps to create one or more Availability Zones for your
+  products to use:
     1. Click **Add**.
     1. Enter a unique name for the Availability Zone.
     1. Enter the name of an existing vCenter cluster to use as an Availability
-	Zone.
+    Zone.
     1. **(Optional)** Enter the name of a resource pool in the vCenter cluster
-	you that specify. The jobs running in this Availability Zone share the CPU
-	and memory resources defined by the pool.
-	1. Click **Save**.
+    that you specify.
+    The jobs running in this Availability Zone share the CPU and memory
+    resources defined by the pool.
+  1. Click **Save**.
 
     <%= image_tag("create-az.png") %>
 
-1. Select **Assign Availability Zones**. Use the drop-down menu to select an
-Availability Zone. The Ops Manager Director installs in this Availability Zone.
+1. Select **Assign Availability Zones**.
+Use the drop-down menu to select an Availability Zone.
+The Ops Manager Director installs in this Availability Zone.
 
     <%= image_tag("assign-az.png") %>
 
@@ -74,26 +87,33 @@ the rest of your deployment on a public network.
 Isolating vCenter in this manner denies access to it from outside sources and
 reduces possible security vulnerabilities.
 <br /><br />
-    Use the following steps to create one or more Ops Manager networks:
-	1. Click **Add**.
-    1. Enter a unique name for the network.
-    1. Enter the vSphere network name as it displays in vCenter.
-    1. For **Subnet**, enter a valid CIDR block.
-    1. For **Excluded IP Ranges**, enter any IP addresses from the **Subnet**
-	that you want to blacklist from the installation.
-    1. Enter DNS and Gateway IP addresses.
-    1. Click **Save**.
+Use the following steps to create one or more Ops Manager networks:
+  1. Click **Add**.
+  1. Enter a unique name for the network.
+  1. Enter the vSphere network name as it displays in vCenter.
+  1. For **Subnet**, enter a valid CIDR block.
+  1. For **Excluded IP Ranges**, enter any IP addresses from the **Subnet**
+  that you want to blacklist from the installation.
+  1. Enter DNS and Gateway IP addresses.
+  1. Click **Save**.
 
     <%= image_tag("create-network.png") %>
 
-1. Select **Assign Networks**. You can configure the Ops Manager Director to have an IP address on two networks to give the Director access to both networks. Use the drop-down menu to select an **Infrastructure** network and a **Deployment** network for Ops Manager.
+1. Select **Assign Networks**.
+You can configure the Ops Manager Director to have an IP address on two networks
+to give the Director access to both networks.
+Use the drop-down menu to select an **Infrastructure** network and a
+**Deployment** network for Ops Manager.
 <br /><br />
-	When using multiple networks to isolate vCenter, install vCenter on the **Infrastructure** network and the rest of your deployment on the **Deployment** network. This gives the Director access to both vCenter and the rest of your deployment.
+When using multiple networks to isolate vCenter, install vCenter on the
+**Infrastructure** network and the rest of your deployment on the **Deployment**
+network.
+This gives the Director access to both vCenter and the rest of your deployment.
 
     <%= image_tag("assign-network.png") %>
 
-1. Select **Resource Config**, accept the defaults or make necessary changes, and
-click **Save**.
+1. Select **Resource Config**, accept the defaults or make necessary changes,
+and click **Save**.
 
     <%= image_tag("vsphere-resources.png") %>
 

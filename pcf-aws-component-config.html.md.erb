@@ -4,16 +4,17 @@ title: Manually Configuring AWS for PCF
 
 This topic describes how to manually configure the AWS components that you need to run <a href="https://network.pivotal.io/products/pivotal-cf">Pivotal Cloud Foundry</a> (PCF) on Amazon Web Services (AWS).
 
-After you complete this procedure, complete all steps in the [Configuring Ops Manager Director for AWS](./pcf-aws-om-config.html) and [Configuring Elastic Runtime for AWS](./pcf-aws-er-config.html) topics.
+After you complete this procedure, complete all of the steps in the [Configuring Ops Manager Director for AWS](./pcf-aws-om-config.html) and [Configuring Elastic Runtime for AWS](./pcf-aws-er-config.html) topics.
 
 <p class="note"><strong>Note</strong>: PCF for AWS functionality works only in the us-east-1 region. You cannot deploy PCF to any other region.</p>
 
 <p class="note"><strong>Note</strong>: PCF for AWS functionality currently does not support the Amazon EC2 Auto Recovery feature. Do not enable this feature for any of your instances.</p>
+
 <p class="note"><strong>Note</strong>: File a ticket with Amazon to ensure that your account can launch more than the default 20 instances. In the ticket, ask for a limit of <strong>50 t2.micro</strong> instances and <strong>20 c4.large</strong> instances in the <strong>US East (Northern Virginia)</strong> region. You can check the limits on your account by visiting the <a href="https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#Limits:">limits section</a> of the EC2 site on the AWS console.</p>
 
 ##<a id='overview'></a> Overview of Amazon Objects to Create ##
 
-The following list describes the objects you need to create using the AWS console. Complete the steps in order. For more detailed information about a step, click the **Details** link.
+The following list describes the objects that you need to create using the AWS console. Complete the steps in order. For more detailed information about a step, click the **Details** link.
 
 <br>
 <dl>
@@ -139,7 +140,7 @@ You must create an Amazon Identity and Access Management user (IAM) with the min
     * **Private subnet**: Enter `10.0.16.0/20`.
     * **Private subnet name**: Enter `pcf-private-az1`.
     * **Instance type**: Select **m1.small**.
-    * Select the `pcf` SSH key you created for **Key Pair name**.
+    * Select the `pcf` SSH key that you created for **Key Pair name**.
     * **Enable DNS hostnames**: Click `Yes`.
     * **Hardware tenancy**: Select `Default`.
     * Click **Create VPC**.
@@ -305,7 +306,7 @@ You must create an Amazon Identity and Access Management user (IAM) with the min
 <a id='pcfaws-om-mysqlsecgrp'></a>
 ### Configure a Security Group for MySQL ###
 
-<p class="note"><strong>Note</strong>: If you plan to use an internal database, you can skip this step. If you are using RDS you must configure a security group that enables the Ops Manager VM and Ops Manager Director VM to access the database.</p>
+<p class="note"><strong>Note</strong>: If you plan to use an internal database, you can skip this step. If you are using RDS, you must configure a security group that enables the Ops Manager VM and Ops Manager Director VM to access the database.</p>
 
 1. On the EC2 Dashboard, select **Security Groups****>****Create Security Group**.
 1. Enter a security group name and description: `MySQL`.
@@ -336,7 +337,7 @@ You must create an Amazon Identity and Access Management user (IAM) with the min
 ### Launch a Pivotal Ops Manager AMI ###
 
 1. Return to the EC2 Dashboard.
-1. Click **AMIs**. Locate the Pivotal Ops Manager public AMI and click **Launch**. You can find the AMI ID in the _Ops Manager for AWS_ PDF you downloaded from [Pivotal Network](https://network.pivotal.io/products/pivotal-cf).
+1. Click **AMIs**. Locate the Pivotal Ops Manager public AMI and click **Launch**. You can find the AMI ID in the _Ops Manager for AWS_ PDF that you downloaded from [Pivotal Network](https://network.pivotal.io/products/pivotal-cf).
 
     <p class="note"><strong>Note</strong>: If you cannot locate the AMI, ensure that you have set your AWS Management Console to the <strong>US East (N. Virginia)</strong> region. If you still cannot locate the AMI, log in to the <a href="https://network.pivotal.io">Pivotal Network</a> and file a support ticket.</p>
 
@@ -347,7 +348,7 @@ You must create an Amazon Identity and Access Management user (IAM) with the min
     <%= image_tag("pcfaws/aws_ami_m3large.png") %>
 
 1. Configure the following for your instance:
-    * **Network**: Select the VPC you created.
+    * **Network**: Select the VPC that you created.
     * **Subnet**: Select your public subnet instance.
     * **Auto-assign for Public IP**: Select **Enable**.
     * For all other fields, accept the default values.
@@ -378,14 +379,14 @@ The default persistent disk value is 50 GB. We recommend increasing this value t
 1. On the EC2 Dashboard, click **Load Balancers**.
 1. Click **Define Load Balancer** and configure a load balancer with the following information:
     * Enter a load balancer name.
-    * **Create LB Inside**: Select the pcf-vpc VPC you created in [Create a VPC](#pcfaws-vpc).
+    * **Create LB Inside**: Select the pcf-vpc VPC that you created in [Create a VPC](#pcfaws-vpc).
     * Ensure that the **Internal Load Balancer** checkbox is not selected.
 
     <%= image_tag("pcfaws/config_elb.png") %>
 
-1. Under **Select Subnets**, select the public subnet you configured in [Create a VPC](#pcfaws-vpc), and click **Next**.
+1. Under **Select Subnets**, select the public subnet that you configured in [Create a VPC](#pcfaws-vpc), and click **Next**.
 
-1. On the **Assign Security Groups** page, select the security group you configured in [Configure a Security Group for the Elastic Load Balancer](#pcfaws-om-elbsecgrp), and click **Continue**.
+1. On the **Assign Security Groups** page, select the security group that you configured in [Configure a Security Group for the Elastic Load Balancer](#pcfaws-om-elbsecgrp), and click **Continue**.
 
     <%= image_tag("pcfaws/lb_assign_sec_groups.png") %>
 
@@ -420,7 +421,7 @@ Create a CNAME wildcard record with your DNS provider to point to the load balan
 
 1. On the EC2 Dashboard, click **Instances**. Select the NAT instance, which has an instance type of **m1.small**.
 1. From the **Actions** menu, select **Networking****>****Change Security Groups**.
-1. Change the NAT security group from the default group to the outbound NAT security group you created in [Configure a Security Group for the Outbound NAT](#pcfaws-om-natsecgrp), and click **Assign Security Groups**.
+1. Change the NAT security group from the default group to the outbound NAT security group that you created in [Configure a Security Group for the Outbound NAT](#pcfaws-om-natsecgrp), and click **Assign Security Groups**.
 
     <%= image_tag("pcfaws/pcf_aws_select_security_group.png") %>
 
@@ -488,9 +489,9 @@ Create a CNAME wildcard record with your DNS provider to point to the load balan
 
 1. Configure advanced settings:
     * **VPC**: Select pcf-vpc.
-    * **Subnet Group**: Select the security group you created in [Set up Subnets for RDS](#pcfaws-rds-subnets).
+    * **Subnet Group**: Select the security group that you created in [Set up Subnets for RDS](#pcfaws-rds-subnets).
     * **Publicly Accessible**: Select **No**.
-    * **VPC Security Groups**: Select the security group you created in [Configure a Security Group for MySQL](#pcfaws-om-mysqlsecgrp).
+    * **VPC Security Groups**: Select the security group that you created in [Configure a Security Group for MySQL](#pcfaws-om-mysqlsecgrp).
     * **Database Name**: Enter `bosh`.
     * Accept the default values for the remaining fields.
 

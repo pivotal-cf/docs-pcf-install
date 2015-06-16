@@ -2,12 +2,27 @@
 title: Configuring Elastic Runtime for vSphere and vCloud
 ---
 
-Refer to the following procedure for help configuring the [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) Elastic Runtime product
-tile for VMware vSphere, vCloud, or vCloud Air.
+This topic describes how to configure the Pivotal Elastic Runtime components
+that you need to run <a
+href="https://network.pivotal.io/products/pivotal-cf">Pivotal Cloud Foundry</a>
+(PCF) for VMware vSphere, vCloud, or vCloud Air.
 
-1. Click the **Elastic Runtime** tile.
 
-    <%= image_tag("click-er.png") %>
+## <a id='er-om-add'></a>Step 1: Add Elastic Runtime to Ops Manager ##
+
+1. Navigate to the Pivotal CF Ops Manager Installation Dashboard.
+
+1. Click the Pivotal Network link on the left to add Elastic Runtime to Ops
+Manager.
+
+    For more information, refer to the [Adding and Deleting Products](./add-delete.html) topic.
+
+1. Click the Elastic Runtime tile in the Installation Dashboard.
+
+    <%= image_tag("pcfaws/er_14_tile.png") %>
+
+## <a id='er-az-networks'></a>Step 2: Assign Networks and Availability Zones ##
+
 
 1. Select **Assign Networks**. Elastic Runtime runs on the network that you
     select.
@@ -26,6 +41,8 @@ tile for VMware vSphere, vCloud, or vCloud Air.
 
     <%= image_tag("availability-zones-vmware.png") %>
 
+## <a id='er-db-config'></a>Step 3: Configure System Databases ##
+
 1. Select **System Database Config**.
     By default, this page specifies that PCF uses an internal database for
     UAADB, Apps Manager DB, CCDB, App Usage Events DB, Autoscaling, and 
@@ -41,13 +58,16 @@ tile for VMware vSphere, vCloud, or vCloud Air.
 
 	<%= image_tag("system-db.png") %>
 
-1. Select **File Storage Config**.
-    This page specifies whether to use an internal (NFS) or external (AWS S3)
-    filestore.
+1. <%= partial 'mysql_proxy_config' %>
 
-	<%= image_tag("file-storage.png") %>
+## <a id='file-store-config'></a>Step 4: Configure File Storage ##
 
-1. In the left column, select **IPs and Ports**.
+<%= partial 'file_store_config' %>
+
+## <a id='er-sslcert'></a>Step 5: Configure IPs and Ports ##
+
+
+1. Select **IPs and Ports**.
 
     <p class="note"><strong>Note</strong>: If you choose to assign specific IP addresses in either the <strong>Router IPs</strong> or <strong>HAProxy IPs</strong> field, ensure that these IPs are in your subnet.</p>
 
@@ -76,22 +96,17 @@ tile for VMware vSphere, vCloud, or vCloud Air.
     Pivotal recommends that you accept the default value unless you require
     Loggregator to use a different port.
 
-1. <a id='generate-rsa-cert'></a>If you are using a signed **SSL Certificate**
-    from a known certificate authority (CA), copy and paste its values for
-    **Certificate PEM** and **Private Key PEM** into the appropriate text
-    fields.
-    If you have an **Intermediate CA** paste it in the same box below the
+1. <a id='generate-rsa-cert'></a>Configure **SSL Certificate**.
+    * If you are using a signed **SSL Certificate** from a known certificate authority (CA), copy and paste its values for **Certificate PEM** and **Private Key PEM** into the appropriate text fields.
+    * If you have an **Intermediate CA** paste it in the same box below the
     Certificate PEM.
-    Alternatively, complete the following two steps to generate self-signed RSA
-    certificates.
-    * Check the **Trust Self-Signed Certificates** checkbox, then click
-    **Generate Self-Signed RSA Certificate**.
-    <%= image_tag("gen-ssl.png") %>
-    * Enter your system and app domains in wildcard format.
-    Optionally, also add any custom domains in wildcard format.
-    Click **Generate**.
-
-    <%= image_tag("enter-ssl-domains.png") %>
+    * Alternatively, complete the following steps to generate self-signed RSA
+    certificates:
+        1. Check the **Trust Self-Signed Certificates** checkbox, then click **Generate Self Signed RSA Certificate**.
+        <%= image_tag("gen-ssl.png") %>
+        1. Enter your system and app domains in wildcard format. Optionally, also add any custom domains in wildcard format.
+        1. Click **Generate**.
+        <%= image_tag("enter-ssl-domains.png") %>
 
     <p class="note"><strong>Note</strong>: Wildcard DNS records only work for a
     single domain name component or component fragment. For example,
@@ -99,14 +114,12 @@ tile for VMware vSphere, vCloud, or vCloud Air.
     <code>system.domain.com</code>, but not <code>my.apps.domain.com</code> or
     <code>my.system.domain.com</code>.</p>
 
-1. The **Certificate Key PEM** and **Private Key PEM** fields now contain
-    certificate keys.
-    Click **Save**.
+1. Click **Save** once the **Certificate Key PEM** and **Private Key PEM** fields contain your
+    certificate keys.  
 
     <%= image_tag("router-ip.png") %>
 
-1. <%= partial 'mysql_proxy_config' %>
-
+## <a id='er-clocon'></a>Step 6: Configure the Cloud Controller ##
 
 1. <a id="cloud-controller"></a>Select **Cloud Controller** and enter the system
     and application domains.
@@ -153,10 +166,11 @@ tile for VMware vSphere, vCloud, or vCloud Air.
 
 1. Click **Save**.
 
-1. **(Optional - Advanced)** If you are forwarding syslog messages via TCP to a
-    RELP syslog server, complete this step.
-    Select **External Endpoints**, enter the IP address and port of the syslog
-    aggregator host, and click **Save**.
+## <a id='external-endpoints'></a>Step 8: (Optional - Advanced) Configure External Endpoints ##
+
+If you are forwarding syslog messages via TCP to a RELP syslog server, complete this step.
+
+Select **External Endpoints**, enter the IP address and port of the syslog aggregator host, and click **Save**.
 
     <%= image_tag("external-endpoints.png") %>
 
@@ -164,24 +178,21 @@ tile for VMware vSphere, vCloud, or vCloud Air.
     Elastic Runtime network, accept TCP connections, and use the RELP protocol.
     Ensure <code>syslogd</code> listens on external interfaces.</p>
 
-1. **(Optional - Advanced)** If you are using the VMware SSO appliance for
-    integration with Active Directory, complete this step.
-    Follow the instructions for [Configuring Single Sign-On](../opsguide/sso.html) to configure this page.
+## <a id='sso'></a>Step 8: (Optional - Advanced) Configure VMware SSO ##
+
+If you are using the VMware SSO appliance for integration with Active Directory, follow the instructions in [Configuring Single Sign-On](../opsguide/sso.html).
 
     <%= image_tag("sso-config.png") %>
 
-1. **(Optional - Advanced)** If you are using the LDAP endpoint for UAA, you
-    must configure Elastic Runtime with your LDAP endpoint information.
-    See [Configuring LDAP](../opsguide/ldap-uaa.html) for
-    more information.
+## <a id='ldap'></a>Step 9: (Optional - Advanced) Configure LDAP ##
 
-1. <a id='smtp'></a>**(Optional)** Select **SMTP Config**, enter your reply-
-    to and SMTP email information, set **SMTP Authentication Mechanism** to
-    `none`, and click **Save**.
-    Elastic Runtime uses these settings to send invitations and confirmations to
-    Apps Manager users.
-    These SMTP settings are required if you want to enable end-user
-    self-registration.
+If you are using the LDAP endpoint for UAA, you must configure Elastic Runtime with your LDAP endpoint information. See [Configuring LDAP](../opsguide/ldap-uaa.html) for more information.
+
+## <a id='smtp'></a>Step 10: (Optional) Configure SMTP ##
+
+1. Select **SMTP Config**, enter your reply-to and SMTP email information, set **SMTP Authentication Mechanism** to `none`, and click **Save**.
+    
+Elastic Runtime uses these settings to send invitations and confirmations to Apps Manager users. These SMTP settings are required if you want to enable end-user self-registration.
 
     <p class="note"><strong>Note</strong>: If you do not configure the SMTP
     settings using this form, the administrator must create orgs and users using
@@ -191,51 +202,12 @@ tile for VMware vSphere, vCloud, or vCloud Air.
 
     <%= image_tag("smtp.png") %>
 
-1. Select **Errands**. Errands are scripts that Ops Manager runs to automate
-    tasks for installing or uninstalling products.
-    By default, Ops Manager runs the post-install errands listed below when you
-    deploy Elastic Runtime.
-    You can prevent a specific post-install errand from running by deselecting
-    its checkbox on the **Errands** page.
+## <a id='er-errands'></a>Step 11: Configure Errands ##
 
-    <p class='note'><strong>Note</strong>: Several errands deploy apps that
-    provide services for your deployment, such as Autoscaling and Notifications.
-    Once one of these apps is running, deselecting the checkbox for the
-    corresponding errand on a subsequent deployment does not stop the app.</p>
-    * **Push Apps Manager** deploys the Apps Manager, a dashboard for managing 
-    apps, services, orgs, users, and spaces.
-    Until you deploy Apps Manager, you must perform these functions through the
-    cf CLI.
-    After Apps Manager has been deployed, we recommend deselecting the checkbox
-    for this errand on subsequent Elastic Runtime deployments.
-    For more information on the Apps Manager, see [Getting Started with the Apps
-    Manager](../console/dev-console.html).
-    * **Run Smoke Tests** verifies that your deployment can do the following:
-	    * Push, scale, and delete apps
-	    * Create and delete orgs and spaces
-    * **Push App Usage Service** deploys the Usage Service, a dashboard that
-    provides resource usage data and analytics for your apps.
-    * **Notifications with UI** deploys:
-	    * An API for sending email notifications to your PCF platform users
-	    * A dashboard for users to manage notification subscriptions
-    <p id='pcfaws-er-notifications' class='note'><strong>Note</strong>: The
-    Notifications app requires that you <a href='#smtp'>configure SMTP</a>
-    with a username and password, even if <code>SMTP Authentication
-    Mechanism</code> is set to <code>none</code>.</p>
-    * **Deploy CF Autoscaling App** enables your deployment to automatically
-    scale the number of instances of an app in response to changes in its usage
-    load.
-    To enable Autoscaling for an app, you must also bind the Autoscaling service
-    to it.
-    For more information, see [Binding a Service
-    Instance](../devguide/services/bind-service.html).
-      <p class='note'><strong>Note</strong>: The Autoscaling app requires the
-      Notifications app to send scaling action alerts by email.</p>
-    * **Register Autoscaling Service Broker** makes the Autoscaling service
-    available to your applications.
-    Without this errand, you cannot bind the Autoscaling app to your apps.
+<%= partial 'errands' %>
 
-    <%= image_tag('errands.png') %>
+## <a id='er-resource'></a>Step 12: Configure Resources ##
+
 
 1. Select **Resource Config**, accept the defaults or make necessary changes,
     and click **Save**.

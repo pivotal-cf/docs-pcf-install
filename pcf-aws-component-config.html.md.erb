@@ -6,11 +6,11 @@ This topic describes how to manually configure the AWS components that you need 
 
 After you complete this procedure, complete all of the steps in the [Configuring Ops Manager Director for AWS](./pcf-aws-om-config.html) and [Configuring Elastic Runtime for AWS](./pcf-aws-er-config.html) topics.
 
-<p class="note"><strong>Note</strong>: PCF for AWS functionality works only in the us-east-1 region. You cannot deploy PCF to any other region.</p>
+<p class="note"><strong>Note</strong>: PCF does not support the eu-central-1 (Frankfurt) region because of limitations in Amazon's S3 signature API.</p>
 
 <p class="note"><strong>Note</strong>: PCF for AWS functionality currently does not support the Amazon EC2 Auto Recovery feature. Do not enable this feature for any of your instances.</p>
 
-<p class="note"><strong>Note</strong>: File a ticket with Amazon to ensure that your account can launch more than the default 20 instances. In the ticket, ask for a limit of <strong>50 t2.micro</strong> instances and <strong>20 c4.large</strong> instances in the <strong>US East (Northern Virginia)</strong> region. You can check the limits on your account by visiting the <a href="https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#Limits:">limits section</a> of the EC2 site on the AWS console.</p>
+<p class="note"><strong>Note</strong>: File a ticket with Amazon to ensure that your account can launch more than the default 20 instances. In the ticket, ask for a limit of <strong>50 t2.micro</strong> instances and <strong>20 c4.large</strong> instances in the region you are using. You can check the limits on your account by visiting the EC2 Dashboard on the AWS console and clicking <strong>Limits</strong> on the left navigation.</p>
 
 ##<a id='overview'></a> Overview of Amazon Objects to Create ##
 
@@ -27,7 +27,7 @@ The following list describes the objects that you need to create using the AWS c
  <dt><strong>Step 4: VPC (Public and Private Subnets)</strong></dt><dd><strong>Dashboard: VPC</strong></dd>
     <dd>IP CIDR block: 10.0.0.0/16</dd>
     <dd>Public subnet: 10.0.0.0/24, public-az1</dd>
-    <dd>Availability Zones: Same region in us-east-1 </dd>
+    <dd>Availability Zones: Same zone for both subnets </dd>
     <dd>Private subnet: 10.0.16.0/20, pcf-private-az1 </dd>
     <dd>NAT Instance type: m1.small </dd>
 	<dd>Key Pair name: pcf </dd>
@@ -35,7 +35,7 @@ The following list describes the objects that you need to create using the AWS c
     <dd>Hardware tenancy: Default</dd>
     <dd><a href="#pcfaws-vpc">Details</a></dd><br>
 
- <dt><strong>Step 5: Security Group for Ops Manager</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Name: OpsManager</dd><dd>Source: My IP</dd><dd>HTTP, Port 80</dd><dd>HTTPS, Port 443</dd><dd>SSH, Port 22</dd><dd>BOSH Agent, Port 6868</dd>BOSH Director, Port 25555</dd><dd><a href="#pcfaws-om-secgrp">Details</a></dd><br>
+ <dt><strong>Step 5: Security Group for Ops Manager</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Name: OpsManager</dd><dd>Source: My IP</dd><dd>HTTP, Port 80</dd><dd>HTTPS, Port 443</dd><dd>SSH, Port 22</dd><dd>BOSH Agent, Port 6868</dd><dd>BOSH Director, Port 25555</dd><dd><a href="#pcfaws-om-secgrp">Details</a></dd><br>
 
  <dt><strong>Step 6: Security Group for PCF VMs</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Name: pcfVMs</dd><dd>Source: Custom IP, 10.0.0.0/16</dd><dd>All Traffic (0 - 65535)</dd><dd><a href="#pcfaws-om-ersecgrp">Details</a></dd><br>
 
@@ -135,12 +135,12 @@ You must create an Amazon Identity and Access Management user (IAM) with the min
     * **IP CIDR block**: Enter `10.0.0.0/16`.
     * Enter a VPC name.
     * **Public subnet**: Enter `10.0.0.0/24`.
-    * Set both **Availability Zone** fields to an available **us-east-1** region value. You must set both subnets to the same AZ, such as **us-east-1a**.
+    * Set both **Availability Zone** fields to an available zone within the region you have selected. You must set both subnets to the same AZ, such as **us-east-1a**.
     * **Public subnet name**: Enter `public-az1`.
     * **Private subnet**: Enter `10.0.16.0/20`.
     * **Private subnet name**: Enter `pcf-private-az1`.
-    * **Instance type**: Select **m1.small**.
-    * Select the `pcf` SSH key that you created for **Key Pair name**.
+    * Under **Specify the details of your NAT instance**, set the **Instance type** to **m1.small**.
+    * Select the `pcf` SSH key you created for **Key Pair name**.
     * **Enable DNS hostnames**: Click `Yes`.
     * **Hardware tenancy**: Select `Default`.
     * Click **Create VPC**.
@@ -152,7 +152,7 @@ You must create an Amazon Identity and Access Management user (IAM) with the min
 1. Select **Security Groups****>****Create Security Group**.
 1. Enter a security group name and description: `OpsManager`.
 1. Select the VPC to which to deploy Ops Manager.
-1. Click the **Inbound** tab and add rules for HTTP, HTTPS and SSH for your IP only, as the table and image show.
+1. Click the **Inbound** tab and add rules according to the table below.
 
     <p class="note"><strong>Note</strong>: You may relax the IP restrictions after setting the password for OpsManager. Pivotal recommends limiting access to Ops Manager to IP ranges within your organization.</p>
 
@@ -339,7 +339,7 @@ You must create an Amazon Identity and Access Management user (IAM) with the min
 1. Return to the EC2 Dashboard.
 1. Click **AMIs**. Locate the Pivotal Ops Manager public AMI and click **Launch**. You can find the AMI ID in the _Ops Manager for AWS_ PDF that you downloaded from [Pivotal Network](https://network.pivotal.io/products/pivotal-cf).
 
-    <p class="note"><strong>Note</strong>: If you cannot locate the AMI, ensure that you have set your AWS Management Console to the <strong>US East (N. Virginia)</strong> region. If you still cannot locate the AMI, log in to the <a href="https://network.pivotal.io">Pivotal Network</a> and file a support ticket.</p>
+    <p class="note"><strong>Note</strong>: There is a different AMI for each region. If you cannot locate the AMI for your region, verify that you have set your AWS Management Console to your desired region. If you still cannot locate the AMI, log in to the <a href="https://network.pivotal.io">Pivotal Network</a> and file a support ticket.</p>
 
     <%= image_tag("pcfaws/pcf_aws_ami.png") %>
 
@@ -377,32 +377,32 @@ The default persistent disk value is 50 GB. We recommend increasing this value t
 ### Create Load Balancer ###
 
 1. On the EC2 Dashboard, click **Load Balancers**.
-1. Click **Define Load Balancer** and configure a load balancer with the following information:
+1. Click **Create Load Balancer** and configure a load balancer with the following information:
     * Enter a load balancer name.
     * **Create LB Inside**: Select the pcf-vpc VPC that you created in [Create a VPC](#pcfaws-vpc).
     * Ensure that the **Internal Load Balancer** checkbox is not selected.
 
     <%= image_tag("pcfaws/config_elb.png") %>
 
-1. Under **Select Subnets**, select the public subnet that you configured in [Create a VPC](#pcfaws-vpc), and click **Next**.
+1. Under **Select Subnets**, select the public subnet you configured in [Create a VPC](#pcfaws-vpc), and click **Next: Assign Security Groups**.
 
-1. On the **Assign Security Groups** page, select the security group that you configured in [Configure a Security Group for the Elastic Load Balancer](#pcfaws-om-elbsecgrp), and click **Continue**.
+1. On the **Assign Security Groups** page, select the security group you configured in [Configure a Security Group for the Elastic Load Balancer](#pcfaws-om-elbsecgrp), and click **Next: Configure Security Settings**.
 
     <%= image_tag("pcfaws/lb_assign_sec_groups.png") %>
 
-1. The **Configure Security Settings** page displays a security warning because your load balancer is not using a secure listener. You can ignore this warning. Click **Next**.
+1. The **Configure Security Settings** page displays a security warning because your load balancer is not using a secure listener. You can ignore this warning. Click **Next: Configure Health Check**.
 
  	<%= image_tag("pcfaws/secure_listener.png") %>
 
-1. Select **TCP** in **Ping Protocol** on the **Configure Health Check** page. Ensure that the **Ping Port** value is `80` and set the **Health Check Interval** to 10 seconds. Click **Next**.
+1. Select **TCP** in **Ping Protocol** on the **Configure Health Check** page. Ensure that the **Ping Port** value is `80` and set the **Health Check Interval** to 10 seconds. Click **Next: Add EC2 Instances**.
 
     <%= image_tag("pcfaws/lb_health_check.png") %>
 
-1. Accept the defaults on the **Add EC2 Instances** page and click **Next**.
+1. Accept the defaults on the **Add EC2 Instances** page and click **Next: Add Tags**.
 
     <p class="note"><strong>Note</strong>: AWS dynamically scales the number of load balancer instances, but you must associate the ELB with your routers. Configure this on the <a href="./pcf-aws-er-config.html#pcfaws-er-resource">Resource Config page</a> of the Elastic Runtime tile.</p>
 
-1. Accept the defaults on the **Add Tags** page and click **Next**.
+1. Accept the defaults on the **Add Tags** page and click **Review and Create**.
 
 1. Review and confirm the load balancer details, and click **Create**.
 
@@ -431,7 +431,7 @@ Create a CNAME wildcard record with your DNS provider to point to the load balan
 1. Navigate to the VPC Dashboard and click **Subnets**.
 1. Click **Create Subnet** and enter the following information for the first subnet:
     * **Name tag**: `rds-1`
-    * **VPC**: Select pcf-vpc.
+    * **VPC**: Select the pcf-vpc VPC you created in [Create a VPC](#pcfaws-vpc).
     * **Availability Zone**: For performance reasons, set this AZ value to the same AZ value that you defined for the private subnet.
     * **CIDR block**: Define a unique network range, such as `10.0.2.0/24`.
 
@@ -439,7 +439,7 @@ Create a CNAME wildcard record with your DNS provider to point to the load balan
 
 1. Click **Create Subnet** and enter the following information for the second subnet:
     * **Name tag**: `rds-2`
-    * **VPC**: Select pcf-vpc.
+    * **VPC**: Select the pcf-vpc VPC you created in [Create a VPC](#pcfaws-vpc).
     * **Availability Zone**: Select a different AZ than what you specified in rds-1.
     * **CIDR block**: Define a unique network range, such as `10.0.3.0/24`.
 
@@ -489,7 +489,7 @@ Create a CNAME wildcard record with your DNS provider to point to the load balan
 
 1. Configure advanced settings:
     * **VPC**: Select pcf-vpc.
-    * **Subnet Group**: Select the security group that you created in [Set up Subnets for RDS](#pcfaws-rds-subnets).
+    * **Subnet Group**: Select the subnet group you created in [Set up Subnets for RDS](#pcfaws-rds-subnets).
     * **Publicly Accessible**: Select **No**.
     * **VPC Security Groups**: Select the security group that you created in [Configure a Security Group for MySQL](#pcfaws-om-mysqlsecgrp).
     * **Database Name**: Enter `bosh`.

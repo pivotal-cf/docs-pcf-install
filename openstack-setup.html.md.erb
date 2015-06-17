@@ -1,0 +1,115 @@
+---
+title: Provisioning the OpenStack Infrastructure
+---
+
+This guide describes how to provisioning the OpenStack infrastructure that you
+need to install [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) on Mirantis Express
+hosted OpenStack.
+Use this topic when [Installing Pivotal Cloud Foundry On OpenStack](./openstack.html).
+
+After completing this procedure, complete all of the steps in the [Configuring Ops Manager Director after Deploying PCF to OpenStack](./openstack-om-config.html) and [Installing Elastic Runtime after Deploying PCF to OpenStack](./openstack-er-config.html) topics.
+
+## <a id='log-in'></a>Step 1: Log In to the OpenStack Horizon Dashboard ##
+
+1. Log in to the OpenStack Horizon Dashboard.
+
+    <%= image_tag("openstack/log-in.png") %>
+
+## <a id='security'></a>Step 2: Configure Security ##
+
+1. In the left navigation of your OpenStack dashboard, navigate to **Project > Compute > Access & Security**.
+
+1. Select the **Key Pairs** tab on the **Access & Security** page.
+
+1. Click **Create Key Pair**. Enter a **Key Pair Name**. Click **Create Key Pair**.
+If the key pair does not automatically download to your computer, use the
+**download key pair** link to download it.
+
+    <%= image_tag("openstack/create-key-pair.png") %>
+
+1. In the left navigation, click **Access & Security** to refresh the page.
+
+1. Select the **Security Groups** tab. Click **Create Security Group** and
+create a group with the following properties:
+    * **Name**: `opsmanager`
+    * **Description**: `Ops Manager`
+
+    <%= image_tag("openstack/create-security.png") %>
+
+1. Select the checkbox for the `opsmanager` Security Group and click **Manage Rules**.
+
+    <%= image_tag("openstack/manage-security-rules.png") %>
+
+1. Add the access rules for HTTP, HTTPS, and SSH as shown in the table below.
+
+    <p class='note'><strong>Note</strong>: Adjust the remote sources as
+    necessary for your own security compliance. Pivotal recommends limiting
+    access to Ops Manager to IP ranges within your organization.</p>
+
+    <table class='nice' border='1'>
+      <tr>
+        <th><strong>Direction</strong></th>
+        <th><strong>Ether Type</strong></th>
+        <th><strong>IP Protocol</strong></th>
+        <th><strong>Port Range</strong></th>
+        <th><strong>Remote</strong></th>
+      </tr>
+      <tr>
+        <td>Ingress</td>
+        <td>IPv4</td>
+        <td>TCP</td>
+        <td>22 (SSH)</td>
+        <td>0.0.0.0/0 (CIDR)</td>
+      </tr>
+      <tr>
+        <td>Ingress</td>
+        <td>IPv4</td>
+        <td>TCP</td>
+        <td>80 (HTTP)</td>
+        <td>0.0.0.0/0 (CIDR)</td>
+      </tr>
+      <tr>
+        <td>Ingress</td>
+        <td>IPv4</td>
+        <td>TCP</td>
+        <td>443 (HTTPS)</td>
+        <td>0.0.0.0/0 (CIDR)</td>
+      </tr>
+      <tr>
+        <td>Ingress</td>
+        <td>IPv4</td>
+        <td>TCP</td>
+        <td>6868</td>
+        <td>0.0.0.0/0 (CIDR)</td>
+      </tr>
+      <tr>
+        <td>Ingress</td>
+        <td>IPv4</td>
+        <td>TCP</td>
+        <td>25555</td>
+        <td>0.0.0.0/0 (CIDR)</td>
+      </tr>
+    </table>
+
+## <a id='create-om-image'></a>Step 3: Create Ops Manager Image ##
+
+1. In the left navigation of your OpenStack dashboard, navigate to **Project > Compute > Images**.
+
+1. Click **Create Image**. Complete the **Create An Image** page with the following information:
+    * **Name**: Enter `Ops Manager`
+    * **Image Source**: Select **Image Location**
+    * **Image Location**: Enter `https://s3.amazonaws.com/cf-ops-manager/raw/vm-2015-05-27T13-11-16-v1.4.0.0-Branch-431-g14fa18e.raw`
+    * **Format**: Select **Raw**
+    * **Minimum Disk (GB)**: Enter `40`
+    * **Minimum RAM (MB)**: Enter `4096`
+    * Deselect the **Public** checkbox
+    * Select the **Protected** checkbox
+
+1. Click **Create Image**.
+
+
+
+
+
+
+

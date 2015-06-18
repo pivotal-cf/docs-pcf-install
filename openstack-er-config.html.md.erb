@@ -11,222 +11,68 @@ Before beginning this procedure, ensure that you have successfully completed all
 steps in the [Provisioning the OpenStack Infrastructure](./openstack-setup.html)
 topic and the [Configuring Ops Manager Director after Deploying PCF to OpenStack](./openstack-om-config.html) topics.
 
-## <a id='log-in'></a>Step 12: Add Elastic Runtime to Ops Manager ##
-
-1. Log in to the OpenStack Horizon Dashboard.
-
-    <%= image_tag("openstack/log-in.png") %>
-
-## <a id='security'></a>Step 2: Configure Security ##
-
-1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Access & Security**.
-
-1. Select the **Key Pairs** tab on the **Access & Security** page.
-
-1. Click **Create Key Pair**. Enter a **Key Pair Name**. Click **Create Key Pair**.
-If the key pair does not automatically download to your computer, use the
-**download key pair** link to download it.
-
-    <%= image_tag("openstack/create-key-pair.png") %>
-
-1. In the left navigation, click **Access & Security** to refresh the page.
-
-1. Select the **Security Groups** tab. Click **Create Security Group** and
-create a group with the following properties:
-    * **Name**: `opsmanager`
-    * **Description**: `Ops Manager`
-
-    <%= image_tag("openstack/create-security.png") %>
-
-1. Select the checkbox for the `opsmanager` Security Group and click **Manage Rules**.
-
-    <%= image_tag("openstack/manage-security-rules.png") %>
-
-1. Add the access rules for HTTP, HTTPS, and SSH as shown in the table below.
-
-    <p class='note'><strong>Note</strong>: Adjust the remote sources as
-    necessary for your own security compliance. Pivotal recommends limiting
-    access to Ops Manager to IP ranges within your organization.</p>
-
-    <table class='nice' border='1'>
-      <tr>
-        <th><strong>Direction</strong></th>
-        <th><strong>Ether Type</strong></th>
-        <th><strong>IP Protocol</strong></th>
-        <th><strong>Port Range</strong></th>
-        <th><strong>Remote</strong></th>
-      </tr>
-      <tr>
-        <td>Ingress</td>
-        <td>IPv4</td>
-        <td>TCP</td>
-        <td>22 (SSH)</td>
-        <td>0.0.0.0/0 (CIDR)</td>
-      </tr>
-      <tr>
-        <td>Ingress</td>
-        <td>IPv4</td>
-        <td>TCP</td>
-        <td>80 (HTTP)</td>
-        <td>0.0.0.0/0 (CIDR)</td>
-      </tr>
-      <tr>
-        <td>Ingress</td>
-        <td>IPv4</td>
-        <td>TCP</td>
-        <td>443 (HTTPS)</td>
-        <td>0.0.0.0/0 (CIDR)</td>
-      </tr>
-      <tr>
-        <td>Ingress</td>
-        <td>IPv4</td>
-        <td>TCP</td>
-        <td>6868</td>
-        <td>0.0.0.0/0 (CIDR)</td>
-      </tr>
-      <tr>
-        <td>Ingress</td>
-        <td>IPv4</td>
-        <td>TCP</td>
-        <td>25555</td>
-        <td>0.0.0.0/0 (CIDR)</td>
-      </tr>
-    </table>
+## <a id='log-in'></a>Step 1: Add Elastic Runtime to Ops Manager ##
 
-## <a id='create-om-image'></a>Step 3: Create Ops Manager Image ##
+1. Navigate to the Pivotal CF Ops Manager Installation Dashboard.
 
-You can create the Ops Manager image in OpenStack using the OpenStack GUI or
-using the [Glance CLI](http://docs.openstack.org/developer/python-glanceclient/man/glance.html)
-client.
+1. Click the Pivotal Network link on the left to add Elastic Runtime to Ops 
+Manager. For more information, refer to the [Adding and Deleting Products](./add-delete.html) topic.
 
-### OpenStack GUI ###
+    <%= image_tag("openstack/er-tile.png") %>
 
-1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Images**.
+## <a id='security-config'></a>Step 2: Complete the Security Config Page ##
 
-1. Click **Create Image**. Complete the **Create An Image** page with the
-following information:
-    * **Name**: Enter `Ops Manager`
-    * **Image Source**: Select **Image Location**
-    * **Image Location**: Enter `https://s3.amazonaws.com/cf-ops-manager/raw/vm-2015-05-27T13-11-16-v1.4.0.0-Branch-431-g14fa18e.raw`
-    * **Format**: Select **Raw**
-    * **Minimum Disk (GB)**: Enter `40`
-    * **Minimum RAM (MB)**: Enter `4096`
-    * Deselect the **Public** checkbox
-    * Select the **Protected** checkbox
+1. Click the **Elastic Runtime** tile in the Installation Dashboard.
 
-1. Click **Create Image**.
+1. Select **Security Config**.
 
-    <%= image_tag("openstack/create-image.png") %>
+1. Click the **Generate Self-Signed RSA Certificate** link to launch the RSA 
+certificate wizard.
 
-### Glance CLI ###
+1.	In the **Generate Self-Signed RSA Certificate** window, enter a wildcard 
+domain that you own. Click **Generate**. The example in the image uses 
+`*.example.com`
 
-1. In a terminal window, run the following command to install the Glance CLI
-client:
+    <%= image_tag("openstack/generate-cert.png") %>
 
-    <p class='terminal'>
-    $ apt-get install python-glanceclient
-    </p>
+1. Elastic Runtime populates the **SSL Certificate** fields with RSA certificate and private key information.
 
-1. Run `admin-openrc.sh` to download your `openstack.rc` file and target your
-Openstack environment.
+1. Select the **Trust Self-Signed Certificates** checkbox.
 
-    <p class='terminal'>
-    $ ./admin-openrc.sh
-    Please enter your OpenStack Password:
-    </p>
+1. Click **Save**.
 
-1. Download the RAW image file `https://s3.amazonaws.com/cf-ops-manager/raw/vm-2015-05-27T13-11-16-v1.4.0.0-Branch-431-g14fa18e.raw` to a local directory.
+    <%= image_tag("openstack/security-config.png") %>
 
-1. Run the following command to upload the RAW image file using the Glance CLI client:
+## <a id='cloud-controller'></a>Step 3: Complete the Cloud Controller Page ##
 
-    <p class='terminal'>
-    $ glance image-create --progress --disk-format raw --name "Ops Manager" --container-format bare --file ./vm-2015-05-27T13-11-16-v1.4.0.0-Branch-431-g14fa18e.raw
-    </p>
+1. Select **Cloud Controller** and enter your system and application domains.
+    * The **System Domain** defines your target when you push apps to Elastic 
+      Runtime.
+    * The **Apps Domain** defines where Elastic Runtime should serve your apps.
 
-## <a id='launch-om-vm'></a>Step 4: Launch Ops Manager VM ##
+    Pivotal recommends that you use the same domain name, but different 
+    subdomain names, for your system domain and your app domain. 
+    Doing so allows you to use a single wildcard certificate for the domain 
+    while preventing apps from creating routes that overlap with system routes.
+    For example, name your system domain `system.EXAMPLE.COM` and your apps  
+    domain `apps.EXAMPLE.COM`.
 
-1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Images**.
+1. Click **Save**.
 
-1. Select the **Ops Manager** image and click **Launch**.
+    <%= image_tag("openstack/cloud-controller.png") %>
 
-    <%= image_tag("openstack/launch-image.png") %>
+## <a id='complete'></a>Step 4: Complete Elastic Runtime Installation ##
 
-1. Complete the **Details**, **Access & Security**, and **Networking** tabs of
-the **Launch Instance** form with the information below.
+1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
 
-### Details Tab ###
+1. Click **Apply Changes**. If the following ICMP error message appears, click
+**Ignore errors and start the install**.
 
-Select the **Details** tab and specify the following details:
+    <%= image_tag("openstack/icmp-error.png") %>
 
-  * **Availability Zone**: Select an availability zone.
-  * **Instance Name**: Enter `Ops Manager`.
-  * **Flavor**: Select **m1.large**.
-  * **Instance Count**: Do not change from the default.
-  * **Instance Boot Source**: Select **Boot from image**.
-  * **Image Name**: Select the **Ops Manager** image.
+1. Elastic Runtime installs. The image shows the **Changes Applied** message that displays when the installation process successfully completes.
 
-    <%= image_tag("openstack/instance-details.png") %>
-
-### Access & Security Tab ###
-
-Select the **Access & Security** tab and specify the following details:
-
-  * **Key Pair**: Select the key pair that you created in [Step 2: Configure
-    Security](#security). You need this key pair to log in to the Ops Manager
-    instance from your workstation.
-  * **Security Groups**: Select the **opsmanager** checkbox. Deselect all
-    other Security Groups.
-
-    <%= image_tag("openstack/instance-security.png") %>
-
-### Networking Tab ###
-
-1. Select the **Networking** tab.
-
-1. Under **Available networks**, select a private subnet. You add a Floating IP
-to this network in a later step.
-
-1. Click **Launch**.
-
-    <%= image_tag("openstack/instance-networking.png") %>
-
-## <a id='floating-ip'></a>Step 5: Associate a Floating IP Address ##
-
-1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Instances**.
-
-1. Wait until the **Power State** of the Ops Manager instances shows as
-_Running_.
-
-1. Record the private **IP Address** of the Ops Manager instance. You use this
-IP Address when you [Complete the Networks Pages](/openstack-om-config.html#networks) in Ops Manager.
-
-    <%= image_tag("openstack/instance-running.png") %>
-
-1. Select the **Ops Manager** checkbox. Click the **Actions** drop-down menu and
-select **Associate Floating IP**.
-
-1. Under IP Address, click **+**.
-
-    <%= image_tag("openstack/ip-add.png") %>
-
-1. Under **Pool**, select an IP Pool and click **Allocate IP**.
-
-    <%= image_tag("openstack/ip-pool.png") %>
-
-1. Under **Port to be associated**, select your **Ops Manager** instance. Click
-**Associate**.
-
-    <%= image_tag("openstack/ip-associate.png") %>
-
-## <a id='blob-storage'></a>Step 6: Add Blob Storage ##
-
-1. In the left navigation of your OpenStack dashboard, click **Project > Object Store > Containers**.
-
-1. Click **Create Container**. Create a container with the following properties:
-    * **Container Name**: Enter `pcf`.
-    * **Container Access**: Select **private**.
-
-    <%= image_tag("openstack/create-container.png") %>
+    <%= image_tag("openstack/om-installed.png") %>
 
 ---
 

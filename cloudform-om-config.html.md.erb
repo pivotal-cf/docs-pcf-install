@@ -1,5 +1,5 @@
 ---
-title: Configuring Ops Manager Director after Deploying PCF on AWS using CloudFormation
+title: Configuring Ops Manager Director on AWS CloudFormation
 ---
 
 This topic describes how to configure the Ops Manager Director after deploying
@@ -8,24 +8,37 @@ Services (AWS).
 Use this topic when [Installing Pivotal Cloud Foundry using AWS CloudFormation](./cloudform.html).
 
 Before beginning this procedure, ensure that you have successfully completed all
-steps in the [Deploying the CloudFormation Template for PCF on AWS](./cloudform-template.html) topic.
-After you complete this procedure, follow the instructions in the [Installing Elastic Runtime after Deploying PCF on AWS using CloudFormation](./cloudform-er-config.html) topic.
+steps in the [Deploying the CloudFormation Template for PCF on AWS](./cloudform-template.html) and the [Deploying Ops Manager Director on AWS CloudFormation](./cloudform-om-deploy.html) topics.
+After you complete this procedure, follow the instructions in the [Installing Elastic Runtime on AWS CloudFormation](./cloudform-er-config.html) topic.
 
 ## <a id='outputs'></a>Step 1: Open the Outputs Tab in AWS Stacks ##
 
-In the Stacks dashboard of the [AWS Console](https://console.aws.amazon.com/), select the **pcf-stack** checkbox, then select the **Outputs** tab.
+1. Log in to the [AWS Console](https://console.aws.amazon.com/).
+Navigate to the Stacks Dashboard.
+
+1. In the Stacks dashboard, select the **pcf-stack** checkbox, then select the **Outputs** tab.
 
 <%= image_tag("cloudform/outputs.png") %>
 
-You use the information in the **Value** column of the **Outputs** tab to [access Ops Manager](#access-om), [configure the Ops Manager Director](#aws-config), and [configure Elastic Runtime](./cloudform-er-config.html).
+You use the information in the **Value** column of the **Outputs** tab to [configure the Ops Manager Director](#aws-config) and [configure Elastic Runtime](./cloudform-er-config.html).
 
 ## <a id='access-om'></a>Step 2: Access Ops Manager ##
 
-1. In the **Outputs** tab in the AWS Console, **00OpsManDNS** specifies the public DNS name of your Ops Manager. Enter this public DNS name as a URL in a web browser.
+1. In the AWS Console, navigate to the EC2 Dashboard.
 
-1. Log in with the **OpsMgrWebUID** and **OpsMgrWebPW** that you provided on the [Specify Parameters](./cloudform-template.html#parameters) page of the CloudFormation dashboard in AWS.
+1. Record the **Public IP** of your Ops Manager EC2 instance.
 
-    <%= image_tag("cloudform/login.png") %>
+    <%= image_tag("cloudform/deployed.png") %>
+
+1. Open this IP address in a web browser.
+
+1. Enter a **User Name** and a **Password**.
+
+1. Read the **End User License Agreement** and select the checkbox.
+
+1. Click **Create Admin User** to create an Ops Manager administrator account.
+
+    <%= image_tag("cloudform/create-admin.png") %>
 
 ## <a id='aws-config'></a>Step 3: AWS Config Page ##
 
@@ -35,16 +48,18 @@ You use the information in the **Value** column of the **Outputs** tab to [acces
 
 1. Select **AWS Config** to open the **AWS Management Console Config** page.
 
-1. Complete the **AWS Management Console Config** page with information from the **Outputs** tab in the AWS Console:
-    * **Access Key ID**: Use **01AccessKeyID**.
-    * **AWS Secret Key**: Use **02AWSSecretKey**.
-    * **VPC ID**: Use **03VPCID**.
-    * **Security Group Name**: Click the link in **04SecurityGroupName**. Use
-		the **Group name** shown, not the **Group ID**.
-    * **Key Pair Name**: Use **05KeyPairName**.
+1. Complete the **AWS Management Console Config** page with information from the **Outputs** tab that you opened previously in the AWS Console:
+    * **Access Key ID**: Use the value of **PcfIamUserAccessKey**.
+    * **AWS Secret Key**: Use the value of **PcfIamUserSecretAccessKey**.
+    * **VPC ID**: Use the value of **PcfVpc**.
+    * **Key Pair Name**: Use the value of **PcfKeyPairName**.
     * **SSH Private Key**: Open your pre-existing AWS key pair `.pem` file in a
 		text editor. Copy the contents of the `.pem` file and paste into the
 		**SSH Private Key** field.
+    * **Security Group Name**: You will need to look up the correct security group name from the Security Groups section of the EC2 Dashboard.  In the table of Security Groups, find the row whose Description is **PCF VMs Security Group**, and copy its name into this box.
+    Remember to use
+		the group's **Name** (not its ID), which will be a text string similar to "pcf-stack-PcfVmsSecurityGroup-JFII7G717K3".
+
 
 1. Click **Save**.
 
@@ -65,15 +80,17 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
 
 1. Complete the **Director Config** page with information from the **Outputs** tab in the AWS Console:
     * **Blobstore Location**: Select the **Amazon S3** option.
-    * **Bucket Name**: Use **07OpsMgrBucketName**.
-    * **Access Key ID**: Use **08AccessKeyID**.
-    * **AWS Secret Key**: Use **09AWSSecretKey**.
+    * **S3 Endpoint**: You must determine this value by looking up the S3 Endpoint for your AWS Region in the [Amazon Simple Storage Service endpoints table](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region).  Don't forget to format the endpoint address as an HTTPS URL.
+    For example, if you are using the region ***us-west-1*** then you would enter ***http://s3-us-west-1.amazonaws.com/*** in this box.
+    * **Bucket Name**: Use the value of **PcfOpsManagerS3Bucket**.
+    * **Access Key ID**: Use the value of **PcfIamUserAccessKey**.
+    * **AWS Secret Key**: Use the value of **PcfIamUserSecretAccessKey**.
     * **Database Location**: Select the **External MySQL Database** option.
-    * **Host**: Use **10RDSHost**.
-    * **Port**: Use **11RDSPort**.
-    * **Username**: Use **12RDSUserID**.
-    * **Password**: Use **13RDSPassword**.
-    * **Database**: Use **14RDSDatabase**.
+    * **Host**: Use the value of **PcfRdsAddress**.
+    * **Port**: Use the value of **PcfRdsPort**.
+    * **Username**: Use the value of **PcfRdsUsername**.
+    * **Password**: Use the value of **PcfRdsPassword**.
+    * **Database**: Use the value of **PcfRdsDBName**.
 
 1. Click **Save**.
 
@@ -83,7 +100,7 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
 
 1. Select **Create Availability Zones**.
 
-1. Enter **15AmazonAvailabilityZone** from the **Outputs** tab in the AWS Console.
+1. Enter the value of **PcfPrivateSubnetAvailabilityZone** from the **Outputs** tab in the AWS Console.
 
 1. Select **Assign Availability Zones**.
 
@@ -98,16 +115,18 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
 1. Select **Create Networks**.
 
 1. Complete the **Create Networks** page with information from the **Outputs** tab in the AWS Console:
-    * **Name**: Use **16NetworkName**.
-    * **VPC Subnet ID**: Use **17VPCSubnetId**.
-    * **Subnet (CIDR Range)**: Use **18SubnetCIDRRange**.
-    * **Excluded IP Ranges**: Use **19ExcludedIPRanges**.
-    * **DNS**: Use **20DNS**.
-    * **Gateway**: Use **21Gateway**.
+    * **Name**: Use the value of **PcfNetwork** (or choose any other name you prefer).
+    * **VPC Subnet ID**: Use the value of **PcfPrivateSubnetId**.
+    * **Subnet (CIDR Range)**: Use **10.0.16.0/20**.
+    * **Excluded IP Ranges**: Use **10.0.16.1-10.0.16.9**.
+    * **DNS**: Use **10.0.0.2**.
+    * **Gateway**: Use **10.0.16.1**.
 
 1. Click **Save**.
 
     <%= image_tag("cloudform/create-networks.png") %>
+
+1. You may receive errors indicating that the gateway and DNS IPs you provided are unreachable.  It is safe to ignore these errors.  Click **Save** again.
 
 1. Select **Assign Networks** and assign the Director to the network that you
 created in the **Create Networks** step.

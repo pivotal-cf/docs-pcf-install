@@ -7,12 +7,14 @@ that you need to run <a
 href="https://network.pivotal.io/products/pivotal-cf">Pivotal Cloud Foundry</a>
 (PCF) on Amazon Web Services (AWS).
 
+<p class="note"><strong>Note</strong>: PCF for AWS functionality works only in
+	the us-east-1 region. You cannot deploy PCF to any other region. </p>
+
+## <a id='prerequisites'></a>Prerequisites
+
 Before following this procedure, complete all of the steps in the [Configuring
 AWS for PCF](./pcf-aws-component-config.html) and [Configuring Ops Manager
 Director for AWS](./pcf-aws-om-config.html) topics.
-
-<p class="note"><strong>Note</strong>: PCF for AWS functionality works only in
-	the us-east-1 region. You cannot deploy PCF to any other region. </p>
 
 ## <a id='pcfaws-er-om-add'></a>Step 1: Add Elastic Runtime to Ops Manager ##
 
@@ -96,7 +98,26 @@ Exit the mysql client and close your connection to the Ops Manager VM.
 
 ## <a id='file-store-config'></a>Step 4: Configure File Storage ##
 
-<%= partial 'file_store_config' %>
+Select **File Storage Config**.
+
+To use the PCF internal filestore, select **Internal** and click **Save**.
+
+To use an external S3-compatible filestore for your Elastic
+Runtime file storage, complete the following procedure:
+
+1. Select **External S3-Compatible Filestore**.
+
+1. Enter the **URL Endpoint** for your filestore. If you manually configured Amazon Web Services for PCF, this is the value that you entered into the Director config page in [Configuring Ops Manager Director for AWS](./pcf-aws-om-config.html#pcfaws-om-dirconfig#pcfaws-om-dirconfig).
+
+1. Enter the **Bucket Name**. If you manually configured Amazon Web Services for PCF, this is the name that you chose in [Create S3
+Buckets](./pcf-aws-component-config.html#pcfaws-s3).
+
+1. Enter your **Access Key** and **Secret Key**. If you are using Amazon Web Services, retrieve your key information with the IAM credentials that you generated in [Create an IAM User for PCF](./pcf-aws-component-config.html#pcfaws-iam-user).
+
+1. Click **Save**.
+
+    <%= image_tag("pcfaws/external_filestore_url_endpoint.png") %>
+
 
 ## <a id='pcfaws-er-sslcert'></a>Step 5: Generate a Self-Signed Certificate ##
 
@@ -129,14 +150,12 @@ and private key information.
 
 In this step, you complete your load balancer configuration that you began when
 setting up AWS components for PCF.
-For more information, see the [Prepare a Load Balancer and Wildcard DNS
-Record](./pcf-aws-component-config.html#pcfaws-lb-cname) section in the
-_Configure AWS for PCF_ topic.
+For more information, see the [Create Load Balancer](./pcf-aws-component-config.html#pcfaws-lb) section of the
+_Manually Configuring AWS for PCF_ topic.
 
 1. On the EC2 Dashboard, click **Load Balancers**.
 
-1. Select the load balancer that you created in the [Prepare a Load Balancer and
-Wildcard DNS Record](./pcf-aws-component-config.html#pcfaws-lb-cname) section of
+1. Select the load balancer that you created in the [Create Load Balancer](./pcf-aws-component-config.html#pcfaws-lb) section of
 the _Manually Configuring AWS for PCF_ topic.
 The **Load balancer** detail tabs display at the bottom of the page.
 
@@ -245,13 +264,13 @@ If you are using external resources, you do not need to deploy VMs in Ops Manage
 
 1. Click **Save**.
 
-<%= image_tag("pcfaws/er-aws-resource-config.png") %>
-
 ## <a id='config-elb'></a>Step 11: Configure Elastic Load Balancer ##
 
-1. CLick **Resource Config**. In the **ELB Name** field of the **Router** row, enter the load balancer name that you created in the **Create Load Balancer** step described in [Manually Configuring AWS for PCF](./pcf-aws-component-config.html#pcfaws-lb-cname). You may configure multiple load balancers by entering the names separated by commas.
+1. CLick **Resource Config**. In the **ELB Name** field of the **Router** row, enter the load balancer name that you created in the **Create Load Balancer** step in [Manually Configuring AWS for PCF](./pcf-aws-component-config.html#pcfaws-lb-cname). You may configure multiple load balancers by entering the names separated by commas.
 
 1. Click **Save**.
+
+<%= image_tag("pcfaws/er-aws-resource-config.png") %>
 
 ## <a id='pcfaws-er-complete'></a>Step 12: Complete the Elastic Runtime Installation ##
 

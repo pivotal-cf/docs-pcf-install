@@ -7,12 +7,14 @@ that you need to run <a
 href="https://network.pivotal.io/products/pivotal-cf">Pivotal Cloud Foundry</a>
 (PCF) on Amazon Web Services (AWS).
 
+<p class="note"><strong>Note</strong>: PCF for AWS functionality works only in
+	the us-east-1 region. You cannot deploy PCF to any other region. </p>
+
+## <a id='prerequisites'></a>Prerequisites
+
 Before following this procedure, complete all of the steps in the [Configuring
 AWS for PCF](./pcf-aws-component-config.html) and [Configuring Ops Manager
 Director for AWS](./pcf-aws-om-config.html) topics.
-
-<p class="note"><strong>Note</strong>: PCF for AWS functionality works only in
-	the us-east-1 region. You cannot deploy PCF to any other region. </p>
 
 ## <a id='pcfaws-er-om-add'></a>Step 1: Add Elastic Runtime to Ops Manager ##
 
@@ -52,8 +54,9 @@ singleton jobs and job balancing.
 
 ## <a id='pcfaws-er-db-config'></a>Step 3: Configure System Databases ##
 
-Complete the following procedure if you want to use the external RDS instance
-for your Elastic Runtime databases.
+If you want to use PCF internal databases, select **Internal** and click **Save**.
+
+If you want to use the external RDS instance for your Elastic Runtime databases, complete the following procedure.
 
 First, create the databases that Elastic Runtime requires.
 These instructions create those databases on the same RDS instance that you
@@ -93,24 +96,28 @@ Exit the mysql client and close your connection to the Ops Manager VM.
 
 1. <%= partial 'mysql_proxy_config' %>
 
+## <a id='file-store-config'></a>Step 4: Configure File Storage ##
 
-## <a id='pcfaws-er-fs-config'></a>Step 4: Configure File Storage ##
+Select **File Storage Config**.
 
-Complete the following procedure if you want to use Amazon S3 for your Elastic
-Runtime file storage.
+To use the PCF internal filestore, select **Internal** and click **Save**.
 
-1. Navigate to the **File Storage Config** page of the Elastic Runtime product tile.
+To use an external S3-compatible filestore for your Elastic
+Runtime file storage, complete the following procedure:
 
 1. Select **External S3-Compatible Filestore**.
 
-1. Enter the **URL Endpoint** point for your Amazon S3 filestore.
+1. Enter the **URL Endpoint** for your filestore. If you manually configured Amazon Web Services for PCF, this is the value that you entered into the Director config page in [Configuring Ops Manager Director for AWS](./pcf-aws-om-config.html#pcfaws-om-dirconfig#pcfaws-om-dirconfig).
 
-1. Enter the Elastic Runtime **Bucket Name** that you chose in [Create S3
+1. Enter the **Bucket Name**. If you manually configured Amazon Web Services for PCF, this is the name that you chose in [Create S3
 Buckets](./pcf-aws-component-config.html#pcfaws-s3).
 
-1. Enter your **Access Key** and **Secret Key**. To retrieve your AWS key information, use the IAM credentials that you generated in [Create an IAM User for PCF](./pcf-aws-component-config.html#pcfaws-iam-user).
+1. Enter your **Access Key** and **Secret Key**. If you are using Amazon Web Services, retrieve your key information with the IAM credentials that you generated in [Create an IAM User for PCF](./pcf-aws-component-config.html#pcfaws-iam-user).
+
+1. Click **Save**.
 
     <%= image_tag("pcfaws/external_filestore_url_endpoint.png") %>
+
 
 ## <a id='pcfaws-er-sslcert'></a>Step 5: Generate a Self-Signed Certificate ##
 
@@ -143,14 +150,12 @@ and private key information.
 
 In this step, you complete your load balancer configuration that you began when
 setting up AWS components for PCF.
-For more information, see the [Prepare a Load Balancer and Wildcard DNS
-Record](./pcf-aws-component-config.html#pcfaws-lb-cname) section in the
-_Configure AWS for PCF_ topic.
+For more information, see the [Create Load Balancer](./pcf-aws-component-config.html#pcfaws-lb) section of the
+_Manually Configuring AWS for PCF_ topic.
 
 1. On the EC2 Dashboard, click **Load Balancers**.
 
-1. Select the load balancer that you created in the [Prepare a Load Balancer and
-Wildcard DNS Record](./pcf-aws-component-config.html#pcfaws-lb-cname) section of
+1. Select the load balancer that you created in the [Create Load Balancer](./pcf-aws-component-config.html#pcfaws-lb) section of
 the _Manually Configuring AWS for PCF_ topic.
 The **Load balancer** detail tabs display at the bottom of the page.
 
@@ -163,21 +168,10 @@ The **Load balancer** detail tabs display at the bottom of the page.
     <%= image_tag("pcfaws/er_lb_add_listeners.png") %>
 
 1. Click **Edit** to define a second listener with the following values:
-    * **Load Balancer Protocol**: **HTTPS (Secure HTTPS)**
+    * **Load Balancer Protocol**: **HTTPS (Secure HTTP)**
     * **Load Balancer Port**: `443`
     * **Instance Protocol**: **HTTP**
     * **Instance Port**: `80`
-
-1. Click **Edit** to define a third listener with the following values for use with websockets:
-    * **Load Balancer Protocol**: **SSL (Secure TCP)**
-    * **Load Balancer Port**: `4443`
-    * **Instance Protocol**: **TCP**
-    * **Instance Port**: `80`
-
-    When you click **Save**, AWS prompts you to enter SSL certificates for these
-	listeners.
-
-    <%= image_tag("pcfaws/er_lb_add_sslcert.png") %>
 
 1. Click **Change** in the **SSL Certificate** column of the second listener.
 
@@ -191,7 +185,18 @@ complete the following information:
 
     <%= image_tag("pcfaws/er_lb_cert_details.png") %>
 
+1. Click **Edit** to define a third listener with the following values for use with websockets:
+    * **Load Balancer Protocol**: **SSL (Secure TCP)**
+    * **Load Balancer Port**: `4443`
+    * **Instance Protocol**: **TCP**
+    * **Instance Port**: `80`
+
 1. Click **Change** in the **SSL Certificate** column of the third listener.
+
+    When you click **Save**, AWS prompts you to enter SSL certificates for these
+	listeners.
+
+    <%= image_tag("pcfaws/er_lb_add_sslcert.png") %>
 
 1. Select **Choose an existing SSL certificate** and select the certificate that
 you previously uploaded for the second listener.
@@ -246,8 +251,7 @@ These SMTP settings are required for the following:
 
 ## <a id='pcfaws-er-resource'></a>Step 10: Configure Resources ##
 
-Because you are using RDS, S3, and ELBs, you can turn off VMs that you do not
-need.
+If you are using external resources, you do not need to deploy VMs in Ops Manager for these resources. For example, if you use an external RDS instance, S3, and ELBs, you can disable the following VMs as follows:
 
 1. Click **Resource Config** and edit the following fields:
     * **NFS Server**: Enter `0` in **Instances**.
@@ -260,13 +264,13 @@ need.
 
 1. Click **Save**.
 
-<%= image_tag("pcfaws/er-aws-resource-config.png") %>
-
 ## <a id='config-elb'></a>Step 11: Configure Elastic Load Balancer ##
 
-1. CLick **Resource Config**. In the **ELB Name** field of the **Router** row, enter the load balancer name that you created in the **Create Load Balancer** step described in [Manually Configuring AWS for PCF](./pcf-aws-component-config.html#pcfaws-lb-cname).
+1. Click **Resource Config**. In the **ELB Name** field of the **Router** row, enter the load balancer name that you created in the [Create Load Balancer](./pcf-aws-component-config.html#pcfaws-lb) section of the _Manually Configuring AWS for PCF_ topic.
 
 1. Click **Save**.
+
+<%= image_tag("pcfaws/er-aws-resource-config.png") %>
 
 ## <a id='pcfaws-er-complete'></a>Step 12: Complete the Elastic Runtime Installation ##
 

@@ -15,50 +15,73 @@ Ops Manager and Elastic Runtime require the following open TCP ports:
 
 For more information about required ports for additional installed products, refer to the product documentation.
 
-The following iptables script configures an example firewall.
+The following example procedure uses iptables commands to configure a firewall.
 
 <p class="note"><strong>Note</strong>: <code>GATEWAY_EXTERNAL_IP</code> is a placeholder. Replace this value with your <code>PUBLIC_IP</code>.</p>
 
-<pre class='terminal'>
-sudo vi /etc/sysctl.conf
-   net.ipv4.ip_forward=1
+1. Open `/etc/sysctl.conf`, a file that contains configurations for Linux kernel settings, with the command below:
+  <pre class='terminal'>
+  sudo vi /etc/sysctl.conf
+  </pre>
 
-iptables --flush
-iptables --flush -t nat
-export INTERNAL_NETWORK_RANGE=10.0.0.0/8
-export GATEWAY_INTERNAL_IP=10.0.0.1
-export GATEWAY_EXTERNAL_IP=88.198.252.242
-export PIVOTALCF_IP=10.0.0.2
-export HA_PROXY_IP=10.0.0.254
+1. Add the `net.ipv4.ip_forward=1` line to `/etc/sysctl.conf` and save the file.
 
- # iptables forwarding rules including loopback
-iptables -A FORWARD -i eth1 -j ACCEPT
-iptables -A FORWARD -o eth1 -j ACCEPT
-iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-iptables -t nat -A POSTROUTING -d $HA_PROXY_IP -s $INTERNAL_NETWORK_RANGE \
-        -p tcp --dport 80 -j SNAT --to $GATEWAY_INTERNAL_IP
-iptables -t nat -A POSTROUTING -d $HA_PROXY_IP -s $INTERNAL_NETWORK_RANGE \
-        -p tcp --dport 443 -j SNAT --to $GATEWAY_INTERNAL_IP
+1. Flush all the chains in the `filter` and `nat` tables:
+    <pre class='terminal'>
+    iptables --flush
+    iptables --flush -t nat
+    </pre>
 
-iptables -t nat -A PREROUTING -d $GATEWAY_EXTERNAL_IP -p tcp --dport 25555 -j DNAT \
-         --to $PIVOTALCF_IP
-iptables -t nat -A PREROUTING -d $GATEWAY_EXTERNAL_IP -p tcp --dport 443 -j DNAT \
-         --to $HA_PROXY_IP
-iptables -t nat -A PREROUTING -d $GATEWAY_EXTERNAL_IP -p tcp --dport 80 -j DNAT \
-         --to $HA_PROXY_IP
+1. Add environment variables to use when creating the ip rules:
+    <pre class='terminal'>
+    export INTERNAL\_NETWORK\_RANGE=10.0.0.0/8
+    export GATEWAY\_INTERNAL\_IP=10.0.0.1
+    export GATEWAY\_EXTERNAL\_IP=88.198.252.242
+    export PIVOTALCF\_IP=10.0.0.2
+    export HA\_PROXY\_IP=10.0.0.254
+    </pre>
 
-iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 8443 -j DNAT \
-      --to $PIVOTALCF_IP:443
-iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j DNAT \
-      --to $HA_PROXY_IP:80
-iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 8022 -j DNAT \
-      --to $PIVOTALCF_IP:22
-iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 8080 -j DNAT \
-      --to $PIVOTALCF_IP:80
+1. Run the following commands to configure ip rules for the specified chains:
+  * **FORWARD**:
 
-service iptables save
-shutdown -r now
-</pre>
+    <pre class='terminal'>
+    iptables -A FORWARD -i eth1 -j ACCEPT
+    iptables -A FORWARD -o eth1 -j ACCEPT
+    </pre>
+  * **POSTROUTING**:
+
+    <pre class='terminal'>
+    iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+    iptables -t nat -A POSTROUTING -d $HA_PROXY_IP -s $INTERNAL_NETWORK_RANGE \
+            -p tcp --dport 80 -j SNAT --to $GATEWAY_INTERNAL_IP
+    iptables -t nat -A POSTROUTING -d $HA_PROXY_IP -s $INTERNAL_NETWORK_RANGE \
+            -p tcp --dport 443 -j SNAT --to $GATEWAY_INTERNAL_IP
+	  </pre>
+  * **PREROUTING**:
+
+    <pre class='terminal'>
+    iptables -t nat -A PREROUTING -d $GATEWAY_EXTERNAL_IP -p tcp --dport 25555 -j DNAT \
+             --to $PIVOTALCF_IP
+    iptables -t nat -A PREROUTING -d $GATEWAY_EXTERNAL_IP -p tcp --dport 443 -j DNAT \
+             --to $HA_PROXY_IP
+    iptables -t nat -A PREROUTING -d $GATEWAY_EXTERNAL_IP -p tcp --dport 80 -j DNAT \
+             --to $HA_PROXY_IP
+    iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 8443 -j DNAT \
+          --to $PIVOTALCF_IP:443
+    iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j DNAT \
+          --to $HA_PROXY_IP:80
+    iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 8022 -j DNAT \
+          --to $PIVOTALCF_IP:22
+    iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 8080 -j DNAT \
+          --to $PIVOTALCF_IP:80
+	  </pre>
+
+1. Save the iptables by running the following command:
+    <pre class='terminal'>
+    service iptables save
+    </pre>
+
+For more information about administering ip tables with `iptables`, refer to the [iptables documentation](http://ipset.netfilter.org/iptables.man.html).
 
 ## <a id='DNS_fails'></a>Verifying PCF Resolves DNS Entries Behind a Firewall ##
 

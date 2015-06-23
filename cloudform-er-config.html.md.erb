@@ -10,13 +10,13 @@ Use this topic when [Installing Pivotal Cloud Foundry using AWS CloudFormation](
 Before beginning this procedure, ensure that you have successfully completed all
 steps in the [Deploying the CloudFormation Template for PCF on AWS](./cloudform-template.html) and [Configuring Ops Manager Director after Deploying PCF on AWS using CloudFormation](./cloudform-om-config.html) topics.
 
-## <a id='add-er'></a>Step 1: Open the Outputs Tab in AWS ##
+## <a id='open-outputs'></a>Step 1: Open the Outputs Tab in AWS ##
 
 In the Stacks dashboard of the [AWS Console](https://console.aws.amazon.com/), select the **pcf-stack** checkbox, then select the **Outputs** tab.
 
 <%= image_tag("cloudform/outputs.png") %>
 
-You use the information in the **Value** column of the **Outputs** tab to 
+You use the information in the **Value** column of the **Outputs** tab to
 [configure the Ops Manager Director](./cloudform-om-config.html#aws-config) and [configure Elastic Runtime](#add-er).
 
 ## <a id='add-er'></a>Step 2: Add Elastic Runtime to Ops Manager ##
@@ -47,48 +47,40 @@ Manager. For more information, refer to the [Adding and Deleting Products](/pivo
 1. Select the **External Databases** option.
 
 1. Complete the **System Database Config** page with information from the **Outputs** tab in the AWS Console:
-    * **Hostname DNS Name**: Use **23RDSHost**.
-    * **TCP Port**: Use **24RDSPort**.
-    * **Username**: Use **25RDSUserID**.
-    * **Password**: Use **26RDSPassword**.
+    * **Hostname DNS Name**: Use the value of **PcfRdsAddress**.
+    * **TCP Port**: Use the value of **PcfRdsPort**.
+    * **Username**: Use the value of **PcfRdsUsername**.
+    * **Password**: Use the value of **PcfRdsPassword**.
 
 1. Click **Save**.
 
     <%= image_tag("cloudform/sys-db.png") %>
 
-1. <%= partial 'mysql_proxy_config' %>
+## <a id='filestore'></a>Step 5: (Optional) File Storage Config Page##
 
+Follow the steps below to configure Elastic Runtime to use an external
+S3-compatible filestore.
 
-## <a id='filestore'></a>Step 5: Configure File Storage ##
+1. Select **File Storage Config**.
 
-<%= partial 'filestore_config' %>
+1. Select the **External S3-Compatible Filestore** option and complete the
+following fields:
+    * For **URL Endpoint**:
+        1. In a browser, open the [Amazon Simple Storage Service (S3) table](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region).
+        1. Prepend `https://` to the **Endpoint** for your region and copy it
+          into the Ops Manager **URL Endpoint** field.
+		      <br /><br />
+		      For example, in the **us-west-1** region, use
+		      `https://s3-us-west-1.amazonaws.com/`.
+    * **Bucket Name**: Use the value of **PcfOpsManagerS3Bucket**.
+    * **Access Key ID**: Use the value of **PcfIamUserAccessKey**.
+    * **AWS Secret Key**: Use the value of **PcfIamUserSecretAccessKey**.
 
+1. Click Save.
 
-## <a id='generate-ssl'></a>Step 6: Generate a Self-Signed Certificate ##
+    <%= image_tag("cloudform/filestore-config.png") %>
 
-1. Select **IPs and Ports**.
-
-1. Leave the **Router IPs** and **HAProxy IPs** fields blank.
-
-1. For **Loggregator Port**, enter `4443`.
-
-1. Click the **Generate Self-Signed RSA Certificate** link to launch the RSA
-certificate wizard.
-
-1. In the **Generate Self-Signed RSA Certificate** window, enter a wildcard domain that you own. Click **Generate**. The example in the image uses `*.example.com`.
-
-    <%= image_tag("cloudform/generate-cert.png") %>
-
-1. Elastic Runtime populates the **SSL Certificate** fields with RSA certificate
-and private key information.
-
-1. Select the **Trust Self-Signed Certificates** checkbox.
-
-1. Click **Save**.
-
-    <%= image_tag("cloudform/ip-ports.png") %>
-
-## <a id='cc'></a>Step 7: Cloud Controller Page ##
+## <a id='cloud-controller'></a>Step 6: Cloud Controller Page ##
 
 1. Select **Cloud Controller** and enter your system and application domains.
     * The **System Domain** defines your target when you push apps to Elastic
@@ -107,7 +99,7 @@ and private key information.
 
     <%= image_tag("cloudform/cloud-controller.png") %>
 
-## <a id='smtp'></a>Step 8: (Optional) SMTP Config Page ##
+## <a id='smtp'></a>Step 7: (Optional) SMTP Config Page ##
 
 Elastic Runtime uses SMTP to send invitations and confirmations to Apps Manager
 users.
@@ -130,29 +122,7 @@ end-user self-registration.
 
     <%= image_tag("cloudform/smtp.png") %>
 
-## <a id='errands'></a>Step 9: Configure Errands ##
-
-<%= partial 'errands' %>
-
-## <a id='resources'></a>Step 10: Resource Config Page ##
-
-Select **Resource Config** and edit the following fields:
-
-* **NFS Server**: Enter `0` in **Instances**.
-* **Cloud Controller Database**: Enter `0` in **Instances**.
-* **UAA Database**: Enter `0` in **Instances**.
-* **Apps Manager Database**: Enter `0` in **Instances**.
-* **HAProxy**: Enter `0` in **Instances**.
-* **MySQL Proxy**: Enter `0` in **Instances**.
-* **MySQL Server**: Enter `0` in **Instances**.
-* **Router**: In **ELB Name**, enter the **ELBRDSName** that you defined on the
-[Specify Parameters](./cloudform-template.html#parameters) page of the CloudFormation dashboard in AWS. This field can accept multiple ELB names, seperated by commas.
-
-The image below shows the edited fields.
-
-<%= image_tag("cloudform/resources.png") %>
-
-## <a id='complete'></a>Step 11: Complete the Elastic Runtime Installation ##
+## <a id='complete'></a>Step 8: Complete the Elastic Runtime Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.

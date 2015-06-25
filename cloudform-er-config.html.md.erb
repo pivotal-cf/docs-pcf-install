@@ -12,7 +12,8 @@ steps in the [Deploying the CloudFormation Template for PCF on AWS](./cloudform-
 
 ## <a id='open-outputs'></a>Step 1: Open the Outputs Tab in AWS ##
 
-In the Stacks dashboard of the [AWS Console](https://console.aws.amazon.com/), select the **pcf-stack** checkbox, then select the **Outputs** tab.
+In the Stacks Dashboard of the [AWS Console](https://console.aws.amazon.com/),
+select the **pcf-stack** checkbox, then select the **Outputs** tab.
 
 <%= image_tag("cloudform/outputs.png") %>
 
@@ -56,12 +57,75 @@ Manager. For more information, refer to the [Adding and Deleting Products](/pivo
 
     <%= image_tag("cloudform/sys-db.png") %>
 
-## <a id='filestore'></a>Step 5: (Optional) File Storage Config Page##
+## <a id='filestore'></a>Step 5: (Optional) File Storage Config Page ##
 
-Follow the steps below to configure Elastic Runtime to use an external
-S3-compatible filestore.
+Complete the following procedures to create and configure an external filestore
+for Elastic Runtime.
 
-1. Select **File Storage Config**.
+* [Create an S3 bucket](#create-bucket).
+* [Update the IAM policy](#update) to grant the **PcfIamUserAccessKey** user
+access to this bucket.
+* [Configure Elastic Runtime](#configure) to use this bucket.
+
+### <a id='create-bucket'></a> Create S3 Bucket ###
+
+1. In the AWS Console, navigate to the [S3 Dashboard](https://console.aws.amazon.com/s3/home?region=us-east-1#).
+
+1. Click **Create Bucket**.
+
+    <%= image_tag("cloudform/create-bucket.png") %>
+
+1. For **Bucket Name**, enter `pcf-runtime`.
+
+1. For **Region**, select the region where you deployed Ops Manager.
+
+1. Click **Create**.
+
+    <%= image_tag("cloudform/pcf-runtime-bucket.png") %>
+
+### <a id='update'></a> Update IAM Policy ###
+
+1. Navigate to the AWS [Identity and Access Management Dashboard](https://console.aws.amazon.com/iam/home?region=us-east-1#home).
+
+1. Click **Users**.
+
+    <%= image_tag("cloudform/identity-dashboard.png") %>
+
+1. Click the name of the user created by the CloudFormation script. This name
+begins with `pcf-stack`, the name of the stack that you created when [Deploying the CloudFormation Template](./cloudform-template.html).
+
+    <%= image_tag("cloudform/select-user.png") %>
+
+1. In the **Security Credentials** section of the user **Summary** page, confirm
+that the **Access Key** matches the value of **PcfIamUserAccessKey** from the
+**Outputs** tab of the Stacks Dashboard.
+
+    <%= image_tag("cloudform/confirm-access-key.png") %>
+
+1. In the **Permissions** section of the user **Summary** page, under **Inline Policies**, locate the **PcfPolicy** and click **Edit Policy**.
+
+    <%= image_tag("cloudform/edit-policy.png") %>
+
+1. In the **Review Policy** page, within the **Statement** block, locate the
+second **Resource** key.
+
+    <%= image_tag("cloudform/resource-orig.png") %>
+
+1. Add the following two lines to the beginning of the array for this
+**Resource** key:
+
+    <pre class='code'>
+      "arn:aws:s3:::pcf-runtime",
+      "arn:aws:s3:::pcf-runtime/*",
+    </pre>
+
+1. Click **Apply Policy**
+
+    <%= image_tag("cloudform/resource-new.png") %>
+
+### <a id='configure'></a> Configure Elastic Runtime ###
+
+1. In Ops Manager, select **File Storage Config**.
 
 1. Select the **External S3-Compatible Filestore** option and complete the
 following fields:
@@ -72,7 +136,8 @@ following fields:
 		      <br /><br />
 		      For example, in the **us-west-1** region, use
 		      `https://s3-us-west-1.amazonaws.com/`.
-    * **Bucket Name**: Use the value of **PcfOpsManagerS3Bucket**.
+    * **Bucket Name**: Enter the name of the S3 bucket that you created,
+        `pcf-runtime`.
     * **Access Key ID**: Use the value of **PcfIamUserAccessKey**.
     * **AWS Secret Key**: Use the value of **PcfIamUserSecretAccessKey**.
 

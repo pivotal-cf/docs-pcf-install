@@ -14,14 +14,100 @@ Complete the following procedures to install PCF on OpenStack:
 
 ## Prerequisites ##
 
-Before installing Pivotal Cloud Foundry on OpenStack, you must have the
-following resources available in OpenStack:
+In order to deploy Pivotal Cloud Foundry on OpenStack, you must have a dedicated OpenStack tenant (a.k.a. OpenStack project) that meets the following requirements.
 
-* 70 GB of RAM
-* 30 CPU
-* 1 TB of storage
-* Neutron Networking with Floating IP Support
-* DHCP Enabled
+* Pivotal has tested and certified that Pivotal Cloud Foundry works on Mirantis OpenStack versions 5.1 (IceHouse) and 6.1 (Juno). Other OpenStack releases and distributions based on Havana, Icehouse, and Juno may also function properly.
+
+* You must have keystone credentials for the OpenStack tenant, including:
+  
+	* Auth URL
+	* API key
+	* Username
+	* Project name
+	* Region
+	* SSL certificate for your wildcard domain (see below).
+
+* The following must be enabled for the tenant:
+  
+	* The ability to upload custom images to Glance
+	* The ability to create and modify VM flavors. See the [VM flavor configuration table](#vm-flavors).
+	* DHCP
+	* The ability to allocate floating IPs.
+	* One wildcard DNS domain. Pivotal recommends using two wildcard domains if system and apps need to be separated. See [note](#wildcard-note).
+	* The ability for VMs inside a tenant to send messages via the floating IP.
+	* Permissions for VMs to boot directly from image.
+
+	<p id='wildcard-note'class='note'><strong>Note</strong>: It is possible to avoid using wildcard DNS domains by using a service such as xip.io. However, this option requires granting external internet access from inside VMs.</p>
+
+* Your OpenStack Tenant must have the following resources before installing Pivotal Cloud Foundry:
+	
+	* 70 GB of RAM
+	* 22 available instances
+	* 16 small VMs (1 vCPU, 1024 MB of RAM, 10 GB of Root disk)
+	* 3 large VMs (4 vCPU, 16384 MB of RAM, 10 GB Root disk)
+	* 32 vCPUs
+	* 1 TB of storage
+	* Neutron Networking with Floating IP Support
+
+* Requirements for your Cinder Backend:
+
+	* PCF requires RAW root disk images. The Cinder backend for your OpenStack tenant must support RAW.
+	* Pivotal recommends that you use a Cinder backend that supports snapshots. This is required for some BOSH functionalities.
+	* Pivotal recommends enabling your Cinder back end to delete block storage asynchrously. If this is not possible, it must be able to delete multiple 20BG volumes within 300 seconds.
+
+* Miscellaneous:
+	* If any overlay network is being used with VXLAN or GRE protocols, the MTU of the created VMs must be adjusted to the best practices recommended by the plugin vendor (if any). If Neutron is configured with VXLAN via OpenvSwitch mechanism, the MTU should be 1400. For GRE, the recommended number is 1460. DHCP must be enabled in the internal network for the MTU to be assigned to the VMs automatically.
+	* Pivotal recommends granting complete access to OpenStack logs during the installation process to aid in any troubleshooting.
+	* Your OpenStack environment should be thoroughly tested and considered stable before deploying PCF.
+
+<p class='note'><strong>Note</strong>: There will be <strong>no upgrade path</strong> from an open source Cloud Foundry installation to a commercial Pivotal Cloud Foundry Deployment using Ops Manager.</p>	
+	
+<a id='vm-flavors'></a>Configure your OpenStack VM flavors as follows:
+
+<table class='nice' border='1'>
+  <tr>
+    <th><strong>ID</strong></th>
+    <th><strong>Name</strong></th>
+    <th><strong>Memory_MB</strong></th>
+    <th><strong>Disk</strong></th>
+    <th><strong>Ephemeral</strong></th>
+    <th><strong>VCPUs</strong></th>
+  </tr>
+    <tr>
+    <td>1</td>
+    <td>m1.small</td>
+    <td>2048</td>
+    <td>20</td>
+    <td>0</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>m1.medium</td>
+    <td>4096</td>
+    <td>40</td>
+    <td>0</td>
+    <td>2</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>m1.large</td>
+    <td>8192</td>
+    <td>80</td>
+    <td>0</td>
+    <td>4</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>m1.xlarge</td>
+    <td>16384</td>
+    <td>160</td>
+    <td>0</td>
+    <td>8</td>
+  </tr>
+</table>
+
+
 
 ## Supported Versions ##
 

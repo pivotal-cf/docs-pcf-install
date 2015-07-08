@@ -378,6 +378,452 @@ Example:
 
 <p class="note"><strong>Note</strong>: The Elastic Runtime deploy contains an embedded MySQL Server that serves as the data store for the Application Usage Events, Notifications, and Autoscaler services.</p>
 
+1. From the Installation Dashboard in Ops Manager, select **Pivotal Elastic Runtime**. Click **Status** and record the IP address of **MySQL Server**.
+
+    <%= image_tag("mysql-ip.png") %>
+
+1. Click **Credentials** and record the Mysql Admin Credentials of **MySQL Server**.
+
+    <%= image_tag("mysql-cred.png") %>
+
+1.  Dump the data from the p-mysql DB and save it:
+
+    `$ mysqldump -u root -p -h 10.85.52.105 --all-databases > user_databases.sql`
+
+### <a id='cc-start'></a>Start Cloud Controller ###
+
+Run `bosh start SELECTED-VM` for each stopped VM to restart the Cloud Controller. For information on how to review stopped VMs, refer to the [Back Up the Cloud Controller Database](http://docs.pivotal.io/pivotalcf/customizing/backup-settings.html#ccdb) section.
+
+The following example demonstrates starting a cloud controller VM:
+
+<pre class="terminal">
+$ bosh start api_z2 1
+
+Processing deployment manifest
+------------------------------
+
+Processing deployment manifest
+------------------------------
+You are about to start api_z2/1
+
+Processing deployment manifest
+------------------------------
+
+Detecting deployment changes
+----------------------------
+Start api_z2/1? (type 'yes' to continue): yes
+
+Performing `start api_z2/1'...
+
+Director task 1428
+  Started preparing deployment
+  Started preparing deployment > Binding deployment. Done (00:00:00)
+  Started preparing deployment > Binding releases. Done (00:00:00)
+  Started preparing deployment > Binding existing deployment. Done (00:00:01)
+  Started preparing deployment > Binding resource pools. Done (00:00:00)
+  Started preparing deployment > Binding stemcells. Done (00:00:00)
+  Started preparing deployment > Binding templates. Done (00:00:00)
+  Started preparing deployment > Binding properties. Done (00:00:00)
+  Started preparing deployment > Binding unallocated VMs. Done (00:00:00)
+  Started preparing deployment > Binding instance networks. Done (00:00:00)
+     Done preparing deployment (00:00:01)
+
+  Started preparing package compilation > Finding packages to compile. Done (00:00:01)
+
+  Started preparing dns > Binding DNS. Done (00:00:00)
+
+  Started preparing configuration > Binding configuration. Done (00:00:13)
+
+  Started updating job api_z2 > api_z2/1 (canary)^@. Done (00:01:44)
+
+Task 1428 done
+
+Started		2015-02-25 17:54:28 UTC
+Finished	2015-02-25 17:56:27 UTC
+Duration	00:01:59
+
+api_z2/1 has been started
+</pre>
+---
+title: Backing Up Pivotal Cloud Foundry
+---
+
+Refer to this topic for help backing up the contents of critical databases and
+backing up and restoring your [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) installation settings.
+
+<p class="note"><strong>Note</strong>: Contact Pivotal Support for help restoring your PCF installation from the backups that you create.</p>
+
+## <a id='settings'></a>Backing Up and Restoring Installation Settings ##
+
+Pivotal recommends that you back up your installation settings by exporting
+frequently.
+Always export an installation before importing a new one.
+Import an installation to restore your settings or to share your settings with
+another user.
+
+<p class="note"><strong>Note</strong>: Exporting your installation only backs up your installation settings. It does not back up your VMs or any external MySQL databases that you have configured on the Ops Manager <a href="./vsphere-config.html"><strong>Director Config</strong> page</a>.</p>
+
+### <a id='export'></a>Exporting an Installation ###
+
+From the Product Installation Dashboard in the Ops Manager interface, click the gear icon and select **Export installation settings**.
+This option is only available after you have deployed at least one time.
+
+<%= image_tag("action.png") %>
+
+**Export installation settings** exports the current PCF installation
+settings and assets.
+When you export an installation, the exported file contains the base VM images,
+necessary packages, and references to the installation IP addresses.
+As a result, an export can be 5 GB or more.
+
+<p class='note'><strong>Note</strong>: For versions of Ops Manager 1.3 or older, the process of archiving files for export may exceed the timeout limit of 600 seconds, causing a 500 error. If this happens, you can fix the problem by manually configuring the timeout value to a longer limit, or by assigning more resources to the Ops Manager VM to improve performance. Refer to the <a href='https://support.pivotal.io/hc/en-us/articles/206113627-Exporting-installation-via-Ops-Manager-failed-with-error-500-An-error-occurred-Contact-Pivotal-Technical-Support-report-the-problem-'>Knowledge Base</a> for a more in depth discussion of this issue.</p>
+
+### <a id='import'></a>Importing an Installation ###
+
+1. From the Product Installation Dashboard, click the gear icon and select **Import installation settings**.
+
+1. Browse to and select a PCF installation file.
+
+1. If the admin password has changed since the file was exported, you must select **Need to enter a decryption password?** before you click **Import** to prevent an error. Enter the original password that was used when the            installation was exported. If the admin password has not changed, you may skip this step.
+
+    <%= image_tag("import-installation-file.png") %>
+
+1. Click **Import**.
+
+**Import installation settings** imports the settings and assets of an existing
+PCF installation.
+Importing an installation overwrites any existing installation.
+
+## <a id='encrypt-key'></a>Backing Up the Cloud Controller DB Encryption Credentials ##
+
+From the Product Installation Dashboard, select **Pivotal Elastic Runtime > Credentials** and locate the Cloud Controller section.
+Record the Cloud Controller DB encryption credentials.
+You must provide these credentials if you contact Pivotal Support for help
+restoring your installation.
+
+<%= image_tag("ccdb-encrypt-creds.png") %>
+
+## <a id='manifest'></a>Download the BOSH Deployment Manifest ##
+
+1. Install Ruby and the [BOSH CLI Ruby gem](http://docs.cloudfoundry.org/bosh/bosh-cli.html) on a machine outside of your PCF system deployment.
+1. From the Installation Dashboard in Ops Manager, select **Ops Manager Director > Status** and record the IP address listed for the Ops Manager Director.
+You access the BOSH Director using this IP address.
+
+    <%= image_tag("director-ip.png") %>
+
+1. Click **Credentials** and record the Director credentials.
+
+    <%= image_tag("director-creds.png") %>
+
+1. From a command line, target the BOSH Director using the IP address and credentials that you recorded:
+
+    ```
+    $ bosh target 10.0.0.3
+    Target set to `microbosh-1234abcd1234abcd1234'
+    Your username: director
+    Enter password: ********************
+    Logged in as `director'
+    ```
+    <p class="note"><strong>Note</strong>: If <code>bosh target</code> does not prompt you for your username and password, run <code>bosh login</code>.</p>
+
+1. Run `bosh deployments` to identify the name of the current BOSH deployment:
+
+    ```
+	$ bosh deployments
+	+-----------------+--------------------------+-------------------------------------------------+
+	| Name            | Release(s)               | Stemcell(s)                                     |
+	+-----------------+--------------------------+-------------------------------------------------+
+	| cf-5678dcba5678 | cf-mysql/10              | bosh-vsphere-esxi-ubuntu-trusty-go_agent/2690.3 |
+	|                 | cf/183.2                 |                                                 |
+	+-----------------+--------------------------+-------------------------------------------------+
+    ```
+
+1. Run `bosh download manifest DEPLOYMENT-NAME LOCAL-SAVE-NAME` to download and
+save the current BOSH deployment manifest.
+You need this manifest to locate information about your databases.
+Replace DEPLOYMENT-NAME with the name of the current BOSH deployment.
+For this procedure, use `cf.yml` as the LOCAL-SAVE-NAME.
+<br /><br />
+    Example:
+
+    ```
+    $ bosh download manifest cf-5678dcba5678 cf.yml
+    Deployment manifest saved to `cf.yml'
+    ```
+
+## <a id='databases'></a>Backing Up Critical Databases ##
+
+Refer to this section for help backing up databases associated
+with your PCF installation.
+
+Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore.
+You must back up each of the following:
+
+* Cloud Controller Database
+* UAA Database
+* Apps Manager Database
+* The NFS Server
+* Pivotal MySQL Server
+
+<p class="note"><strong>Note</strong>: If you are running the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard these instructions and ensure that you back up your external databases and filestores. </p>
+
+### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
+
+1. Download the BOSH manifest as instructed in the [Download the BOSH Manifest](http://docs.pivotal.io/pivotalcf/customizing/backup-settings.html#manifest) section.
+
+1. Run `bosh deployment DEPLOYMENT-MANIFEST` to set your deployment.
+
+    <pre class="terminal">
+    $ bosh deployment cf.yml
+    Deployment set to `/home/working_directory/cf.yml'
+    </pre>
+
+1. Run `bosh vms DEPLOYMENT-NAME` to view all the VMs in your selected deployment. Notice that all the Cloud Controller VMs begin with _api_.
+
+    <pre class="terminal">
+    $ bosh vms cf
+    Deployment `cf'
+
+    Director task 1430
+
+    Task 1430 done
+
+    +------------------------------------+---------+---------------+--------------+
+    | Job/index                          | State   | Resource Pool | IPs          |
+    +------------------------------------+---------+---------------+--------------+
+    | api_worker_z1/0                    | running | small_z1      | 10.10.xx.xx  |
+    | api_worker_z2/0                    | running | small_z2      | 10.10.xx.xx  |
+    | api_z1/0                           | running | large_z1      | 10.10.xx.xx  |
+    | api_z1/1                           | running | large_z1      | 10.10.xx.xx  |
+    | api_z2/0                           | running | large_z2      | 10.10.xx.xx  |
+    | api_z2/1                           | running | large_z2      | 10.10.xx.xx  |
+    | clock_global/0                     | running | medium_z1     | 10.10.xx.xx  |
+    | etcd_z1/0                          | running | medium_z1     | 10.10.xx.xx  |
+    | hm9000_z1/0                        | running | medium_z1     | 10.10.xx.xx  |
+    | loggregator_trafficcontroller_z1/0 | running | small_z1      | 10.10.xx.xx  |
+    | nats_z2/0                          | running | medium_z2     | 10.10.xx.xx  |
+    | router_z1/0                        | running | router_z1     | 10.10.xx.xx  |
+    | uaa_z2/0                           | running | medium_z2     | 10.10.xx.xx  |
+    +------------------------------------+---------+---------------+--------------+
+
+    VMs total: 13
+    </pre>
+
+1. Run `bosh -d DEPLOYMENT-MANIFEST stop SELECTED-VM` for each Cloud Controller VM.
+Example:
+
+    <pre class="terminal">
+    $ bosh -d cf.yml stop api_z2 1
+
+    Processing deployment manifest
+    ------------------------------
+
+    Processing deployment manifest
+    ------------------------------
+    You are about to stop api_z2/1
+
+    Processing deployment manifest
+    ------------------------------
+
+    Detecting deployment changes
+    ----------------------------
+    Stop api_z2/1? (type 'yes' to continue): yes
+
+    Performing `stop api_z2/1'...
+
+    Director task 1424
+      Started preparing deployment
+      Started preparing deployment > Binding deployment. Done (00:00:00)
+      Started preparing deployment > Binding releases. Done (00:00:00)
+      Started preparing deployment > Binding existing deployment. Done   (00:00:01)
+      Started preparing deployment > Binding resource pools. Done (00:00:00)
+      Started preparing deployment > Binding stemcells. Done (00:00:00)
+      Started preparing deployment > Binding templates. Done (00:00:00)
+      Started preparing deployment > Binding properties. Done (00:00:00)
+      Started preparing deployment > Binding unallocated VMs. Done (00:00:00)
+      Started preparing deployment > Binding instance networks. Done (00:00:00)
+         Done preparing deployment (00:00:01)
+
+      Started preparing package compilation > Finding packages to compile. Done     (00:00:00)
+
+      Started preparing dns > Binding DNS. Done (00:00:00)
+
+      Started preparing configuration > Binding configuration. Done (00:00:13)
+
+    Task 1424 done
+
+    Started		2015-02-25 17:52:23 UTC
+    Finished	2015-02-25 17:52:37 UTC
+    Duration	00:00:14
+
+    api_z2/1 has been stopped
+    </pre>
+
+1. In `cf.yml`, locate the `ccdb` component and record the IP address:
+
+    ```
+    ccdb:
+	      address: 10.85.52.96
+	      port: 2544
+	      db_scheme: postgres
+	```
+
+1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the Cloud Controller Database credentials.
+
+    <%= image_tag("ccdb-creds.png") %>
+
+1. SSH into the CCDB VM as the admin using the IP address and password recorded in the previous steps.
+
+    <pre class="terminal">
+    $ ssh vcap@10.85.52.96
+	Password:***********
+    </pre>
+
+1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the CCDB VM.
+
+    Example:
+
+    <pre class="terminal">
+    $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
+
+    /var/vcap/data/packages/postgres/5.1/bin/psql
+    </pre>
+
+1. Run `pg_dump` from the locally installed psql client to export the database:
+
+    Example:
+
+    <pre class="terminal">
+    $ /var/vcap/data/packages/postgres/5.1/bin/psql/pg_dump -h 10.85.52.96 -U admin -p 2544 ccdb > ccdb.sql
+    </pre>
+
+1. Exit from the CCDB VM.
+
+1. Run `scp` to copy the exported database to your local machine.
+
+    Example:
+
+    <pre class="terminal">
+    $ scp vcap@10.85.52.96:ccdb.sql
+    </pre>
+
+### <a id='uaadb'></a>Back Up the UAA Database ###
+
+1. In the BOSH deployment manifest, locate the `uaadb` component and record the IP address:
+
+    ```
+    uaadb:
+          address: 10.85.52.101
+          port: 2544
+          db_scheme: postgresql
+    ```
+1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the UAA Database credentials.
+
+    <%= image_tag("uaadb-creds.png") %>
+
+1. SSH into the UAA DB VM as the admin using the IP address and password recorded in the previous steps.
+
+1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the UAA DB VM.
+
+    Example:
+
+    ```
+    $ root@10.85.52.101:~# find /var/vcap | grep 'bin/psql'
+
+    /var/vcap/data/packages/postgres/5.1/bin/psql
+    ```
+
+1. Run `pg_dump` from the locally installed psql client to export the database:
+
+    Example:
+
+    ```
+    $ /var/vcap/data/packages/postgres/5.1/bin/psql/pg_dump -h 10.85.52.101 -U root -p 2544 uaa > uaa.sql
+```
+
+1. Exit from the UAA DB VM.
+
+1. Run `scp` to copy the exported database to your local machine.
+
+    Example:
+
+    ```
+    $ scp vcap@10.85.52.101:uaa.sql
+    ```
+
+### <a id='consoledb'></a>Back Up the Apps Manager Database ###
+
+1. In the BOSH deployment manifest, locate the `consoledb` component and record the IP address and password:
+
+    ```
+    consoledb:
+      address: 10.85.52.104
+      port: 2544
+      db_scheme: postgresql
+    ```
+1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the Apps Manager Database credentials.
+
+    <%= image_tag("appsmgr-creds.png") %>
+
+1. SSH into the Apps Manager DB VM as the admin using the IP address and password recorded in the previous steps.
+
+1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the Apps Manager DB VM.
+
+    Example:
+
+    ```
+	$ root@10.85.52.104:~# find /var/vcap | grep 'bin/psql'
+
+    /var/vcap/data/packages/postgres/5.1/bin/psql
+    ```
+
+1. Run `pg_dump` from the locally installed psql client to export the database:
+
+    Example:
+
+    ```
+    $ /var/vcap/data/packages/postgres/5.1/bin/psql/pg_dump -h 10.85.52.104 -U root -p 2544 console > console.sql
+	```
+
+1. Exit from the Apps Manager DB.
+
+1. Run `scp` to copy the exported database to your local machine.
+
+    Example:
+    ```
+    $ scp vcap@10.85.52.104:console.sql
+    ```
+
+### <a id='nfs'></a>Back Up the NFS Server ###
+
+1. In the BOSH deployment manifest, locate the `nfs_server` component and note the address:
+
+    ```
+    nfs_server:
+      address: 10.0.0.10
+      network: 10.0.0.0/24
+    syslog_aggregator:
+      address:
+      port:
+    ```
+
+1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the NFS Server credentials.
+
+    <%= image_tag("nfs-creds.png") %>
+
+1. SSH into the NFS server VM using the NFS Server and create a TAR file:
+
+    `$ ssh vcap@10.0.0.10 'cd /var/vcap/store && tar cz shared' > nfs.tar.gz`
+
+    <p class="note"><strong>Note</strong>: The TAR file that you create to back up the NFS server might be large. To estimate the size of the TAR file before you create it, run the following command:
+
+    <code>tar -cf - /dir/to/archive/ | wc -c</code></p>
+
+
+### <a id='runtime'></a>Back Up Pivotal MySQL Server ###
+
+<p class="note"><strong>Note</strong>: The Elastic Runtime deploy contains an embedded MySQL Server that serves as the data store for the Application Usage Events, Notifications, and Autoscaler services.</p>
+
 1. From the Installation Dashboard in Ops Manager, select **Pivotal Elastic Runtime**. Click **Status** and record the CID of **MySQL Server**.
 
     <%= image_tag("mysql-cid.png") %>

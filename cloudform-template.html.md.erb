@@ -17,7 +17,25 @@ An AWS CloudFormation template describes a set of AWS resources and properties.
 Follow the instructions below to use a CloudFormation template to create the
 infrastructure that you need to deploy PCF to AWS.
 
-1. Download the **Pivotal Cloud Foundry Ops Manager CloudFormation Template** from the Pivotal Cloud Foundry section of [Pivotal Network](https://network.pivotal.io/).
+## <a id='download-template'></a>Step 1: Download the PCF CloudFormation Template ##
+
+Sign in to [Pivotal Network](https://network.pivotal.io/) and download the **Pivotal Cloud Foundry Ops Manager CloudFormation Template** from the Pivotal Cloud Foundry section. 
+
+## <a id='upload-cert'></a>Step 2: Use the AWS CLI to upload your SSL Cert ##
+
+The AWS cli must be installed on your machine, and configured to a user account with Admin Access privileges on your AWS account.
+
+Run the following command to upload your SSL cert, referencing the certificate and it's corresponding private key. `certificate-chain` is an optional parameter. Include this only if your certificate authority provided a certificate chain.
+
+
+<pre class='terminal'>
+aws iam upload-server-certificate --server-certificate-name A-NAME-FOR-YOUR-CERT --certificate-body file://FILE-PATH-TO-YOUR-CERT --private-key file://FILE-PATH-TO-YOUR-AWS-PRIVATE-KEY [--certificate-chain file://FILE-PATH-TO-YOUR-CERT-CHAIN-FILE]
+</pre>
+
+The terminal will output metadata for your cert. You will need the value of the `Arn` key when configuring your AWS resource stack, so you may want to record it. Alternatively, if you know the name of the cert, you can run the following command to retrieve the metadata for the cert at a later point: <pre class='terminal'>aws iam get-server-certificate --server-certificate-name YOUR-CERT-NAME</pre> 
+
+
+## <a id='create-stack'></a>Step 3: Create a Resource Stack Using the CloudFormation Template ##
 
 1. Log in to the [AWS Console](https://console.aws.amazon.com/).
 
@@ -50,8 +68,7 @@ following fields:
     * **06RdsPassword**: Enter a password for the RDS database.
 
 1. Click **Next**.
-
-    <%= image_tag("cloudform/parameters.png") %>
+    <%= image_tag("cloudform/new_stack_params.png") %>
 
 1. On the **Options** page, click **Next**.
 

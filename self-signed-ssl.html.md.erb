@@ -23,11 +23,67 @@ Clients keep all trusted certificates in a kind of keystore called a truststore.
 To configure a client to trust a self-signed certificate, import the
 self-signed certificate to a truststore on the client.
 
-Follow these steps to use SSL with a self-signed certificate:
+## <a id="enable"></a>Enabling SSL ##
+To enable SSL, you must configure a PKCS#1 certificate in the release manifest.
 
-1. [Generate](#generate) the self-signed certificate on the server.
-1. [Import](#import) the self-signed certificate to a truststore on the client.
-1. [Start](#start) jConsole or another monitoring tool on the client with the truststore.
+1. Create a new private key.
+
+    <pre class='terminal'>
+    openssl genrsa -out privkey.pem 2048
+    </pre>
+
+1. Create a new server sign request from your private key.
+
+    <pre class='terminal'>
+    openssl req -new -key privkey.pem -out server.csr
+    </pre>
+
+1. Create a server cert.
+
+    <pre class='terminal'>
+    openssl x509 -req -days 365 -in server.csr -signkey privkey.pem -out   server.crt
+    </pre>
+
+1. Create a client keystore. This is to be used by the local JMX client, not the server.
+
+    <pre class='terminal'>
+    keytool -importcert -keystore metrics-store.jks -file server.crt
+    </pre>
+
+    Remember the password that you set for this keystore. Trust the certificate.
+
+1. Use the `bosh edit deployment` command to update the manifest to include the private key and public certificate.
+
+    <pre class='terminal'>
+    bosh edit deployment
+    </pre>
+
+    Paste the key and cert into the correct fields `ssl_cert`, `ssl_private_key`:
+
+    <pre class='terminal'>
+  properties:
+    maximus:
+      username: USERNAME
+      password: PASSWORD
+      public_hostname: HOSTNAME
+      use_ssl: true # This defaults to true, so you don't have to specify it
+      ssl_cert: ! '-----BEGIN CERTIFICATE-----
+        ...
+        -----END CERTIFICATE-----'
+      ssl_private_key: ! '-----BEGIN PRIVATE KEY-----
+        ...
+        -----END PRIVATE KEY----- '
+    </pre>
+
+1. Verify your settings by using the local JMX client of your choice. For this example, we will use `jconsole`. Use the keystore password from **Step 4** above in place of `$KEYSTORE_PASSWORD`:
+
+   <pre class='terminal'>
+   jconsole -J-Djavax.net.ssl.trustStore=metrics-store.jks -J-Djavax.net.ssl.trustStorePassword=$KEYSTORE_PASSWORD
+   </pre>
+
+You will use the IP address of the Maximus server and the port number 44444. The credentials are "admin/admin" by default
+   and can be found on the "Credentials" tab of the Metrics tile in OpsManager.
+
 
 ## <a id="generate"></a>Generating a Self-Signed Certificate ##
 

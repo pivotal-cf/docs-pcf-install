@@ -1,0 +1,120 @@
+---
+title: Starting and Stopping PCF VMs on vSphere
+---
+
+## <a id='stop'></a>Stopping PCF Virtual Machines
+
+<p class='note'><strong>Note</strong>: For safety purposes, Pivotal recommends creating a full backup as described in this topic.</p>
+
+1. Log in to the Ops Manager VM. In `/var/tempest/workspaces/default/deployments/bosh_deployments.yml`, find and record the `vm_cid` for your bosh director.
+1. Stop the VM in vSphere client. VMs for PCF should have VMTools installed, so you should be able to choose "Shut Down Guest" to shutdown VMs gracefully.
+1. In Ops Manager VM, run the `bosh vms --details` to list all of the related VMs and their CIDs in vSphere.
+1. In the order presented in the following table, run `bosh stop <VM-NAME>`:
+
+<table border="1" class="nice">
+  <tr>
+    <th>Start Order</th>
+    <th>Component</th>
+    <th>VM NAME</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>Loggregator Trafficcontroller</td>
+    <td>loggregator_trafficcontroller-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Doppler Server</td>
+    <td>doppler-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>DEA</td>
+    <td>dea-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>MySQL Server</td>
+    <td>mysql-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>MySQL Proxy</td>
+    <td>mysql_proxy-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>Login</td>
+    <td>login-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>UAA</td>
+    <td>uaa-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>8</td>
+    <td>Cloud Controller Worker</td>
+    <td>cloud_controller_worker-partition-default_az_guid</td>
+  </tr>
+
+  <tr>
+    <td>9</td>
+    <td>Clock Global</td>
+    <td>clock_global-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>10</td>
+    <td>Health Manager</td>
+    <td>health_manager-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>11</td>
+    <td>Router</td>
+    <td>router-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>12</td>
+    <td>HAProxy</td>
+    <td>ha_proxy-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>13</td>
+    <td>Cloud Controller</td>
+    <td>cloud_controller-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>14</td>
+    <td>Apps Manager Database</td>
+    <td>consoledb-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>15</td>
+    <td>UAA Database</td>
+    <td>uaadb-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>164</td>
+    <td>Cloud Controller Database</td>
+    <td>ccdb-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>17</td>
+    <td>NFS Server</td>
+    <td>nfs_server-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>18</td>
+    <td>etcd</td>
+    <td>etcd_server-partition-default_az_guid</td>
+  </tr>
+  <tr>
+    <td>19</td>
+    <td>NATS</td>
+    <td>nats-partition-default_az_guid</td>
+  </tr>
+</table>
+
+<p class='note'><strong>Note</strong>: The "unknown/unknown" jobs are all errand VMs that should be removed after the errand finishes. It is safe to ignore them, as they do not affect the system.</p>
+
+For RabbitMQ & MongoDB, stop the VMs one by one.

@@ -47,7 +47,7 @@ To enable SSL, you must configure a PKCS#1 certificate in the release manifest.
 1. Create a client keystore. This is to be used by the local JMX client, not the server.
 
     <pre class='terminal'>
-    keytool -importcert -keystore metrics-store.jks -file server.crt
+    keytool -import -alias ops-metrics-ssl -file ops-metrics.cer -keystore localhost.truststore
     </pre>
 
     Remember the password that you set for this keystore. Trust the certificate.
@@ -78,7 +78,7 @@ To enable SSL, you must configure a PKCS#1 certificate in the release manifest.
 1. Verify your settings by using the local JMX client of your choice. For this example, we will use `jconsole`. Use the keystore password from **Step 4** above in place of `$KEYSTORE_PASSWORD`:
 
    <pre class='terminal'>
-   jconsole -J-Djavax.net.ssl.trustStore=metrics-store.jks -J-Djavax.net.ssl.trustStorePassword=$KEYSTORE_PASSWORD
+   jconsole -J-Djavax.net.ssl.trustStore=/lib/home/jcert/localhost.truststore -J-Djavax.net.ssl.trustStorePassword=myPW
    </pre>
 
 You will use the IP address of the Maximus server and the port number 44444. The credentials are "admin/admin" by default
@@ -150,5 +150,5 @@ Example starting jConsole:
 $ jconsole -J-Djavax.net.ssl.trustStore=/lib/home/jcert/localhost.truststore -J-Djavax.net.ssl.trustStorePassword=myPW
 </pre>
 
-Your monitoring tool now communicates with your server through the SSL
+Enter a fully-qualified hostname that is in the subdomain your certificate is signed for. An IP address will not work. Your monitoring tool now communicates with your server through the SSL
 connection.

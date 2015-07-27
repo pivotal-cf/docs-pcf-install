@@ -18,7 +18,7 @@ select the **pcf-stack** checkbox, then select the **Outputs** tab.
 
 <%= image_tag("cloudform/aws-cloudform-stacks.png") %>
 
-In the steps described below, you will use the information in the **Value** column of the **Outputs** tab to [configure Elastic Runtime](#add-er).
+Keep this **Outputs** tab open. In the steps described below, use information contained here to configure Elastic Runtime.
 
 ## <a id='add-er'></a>Step 2: Add Elastic Runtime to Ops Manager ##
 
@@ -56,33 +56,39 @@ You must manually create the databases required by Elastic Runtime on the RDS in
 
     You can find the IP address for the Ops Manager VM on the AWS EC2 console.
 
-1. Run the following terminal command to log in to your RDS instance through the MySQL client:
+1. Run the following terminal command to log in to your RDS instance through the MySQL client, using information from the table below to fill in the placeholder values.
+
      <pre class='terminal'>mysql --host=RDS-HOSTNAME --user=RDS-USERNAME --password=RDS-PASSWORD</pre>
-
-    Use the following values from the **Outputs** tab:
-    <table border="1" class="nice" >
-      <tr>
-        <th><strong>Placeholder</strong></th>
-        <th><strong>**Outputs** Key</strong></th>
-      </tr>
-      <tr>
-        <td>RDS-HOSTNAME</td>
-        <td>PcfRdsAddress</td>
-      </tr>
-      <tr>
-        <td>RDS-USERNAME</td>
-        <td>PcfRdsUsername</td>
-      </tr>
-      <tr>
-        <td>RDS-PASSWORD</td>
-        <td>PcfRdsPassword</td>
-      </tr>
-    </table>
-
+  For each placeholder value in the above terminal command, use the **Value** from the **Outputs** tab of the corresponding **Key** in the table below:
+  <table border="1" class="nice" >
+    <tr>
+      <th><strong>Placeholder</strong></th>
+      <th><strong>Outputs Key</strong></th>
+    </tr>
+    <tr>
+      <td>RDS-HOSTNAME</td>
+      <td>PcfRdsAddress</td>
+    </tr>
+    <tr>
+      <td>RDS-USERNAME</td>
+      <td>PcfRdsUsername</td>
+    </tr>
+    <tr>
+      <td>RDS-PASSWORD</td>
+      <td>PcfRdsPassword</td>
+    </tr>
+  </table>
 
 1. Create databases for each of the six CF components that require a database.
-Run `CREATE database DB-NAME` for each of the following: `uaa`, `ccdb`,
-`console`, `notifications`, `autoscale`, `app_usage_service`
+  <br>Run the terminal command 
+  <pre class='terminal'>CREATE database DB-NAME</pre>
+  for each of the following database names:
+    * `uaa`
+    * `ccdb`
+    * `console`
+    * `notifications`
+    * `autoscale`
+    * `app_usage_service`
 
 1. Exit the mysql client and close your connection to the Ops Manager VM.
 
@@ -92,16 +98,33 @@ Run `CREATE database DB-NAME` for each of the following: `uaa`, `ccdb`,
 
 1. Select the **External Databases** option.
 
-1. Complete the **System Database Config** page with information from the **Outputs** tab in the AWS Console:
-    * **Hostname DNS Name**: Use the value of **PcfRdsAddress**.
-    * **TCP Port**: Use the value of **PcfRdsPort**.
-    * **Username**: Use the value of **PcfRdsUsername**.
-    * **Password**: Use the value of **PcfRdsPassword**.
+1. Complete the **System Database Config** page with information from the corresponding **Outputs** tab in the AWS Console, according to the following table: 
+  <table border="1" class="nice" >
+    <tr>
+      <th><strong>Ops Manager Field</strong></th>
+      <th><strong>Outputs Key</strong></th>
+    </tr>
+    <tr>
+      <td><str>Hostname DNS Name</str></td>
+      <td><str>PcfRdsAddress</str></td>
+    </tr>
+    <tr>
+      <td><str>TCP Port</str></td>
+      <td><str>PcfRdsPort</str></td>
+    </tr>
+    <tr>
+      <td><str>Username</str></td>
+      <td><str>PcfRdsUsername</str></td>
+    </tr>
+    <tr>
+      <td><str>Password</str></td>
+      <td><str>PcfRdsPassword</str></td>
+    </tr>
+  </table>
 
 1. Click **Save**.
 
     <%= image_tag("cloudform/sys-db.png") %>
-
 
 1. <%= partial 'mysql_proxy_config' %>
 
@@ -118,22 +141,22 @@ following fields:
 		      <br />
 		      For example, in the **us-west-1** region, use
 		      `https://s3-us-west-1.amazonaws.com/`.
-    * Use values of **Outputs** keys to fill in the remaining fields as follows:
+    * Use the values of your AWS **Outputs** tab keys to fill in the remaining fields as follows:
     <table border="1" class="nice" >
       <tr>
-        <th><strong>Field</strong></th>
-        <th><strong>**Outputs** Key</strong></th>
+        <th>Ops Manager Field</th>
+        <th>Outputs Key</th>
       </tr>
       <tr>
-        <td>**Bucket Name**</td>
+        <td>Bucket Name</td>
         <td>PcfElasticRuntimeS3Bucket</td>
       </tr>
       <tr>
-        <td>**Access Key ID**</td>
+        <td>Access Key ID</td>
         <td>PcfIamUserAccessKey</td>
       </tr>
       <tr>
-        <td>**AWS Secret Key**</td>
+        <td>AWS Secret Key</td>
         <td>PcfIamUserSecretAccessKey</td>
       </tr>
     </table>
@@ -156,19 +179,19 @@ following fields:
 
 ## <a id='cname'></a>Step 9: Add CNAME Record for Your Custom Domain ##
 
-In the [Use the AWS CLI to upload your SSL Cert](./cloudform-template.html#upload-cert) step, you uploaded an SSL certificate for your PCF wildcard domain to AWS. In this step you will redirect all wildcard queries for your domain to the DNS name of your ELB.
+In the [Use the AWS CLI to upload your SSL Cert](./cloudform-template.html#upload-cert) step, you uploaded an SSL certificate for your PCF wildcard domain to AWS. In this step you redirect all wildcard queries for your domain to the DNS name of your ELB.
 
-<p class='note'><strong>Note</strong>: Do not point your wildcard domain at the ELB's numeric IP address because this will change frequently.</p>
+<p class='note'><strong>Note</strong>: Do not point your wildcard domain at the numeric IP address for your ELB because this changes frequently.</p>
 
-1. Look up the DNS hostname of your ELB. This will be listed in the **Output** tab of the CloudFormation page in the AWS dashboard as the value of the key **PcfElbDnsName**.
+1. Find the DNS hostname of your ELB. The **Output** tab of the CloudFormation page in the AWS dashboard lists this as the value for the key **PcfElbDnsName**.
 
 1. Log in to the DNS registrar that hosts your domain (for example, Network Solutions, Godaddy, or Register.com).
 
 1. Create a CNAME record with your DNS registrar that points `*.YOUR-DOMAIN.com` to the DNS hostname of your ELB.
 
-1. Save changes in your DNS registrar's web interface.
+1. Save changes the web interface for your DNS registrar .
 
-1. Confirm success by running the following terminal command:
+1. In the terminal, run the following `dig` command to confirm that you created your CNAME record successfully:
 
 <pre class='terminal'>dig xyz.MY-DOMAIN.COM</pre>
 
@@ -178,7 +201,7 @@ You should see the CNAME record that you just created:
 ;; ANSWER SECTION:
 xyz.MY-DOMAIN.COM.      1767    IN  CNAME pcf-ert-frankfurt-pcf-elb-428333773.eu-central-1.elb.amazonaws.com.
 </pre>
-<p class='note'><strong>Note</strong>: You <strong>must</strong> complete this CNAME step before proceeding to Cloud Controller configuration.</p>
+<p class='note'><strong>Note</strong>: You <strong>must</strong> complete this step before proceeding to Cloud Controller configuration. A difficult-to-resolve problem can occur if the wildcard domain is improperly cached before the CNAME is registered. </p>
 
 ## <a id='cloud-controller'></a>Step 10: Cloud Controller Page ##
 

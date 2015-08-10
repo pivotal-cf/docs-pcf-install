@@ -23,71 +23,81 @@ Clients keep all trusted certificates in a kind of keystore called a truststore.
 To configure a client to trust a self-signed certificate, import the
 self-signed certificate to a truststore on the client.
 
-## <a id="enable"></a>Enabling SSL ##
-To enable SSL, you must configure a PKCS#1 certificate in the release manifest.
+Refer to the following procedures to use SSL with a self-signed certificate in Pivotal Ops Metrics.
 
-1. Create a new private key.
+## <a id='enable'></a>Step 1: Enable SSL ##
 
-    <pre class='terminal'>
-    openssl genrsa -out privkey.pem 2048
+To enable SSL, follow the step below to configure a PKCS#1 certificate in your release manifest. 
+
+1. Use `openssl genrsa` with the `-out` flag to generate a new private key. For example, run the following command to generate a 2048-bit private key named `privkey.pem`:
+
+    <pre class="terminal">
+    $ openssl genrsa -out privkey.pem 2048
     </pre>
 
-1. Create a new server sign request from your private key.
+1. Use `openssl req` to generate a new certificate signing request  based on your private key.
 
-    <pre class='terminal'>
-    openssl req -new -key privkey.pem -out server.csr
+    <pre class="terminal">
+    $ openssl req -new -key privkey.pem -out server.csr
     </pre>
 
-1. Create a server cert.
+1. Use the command below to create a self-signed certificate, `server.crt`, from the existing private key, `privkey.pem` and the existing certificate signing request, `server.csr`: 
 
-    <pre class='terminal'>
-    openssl x509 -req -days 365 -in server.csr -signkey privkey.pem -out   server.crt
+    <pre class="terminal">
+    $ openssl x509 -req -days 365 -in server.csr -signkey privkey.pem -out server.crt
     </pre>
 
-1. Create a client keystore. This is to be used by the local JMX client, not the server.
+1. Use `keytool -import` to create a client keystore. Note that the local JMX client uses this keystore, not the server.
 
-    <pre class='terminal'>
-    keytool -import -alias ops-metrics-ssl -file ops-metrics.cer -keystore localhost.truststore
+    <pre class="terminal">
+    $ keytool -import -alias ops-metrics-ssl -file ops-metrics.cer -keystore localhost.truststore
     </pre>
 
-    Remember the password that you set for this keystore. Trust the certificate.
+1. Enter a password for the keystore when prompted. Record this password.
 
-1. Use the `bosh edit deployment` command to update the manifest to include the private key and public certificate.
+1. Enter `yes` when prompted to trust the certificate.
 
-    <pre class='terminal'>
-    bosh edit deployment
+1. Use `bosh edit deployment` to open your release manifest for editing.
+
+    <pre class="terminal">
+    $ bosh edit deployment
     </pre>
 
-    Paste the key and cert into the correct fields `ssl_cert`, `ssl_private_key`:
+    In your release manifest, copy your private key into the `ssl_private_key` field and your public certificate into the `ssl_cert` field.
+	 
+    ```
+    properties:
+      maximus:
+        username: USERNAME
+        password: PASSWORD
+        public_hostname: HOSTNAME
+        use_ssl: true # This defaults to true
+        ssl_cert: ! '-----BEGIN CERTIFICATE-----
+          ...
+          -----END CERTIFICATE-----'
+        
+		ssl_private_key: ! '-----BEGIN PRIVATE KEY-----
+          ...
+          -----END PRIVATE KEY----- '
+    ```
 
-    <pre class='terminal'>
-  properties:
-    maximus:
-      username: USERNAME
-      password: PASSWORD
-      public_hostname: HOSTNAME
-      use_ssl: true # This defaults to true, so you don't have to specify it
-      ssl_cert: ! '-----BEGIN CERTIFICATE-----
-        ...
-        -----END CERTIFICATE-----'
-      ssl_private_key: ! '-----BEGIN PRIVATE KEY-----
-        ...
-        -----END PRIVATE KEY----- '
+1. Verify your settings using the local JMX client of your choice. 
+The example below uses `jconsole`. 
+Replace `KEYSTORE_PASSWORD` with the keystore password that you recorded in a previous step:
+    <pre class="terminal">
+    $ jconsole -J-Djavax.net.ssl.trustStore=/lib/home/jcert/localhost.truststore -J-Djavax.net.ssl.trustStorePassword=KEYSTORE_PASSWORD
     </pre>
+    1. In the **Remote Process** field, enter the IP address of the Maximus 
+    server, port number `44444`. 
+    <br><br>
+    1. To complete the **Username** and **Password** fields, refer to the 
+    **Credentials** tab of the Metrics tile in Pivotal Ops Manager.  
+    By default, these credentials are `admin` and `admin`.
+    <%= image_tag("images/ssl/jconsole.png") %>
 
-1. Verify your settings by using the local JMX client of your choice. For this example, we will use `jconsole`. Use the keystore password from **Step 4** above in place of `$KEYSTORE_PASSWORD`:
+## <a id='generate'></a>Step 2: Generate a Self-Signed Certificate ##
 
-   <pre class='terminal'>
-   jconsole -J-Djavax.net.ssl.trustStore=/lib/home/jcert/localhost.truststore -J-Djavax.net.ssl.trustStorePassword=myPW
-   </pre>
-
-You will use the IP address of the Maximus server and the port number 44444. The credentials are "admin/admin" by default
-   and can be found on the "Credentials" tab of the Metrics tile in OpsManager.
-
-
-## <a id="generate"></a>Generating a Self-Signed Certificate ##
-
-To generate a self-signed certificate on your server:
+Follow the steps below to generate a self-signed certificate on your server:
 
 1. In Pivotal Ops Manager, click the **Pivotal Ops Metrics** tile.
 1. Check **Enable SSL**.
@@ -107,48 +117,48 @@ Click **Generate.**
 
 1. Paste the certificate into a text file and save as `ops-metrics.cer`.
 
-## <a id="import"></a>Importing the Self-signed Certificate to a Truststore ##
+## <a id='import'></a>Step 3: Import the Self-signed Certificate to a Truststore ##
 
-To import the self-signed certificate to your client:
+Follow the steps below to import the self-signed certificate to your client:
 
 1. Copy `ops-metrics.cer` from your server to your client.
 
 1. Navigate to the client directory where you copied the saved certificate.
 
-1. Run the keytool command:
+1. Use `keytool -import` to import the certificate with an alias of `ops-metrics-ssl` to the truststore `localhost.truststore`:
 
-    <pre class='terminal'>
+    <pre class="terminal">
     $ keytool -import -alias ops-metrics-ssl -file ops-metrics.cer -keystore localhost.truststore
     </pre>
-
-    This command imports the certificate with an alias of `ops-metrics-ssl` to
-    the truststore `localhost.truststore`.
-
-    If `localhost.truststore` already exists, a prompt for the password appears.
-    If `localhost.truststore` does not exist, you must create a password for it.
+    * If `localhost.truststore` already exists, a password prompt appears. 
+      Enter the keystore password that you recorded in a previous step.
+    * If `localhost.truststore` does not exist, you must create a password.
 
 1. Verify the details of the imported certificate.
 
-## <a id="start"></a>Starting a Monitoring Tool with the Truststore ##
+## <a id='start'></a>Step 4: Start a Monitoring Tool with the Truststore ##
 
-Once you have imported the self-signed certificate to the `localhost.truststore`
+Once you import the self-signed certificate to the `localhost.truststore`
 truststore on the client, you must instruct your monitoring tool to use the
 truststore.
 
-On a command line, start your monitoring tool with the location and password of
-the truststore:
+On a command line, start your monitoring tool with the location and password of the truststore as follows:
 
-* Pass the location of `localhost.truststore` to the monitoring tool using
+1. Pass the location of `localhost.truststore` to the monitoring tool using
 the `javax.net.ssl.trustStore` property.
 
-* Pass the truststore password using the `javax.net.ssl.trustStorePassword`
+1. Pass the truststore password using the `javax.net.ssl.trustStorePassword`
 property.
 
-Example starting jConsole:
+    Example starting jConsole:
 
-<pre class='terminal'>
-$ jconsole -J-Djavax.net.ssl.trustStore=/lib/home/jcert/localhost.truststore -J-Djavax.net.ssl.trustStorePassword=myPW
-</pre>
+    <pre class="terminal">
+    $ jconsole -J-Djavax.net.ssl.trustStore=/lib/home/jcert/localhost.truststore -J-Djavax.net.ssl.trustStorePassword=KEYSTORE_PASSWORD
+    </pre>
 
-Enter a fully-qualified hostname that is in the subdomain your certificate is signed for. An IP address will not work. Your monitoring tool now communicates with your server through the SSL
-connection.
+1. Enter a fully-qualified hostname. This hostname must exist in a subdomain covered by your certificate.
+    <p class='note'><strong>**Note**</strong>: You must enter a fully-qualified 
+    hostname, not an IP address.
+    </p>
+    Your monitoring tool should now communicate with your server through the 
+    SSL connection.

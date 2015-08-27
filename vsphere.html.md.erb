@@ -1,63 +1,140 @@
 ---
-title: Installing Pivotal Cloud Foundry on vSphere
+breadcrumb: Pivotal Cloud Foundry Documentation
+title: Getting Started with Pivotal Cloud Foundry
 ---
 
-This guide describes how to install [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) on vSphere.
+This guide is intended to walk you the process of installing Pivotal Cloud Foundry on vSphere. You will deploy the installation virtual machine known as Ops Manager, configure your vSphere settings, and install PCF Elastic Runtime.
 
-Complete the following procedures to install PCF on vSphere:
+If you experience a problem while following the steps below, check the [Known Issues](../pcf-release-notes/index.html), or refer to the [PCF Troubleshooting Guide](./troubleshooting.html).
+Once you have completed the steps in this guide, explore the documentation on
+[docs.pivotal.io](http://docs.pivotal.io) to learn more about [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF)
+and the Pivotal product suite.
 
-1. [Provisioning the vSphere Infrastructure](./vsphere-setup.html)
+## <a id='system'></a>Step 1: Confirm System Requirements ##
 
-1. [Deploying Operations Manager to vSphere](./deploying-vm.html)
+Before you begin your PCF deployment, ensure that your system meets the
+minimum requirements.
+The requirements include capacity for the virtual machines necessary for the
+deployment, a supported version of the cf command line interface tool, and
+certain user privileges.
+Refer to the [Prerequisites to Deploying Operations Manager and Elastic Runtime](./requirements.html) topic for the complete list.
 
-1. [Configuring Ops Manager Director for VMware vSphere](./vsphere-config.html)
+## <a id='deploy'></a>Step 2: Deploy PCF Ops Manager ##
 
-1. [Installing Elastic Runtime after Deploying PCF on vSphere](./config-er-vmware.html)
+1. Log in to [Pivotal Network](https://network.pivotal.io) and download the Ops
+Manager virtual appliance file that matches your infrastructure.
 
-## Supported Versions ##
+1. Deploy Ops Manager using the procedure that corresponds to the vSphere that you
+use:
 
-???
+* [Deploying Operations Manager to vSphere](./deploying-vm.html)
+* [Deploying Operations Manager to vCloud Air and vCloud](./pcf-vchs-vcloud.html)
 
-## Prerequisites ##
+## <a id='paas'></a>Step 3: Configure and Install PCF ##
 
-In order to deploy Pivotal Cloud Foundry on vSphere, you must have a dedicated vSphere account/project/thing that meets the following requirements.
+**Goal**: Configure and install Ops Manager Director (included), Elastic
+Runtime, and MySQL for PCF.
+Skip the import steps for Elastic Runtime or MySQL for PCF if you do not
+want to import these products.
 
-!!!All this stuff is from openstack and needs to be replaced!!!
+1. Browse to the interface IP address that you specified in Step 2.
 
-* Credentials...
+    <%= image_tag("guide/pivotal-cf.png") %>
 
-	* Auth URL
-	* API key
-	* Username
-	* Project name
-	* Region
-	* SSL certificate for your wildcard domain (see below).
+1. Create a **User name** and **Password** and log in to access the interface.
+    <p class="note"><strong>Note</strong>: On your first login attempt, an error
+	message that the connection is untrusted appears because you are attempting
+	to connect securely to a website with a self-signed certificate. Add Ops
+	Manager as an exception to bypass this message on subsequent logins. </p>
 
-* The following must be enabled for the tenant:
+### <a id='import-tiles'></a>Import Products ###
 
-!!!All this stuff is from openstack and needs to be replaced!!!
+1. Download Elastic Runtime and MySQL for PCF at [Pivotal Network](https://network.pivotal.io).
+    * Elastic Runtime: Click the **Pivotal Cloud Foundry** banner to access the PCF
+		product page. Use the drop-down menu to select an Elastic Runtime
+		release.
+    * MySQL for PCF: Select the **All Products** tab to view available
+		products. Search for "MySQL for PCF" and select a release.
 
-	* The ability to allocate floating IPs.
-	* The ability for VMs inside a tenant to send messages via the floating IP.
-	* Permissions for VMs to boot directly from image.
-  * One wildcard DNS domain. Pivotal recommends using two wildcard domains if system and apps need to be separated.
-	
+1. From the Available Products view, click **Import a Product**.
 
-* Your vSphere tenant must have the following resources before you install Pivotal Cloud Foundry:
-	
-!!!All this stuff is from openstack and needs to be replaced!!!
+    <%= image_tag("guide/import-prod.png") %>
 
-	* 70 GB of RAM
-	* 22 available instances
-	* 16 small VMs (1 vCPU, 1024 MB of RAM, 10 GB of root disk)
-	* 3 large VMs (4 vCPU, 16384 MB of RAM, 10 GB root disk)
-	* 32 vCPUs
-	* 1 TB of storage
-	* Neutron networking with floating IP support
+1. Select the Elastic Runtime .pivotal file that you downloaded from Pivotal
+Network and click **Open**.
+After the import completes, Elastic Runtime appears in the Available Products
+view.
 
+1. Repeat the previous step for MySQL for PCF.
 
-* Miscellaneous:
+1. In the Available Products view, hover over Elastic Runtime and click **Add**.
+Repeat this step for MySQL for PCF.
 
-	* Pivotal recommends granting complete access to the vSphere logs to the operator managing the installation process.
-	* Your vSphere environment should be thoroughly tested and considered stable before deploying PCF.
-	
+<%= image_tag("guide/add-products.png") %>
+
+### <a id='configure-vmware'></a>Configure Ops Manager Director ###
+
+Your Ops Manager download includes a tile for the version of Ops Manager
+Director that corresponds to your IaaS.
+Refer to one of the following topics for help configuring your Ops Manager
+Director product tile:
+
+* [Configuring Ops Manager Director for VMware vSphere](./vsphere-config.html)
+* [Configuring Ops Manager Director for vCloud Air and vCloud](./vchs-vcloud-config.html)
+* [Configuring Ops Manager Director for Amazon Web Services](./cloudform-om-config.html)
+* [Configuring Ops Manager Director after Deploying PCF on OpenStack](./openstack-om-config.html)
+
+### <a id='configure-er'></a>Configure Elastic Runtime ###
+
+Refer to one of the following topics for help configuring Elastic Runtime:
+
+* [Configuring Elastic Runtime for vSphere and VCloud Air](./config-er-vmware.html)
+* [Configuring Elastic Runtime for AWS](./cloudform-er-config.html)
+* [Installing Elastic Runtime after Deploying PCF on OpenStack](./openstack-er-config.html)
+
+### <a id='configure-mysql'></a>Configure MySQL ###
+
+1. Click the **MySQL Dev** tile.
+
+1. Configure the MySQL Service Plan, Lifecycle Errands, and resource sizes.
+Assign Availability Zones and an Ops Manager network, then click **Save**.
+
+1. Click the **Installation Dashboard** link to return to the Installation
+Dashboard.
+
+### <a id='install'></a>Install Products ###
+
+1. Click **Install**.
+
+     <%= image_tag("guide/install.png") %>
+
+1. Your updated PCF installation begins deploying.
+
+     <%= image_tag("guide/deploy-progress.png") %>
+
+1. When the deployment is finished, a success message appears.
+
+     <p class="note"><strong>Note</strong>: On the recommended hardware
+	infrastructure, deployment should take less than one hour and require no
+	user intervention.</p>
+
+You now have a fully functional installation of PCF and Pivotal MySQL
+Service.
+
+## <a id='new-users'></a>Step 4: Create New User Accounts ##
+
+Once you have successfully deployed PCF, add users to your account.
+Refer to the [Creating New Elastic Runtime User Accounts](./creating-account.html) topic for more information.
+
+## <a id='target'></a>Step 5: Target Elastic Runtime ##
+
+The next step is to use the cf CLI tool to target your Elastic Runtime
+installation.
+Make sure that you have [installed the cf CLI tool](../devguide/installcf/install-go-cli.html).
+Refer to the PCF documentation for more information about [using the cf
+command line tool](../devguide/installcf/whats-new-v6.html).
+
+<p class="note"><strong>Note</strong>: In Pivotal Ops Manager, refer to
+	<strong>Elastic Runtime > Credentials</strong> for the UAA admin name and
+	password. You can also use the user that you created in Apps Manager, or
+	create another user with the <code>create-user</code> command.</p>

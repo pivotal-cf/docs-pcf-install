@@ -1,11 +1,9 @@
 ---
-title: Backing Up Pivotal Cloud Foundry
+title: Backing Up and Restoring Pivotal Cloud Foundry
 ---
 
 Refer to this topic for help backing up the contents of critical databases and
-backing up and restoring your [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) installation settings.
-
-<p class="note"><strong>Note</strong>: Contact Pivotal Support for help restoring your PCF installation from the backups that you create.</p>
+backing up and restoring your [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) installation settings. Pivotal recommends that you back up your installation frequently.
 
 ## <a id='settings'></a>Backing Up and Restoring Installation Settings ##
 
@@ -38,7 +36,7 @@ As a result, an export can be 5 GB or more.
 
 1. Browse to and select a PCF installation file.
 
-1. If the admin password has changed since the file was exported, you must select **Need to enter a decryption password?** before you click **Import** to prevent an error. Enter the original password that was used when the            installation was exported. If the admin password has not changed, you may skip this step.
+1. If the admin password has changed since the file was exported, select **Need to enter a decryption password?** before you click **Import** to prevent an error. Enter the original password that was used when the            installation was exported. If the admin password has not changed, you may skip this step.
 
     <%= image_tag("import-installation-file.png") %>
 
@@ -105,9 +103,9 @@ For this procedure, use `cf.yml` as the LOCAL-SAVE-NAME.
     Deployment manifest saved to `cf.yml'
     ```
 
-## <a id='databases'></a>Backing Up Critical Databases ##
+## <a id='back-up-databases'></a>Backing Up Critical Databases ##
 
-Refer to this section for help backing up databases associated
+Refer to this section for help backing up and restoring databases associated
 with your PCF installation.
 
 Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore.
@@ -121,7 +119,7 @@ You must back up each of the following:
 
 <p class="note"><strong>Note</strong>: If you are running the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard these instructions and ensure that you back up your external databases and filestores. </p>
 
-### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
+### <a id='ccdb'></a>Stop Cloud Controller###
 
 1. Download the BOSH manifest as instructed in the [Download the BOSH Manifest](http://docs.pivotal.io/pivotalcf/customizing/backup-settings.html#manifest) section.
 
@@ -132,10 +130,10 @@ You must back up each of the following:
     Deployment set to `/home/working_directory/cf.yml'
     </pre>
 
-1. Run `bosh vms DEPLOYMENT-NAME` to view all the VMs in your selected deployment. Notice that all the Cloud Controller VMs begin with _api_.
+1. Run `bosh VMs DEPLOYMENT-NAME` to view all the VMs in your selected deployment. Notice that all the Cloud Controller VMs begin with _api_.
 
     <pre class="terminal">
-    $ bosh vms cf
+    $ bosh VMs cf
     Deployment `cf'
 
     Director task 1430
@@ -163,7 +161,7 @@ You must back up each of the following:
     VMs total: 13
     </pre>
 
-1. Run `bosh -d DEPLOYMENT-MANIFEST stop SELECTED-VM` for each Cloud Controller VM.
+1. Stop Cloud Controller by running `bosh -d DEPLOYMENT-MANIFEST stop SELECTED-VM` for each Cloud Controller VM.
 Example:
 
     <pre class="terminal">
@@ -206,12 +204,16 @@ Example:
 
     Task 1424 done
 
-    Started		2015-02-25 17:52:23 UTC
-    Finished	2015-02-25 17:52:37 UTC
-    Duration	00:00:14
+    Started     2015-02-25 17:52:23 UTC
+    Finished    2015-02-25 17:52:37 UTC
+    Duration    00:00:14
 
     api_z2/1 has been stopped
     </pre>
+
+### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
+
+
 
 1. In `cf.yml`, locate the `ccdb` component and record the IP address:
 
@@ -444,3 +446,136 @@ Duration	00:01:59
 
 api_z2/1 has been started
 </pre>
+
+## <a id='restore-databases'></a>Restoring Critical Databases ##
+
+Refer to this section for help restoring databases associated
+with your PCF installation.
+
+Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore.
+You must restore each of the following:
+
+* Cloud Controller Database
+* UAA Database
+* Apps Manager Database
+* The NFS Server
+* Pivotal MySQL Server
+
+### <a id='ccdb'></a>Stop Cloud Controller###
+
+1. Download the BOSH manifest as instructed in the [Download the BOSH Manifest](http://docs.pivotal.io/pivotalcf/customizing/backup-settings.html#manifest) section.
+
+1. Run `bosh deployment DEPLOYMENT-MANIFEST` to set your deployment.
+
+    <pre class="terminal">
+    $ bosh deployment cf.yml
+    Deployment set to `/home/working_directory/cf.yml'
+    </pre>
+
+1. Run `bosh VMs DEPLOYMENT-NAME` to view all the VMs in your selected deployment. Notice that all the Cloud Controller VMs begin with _api_.
+
+    <pre class="terminal">
+    $ bosh VMs cf
+    Deployment `cf'
+
+    Director task 1430
+
+    Task 1430 done
+
+    +------------------------------------+---------+---------------+--------------+
+    | Job/index                          | State   | Resource Pool | IPs          |
+    +------------------------------------+---------+---------------+--------------+
+    | api_worker_z1/0                    | running | small_z1      | 10.10.xx.xx  |
+    | api_worker_z2/0                    | running | small_z2      | 10.10.xx.xx  |
+    | api_z1/0                           | running | large_z1      | 10.10.xx.xx  |
+    | api_z1/1                           | running | large_z1      | 10.10.xx.xx  |
+    | api_z2/0                           | running | large_z2      | 10.10.xx.xx  |
+    | api_z2/1                           | running | large_z2      | 10.10.xx.xx  |
+    | clock_global/0                     | running | medium_z1     | 10.10.xx.xx  |
+    | etcd_z1/0                          | running | medium_z1     | 10.10.xx.xx  |
+    | hm9000_z1/0                        | running | medium_z1     | 10.10.xx.xx  |
+    | loggregator_trafficcontroller_z1/0 | running | small_z1      | 10.10.xx.xx  |
+    | nats_z2/0                          | running | medium_z2     | 10.10.xx.xx  |
+    | router_z1/0                        | running | router_z1     | 10.10.xx.xx  |
+    | uaa_z2/0                           | running | medium_z2     | 10.10.xx.xx  |
+    +------------------------------------+---------+---------------+--------------+
+
+    VMs total: 13
+    </pre>
+
+1. Stop Cloud Controller by running `bosh -d DEPLOYMENT-MANIFEST stop SELECTED-VM` for each Cloud Controller VM.
+Example:
+
+    <pre class="terminal">
+    $ bosh -d cf.yml stop api_z2 1
+
+    Processing deployment manifest
+    ------------------------------
+
+    Processing deployment manifest
+    ------------------------------
+    You are about to stop api_z2/1
+
+    Processing deployment manifest
+    ------------------------------
+
+    Detecting deployment changes
+    ----------------------------
+    Stop api_z2/1? (type 'yes' to continue): yes
+
+    Performing `stop api_z2/1'...
+
+    Director task 1424
+      Started preparing deployment
+      Started preparing deployment > Binding deployment. Done (00:00:00)
+      Started preparing deployment > Binding releases. Done (00:00:00)
+      Started preparing deployment > Binding existing deployment. Done   (00:00:01)
+      Started preparing deployment > Binding resource pools. Done (00:00:00)
+      Started preparing deployment > Binding stemcells. Done (00:00:00)
+      Started preparing deployment > Binding templates. Done (00:00:00)
+      Started preparing deployment > Binding properties. Done (00:00:00)
+      Started preparing deployment > Binding unallocated VMs. Done (00:00:00)
+      Started preparing deployment > Binding instance networks. Done (00:00:00)
+         Done preparing deployment (00:00:01)
+
+      Started preparing package compilation > Finding packages to compile. Done     (00:00:00)
+
+      Started preparing dns > Binding DNS. Done (00:00:00)
+
+      Started preparing configuration > Binding configuration. Done (00:00:13)
+
+    Task 1424 done
+
+    Started     2015-02-25 17:52:23 UTC
+    Finished    2015-02-25 17:52:37 UTC
+    Duration    00:00:14
+
+    api_z2/1 has been stopped
+    </pre>
+
+### <a id='restore-uaa'></a>Restore UAA Database ###
+
+#### Stop UAA
+
+1. Find your UAA DB VM id by running <pre class='terminal'>bosh VMs</pre>
+
+1. Using your UAA VM id, Stop UAA by running:
+<pre class='terminal'>$ bosh stop YOUR\_UAA\_VM\_ID</pre>
+
+#### Drop the UAADB tables
+
+1. Login to the UAADB VM via the vcap user and pw from runtime's credentials page
+<pre class='terminal'>$ ssh vcap#[YOUR\_UAADB\_VM\_IP]</pre>
+1. Login to the psql client on the VM
+<pre class='terminal'>$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 uaa</pre>
+1. Run the following commands to drop the tables:
+<pre class='terminal'>
+drop schema public cascade;
+create schema public;
+\q;
+</pre>
+
+
+
+
+

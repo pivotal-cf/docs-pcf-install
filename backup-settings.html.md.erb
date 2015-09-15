@@ -67,7 +67,7 @@ You access the BOSH Director using this IP address.
 
     <%= image_tag("director-creds.png") %>
 
-1. From a command line, target the BOSH Director using the IP address and credentials that you recorded:
+1. From the command line, target the BOSH Director using the IP address and credentials that you recorded:
 
 
     <pre class='terminal'>
@@ -541,9 +541,13 @@ Example:
 #### Drop the UAADB tables
 
 1. Login to the UAADB VM using the vcap user and password. To find this information in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
-<pre class='terminal'>$ ssh vcap#[YOUR-UAADB-VM-IP-ADDRESS]</pre>
+<pre class='terminal'>$ ssh vcap@[YOUR-UAADB-VM-IP-ADDRESS]</pre>
+
 1. Login to the psql client on the VM
-<pre class='terminal'>$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 uaa</pre>
+<pre class='terminal'>$ /var/vcap/data/packages/postgres/YOUR-POSTGRES-VERSION/bin/psql -U vcap -p 2544 uaa</pre>
+
+<p>hat is not quite right, it's not a version number; but it's easy, there should only be one folder in ../postgres/, do that one.</p>
+ 
 1. Run the following commands to drop the tables:
 <pre class='terminal'>
 drop schema public cascade;
@@ -559,13 +563,13 @@ create schema public;
 1. Use the UAA DB password and IP address to restore the UAA database by running the following commands. You can find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
 <pre class='terminal'>
 $ scp uaa.sql vcap@[YOUR-UAADB-VM-IP-ADDRESS]: #UAADB server
-$ ssh vcap#[YOUR-UAADB-VM-IP-ADDRESS]
+$ ssh vcap@[YOUR-UAADB-VM-IP-ADDRESS]
 $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 uaa < uaa.sql
 </pre>
 
 1. Restart UAA
 <pre class='terminal'>
-$ bosh start uaa
+$ bosh start YOUR-UAA-VM-UUID
 </pre>
 
 ### <a id='restore-nfs'></a>Restore the NFS Server
@@ -598,14 +602,14 @@ $ bosh start uaa
 
 ### <a id='restore-ccdb'></a>Restore the Cloud Controller Database
 
-1. Use the CCDB DB password and IP address to restore the Cloud Controller Database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password, select the **Elastic Runtime** tile and click **Credentials**.
+1. Use the Cloud Controller Database password and IP address to restore the Cloud Controller Database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password, select the **Elastic Runtime** tile and click **Credentials**.
 <pre class='terminal'>
     $ scp ccdb.sql vcap@[YOUR-CCDB-VM-IP-ADDRESS]
 </pre>
 
 1. Login to the VM as the vcap user and drop the DB
 <pre class='terminal'>
-$ ssh vcap@[YOUR-CCDB-VM-IPccdb vm IP]
+$ ssh vcap@[YOUR-CCDB-VM-IP]
 $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 ccdb
 ccdb=# drop schema public cascade;
 ccdb=# create schema public;
@@ -642,11 +646,14 @@ $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 console < consol
 <p class='note'><strong>Note</strong>: Only follow these steps if you have installed the Pivotal MySQL Dev product tile.</p>
 
 1. Use the Pivotal MySQL Dev database password and IP address to restore the Cloud Controller Database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password, select the **Elastic Runtime** tile and click **Credentials**.
-<pre class='terminal'>$ mysql -u root -p -h  < user_databases.sql</pre>
+<pre class='terminal'>
+  mysql -h YOUR-MYSQL-SERVER-IP -u root -p < user_databases.sql
+</pre>
 
 
 1. Login to MySQL and flush priveleges
 <pre class='terminal'>
+
     $ mysql -u root -p -h
     mysql > flush privileges;
 </pre>

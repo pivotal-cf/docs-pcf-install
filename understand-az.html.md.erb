@@ -4,37 +4,34 @@ title: Understanding Availability Zones and Regions in Pivotal Cloud Foundry
 
 The Availability Zone (AZ) functionality in [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) enables applications to be highly available and tolerant to infrastructure failure by distributing app instances and redundant VMs across various infrastructure segments.
 
-PCF uses the concepts of an _AZ_ and _region_ similar to how Amazon Web Services and OpenStack use these constructs, and defines these terms as follows:
+The terms _AZ_ and _region_ for Pivotal Cloud Foundry are used similarly to how they are used by Amazon Web Services and OpenStack. We define these terms as follows:
 
-* **AZ**: An AZ is a unique set of hardware components that is separated logically and generally also physically from any other AZ. A PCF operator assigns a VMware vSphere cluster and resource pool to an AZ.
+* **AZ**: An AZ is a unique set of hardware components separated logically, and typically physically, from any other AZ. For example, in VMWare vSphere implementations, a PCF operator assigns a cluster and resource pool to an AZ.
 
-<p class="note"><strong>Note</strong>: At present, the architecture of VMware vCloud and vCloud Air supports the use of only one AZ. For these products, the AZ is the virtual data center that an operator accesses when configuring the <a href="./pcf-vchs-vcloud.html#access-interface">vShield Edge Gateway Services interface</a>. This means that if your Ops Manager deployment integrates with either of these products, PCF must place all software in the single AZ, the virtual data center.</p>
+<p class="note"><strong>Note</strong>: At present, the architecture of VMware vCloud and vCloud Air supports the use of only one AZ. For these products, the AZ is the virtual data center that an operator accesses when configuring the <a href="./pcf-vchs-vcloud.html#access-interface">vShield Edge Gateway Services interface</a>. In these cases where the Ops Manager deployment integrates with either of these products, PCF places all software in the single AZ, the virtual data center.</p>
 
-* **Region**: A region correlates to either a single data center or to multiple data centers that are in close proximity and have very low latency network connections. A region includes a single PCF installation that an operator deploys to one or more Availability Zones.
+* **Region**: A region correlates to either a single data center or to multiple data centers that are in close geographic proximity and have very low latency network connections. A region includes a single PCF installation that an operator deploys to one or more Availability Zones.
 
-The image shows the difference between how PCF handles Availability Zones and regions in vSphere, vCloud, and vCloud Air.
+The image below shows the difference between how PCF handles Availability Zones and regions in vSphere, vCloud, and vCloud Air, where vSphere supports multiple AZs and vCloud and vCloud Air do not. 
 
 <%= image_tag("vS_vC_vCA.png") %>
 
-You configure an AZ with the Pivotal Ops Manager Director for VMware vSphere and Elastic Runtime products. For more information, refer to the following topics:
+You configure an AZ with the Pivotal Ops Manager Director for VMware vSphere and Elastic Runtime products. For more information, see
+[vSphere Availability Zone Assignment](./config-er-vmware.html#er-az-networks) and [Ops Manager Director for VMware vSphere](./vsphere-config.html)
 
-* [The section on Assigning Networks and AZs in the topic on Configuring Elastic Runtime for vSphere and vCloud](./config-er-vmware.html#er-az-networks)
-* Steps 5-6 of [Configuring Ops Manager Director for VMware vSphere](./vsphere-config.html)
-
-
-Pivotal Elastic Runtime manages the application instances that run in an AZ. When you run more than one instance of an application, Elastic Runtime balances the instances across all of the zones that you assign to the application.
+If you run more than one instance of an application, Elastic Runtime balances multiple instances of each application across the AZs that you assigned to the Elastic Runtime environment with Ops Manager.
 
 ## <a id="eraz-examples"></a>Example Scenario ##
 
-An operator assigns Availability Zones A1, A2, and A3 to an application. The following image shows that Elastic Runtime places two instances in A1, one in A2, and one in A3 when a developer runs four instances of the application.
+An operator scales an application to 4 instances in an Elastic Runtime environment with 3 Availability Zones, A1, A2, and A3. The environment scales the instances according to availability heuristics.
 
 <%= image_tag("az_er_1.png") %>
 
-If A1 experiences a power outage or hardware failure, the two application instances running in A1 terminate. Because A2 and A3 are physically separated from A1, the application instances in these zones continue to run, as the following image shows.
+If A1 experiences a power outage or hardware failure, the two application instances running in A1 terminate while the application instances in zones A2 and A3 continue to run.
 
 <%= image_tag("az_er_2.png") %>
 
-If A1 remains unavailable, Elastic Runtime balances new instances of the application across the remaining Availability Zones, as the following image shows.
+If A1 AZ remains unavailable, Elastic Runtime balances new instances of the application across the remaining Availability Zones, see below.
 
 <%= image_tag("az_er_3.png") %>
 

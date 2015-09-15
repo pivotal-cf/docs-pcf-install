@@ -7,23 +7,14 @@ Manager and Elastic Runtime applications.
 
 ## <a id="vsphere"></a>vSphere/vCenter Requirements ##
 
-* vSphere 6.0, 5.5, or 5.1
-* vSphere editions: standard and above
-* HTTPS access to vCenter and ESX hosts on TCP ports 443, 902, and 903
+The following are the minimum resource requirements for maintaining a [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) deployment with Ops Manager and Elastic Runtime on vSphere:
+
+* vSphere 6.0, 5.5, or 5.1.
+* vSphere editions: standard and above.
+* Ops Manager Director must have HTTPS access to vCenter and ESX hosts on TCP ports 443, 902, and 903.
 * A configured vSphere cluster:
-    * If you enable vSphere DRS (Distributed Resource Scheduler) for the
-	cluster, you must set the Automation level to **Partially automated** or
-	**Fully automated**. If you set the Automation level to **Manual**, the BOSH
-	automated installation will fail with a `power_on_vm` error when BOSH
-	attempts to create virtual VMs.
-* Turn hardware virtualization off if your vSphere hosts do not support
-VT-X/EPT.
-If you are unsure whether the VM hosts support VT-x/EPT, then you can turn this
-setting off.
-If you leave this setting on and the VM hosts do not support VT-x/EPT, then each
-VM requires manual intervention in vCenter to continue powering on without the
-Intel virtualized VT-x/EPT.
-Refer to the vCenter help topic at [Configuring Virtual Machines > Setting Virtual Processors and Memory > Set Advanced Processor Options](http://pubs.vmware.com/fusion-5/index.jsp?topic=%2Fcom.vmware.fusion.help.doc%2FGUID-38178690-1234-4843-B135-4063F9AA73E4.html) for more information.
+  * If you enable vSphere DRS (Distributed Resource Scheduler) for the cluster, you must set the Automation level to **Partially automated** or **Fully automated**. If you set the Automation level to **Manual**, the BOSH automated installation will fail with a `power_on_vm` error when BOSH attempts to create virtual VMs.
+  * Turn hardware virtualization off if your vSphere hosts do not support VT-X/EPT. If you are unsure whether the VM hosts support VT-x/EPT, then you can turn this setting off. If you leave this setting on and the VM hosts do not support VT-x/EPT, then each VM requires manual intervention in vCenter to continue powering on without the Intel virtualized VT-x/EPT. Refer to the vCenter help topic at [Configuring Virtual Machines > Setting Virtual Processors and Memory > Set Advanced Processor Options](http://pubs.vmware.com/fusion-5/index.jsp?topic=%2Fcom.vmware.fusion.help.doc%2FGUID-38178690-1234-4843-B135-4063F9AA73E4.html) for more information.
 * Ops Manager requires read/write permissions to the datacenter level of the [vSphere Inventory Hierarchy](http://pubs.vmware.com/vsphere-4-esx-vcenter/index.jsp?topic=/com.vmware.vsphere.dcadmin.doc_41/vsp_dc_admin_guide/managing_users_groups_roles_and_permissions/c_hierarchical_inheritance_of_permissions.html) to successfully install. Pivotal recommends using the default [VMware Administrator System Role](http://pubs.vmware.com/vsphere-51/index.jsp#com.vmware.wssdk.pg.doc/PG_Authenticate_Authorize.8.6.html#1110514) to achieve the appropriate permission level, or a custom role that has all privileges for all objects in the datacenter, including propagating privileges to children. Be advised that Ops Manager might indicate that you do not have the appropriate rights to create/delete folders when this is untrue. If so, click **Ignore errors and start the install** to continue.
 
 <p class='note'><strong>Note</strong>: If you are using the Cisco Nexus 1000v Switch, refer to the <a href="nexus-switch.html">Using the Cisco Nexus 1000v Switch with Ops Manager</a> topic for more information.</p>
@@ -31,6 +22,8 @@ Refer to the vCenter help topic at [Configuring Virtual Machines > Setting Virtu
 <p class='note'><strong>Note</strong>: When installing Ops Manager on a vSphere environment with multiple ESXi hosts, you must use network-attached or shared storage devices. Local storage devices do not support sharing across multiple ESXi hosts.</p>
 
 ## <a id="vcloud-air"></a>vCD/vCloud Air Requirements ##
+
+The following are the minimum resource requirements for maintaining a [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) deployment with Ops Manager and Elastic Runtime on vCloud Air:
 
 * vCD 5.1, 5.2, or 5.6 (vCloud Air)
 * Disk space: 120GB
@@ -44,7 +37,7 @@ Refer to the vCenter help topic at [Configuring Virtual Machines > Setting Virtu
 
 ## <a id="aws"></a>Amazon Web Services ##
 
-The following are the minimum resource requirements for maintaining a [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) deployment with Ops Manager and Elastic Runtime:
+The following are the minimum resource requirements for maintaining a [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) deployment with Ops Manager and Elastic Runtime on Amazon Web Services infrastructure:
 
 * 1 Elastic Load Balancer
 * 1 Relational Database Service. We recommend at least a db.m3.large instance with 100 GB of allocated storage.
@@ -91,9 +84,17 @@ Alternatively, you can use a service such as xip.io. (Example:
 * (**Recommended**) A network without DHCP available for deploying the Elastic
 Runtime VMs.
 <p class="note"><strong>Note</strong>: If you have DHCP, refer to the Troubleshooting Guide to avoid issues with your installation.</p>
-* One IP address for each instance.
-* An additional IP address for each instance that requires static IPs.
+
+* Sufficient IP Allocation:
+  * One IP address for each VM instance.
+  * An additional IP address for each instance that requires static IPs.
+  * An additional IP address for each errand.
+  * An additional IP address for each compilation worker.
+`IPs needed = VM instances + static IPs + errands + compilation workers`
+
 <p class="note"><strong>Note</strong>: BOSH requires that you allocate a sufficient number of additional dynamic IP addresses when configuring a reserved IP range during installation. BOSH uses these IPs during installation to compile and deploy VMs, install Elastic Runtime, and connect to services. We recommend that you allocate at least 36 dynamic IP addresses when deploying Ops Manager and Elastic Runtime.
+</p>
+
 * The cf command line interface (cf CLI) tool version 6.1.1 or higher.
 * One or more NTP servers.
 * <a id='capacity-requirements'></a>Capacity for the following virtual machines:
@@ -108,7 +109,6 @@ Runtime VMs.
   <th><strong>RAM (MB)</strong></th>
   <th><strong>Ephemeral Disk (MB)</strong></th>
   <th><strong>Persistent Disk (MB)</strong></th>
-  <th><strong>Dynamic IP</strong></th>
   <th><strong>Static IP</strong></th>
 </tr>
 
@@ -119,7 +119,6 @@ Runtime VMs.
   <td>1024</td>
   <td>1024</td>
   <td>0</td>
-  <td>&nbsp;</td>
   <td>&#10003;</td>
 </tr>
 
@@ -130,7 +129,6 @@ Runtime VMs.
   <td>1024</td>
   <td>1024</td>
   <td>1024</td>
-  <td>&nbsp;</td>
   <td>&#10003;</td>
 </tr>
 
@@ -141,7 +139,6 @@ Runtime VMs.
   <td>1024</td>
   <td>1024</td>
   <td>1024</td>
-  <td>&nbsp;</td>
   <td>&#10003;</td>
 </tr>
 
@@ -152,7 +149,6 @@ Runtime VMs.
   <td>1024</td>
   <td>2048</td>
   <td>10240</td>
-  <td>&nbsp;</td>
   <td>&#10003;</td>
 </tr>
 
@@ -163,7 +159,6 @@ Runtime VMs.
   <td>1024</td>
   <td>2048</td>
   <td>2048</td>
-  <td>&nbsp;</td>
   <td>&#10003;</td>
 </tr>
 
@@ -174,7 +169,6 @@ Runtime VMs.
   <td>1024</td>
   <td>2048</td>
   <td>8192</td>
-  <td>&nbsp;</td>
   <td>&#10003;</td>
 </tr>
 
@@ -185,7 +179,6 @@ Runtime VMs.
   <td>1024</td>
   <td>2048</td>
   <td>1024</td>
-  <td>&nbsp;</td>
   <td>&#10003;</td>
 </tr>
 
@@ -196,7 +189,6 @@ Runtime VMs.
   <td>4096</td>
   <td>20480</td>
   <td>0</td>
-  <td>&#10003;</td>
   <td>&nbsp;</td>
 </tr>
 
@@ -207,7 +199,6 @@ Runtime VMs.
   <td>1024</td>
   <td>2048</td>
   <td>0</td>
-  <td>&nbsp;</td>
   <td>&#10003;</td>
 </tr>
 
@@ -218,7 +209,6 @@ Runtime VMs.
   <td>1024</td>
   <td>2048</td>
   <td>0</td>
-  <td>&nbsp;</td>
   <td>&#10003;</td>
 </tr>
 
@@ -229,7 +219,6 @@ Runtime VMs.
   <td>1024</td>
   <td>1024</td>
   <td>0</td>
-  <td>&#10003;</td>
   <td>&nbsp;</td>
 </tr>
 
@@ -240,7 +229,6 @@ Runtime VMs.
   <td>1024</td>
   <td>2048</td>
   <td>0</td>
-  <td>&#10003;</td>
   <td>&nbsp;</td>
 </tr>
 
@@ -251,7 +239,6 @@ Runtime VMs.
   <td>1024</td>
   <td>2048</td>
   <td>0</td>
-  <td>&#10003;</td>
   <td>&nbsp;</td>
 </tr>
 
@@ -262,7 +249,6 @@ Runtime VMs.
   <td>1024</td>
   <td>2048</td>
   <td>0</td>
-  <td>&#10003;</td>
   <td>&nbsp;</td>
 </tr>
 
@@ -273,7 +259,6 @@ Runtime VMs.
   <td>1024</td>
   <td>2048</td>
   <td>0</td>
-  <td>&#10003;</td>
   <td>&nbsp;</td>
 </tr>
 
@@ -284,7 +269,6 @@ Runtime VMs.
   <td>1024</td>
   <td>4096</td>
   <td>0</td>
-  <td>&nbsp;</td>
   <td>&#10003;</td>
 </tr>
 
@@ -295,7 +279,6 @@ Runtime VMs.
   <td>4096</td>
   <td>10000</td>
   <td>10000</td>
-  <td>&nbsp;</td>
   <td>&#10003;</td>
 </tr>
 
@@ -306,7 +289,6 @@ Runtime VMs.
   <td>4096</td>
   <td>10240</td>
   <td>0</td>
-  <td>&#10003;</td>
   <td>&nbsp;</td>
 </tr>
 
@@ -317,7 +299,6 @@ Runtime VMs.
   <td>1024</td>
   <td>2048</td>
   <td>0</td>
-  <td>&nbsp;</td>
   <td>&#10003;</td>
 </tr>
 
@@ -328,7 +309,6 @@ Runtime VMs.
   <td>1024</td>
   <td>2048</td>
   <td>0</td>
-  <td>&nbsp;</td>
   <td>&#10003;</td>
 </tr>
 
@@ -339,7 +319,6 @@ Runtime VMs.
   <td>1024</td>
   <td>1024</td>
   <td>0</td>
-  <td>&#10003; </td>
   <td>&nbsp;</td>
 </tr>
 
@@ -350,7 +329,6 @@ Runtime VMs.
   <td>1024</td>
   <td>1024</td>
   <td>0</td>
-  <td>&#10003; </td>
   <td>&nbsp;</td>
 </tr>
 
@@ -361,7 +339,6 @@ Runtime VMs.
   <td>1024</td>
   <td>1024</td>
   <td>0</td>
-  <td>&#10003; </td>
   <td>&nbsp;</td>
 </tr>
 
@@ -372,7 +349,6 @@ Runtime VMs.
   <td>1024</td>
   <td>2048</td>
   <td>0</td>
-  <td>&#10003; </td>
   <td>&nbsp;</td>
 </tr>
 
@@ -383,7 +359,6 @@ Runtime VMs.
   <td>512</td>
   <td>1024</td>
   <td>0</td>
-  <td>&#10003; </td>
   <td>&nbsp;</td>
 </tr>
 
@@ -394,7 +369,6 @@ Runtime VMs.
   <td>512</td>
   <td>1024</td>
   <td>0</td>
-  <td>&#10003; </td>
   <td>&nbsp;</td>
 </tr>
 
@@ -405,7 +379,6 @@ Runtime VMs.
   <td>512</td>
   <td>1024</td>
   <td>0</td>
-  <td>&#10003; </td>
   <td>&nbsp;</td>
 </tr>
 
@@ -416,7 +389,6 @@ Runtime VMs.
   <td>512</td>
   <td>1024</td>
   <td>0</td>
-  <td>&#10003; </td>
   <td>&nbsp;</td>
 </tr>
 
@@ -427,7 +399,6 @@ Runtime VMs.
   <td>1024</td>
   <td>1024</td>
   <td>0</td>
-  <td>&#10003;</td>
   <td>&nbsp;</td>
 </tr>
 
@@ -438,7 +409,6 @@ Runtime VMs.
   <td>1024</td>
   <td>20480</td>
   <td>0</td>
-  <td>&#10003;</td>
   <td>&nbsp;</td>
 </tr>
 
@@ -449,7 +419,6 @@ Runtime VMs.
   <th><strong>37 GB</strong></th>
   <th><strong>102 GB</strong></th>
   <th><strong>33 GB</strong></th>
-  <th><strong>17</strong></th>
   <th><strong>13</strong></th>
 </tr>
 </table>

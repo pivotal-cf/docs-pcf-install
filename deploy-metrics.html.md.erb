@@ -13,35 +13,50 @@ Provider and a VM that governs compilation.
 Follow the instructions below to deploy Pivotal Ops Metrics using the [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) Operations 
 Manager.
 
-## <a id="add-tile"></a>Adding the Pivotal Ops Metrics Product ##
 
-See [Adding and Importing Products](../customizing/add-delete.html#add-import).
+## <a id='import'></a>Step 1: Install the Ops Metrics Tile ##
 
-## <a id="configure"></a>Configuring Pivotal Ops Metrics ##
+1. [Download Ops Metrics](https://network.pivotal.io/products/ops-metrics).
+
+1. Import Ops Metrics into Ops Manager by following the instructions for [Adding and Importing Products](../customizing/add-delete.html#add-import).
 
 1. On the Installation Dashboard, click the **Pivotal Ops Metrics** tile.
 
-    <%= image_tag("images/metrics/ops-metrics-tile-1_3.png") %>
+    <%= image_tag("images/metrics/screenshot_ops_metrics_tile.png") %>
 
     Note the orange bar on the **Pivotal Ops Metrics** tile.
     This indicates that the product requires configuration.
 
+
+## <a id='config-network'></a>Step 2: Configure Networks ##
+
 1. Select **Assign Networks Zones**. 
-Use the drop-down menu to select a Network. 
-Ops Manager Metrics uses the default Assigned Network if you do not select a 
-different network.
 
-    <%= image_tag("images/metrics/ops-metrics-assign-networks.png") %>
+1. Use the drop-down menu to select a Network. 
+    <p class='note'><strong>Note</strong>: Ops Metrics uses the default Assigned Network if you do not select a different network.</p>
 
-1. (**vSphere Only**) Select **Assign Availability Zones**. These are the Availability Zones that you [create](./vsphere-config.html#create-az) when configuring Ops Manager Director. 
+    <%= image_tag("images/metrics/ops_metrics_assign_networks.png") %>
+
+
+## <a id='config-az'></a>Step 3: Configure Availability Zones ##
+
+1. (**vSphere and Amazon Web Services Only**) Select **Assign Availability Zones**. These are the Availability Zones that you [create](./vsphere-config.html#create-az) when configuring Ops Manager Director. <br>
     * Select an Availability Zone under **Place singleton jobs**. Ops Manager runs Metrics jobs with a single instance in this Availability Zone.
     * Select one or more Availability Zones under **Balance other jobs**. Ops Manager balances instances of Metrics jobs with more than one instance across the Availability Zones that you specify.
 
-    <%= image_tag("images/metrics/ops-metrics-az-assignments.png") %>
+    <%= image_tag("images/metrics/ops_metrics_assign_az.png") %>
+
+
+## <a id='config-jmx-provider'></a>Step 4: Configure JMX Provider ##
 
 1. Select **JMX Provider**.
-1. For the **JMX Provider credentials** fields, create a username and password.
-JMX clients use these credentials to connect to the JMX Provider.
+
+1. Enter a new username and password into the **JMX Provider credentials** username and password fields. 
+
+1. Record these credentials. You will use these to connect JMX clients to the JMX Provider.
+
+
+## <a id='config-ssl'></a>Step 5: Configure SSL ##
 
 1. **(Optional)** Select the **Enable SSL** checkbox.
 Enabling SSL requires JMX clients to use SSL to connect to the JMX Provider.
@@ -68,13 +83,52 @@ credentials.
 
     <%= image_tag("images/metrics/ops-metrics-jmx-cert.png") %>
 
+
+## <a id='gather-info'></a>Step 6: Gather Required Information for Nozzle Configuration ##
+
+1. If you do not have them at hand, find your UAA username and password:
+
+    1. Navigate to the PCF Ops Manager Director Installation Dashboard.
+    1. Click the **Pivotal Elastic Runtime** tile.
+    1. Select the **Credentials** tab.
+    1. Scroll down to the **UAA** job row.
+    1. Find your credentials listed in the format `USERNAME / PASSWORD`.
+        <%= image_tag("images/metrics/ops_man_uaa_firehose_cred.png") %>
+
+1. If you do not know it, find your System Domain:
+    1. Navigate to the PCF Ops Manager Installation Dashboard.
+    1. Click the **Pivotal Elastic Runtime** tile.
+    1. Select **Cloud Controller**.
+    1. Find **System Domain**.
+
+## <a id='config-firehose'></a>Step 7: Configure the Firehose Nozzle ##
+
+1. Select **OpenTSDB Firehose Nozzle**.
+
+1. Enter your UAA credentials. 
+
+1. Enter your System Domain.
+    
+    <%= image_tag("images/metrics/ops_man_firehose.png") %>
+
+1. Click **Save**.
+
+
+## <a id='apply'></a>Step 8: Apply Changes ##
+
+1. Navigate to the PCF Ops Manager Installation Dashboard.
+
 1. In the Pending Changes view, click **Apply Changes** to install Pivotal Ops
 Metrics.
 
     <%= image_tag("images/metrics/ops-metrics-pending-changes.png") %>
 
 1. When complete, a “Changes Applied” message appears.
-Click **Return to Product Dashboard**.
+
+
+## <a id='get-ip'></a>Step 9: Get the IP of JMX Provider ##
+
+1. Click **Return to Product Dashboard**.
 
 1. Click the **Pivotal Ops Metrics** tile and select the **Status** tab.
 
@@ -82,6 +136,9 @@ Click **Return to Product Dashboard**.
 <p class="note"><strong>Note</strong>: After installation, your JMX client connects to this IP address at port 44444 using the credentials that you  supplied.</p>
 
     <%= image_tag("images/metrics/ops-metrics-jmx-ips.png") %>
+
+
+## <a id='config-ip'></a>Step 10: Configure the Metrics IP Address ##
 
 1. Return to the **Installation Dashboard**.
 Click the **Ops Manager Director** tile and select **Director Config**.
@@ -92,6 +149,9 @@ Click **Save**.
 
     <%= image_tag("images/metrics/ops-metrics-director-ip.png") %>
 
+
+## <a id='allocate-collecter-vm'></a>Step 11: Allocate a VM for the Collector ##
+
 1. Return to the **Installation Dashboard**.
 Click the **Pivotal Elastic Runtime** tile and select **Resource Config**.
 
@@ -99,6 +159,9 @@ Click the **Pivotal Elastic Runtime** tile and select **Resource Config**.
 Click **Save**.
 
     <%= image_tag("images/metrics/ops-metrics-elastic-runtime-collector.png") %>
+
+
+## <a id='compplete'></a>Step 12: Complete Installation ##
 
 1. In the Pending Changes view, click **Apply Changes**.
 

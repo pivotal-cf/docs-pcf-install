@@ -1,29 +1,31 @@
 ---
-title: Understanding Availability Zones and Regions in Pivotal Cloud Foundry
+title: Understanding Availability Zones and Regions in VMWare installations
 ---
 
-The Availability Zone (AZ) functionality in [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) enables applications to be highly available and tolerant to infrastructure failure by distributing app instances and redundant VMs across various infrastructure segments.
+## <a id="eraz-examples"></a>Availability Zones and Regions ##
 
-The terms _AZ_ and _region_ for Pivotal Cloud Foundry are used similarly to how they are used by Amazon Web Services and OpenStack. We define these terms as follows:
+Availability zones and regions contribute to the fault tolerance and high availability of a [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) deployment. In cases of partial infrastructure failure, PCF distributes app instances and redundant VMs across backup infrastructure segments. We define these terms as follows:
 
-* **AZ**: An AZ is a unique set of hardware components separated logically, and typically physically, from any other AZ. For example, in VMWare vSphere implementations, a PCF operator assigns a cluster and resource pool to an AZ.
+* **Region**: A region is a logical construct that contains Availability Zones. It correlates to either a single data center or to multiple data centers in close geographic proximity and with very low latency network connections.  A PCF installation belongs to a single region. 
 
-<p class="note"><strong>Note</strong>: At present, the architecture of VMware vCloud and vCloud Air supports the use of only one AZ. For these products, the AZ is the virtual data center that an operator accesses when configuring the <a href="./pcf-vchs-vcloud.html#access-interface">vShield Edge Gateway Services interface</a>. In these cases where the Ops Manager deployment integrates with either of these products, PCF places all software in the single AZ, the virtual data center.</p>
+* **Availability Zone**: An AZ is a unique set of hardware components separated logically and, typically, physically, from any other AZ. If you run more than one instance of an application, Elastic Runtime balances multiple instances of each application across the AZs that you assigned to the Elastic Runtime environment with Ops Manager. 
 
-* **Region**: A region correlates to either a single data center or to multiple data centers that are in close geographic proximity and have very low latency network connections. A region includes a single PCF installation that an operator deploys to one or more Availability Zones.
 
-The image below shows the difference between how PCF handles Availability Zones and regions in vSphere, vCloud, and vCloud Air, where vSphere supports multiple AZs and vCloud and vCloud Air do not. 
+## <a id="eraz-examples"></a>Availability Zones and Regions in vSphere ##
 
-<%= image_tag("vS_vC_vCA.png") %>
+VSphere allows Elastic Runtime deployments to be distributed across multiple availability zones, providing increased availability and fault tolerance. 
 
-You configure an AZ with the Pivotal Ops Manager Director for VMware vSphere and Elastic Runtime products. For more information, see
-[vSphere Availability Zone Assignment](./config-er-vmware.html#er-az-networks) and [Ops Manager Director for VMware vSphere](./vsphere-config.html)
 
-If you run more than one instance of an application, Elastic Runtime balances multiple instances of each application across the AZs that you assigned to the Elastic Runtime environment with Ops Manager.
+Create availability zones with the [Ops Manager Director for VMware vSphere](./vsphere-config.html), and allocate them with [vSphere Availability Zone Assignment](./config-er-vmware.html#er-az-networks).
 
-## <a id="eraz-examples"></a>Example Scenario ##
+## <a id="eraz-examples"></a>Availability Zones and Regions in vCloud and vCloud Air ##
+The architecture of VMware vCloud and vCloud Air supports the use of only one AZ. For these products, the AZ is the virtual data center that an operator accesses when configuring the <a href="./pcf-vchs-vcloud.html#access-interface">vShield Edge Gateway Services interface</a>. In the cases in which the Ops Manager deployment integrates with either of these products, PCF places all software in the single AZ, the virtual data center.
 
-An operator scales an application to 4 instances in an Elastic Runtime environment with 3 Availability Zones, A1, A2, and A3. The environment scales the instances according to availability heuristics.
+VMWare supports the configuration of [Availabity Zones in Ops Manager Director](./vsphere-config.html#az) which allocate clusters and resource pools.
+
+## <a id="eraz-examples"></a>Application Scaling: Example Scenario ##
+
+An operator scales an application to four instances in an Elastic Runtime environment distributed across three Availability Zones: A1, A2, and A3. The environment allocates the instances according to the [DEA Placement Algorithm](../concepts/architecture/cloud-controller.html#dea-placement):
 
 <%= image_tag("az_er_1.png") %>
 
@@ -31,7 +33,7 @@ If A1 experiences a power outage or hardware failure, the two application instan
 
 <%= image_tag("az_er_2.png") %>
 
-If A1 AZ remains unavailable, Elastic Runtime balances new instances of the application across the remaining Availability Zones, see below.
+If A1 remains unavailable, Elastic Runtime balances new instances of the application across the remaining Availability Zones.
 
 <%= image_tag("az_er_3.png") %>
 

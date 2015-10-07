@@ -46,10 +46,10 @@ As a result, an export can be 5 GB or more.
 PCF installation.
 Importing an installation overwrites any existing installation.
 
-## <a id='encrypt-key'></a>Backing Up the Cloud Controller DB Encryption Credentials ##
+## <a id='encrypt-key'></a>Back Up the Cloud Controller Database Encryption Credentials ##
 
 From the Product Installation Dashboard, select **Pivotal Elastic Runtime > Credentials** and locate the Cloud Controller section.
-Record the Cloud Controller DB encryption credentials.
+Record the Cloud Controller **DB encryption credentials**.
 You must provide these credentials if you contact Pivotal Support for help
 restoring your installation.
 
@@ -94,8 +94,8 @@ You access the BOSH Director using this IP address.
 1. Run `bosh download manifest DEPLOYMENT-NAME LOCAL-SAVE-NAME` to download and
 save the current BOSH deployment manifest.
 You need this manifest to locate information about your databases.
-Replace DEPLOYMENT-NAME with the name of the current BOSH deployment.
-For this procedure, use `cf.yml` as the LOCAL-SAVE-NAME.
+Replace `DEPLOYMENT-NAME` with the name of the current BOSH deployment.
+For this procedure, use `cf.yml` as the `LOCAL-SAVE-NAME`.
 <pre class='terminal'>
     $ bosh download manifest cf-5678dcba5678 cf.yml
     Deployment manifest saved to `cf.yml'
@@ -103,8 +103,7 @@ For this procedure, use `cf.yml` as the LOCAL-SAVE-NAME.
 
 ## <a id='backup-databases'></a>Backing Up Critical Databases ##
 
-Refer to this section for help backing up and restoring databases associated
-with your PCF installation.
+This section describes the procedure for backing up databases associated with your PCF installation.
 
 Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore.
 You must back up each of the following:
@@ -117,12 +116,12 @@ You must back up each of the following:
 
 <p class="note"><strong>Note</strong>: If you are running the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard these instructions and ensure that you back up your external databases and filestores. </p>
 
-### <a id='ccdb'></a>Stop Cloud Controller###
+### <a id='stop-cc-2'></a>Stop Cloud Controller###
 <%= partial 'stopping_cc' %>
 
 ### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
 
-1. In `cf.yml`, locate the `ccdb` component and record the IP address:
+1. In `cf.yml`, locate the Cloud Controller database component under the `ccdb` key and record the IP address:
 
     ```
     ccdb:
@@ -131,11 +130,11 @@ You must back up each of the following:
 	      db_scheme: postgres
 	```
 
-1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the Cloud Controller Database credentials.
+1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the Cloud Controller database credentials.
 
     <%= image_tag("ccdb-creds.png") %>
 
-1. SSH into the CCDB VM as the admin using the IP address and password recorded in the previous steps.
+1. SSH into the Cloud Controller database VM as the admin using the IP address and password recorded in the previous steps.
 
     <pre class="terminal">
     $ ssh vcap@10.85.52.96
@@ -153,7 +152,7 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
     $ /var/vcap/data/packages/postgres/5.1/bin/psql/pg_dump -h 10.85.52.96 -U admin -p 2544 ccdb > ccdb.sql
 </pre>
 
-1. Exit from the CCDB VM.
+1. Exit from the Cloud Controller database VM.
 
 1. Run `scp` to copy the exported database to your local machine.
 <pre class="terminal">
@@ -170,13 +169,13 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
           port: 2544
           db_scheme: postgresql
     ```
-1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the UAA Database credentials.
+1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the UAA database credentials.
 
     <%= image_tag("uaadb-creds.png") %>
 
-1. SSH into the UAA DB VM as the admin using the IP address and password recorded in the previous steps.
+1. SSH into the UAA database VM as the admin using the IP address and password recorded in the previous steps.
 
-1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the UAA DB VM.
+1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the UAA database VM.
 <pre class='terminal'>
     $ root@10.85.52.101:~# find /var/vcap | grep 'bin/psql'
     /var/vcap/data/packages/postgres/5.1/bin/psql
@@ -187,7 +186,7 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
     $ /var/vcap/data/packages/postgres/5.1/bin/psql/pg_dump -h 10.85.52.101 -U root -p 2544 uaa > uaa.sql
 </pre>
 
-1. Exit from the UAA DB VM.
+1. Exit from the UAA database VM.
 
 1. Run `scp` to copy the exported database to your local machine.
 <pre class='terminal'>
@@ -205,13 +204,13 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
       port: 2544
       db_scheme: postgresql
     ```
-1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the Apps Manager Database credentials.
+1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the Apps Manager database credentials.
 
     <%= image_tag("appsmgr-creds.png") %>
 
-1. SSH into the Apps Manager DB VM as the admin using the IP address and password recorded in the previous steps.
+1. SSH into the Apps Manager database VM as the admin using the IP address and password recorded in the previous steps.
 
-1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the Apps Manager DB VM.
+1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the Apps Manager database VM.
 <pre class='terminal'>
 	$ root@10.85.52.104:~# find /var/vcap | grep 'bin/psql'
 
@@ -223,7 +222,7 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
     $ /var/vcap/data/packages/postgres/5.1/bin/psql/pg_dump -h 10.85.52.104 -U root -p 2544 console > console.sql
 </pre>
 
-1. Exit from the Apps Manager DB.
+1. Exit from the Apps Manager database.
 
 1. Run `scp` to copy the exported database to your local machine.
 <pre class='terminal'>
@@ -232,7 +231,7 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
 
 ### <a id='nfs'></a>Back Up NFS Server ###
 
-1. In the BOSH deployment manifest, locate the `nfs_server` component and note the address:
+1. In the BOSH deployment manifest, locate the `nfs_server` component and record the address:
 
     ```
     nfs_server:
@@ -252,11 +251,9 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
         $ ssh vcap@10.0.0.10 'cd /var/vcap/store && tar cz shared' > nfs.tar.gz
     </pre>
     <p class="note"><strong>Note</strong>: The TAR file that you create to back up NFS server might be large. To estimate the size of the TAR file before you create it, run the following command:
+    <code class=''>tar -cf - /dir/to/archive/ | wc -c</code></p>
 
-    <code>tar -cf - /dir/to/archive/ | wc -c</code></p>
-
-
-### <a id='runtime'></a>Back Up Pivotal MySQL Server ###
+### <a id='backup-mysql'></a>Back Up Pivotal MySQL Server ###
 
 <p class="note"><strong>Note</strong>: The Elastic Runtime deploy contains an embedded MySQL Server that serves as the data store for the Application Usage Events, Notifications, and Autoscaler services.</p>
 
@@ -268,7 +265,7 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
 
     <%= image_tag("mysql-cred.png") %>
 
-1.  Dump the data from the p-mysql DB and save it:
+1.  Dump the data from the p-mysql database and save it:
 <pre class='terminal'>
     $ mysqldump -u root -p -h 10.85.52.105 --all-databases > user_databases.sql
 </pre>
@@ -290,29 +287,38 @@ You must restore each of the following:
 * NFS Server
 * Pivotal MySQL Server
 
-### <a id='stop-ccdb'></a>Stop Cloud Controller###
+### <a id='stop-cc'></a>Stop Cloud Controller###
 
 <%= partial 'stopping_cc' %>
 
 ### <a id='restore-uaa'></a>Restore UAA Database
 
-#### Stop UAA
+#### Stop the UAA database
 
-1. Find your UAA DB VM id by running <pre class='terminal'>bosh VMs</pre>
+1. Find your UAA database VM id. To view all VM ids, run:
+<pre class='terminal'>$ bosh VMs</pre>
 
-1. Using your UAA VM id, Stop UAA by running:
-<pre class='terminal'>$ bosh stop YOUR-UAADB-VM-ID</pre>
+1. Run `bosh stop UAADB-VM` to stop the UAA Database VM. Replace `UAADB-VM` in this command with the name of your UAA Database VM.
+For example:
+<pre class='terminal'>$ bosh stop uaa-partition-bd784aa8b15f/0 </pre>
 
-#### Drop the UAADB tables
+#### Drop the UAA database tables
 
-1. Login to the UAADB VM using the vcap user and password. To find this information in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+1. SSH into the UAA database VM using the vcap user and password. If you do not have this information recorded, find it in the Ops Manager Installation Dashboard. Click the **Elastic Runtime** tile and select **Credentials**.
 <pre class='terminal'>$ ssh vcap@[YOUR-UAADB-VM-IP-ADDRESS]</pre>
 
-1. Login to the psql client on the VM
-<pre class='terminal'>$ /var/vcap/data/packages/postgres/YOUR-POSTGRES-VERSION/bin/psql -U vcap -p 2544 uaa</pre>
+1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the UAA Database VM.
+<pre class='terminal'>
+$ root@10.85.52.101:~# find /var/vcap | grep 'bin/psql'
+/var/vcap/data/packages/postgres/5.1/bin/psql
+</pre>
 
-<p>hat is not quite right, it's not a version number; but it's easy, there should only be one folder in ../postgres/, do that one.</p>
- 
+1. Log in to the psql client:
+<pre class='terminal'>
+$ root@10.85.52.101:~# /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 uaa
+</pre>
+
+
 1. Run the following commands to drop the tables:
 <pre class='terminal'>
 drop schema public cascade;
@@ -320,88 +326,116 @@ create schema public;
 \q;
 </pre>
 
-1. Exit the UUADB VM
+1. Exit the UAA database VM.
 <pre class='terminal'>$ exit</pre>
 
-#### Restore the backup
+#### Restore the UAA database from its backup state
 
-1. Use the UAA DB password and IP address to restore the UAA database by running the following commands. You can find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+1. Use the UAA database  password and IP address to restore the UAA database by running the following commands. You can find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+
+1. Use `scp` to copy the database backup file to the UUA database VM.
 <pre class='terminal'>
 $ scp uaa.sql vcap@[YOUR-UAADB-VM-IP-ADDRESS]: #UAADB server
+</pre>
+
+1. SSH into the UUA database VM.
+<pre class='terminal'>
 $ ssh vcap@[YOUR-UAADB-VM-IP-ADDRESS]
+</pre>
+
+1. Restore the database from the backup file.   
+<pre class='terminal'>
 $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 uaa < uaa.sql
 </pre>
 
-1. Restart UAA
+1. Restart the UAA database VM.
 <pre class='terminal'>
 $ bosh start YOUR-UAA-VM-UUID
 </pre>
 
 ### <a id='restore-nfs'></a>Restore NFS Server
 
-1. Login as root user:
+1. Log in as root user:
 <pre class='terminal'>$ sudo su</pre>
 
-1. Run the following to create a store folder if it does not exist:
+1. Run the following command to create a store folder if one does not exist:
 <pre class='terminal'>
     [ ! -d /var/vcap/store ] && mkdir /var/vcap/store
 </pre>
 
-1. View and record the permissions on `var/vcap/store` so you can restore them after running the commands below.
+1. Record the permissions on `var/vcap/store` so you can restore them after running the commands below. To view the permissions, run:
 <pre class='terminal'>
-    ls -ld /var/vcap/store
+    $ ls -ld /var/vcap/store
 </pre>
 
-1. Change the permissions on `var/vcap/store` to allow all
+1. Change the permissions on `var/vcap/store` to `777`.
 <pre class='terminal'>
-    chmod 777 /var/vcap/store
+    $ chmod 777 /var/vcap/store
 </pre>
 
-1. Run the following command to restore NFS Server. Find the IP address in your BOSH deployment manifest. To find your password, select the **Elastic Runtime** tile and click **Credentials**.
+1. Run the following command to restore NFS Server. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
 <pre class='terminal'>$ ssh vcap@10.0.0.10 'cd /var/vcap/store && tar zx' < nfs.tar.gz</pre>
 
 1. Change the permissions on `var/vcap/store` back to their prior setting.
 <pre class='terminal'>
-    chmod YOUR-PRIOR-PERMISSION /var/vcap/store
+    $ chmod YOUR-PRIOR-PERMISSION /var/vcap/store
 </pre>
 
 ### <a id='restore-ccdb'></a>Restore the Cloud Controller Database
 
-1. Use the Cloud Controller Database password and IP address to restore the Cloud Controller Database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password, select the **Elastic Runtime** tile and click **Credentials**.
+1. Use the Cloud Controller database password and IP address to restore the Cloud Controller database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
 <pre class='terminal'>
     $ scp ccdb.sql vcap@[YOUR-CCDB-VM-IP-ADDRESS]
 </pre>
 
-1. Login to the VM as the vcap user and drop the DB
+1. SSH into the Cloud Controller database VM.
 <pre class='terminal'>
 $ ssh vcap@[YOUR-CCDB-VM-IP]
+</pre>
+
+1. Log in to the psql client
+<pre class='terminal'>
 $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 ccdb
+</pre>
+
+1. Drop the database schema and then create a new one to replace it.
+<pre class='terminal'>
 ccdb=# drop schema public cascade;
 ccdb=# create schema public;
 </pre>
 
-1. Restore the database from the backup
+1. Restore the database from the backup file.
 <pre class='terminal'>
 $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 ccdb < ccdb.sql
 </pre>
 
 
-### <a id='restore-console'></a>Restore the Console Database
+### <a id='restore-console'></a>Restore the Console Database from its backup state
 
-1. Use the Console database password and IP address to restore the Cloud Controller Database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password, select the **Elastic Runtime** tile and click **Credentials**.
+1. Use the Console database password and IP address to restore the Cloud Controller database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+
+1. Use `scp` to copy the database backup file to the UUA database VM.
 <pre class='terminal'>
 $ scp console.sql vcap@[YOUR-CONSOLE-DB-VM-IP-ADDRESS]
 </pre>
 
-1. Login to the VM as the vcap user and drop the db
+1. SSH into the UUA database VM.
 <pre class='terminal'>
 $ ssh vcap@[YOUR-CONSOLE-DB-VM-IP-ADDRESS]
+</pre>
+
+1. Log into the psql client.
+<pre class='terminal'>
 $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 console
+</pre>
+
+1. Drop the existing database schema and create a new one to replace it.
+<pre class='terminal'>
 console=# drop schema public cascade;
 console=# create schema public;
 </pre>
 
-1. Restore the backed up database
+1. Restore the database from the backup file.
 <pre class='terminal'>
 $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 console < console.sql
 </pre>
@@ -410,18 +444,17 @@ $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 console < consol
 
 <p class='note'><strong>Note</strong>: Only follow these steps if you have installed the Pivotal MySQL Dev product tile.</p>
 
-1. Use the Pivotal MySQL Dev database password and IP address to restore the Cloud Controller Database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password, select the **Elastic Runtime** tile and click **Credentials**.
+1. Use the Pivotal MySQL Dev database password and IP address to restore the Cloud Controller database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
 <pre class='terminal'>
   mysql -h YOUR-MYSQL-SERVER-IP -u root -p < user_databases.sql
 </pre>
 
 
-1. Login to MySQL and flush priveleges
+1. Log in to the MySQL client and flush priveleges.
 <pre class='terminal'>
-
     $ mysql -u root -p -h
     mysql > flush privileges;
 </pre>
 
-### <a id='cc-start'></a>Start Cloud Controller ###
+### <a id='cc-start-2'></a>Start Cloud Controller ###
 <%= partial 'starting_cc' %>

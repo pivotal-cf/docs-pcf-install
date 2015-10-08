@@ -1,0 +1,44 @@
+1. Install Ruby and the [BOSH CLI Ruby gem](http://docs.cloudfoundry.org/bosh/bosh-cli.html) on a machine outside of your PCF system deployment.
+1. From the Installation Dashboard in Ops Manager, select **Ops Manager Director > Status** and record the IP address listed for the Ops Manager Director.
+You access the BOSH Director using this IP address.
+
+    <%= image_tag("director-ip.png") %>
+
+1. Click **Credentials** and record the Director credentials.
+
+    <%= image_tag("director-creds.png") %>
+
+1. From the command line, target the BOSH Director using the IP address and credentials that you recorded:
+
+
+	<pre class='terminal'>
+	    $ bosh target 10.0.0.3
+	    Target set to `microbosh-1234abcd1234abcd1234'
+	    Your username: director
+	    Enter password: ********************
+	    Logged in as `director'
+	</pre>
+
+    <p class="note"><strong>Note</strong>: If <code>bosh target</code> does not prompt you for your username and password, run <code>bosh login</code>.</p>
+
+1. Run `bosh deployments` to identify the name of the current BOSH deployment:
+<pre class='terminal'>
+	$ bosh deployments
+	+-----------------+--------------------------+-------------------------------------------------+
+	| Name            | Release(s)               | Stemcell(s)                                     |
+	+-----------------+--------------------------+-------------------------------------------------+
+	| cf-5678dcba5678 | cf-mysql/10              | bosh-vsphere-esxi-ubuntu-trusty-go_agent/2690.3 |
+	|                 | cf/183.2                 |                                                 |
+	+-----------------+--------------------------+-------------------------------------------------+
+</pre>
+
+1. Run `bosh download manifest DEPLOYMENT-NAME LOCAL-SAVE-NAME` to download and
+save the current BOSH deployment manifest.
+You need this manifest to locate information about your databases.
+Replace `DEPLOYMENT-NAME` with the name of the current BOSH deployment.
+For this procedure, use `cf.yml` as the `LOCAL-SAVE-NAME`.
+	
+	<pre class='terminal'>
+	    $ bosh download manifest cf-5678dcba5678 cf.yml
+	    Deployment manifest saved to `cf.yml'
+	</pre>

@@ -1,0 +1,44 @@
+---
+title: Accessing Apps with Diego-SSH
+---
+
+## Diego-SSH CLI Plugin
+
+The easiest way to start an SSH session into a CF app instance is to use the [SSH plugin for the CF CLI](https://github.com/cloudfoundry-incubator/diego-ssh/releases). For CF CLI v6.10.0+, you can install it from the CF-Community repo:
+
+```
+cf add-plugin-repo CF-Community http://plugins.cloudfoundry.org/
+cf install-plugin Diego-SSH -r CF-Community
+```
+
+For older versions of the CF CLI, install the plugin via `cf install-plugin <binary-url>`, where `<binary-url>` is the URL from the [SSH plugin GitHub releases](https://github.com/cloudfoundry-incubator/diego-ssh/releases) appropriate for your OS and architecture.
+
+If your app is running on Diego with SSH enabled and your operator has configured SSH access to be publicly routable, run
+
+```
+cf ssh <app-name>
+```
+
+to start an interactive SSH session in instance index 0 of your app. To target a different instance index with `cf ssh`, supply it via the `-i` flag. 
+
+The `cf ssh` command also supports executing commands inside the app instance and forwarding local ports to it via the `-L` flag. Additionally, we plan to add support for a `cf scp` command to transfer files via the SCP protocol and for a command or flag to run the Diego-SSH plugin as a local SSH proxy to the instance.
+
+
+## CF Authenticator access
+
+It is also possible to connect to your SSH-enabled app instance via other SSH clients. If SSH is configured for your deployment, Cloud Controller's `/v2/info` endpoint contains an `app_ssh_endpoint` field with the domain name and port for the externally available SSH endpoint, and an `app_ssh_host_key_fingerprint` field with the fingerprint of the host key for the deployment. To connect to a particular instance of your app, run 
+
+```
+ssh -p <ssh-port> cf:<app-guid>/<instance-index>@<ssh-domain>
+```
+
+The password is a UAA-issued authorization code for a user authorized to modify that app, such as a user with the SpaceDeveloper role in the app's space. Such a code can be obtained via the Diego-SSH plugin's `get-ssh-code` command, or directly from the UAA `/oauth/authorize` endpoint.
+
+Transferring files with `scp` is invoked similarly, although the user name must be specified with the `-o` flag because of the `:` character present in it. For example, to copy a file out of the instance, run
+
+```
+ssh -P <ssh-port> -oUser=cf:<app-guid>/<instance-index> <ssh-domain>:<remote-file-to-retrieve> <local-file-destination>
+```
+
+More details on the CF Authenticator can be found in the [Diego-SSH README](https://github.com/cloudfoundry-incubator/diego-ssh/blob/master/README.md#cloud-foundry-via-cloud-controller-and-uaa).
+

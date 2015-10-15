@@ -106,28 +106,51 @@ $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 uaa < uaa.sql
 $ bosh start YOUR-UAA-VM-UUID
 </pre>
 
-### <a id='restore-nfs'></a>Restore NFS Server
+### <a id='restore-nfs'></a>Restore NFS
+Use the NFS password and IP address to restore the NFS by following the steps detailed below. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+
+1. Use `scp` to send the NFS backup tarball to the NFS VM.
+<pre class='terminal'>
+    $ scp nfs.tar.gz vcap@[YOUR-NFS-VM-IP-ADDRESS]
+</pre>
+
+1. Run `ssh YOUR-NFS-VM-IP-ADDRESS` to enter the NFS VM.
+<pre class='terminal'>
+	$ ssh vcap@10.0.0.10
+</pre>
 
 1. Log in as root user:
 <pre class='terminal'>$ sudo su</pre>
 
 1. Run the following command to create a store folder if one does not exist:
 <pre class='terminal'>
-    [ ! -d /var/vcap/store ] && mkdir -p /var/vcap/store
+    $ [ ! -d /var/vcap/store ] && mkdir -p /var/vcap/store
 </pre>
 
 1. Record the permissions on `var/vcap/store` so you can restore them after running the commands below. To view the permissions, run:
 <pre class='terminal'>
-    $ ls -ld /var/vcap/store
+	$ ls -ld /var/vcap/store
 </pre>
 
 1. Change the permissions on `var/vcap/store` to `777`.
 <pre class='terminal'>
-    $ chmod 777 /var/vcap/store
+	$ chmod 777 /var/vcap/store
 </pre>
 
-1. Run the following command to restore NFS Server. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
-<pre class='terminal'>$ ssh vcap@10.0.0.10 'cd /var/vcap/store && tar zx' < nfs.tar.gz</pre>
+1. Move the backup archive to the `store` folder.
+<pre class='terminal'>
+	$ mv nfs.tar.gz /var/vcap/store
+</pre>
+
+1. `cd` into the `store` folder.
+<pre class='terminal'>
+	$ cd /var/vcap/store
+</pre>
+
+1. Uncompress and extract the contents of the backup archive.
+<pre class='terminal'>
+	$ tar zx < nfs.tar.gz</pre>
+</pre>
 
 1. Change the permissions on `var/vcap/store` back to their prior setting.
 <pre class='terminal'>
@@ -136,7 +159,9 @@ $ bosh start YOUR-UAA-VM-UUID
 
 ### <a id='restore-ccdb'></a>Restore the Cloud Controller Database
 
-1. Use the Cloud Controller database password and IP address to restore the Cloud Controller database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+Use the Cloud Controller database password and IP address to restore the Cloud Controller database by following the steps detailed below. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+
+1. Use `scp` to send the Cloud Controller database backup file to the Cloud Controller database VM.
 <pre class='terminal'>
     $ scp ccdb.sql vcap@[YOUR-CCDB-VM-IP-ADDRESS]
 </pre>

@@ -1,29 +1,20 @@
 ---
-title: Understanding Availability Zones and Regions in VMware Installations
+title: Understanding Availability Zones in VMware Installations
 ---
 
-## <a id="eraz-examples"></a>Availability Zones and Regions ##
+An availability zone (AZ) contributes to the fault tolerance and high availability of a [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) deployment. We define an availability zone as a unique set of hardware components separated physically and logically from any other AZ. If you run more than one instance of an application in PCF, Ops Manager balances those instances across the AZs that you [assigned to the Elastic Runtime environment](./vsphere-config.html#az). 
 
-Availability zones and regions contribute to the fault tolerance and high availability of a [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) deployment. In cases of partial infrastructure failure, PCF distributes app instances and redundant VMs across backup infrastructure segments. We define these terms as follows:
+In cases of partial infrastructure failure, PCF distributes all app instances across backup infrastructure segments, as seen in the [example below](./understand-az.html#example-case). 
 
-* **Region**: A region is a logical construct that contains Availability Zones. It correlates to either a single data center or to multiple data centers in close geographic proximity and with very low latency network connections.  A PCF installation belongs to a single region. 
+## <a id="AZes-in-vSphere"></a>Create and Assign Availability Zones in vSphere ##
+Elastic Runtime on vSphere support deployment distribution across multiple availability zones. To create and assign availability zones, configure [Ops Manager Director for VMware vSphere](./vsphere-config.html#az) with the unique name of vCenter clusters and resource pools.
 
-* **Availability Zone**: An Availability Zone (AZ) is a unique set of hardware components separated logically and, typically, physically, from any other AZ. If you run more than one instance of an application, Elastic Runtime balances multiple instances of each application across the AZs that you assigned to the Elastic Runtime environment with Ops Manager. 
+## <a id="AZes-in-vCloud-vAir"></a>Single Availability Zone in vCloud and vCloud Air ##
+The architecture of VMware vCloud and vCloud Air supports the use of only one AZ, which is set to the virtual data center you access when you configure the <a href="./pcf-vchs-vcloud.html#access-interface">vShield Edge Gateway Services interface</a>. In the cases in which the Ops Manager deployment integrates with either of these products, PCF places all software in the single AZ, the virtual data center.
 
-## <a id="eraz-examples"></a>Availability Zones and Regions in vSphere ##
+## <a id="example-case"></a>AZ Balancing During Failure: Example Scenario ##
 
-vSphere allows Elastic Runtime deployments to be distributed across multiple availability zones, providing increased availability and fault tolerance. 
-
-Create availability zones with the [Ops Manager Director for VMware vSphere](./vsphere-config.html), and allocate them with [vSphere Availability Zone Assignment](./config-er-vmware.html#er-az-networks).
-
-## <a id="eraz-examples"></a>Availability Zones and Regions in vCloud and vCloud Air ##
-The architecture of VMware vCloud and vCloud Air supports the use of only one AZ. For these products, the AZ is the virtual data center that an operator accesses when configuring the <a href="./pcf-vchs-vcloud.html#access-interface">vShield Edge Gateway Services interface</a>. In the cases in which the Ops Manager deployment integrates with either of these products, PCF places all software in the single AZ, the virtual data center.
-
-VMware supports the configuration of [Availability Zones in Ops Manager Director](./vsphere-config.html#az) which allocate clusters and resource pools.
-
-## <a id="eraz-examples"></a>Application Scaling: Example Scenario ##
-
-An operator scales an application to four instances in an Elastic Runtime environment distributed across three Availability Zones: A1, A2, and A3. The environment allocates the instances according to the [DEA Placement Algorithm](../concepts/architecture/cloud-controller.html#dea-placement):
+An operator scales an application to four instances in an Elastic Runtime environment distributed across three availability zones: A1, A2, and A3. The environment allocates the instances according to the [DEA Placement Algorithm](../concepts/architecture/cloud-controller.html#dea-placement):
 
 <%= image_tag("az_er_1.png") %>
 
@@ -31,7 +22,6 @@ If A1 experiences a power outage or hardware failure, the two application instan
 
 <%= image_tag("az_er_2.png") %>
 
-If A1 remains unavailable, Elastic Runtime balances new instances of the application across the remaining Availability Zones.
+If A1 remains unavailable, Elastic Runtime balances new instances of the application across the remaining availability zones.
 
-<%= image_tag("az_er_3.png") %>
-
+<%= image_tag("az_er_3.png") %>=

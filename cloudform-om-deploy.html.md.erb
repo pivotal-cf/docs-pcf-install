@@ -5,7 +5,6 @@ title: Launching an Ops Manager Director Instance on AWS
 This topic describes how to deploy Ops Manager Director after deploying
 the CloudFormation template for [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Amazon Web
 Services (AWS).
-Use this topic when [Installing Pivotal Cloud Foundry Using AWS CloudFormation](./cloudform.html).
 
 Before beginning this procedure, ensure that you have successfully completed all
 of the steps in the [Deploying the CloudFormation Template for PCF on AWS](./cloudform-template.html) topic.
@@ -14,44 +13,44 @@ After you complete this procedure, follow the instructions in the [Configuring O
 
 ## <a id='outputs'></a>Step 1: Open the Outputs Tab in AWS Stacks ##
 
-In the Stacks Dashboard of the [AWS Console](https://console.aws.amazon.com/), select the **pcf-stack** checkbox, then select the **Outputs** tab.
-
-<%= image_tag("cloudform/aws-cloudform-stacks.png") %>
-
-In the steps described below, you will use the information in the **Value** column of the **Outputs** tab to
-[configure the details of an AMI instance](#configure-instance) for Ops Manager,
-[configure Ops Manager Director](./cloudform-om-config.html), and [configure Elastic Runtime](./cloudform-er-config.html).
+<%= partial 'aws_stacks_view_outputs' %>
 
 ## <a id='select-ami'></a>Step 2: Select a Pivotal Ops Manager AMI Instance ##
 
-1. Download the _Ops Manager for AWS_ PDF from [Pivotal Network](https://network.pivotal.io/products/pivotal-cf).
-This PDF contains an AMI ID for Pivotal Ops Manager.
+1. Log into the [Pivotal Network](https://network.pivotal.io/products/pivotal-cf) and click on **Ops Manager**.
+
+1. From the **Releases** dropdown, select the release you wish to install.
+
+1. Select **Pivotal Cloud Foundry Ops Manager for AWS** to download the `OpsManagerx.x.xonAWSFulfillmentInstructions.pdf` file.
+This document lists AMI IDs for Pivotal Ops Manager for specific regions.
 
 1. Log in to the [AWS Console](https://console.aws.amazon.com/).
 Navigate to the EC2 Dashboard.
 
 1. In the left navigation panel, click **AMIs**.
 
-1. Use the AMI ID from the _Ops Manager for AWS_ PDF to locate the Pivotal Ops
-Manager AMI within public images. Select this AMI and click **Launch**.
+1. Using the `OpsManagerx.x.xonAWSFulfillmentInstructions.pdf` document, enter the AMI ID for your AWS region in the Public images search field. This search locates the appropriate Pivotal Ops Manager AMI for your region within public images.
 
     <%= image_tag("cloudform/ami.png") %>
+1. Select this AMI and click **Launch**.
 
-1. Choose **m3.large** for your instance type. Click **Next: Configure Instance Details**.
+1. Choose **m3.large** for your instance type.
 
     <%= image_tag("cloudform/ami-instance-type.png") %>
-
+1. Click **Next: Configure Instance Details**.
+    
 ## <a id='configure-instance'></a>Step 3: Configure Instance Details ##
 
 1. Complete the **Config Instance Details** page with information from the [Outputs tab](#outputs) in the AWS Stacks Dashboard:
+
+	<%= image_tag("cloudform/instance-details.png") %>
+	
   * Select the **Network** that matches the value of **PcfVpc**.
   * Select the **Subnet** that matches the value of **PcfPublicSubnetId**.
 
 1. Set **Auto-assign Public IP** to **Enable**.
 
 1. Click **Next: Add Storage**.
-
-    <%= image_tag("cloudform/instance-details.png") %>
 
 1. On the **Add Storage** page, adjust the **Size (GiB)** value.
 Pivotal recommends increasing this value to a minimum of 100 GB.
@@ -70,11 +69,11 @@ Pivotal recommends increasing this value to a minimum of 100 GB.
 
 1. Select the **Select an existing security group** option.
 
-1. Select the **Security Group ID** that matches the value of **PcfOpsManagerSecurityGroupId**.
+1. Select the **Security Group ID** that matches the value of **PcfOpsManagerSecurityGroupId** located in the [Outputs](#outputs) tab of the Stacks dashboard.
 
+<%= image_tag("cloudform/security-group.png") %>
 1. Click **Review and Launch**.
 
-    <%= image_tag("cloudform/security-group.png") %>
 
 ## <a id='deploy'></a>Step 5: Deploy Ops Manager ##
 
@@ -88,21 +87,19 @@ Pivotal recommends increasing this value to a minimum of 100 GB.
 
 1. Select the acknowledgement checkbox.
 
-1. Click **Launch Instances**.
+1. Click **Launch Instances**. If successful, you will see the **Launch Status Page**.
 
     <%= image_tag("cloudform/launch.png") %>
+    
+1. Click **View Instances**. Or alternately, navigate to **Instances** from the left navigation panel of the EC2 Dashboard.
 
-1. Navigate to the EC2 Dashboard. In the left navigation panel, click
-**Instances**.
-
-1. AWS deploys Ops Manager. The image shows that AWS displays an **Instance State** of `running` and a **Status Check** of `passed` when the Ops Manager 
+1. AWS deploys Ops Manager. This may take a few minutes. When complete, AWS displays an **Instance State** of `running` and a **Status Check** of `passed` when the Ops Manager 
 deployment successfully completes.
-<br />
-<br />
-Record the **Public IP** of your Ops Manager EC2 instance.
+	<%= image_tag("cloudform/deployed.png") %>
+	Record the **Public IP** of your Ops Manager EC2 instance.
 You use this IP address when [Configuring Ops Manager Director on AWS CloudFormation](./cloudform-om-config.html).
 
-    <%= image_tag("cloudform/deployed.png") %>
+    
 
 ---
 

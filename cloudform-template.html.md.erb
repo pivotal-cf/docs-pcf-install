@@ -4,14 +4,6 @@ title: Deploying the CloudFormation Template for PCF on AWS
 
 This topic describes how to deploy the CloudFormation template for [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Amazon
 Web Services (AWS).
-Use this topic when [Installing Pivotal Cloud Foundry Using AWS CloudFormation](./cloudform.html).
-
-After completing this procedure, complete all of the steps in the following
-topics:
-
-* [Launching an Ops Manager Director Instance on AWS](./cloudform-om-deploy.html)
-* [Configuring Ops Manager Director for AWS](./cloudform-om-config.html)
-* [Deploying Elastic Runtime on AWS](./cloudform-er-config.html)
 
 An AWS CloudFormation template describes a set of AWS resources and properties.
 Follow the instructions below to use a CloudFormation template to create the
@@ -21,32 +13,57 @@ infrastructure that you need to deploy PCF to AWS.
 
 ## <a id='download-template'></a>Step 1: Download the PCF CloudFormation Template ##
 
-Sign in to [Pivotal Network](https://network.pivotal.io/) and download the **Pivotal Cloud Foundry Elastic Runtime and Ops Manager CloudFormation Template for AWS** from the Elastic Runtime section. Save the file as `pcf.json`.
+1. Sign in to [Pivotal Network](https://network.pivotal.io/). 
 
-## <a id='upload-cert'></a>Step 2: Upload an SSL Certificate ##
+1. Select <b>Elastic Runtime</b>. From the <b>Releases</b> dropddown, select the release you wish to install.
 
-The AWS CLI must be installed on your machine and configured to a user account with admin access privileges on your AWS account.
+1. Download the **PCF Elastic Runtime and Ops Manager CloudFormation Template for AWS**. 
+
+1. Save the file as `pcf.json`.
+
+## <a id='upload-cert'></a>Step 2: Upload an SSL Certificate to AWS ##
+
+The [AWS CLI](https://aws.amazon.com/cli/) must be installed on your machine and configured to a user account with admin access privileges on your AWS account.
 
 1. Obtain or create an SSL server certificate. See the [AWS docs on SSL certificates](http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/ssl-server-cert.html).
     <p class='note'><strong>Note</strong>: When you create a certificate signing request (CSR) in the "Create a Server Certificate" instructions, you must use your system wildcard domain (example: *.my-pcf-apps-domain.com) as the Common Name input.</p>
 
-1. Ensure that your SSL certificate is in the proper `.pem` format. See the [AWS docs on SSL certificates](http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/ssl-server-cert.html).
-
-1. Run the following to upload your SSL certificate to AWS. For more information, see the [AWS docs on uploading SSL certs via the CLI](http://docs.aws.amazon.com/cli/latest/reference/iam/upload-server-certificate.html).
+1. Upload your SSL certificate to AWS. For more information, see the [AWS docs on uploading SSL certs via the CLI](http://docs.aws.amazon.com/cli/latest/reference/iam/upload-server-certificate.html).
 <pre class='terminal'>
 $ aws iam upload-server-certificate \
 --server-certificate-name YOUR-CERTIFICATE \
 --certificate-body file://YOUR-PUBLIC-KEY-CERT-FILE.pem \
 --private-key file://YOUR-PRIVATE-KEY-FILE.pem \
 </pre>
+For example:
+<pre class='terminal'>
+$ aws iam upload-server-certificate \
+--server-certificate-name myServerCertificate \
+--certificate-body file://my-certificate.pem \
+--private-key file://my-private-key.pem
+</pre><p class='note'><strong>Note</strong>: If you receive an upload error (MalformedCertificate), run the following command to convert your server certificate to the PEM format as required by the AWS Identity and Management (IAM) service:
+<code>$ openssl x509 -inform PEM -in my-certificate.pem</code><br/>Then try your upload again.</p>
 
-After uploading the certificate to your AWS account, you will see output metadata for your cert. Record the value of the `Arn` key to use when configuring your AWS resource stack. Alternatively, if you know the name of the cert, you can run the following command to retrieve the metadata for the cert at a later point: <pre class='terminal'>$ aws iam get-server-certificate --server-certificate-name YOUR-CERT-NAME</pre>
+1. After successfully uploading the certificate to your AWS account, you will see output metadata for your certificate. For example:
+   <pre class='terminal'>
+   {
+     "ServerCertificateMetadata": {
+     "ServerCertificateId": "ASCAI3HRTYUTD55KNAF64",
+     "ServerCertificateName": "myServerCertificate",
+     "Expiration": "2016-10-18T18:41:59Z",
+     "Path": "/",
+     "Arn": "arn:aws:iam::9940874958318:server-certificate/myServerCertificate",
+     "UploadDate": "2015-10-19T19:10:57.404Z"
+     }
+   }
+</pre>
+1. Record the value of the <code>Arn</code> key to use when configuring your AWS resource stack. Alternatively, if you know the name of the certificate, you can run the following command to retrieve the metadata for the certificate at a later point: <pre class='terminal'>$ aws iam get-server-certificate --server-certificate-name YOUR-CERT-NAME</pre> For example: <pre class='terminal'>$ aws iam get-server-certificate --server-certificate-name myServerCertificate</pre>
 
 ## <a id='create-stack'></a>Step 3: Create a Resource Stack Using the CloudFormation Template ##
 
 1. Log in to the [AWS Console](https://console.aws.amazon.com/).
 
-1. In the second column, under **Deployment & Management**, click **CloudFormation**.
+1. In the second column, under **Management Tools**, click **CloudFormation**.
 
     <%= image_tag("cloudform/cloudformation.png") %>
 
@@ -54,45 +71,55 @@ After uploading the certificate to your AWS account, you will see output metadat
 
     <%= image_tag("cloudform/newstack.png") %>
 
-1. Name the stack `pcf-stack`. Select **Upload a template to Amazon S3**.
+1. Select **Upload a template to Amazon S3**.
 
     <%= image_tag("cloudform/uploadtemplate.png") %>
 
 1. Click **Browse**. Browse to and select the `pcf.json`, the **Pivotal Cloud Foundry Elastic Runtime and Ops Manager CloudFormation Template for AWS** file that you downloaded. Click **Next**.
 
+1. On the next screen, name the stack `pcf-stack`. 
+
 1. <a id='parameters'></a>In the **Specify Parameters** page, complete the
 following fields:
+
+	<%= image_tag("cloudform/new_stack_params.png") %>
     * **01NATKeyPair**: Use the drop-down menu to select the name of your
       pre-existing AWS key pair. If you do not have a pre-existing key pair, [create one in AWS](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-keypair.html) and return to this step.
     * **02NATInstanceType**: Do not change this value.
     * **03OpsManagerIngress**: Do not change this value.
     * **04RdsDBName**: Do not change this value.
-    * **05RdsUserName**: Enter a user name for the RDS database.
-      <p class='note'><strong>Note</strong>: Do not enter the user name
+    * **05RdsUserName**: Enter a username for the RDS database.
+      <p class='note'><strong>Note</strong>: Do not enter the username
         <code>rdsadmin</code>. AWS reserves the <code>rdsadmin</code> user
         account for internal database instance management.
       </p>
     * **06RdsPassword**: Enter a password for the RDS database.
     * **07SSLCertificateARN**: Enter your uploaded SSL Certificate ARN.
     * **08OpsManagerTemplate**: The default template link provided here works. Otherwise you can enter your own S3 bucket location of the Ops Manager CloudFormation script.
+    * **09ElbPrefix**: Prefix for the generated names of the ELBs. Leave empty to use the default prefix of <code>AWS::StackName</code>
 
 1. Click **Next**.
-    <%= image_tag("cloudform/new_stack_params.png") %>
 
-1. On the **Options** page, click **Next**.
+1. On the **Options** page, leave the fields blank and click **Next**.
 
     <%= image_tag("cloudform/options.png") %>
 
-1. On the **Review** page, select the **I acknowledge that this template might cause AWS CloudFormation to create IAM resources** checkbox.
+1. On the **Review** page, select the **I acknowledge that this template might cause AWS CloudFormation to create IAM resources** checkbox and click **Create**.
 
-1. Click **Create**.
+	<%= image_tag("cloudform/acknowledge.png") %>
 
-    <%= image_tag("cloudform/acknowledge.png") %>
+	AWS runs the CloudFormation script and creates the infrastructure that you need to deploy PCF to AWS. This may take a few moments. You can click on the **Events** tab to view the progress of the setup.
 
-AWS creates the infrastructure that you need to deploy PCF to AWS.
-The image shows the **Create_Complete** message that AWS displays when the
-installation process successfully completes.
-    <%= image_tag "cloudform/aws-cloudform-stacks.png" %>
+When the installation process successfully completes, AWS displays **CREATE_COMPLETE** as the status of the stack.
+
+<%= image_tag "cloudform/aws-cloudform-stacks.png" %>
+
+After completing this procedure, complete all of the steps in the following
+topics:
+
+* [Launching an Ops Manager Director Instance on AWS](./cloudform-om-deploy.html)
+* [Configuring Ops Manager Director for AWS](./cloudform-om-config.html)
+* [Deploying Elastic Runtime on AWS](./cloudform-er-config.html)
 
 ---
 

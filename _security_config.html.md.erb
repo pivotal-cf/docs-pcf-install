@@ -1,3 +1,5 @@
+1. Click on **Security Config**.
+
 1. Provide a certificate for your SSL Termination Point.
   <% if $this_IaaS == 'AWS-cloudform' %>
     This certificate must match the one that you uploaded to AWS earlier in the
@@ -6,6 +8,12 @@
     AWS](./cloudform-template.html) topic.
     <p class='note'><strong>Note</strong>: Pivotal does not recommend using a
     self-signed certificate for production deployments.</p>
+    
+2. Configure **Disable HTTP traffic to HAProxy**. If you enable the **Disable HTTP traffic to HAProxy** checkbox, your deployment rejects all port 80 traffic to HAProxy. Additionally, this option enables the secure flag in the `VCAP_ID` cookie that the Router generates.
+
+  <p class='note'><strong>Note</strong>: If you enable this checkbox and your deployment is not using HAProxy, configure your external load balancer to not accept port 80 traffic. If you do not do this, traffic to port 80 is still forwarded to applications but loses session stickiness.</p>
+
+3. Configure **Disable HTTP traffic to UAA**. If you enable the **Disable HTTP traffic to UAA** checkbox, your deployment rejects all port 80 traffic to the UAA server. For more information about the UAA server, refer to the [User Account and Authentication (UAA) Server](../concepts/architecture/uaa.html) topic.
   <% else %>
   * In a production environment, use a signed **SSL Certificate**
     from a known certificate authority (CA). Copy and paste the values for
@@ -35,5 +43,7 @@
         * Select the **Trust Self-Signed Certificates** checkbox.
   <% end %>
 
+	<%= image_tag("security_config.png") %>
+ 
 1. Click **Save**.
-  <%= image_tag("security_config.png") %>
+ 

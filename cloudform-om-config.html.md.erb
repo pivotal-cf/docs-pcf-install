@@ -13,16 +13,7 @@ After you complete this procedure, follow the instructions in the [Deploying Ela
 
 ## <a id='outputs'></a>Step 1: Open the Outputs Tab in AWS Stacks ##
 
-1. Log in to the [AWS Console](https://console.aws.amazon.com/).
-Navigate to the Stacks Dashboard.
-
-1. In the Stacks Dashboard, select the **pcf-stack** checkbox, then select the
-**Outputs** tab.
-
-<%= image_tag("cloudform/aws-cloudform-stacks.png") %>
-
-In the steps described below, you will use the information in the **Value** column of the **Outputs** tab to
-[configure Ops Manager Director](./cloudform-om-config.html), and [configure Elastic Runtime](./cloudform-er-config.html).
+<%= partial 'aws_stacks_view_outputs' %>
 
 ## <a id='access-om'></a>Step 2: Access Ops Manager ##
 
@@ -32,15 +23,15 @@ In the steps described below, you will use the information in the **Value** colu
 
     <%= image_tag("cloudform/deployed.png") %>
 
-1. Open this IP address in a web browser.
+1. Open this IP address in a web browser. A login page appears.
 
-1. Enter a **User Name** and a **Password**.
+ 	<%= image_tag("cloudform/create-admin.png") %>
+
+1. Enter a **Username** and a **Password**.
 
 1. Read the **End User License Agreement** and select the checkbox.
 
 1. Click **Create Admin User** to create an Ops Manager administrator account.
-
-    <%= image_tag("cloudform/create-admin.png") %>
 
 ## <a id='aws-config'></a>Step 3: AWS Config Page ##
 
@@ -51,7 +42,9 @@ In the steps described below, you will use the information in the **Value** colu
 1. Select **AWS Config** to open the **AWS Management Console Config** page.
 
 1. Complete the **AWS Management Console Config** page with information from the
-**Outputs** tab for your stack in the AWS Console:
+[**Outputs**](#outputs) tab for your stack in the AWS Console:
+
+	<%= image_tag("cloudform/aws-config.png") %>
     * **Access Key ID**: Use the value of **PcfIamUserAccessKey**.
     * **AWS Secret Key**: Use the value of **PcfIamUserSecretAccessKey**.
     * **VPC ID**: Use the value of **PcfVpc**.
@@ -67,14 +60,15 @@ In the steps described below, you will use the information in the **Value** colu
 		  text editor. Copy the contents of the `.pem` file and paste into the
 		  **SSH Private Key** field.
     * **Region**: Select the region where you deployed Ops Manager.
+    * **Encrypt EBS Volumes**: 
 
 1. Click **Save**.
-
-    <%= image_tag("cloudform/aws-config.png") %>
 
 ## <a id='director-config'></a>Step 4: Director Config Page ##
 
 1. Select **Director Config** to open the **Director Config** page.
+
+	<%= image_tag("cloudform/director-config.png") %>
 
 1. Enter at least two of the following NTP servers in the **NTP Servers (comma delimited)** field, separated by a comma:
     * 0.amazon.pool.ntp.org
@@ -88,12 +82,9 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
 1. For **Blobstore Location**, select the **S3 Compatible Blobstore** option.
 
 1. For **S3 Endpoint**:
-    1. In a browser, open the [Amazon Simple Storage Service (S3) table](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region).
-    1. Prepend `https://` to the **Endpoint** for your region and copy it into
-      the Ops Manager **S3 Endpoint** field.
-      <br /><br />
-      For example, in the **us-west-1** region, use
-      `https://s3-us-west-1.amazonaws.com/`.
+    1. In a browser, reference the [**Amazon Simple Storage Service (Amazon S3) table** ](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region), and find the region for your AWS account.
+    1. Prepend `https://` to the **Endpoint** for your region, and copy it into
+      the Ops Manager **S3 Endpoint** field. For example, in the **us-west-2** region, enter `https://s3-us-west-2.amazonaws.com` into the field.
 
 1. Complete the **Director Config** page with information from the **Outputs**
 tab in the AWS Console:
@@ -106,14 +97,15 @@ tab in the AWS Console:
     * **Username**: Use the value of **PcfRdsUsername**.
     * **Password**: Use the value of **PcfRdsPassword**.
     * **Database**: Use the value of **PcfRdsDBName**.
+    * **Max Threads**:
 
 1. Click **Save**.
-
-    <%= image_tag("cloudform/director-config.png") %>
 
 ## <a id='az'></a>Step 5: Availability Zones Pages ##
 
 1. Select **Create Availability Zones**.
+
+<!-- add screenshot -->
 
 1. Enter the value of **PcfPrivateSubnetAvailabilityZone** from the **Outputs**
 tab in the AWS Console. Click **Save**.
@@ -122,13 +114,15 @@ tab in the AWS Console. Click **Save**.
 
 1. Select the Availability Zone that you created in **Create Availability Zones**.
 
-1. Click **Save**.
-
     <%= image_tag("cloudform/assign-az.png") %>
+
+1. Click **Save**.
 
 ## <a id='network'></a>Step 6: Network Pages ##
 
 1. Select **Create Networks**.
+
+	<%= image_tag("cloudform/create-networks.png") %>
 
 1. In the **Name** field, enter a name for your PCF Network.
 
@@ -136,26 +130,23 @@ tab in the AWS Console. Click **Save**.
 the **Outputs** tab in the AWS Console.
 
 1. Complete the **Create Networks** page with the following information:
-    * **Subnet (CIDR Range)**: Enter `10.0.16.0/20`.
-    * **Excluded IP Ranges**: Enter `10.0.16.1-10.0.16.9`.
-    * **DNS**: Enter `10.0.0.2`.
-    * **Gateway**: Enter `10.0.16.1`.
+    * **Subnet (CIDR Range)**: Enter `10.0.16.0/20`
+    * **Excluded IP Ranges**: Enter `10.0.16.1-10.0.16.9`
+    * **DNS**: Enter `10.0.0.2`
+    * **Gateway**: Enter `10.0.16.1`
 
 1. Click **Save**.
 
-    <%= image_tag("cloudform/create-networks.png") %>
-
-1. If the following ICMP error message appears, you can ignore the warning and
-click **Save**.
+1. If the following ICMP error message appears, you can ignore the warning. Dismiss the warning, and move on to the next step.
 
     <%= image_tag("cloudform/config-error.png") %>
 
 1. Select **Assign Networks** and assign the Director to the network that you
 created in the **Create Networks** step.
 
-1. Click **Save**.
+	<%= image_tag("cloudform/assign-networks.png") %>
 
-    <%= image_tag("cloudform/assign-networks.png") %>
+1. Click **Save**.
 
 ## <a id='complete'></a>Step 7: Complete the Ops Manager Director Installation ##
 
@@ -167,7 +158,7 @@ Dashboard.
 
     <%= image_tag("cloudform/install-error.png") %>
 
-1. Ops Manager Director installs. The image shows the **Changes Applied** window
+1. Ops Manager Director installs. This may take a few moments. The image shows the **Changes Applied** window
 that displays when the installation process successfully completes.
 
     <%= image_tag("cloudform/ops-manager-complete.png") %>

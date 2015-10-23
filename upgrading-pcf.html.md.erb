@@ -18,6 +18,32 @@ Pivotal strongly recommends that you [back up all critical data](./backup-restor
   sequential order. For example, if your deployment uses Ops Manager release 1.1
   and you are upgrading to 1.3, you must sequentially install 1.2 and 1.3.</p>
 
+## <a id="pcf16upgrade"></a>Upgrading to PCF 1.6
+
+This section contains important guidelines that you must follow if you are upgrading an existing PCF 1.5 deployment to PCF 1.6. Failure to follow these instructions may jeopardize your existing deployment data or cause your upgrade to fail.
+
+### Before You Upgrade ###
+
+* Delete the Diego BETA tile if you have it installed.
+
+* In **Resource Config** of your existing Elastic Runtime 1.5 configuration, scale the number of consul servers down to **1** instance. You can scale the number back up after you have upgraded the Elastic Runtime. If you are not running any consul servers as part of your deployment, you can ignore this step.
+
+* If you are upgrading PCF on AWS, you should create and configure an ELB for enabling Diego SSH connections.
+
+### During the Elastic Runtime Upgrade ###
+
+* If your existing PCF 1.5 deployment uses internal databases, do not modify the selected Postgres/MySQL configuration on the **System Database Config** page. PCF 1.6 allows you to deploy all your internal databases to MySQL for improved high-availability. However, you should only select the MySQL option after you have migrated all your existing Postgres data. If you wish to migrate your data in order to access this feature in PCF 1.6, please contact Pivotal support first.
+
+* If your existing PCF 1.5 deployment uses an external S3 filestore, do not modify the prepopulated value used in the bucket name fields on the **File Storage Config** page. PCF 1.6 allows you to specify four different buckets for various cloud-controller artifacts; however, you should continue to use your existing 1.5 bucket name across all four buckets in order not to lose existing data.
+
+* If you wish to make [Diego](/concepts/diego-architecture.html) the default for all new applications pushed to your PCF 1.6 deployment, you should select **Use Diego by default instead of DEAs** on the **Diego configuration screen**. If you do not select this option, application developers will need to specify Diego explicitly when pushing their applications. See Diego Migration.
+
+### After the Upgrade ###
+
+* In **Resource Config** scale your consul server instances back up to the desired number.
+
+* Advise your application developers on how to target Diego when pushing their applications. See Diego Migration.
+
 ## <a id="keep"></a>Upgrading with Installed Products ##
 
 Follow these steps to keep all installed products when you upgrade Ops Manager.

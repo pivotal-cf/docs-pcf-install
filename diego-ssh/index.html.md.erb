@@ -20,8 +20,6 @@ The Diego-SSH package enables SSH access to [Diego Cell](../../concepts/diego/di
 
 - [ Migrate Apps to Diego ](./apps-enable-diego.html)
 
-- [ Diego-SSH Access Policy ](./policy.html)
-
 <% if vars.product_full == "Pivotal Web Services (PWS)" %>
 - [ Using Diego-SSH to Access PWS-Deployed Applications ](./pws-config.html)
 <% end %>
@@ -76,3 +74,35 @@ You can use CF CLI v6.10.0 or higher to install the SSH plugin from the CF-Commu
 $ cf add-plugin-repo CF-Community http://plugins.cloudfoundry.org/
 $ cf install-plugin Diego-SSH -r CF-Community
 </pre>
+
+## <a id='cc-config'></a>Cloud Controller Configuration
+
+The Cloud Controller provides several levels of granularity for enabling or disabling SSH access to CF app instances.
+
+- Each CF app has an `enable_ssh` field that determines whether the Diego SSH server will be invoked alongside the main process in the app and whether users will be authorized to connect to it. Changing the value of `enable_ssh` triggers a new version of the app and hence restarts it on Diego with or without the SSH server running, as desired.
+
+- Each CF space has an `allow_ssh` field that determines whether users are authorized to connect to the SSH server running inside their app instance.
+
+- Cloud Controller has an `allow_app_ssh_access` configuration field that determines whether any user is authorized to connect to the SSH server running inside their app instance.
+
+The Diego-SSH plugin allows users to inspect and alter the app and space fields through plugin commands:
+
+Run `cf enable-ssh APP-NAME` to enable ssh access to the named app.
+<pre class='terminal'>
+$ cf enable-ssh my-example-app
+</pre>
+
+
+Run `cf disable-ssh APP-NAME` to disable ssh access to the named app.
+<pre class='terminal'>
+$ cf disable-ssh my-example-app
+</pre>
+
+Run `cf ssh-enabled APP-NAME` to see whether SSH access is enabled for that app.
+
+Run `cf allow-space-ssh SPACE-NAME` to allow ssh access to the named space.
+
+Run `cf disallow-space-ssh SPACE-NAME` disallow ssh access to the named space.
+
+`cf space-ssh-allowed SPACE-NAME` reports whether SSH access is allowed for apps in that space.
+The `allow\_app\_ssh\_access` property must be changed through Cloud Controller's config file. For a BOSH-deployed CF, an operator can specify this config property via the `cc.allow_app_ssh_access` property.

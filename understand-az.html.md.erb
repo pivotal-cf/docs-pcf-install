@@ -2,28 +2,22 @@
 title: Understanding Availability Zones in VMware Installations
 ---
 
-Strategic use of Availability Zones contributes to the fault tolerance and high availability of a [Pivotal Cloud Foundry (PCF)](https://network.pivotal.io/products/pivotal-cf) deployment. We define an Availability Zone (AZ) as a functionally independent segment of network infrastructure. In cases of partial infrastructure failure, PCF distributes all app instances across remaining AZs, as seen in the [example below](./understand-az.html#example-case). Ops Manager balances instances of running applications across the AZs that you assign to your [Elastic Runtime environment](./vsphere-config.html#az).
+Pivotal defines an Availability Zone (AZ) as a functionally independent segment of network infrastructure that you assign. In cases of partial infrastructure failure, [Pivotal Cloud Foundry (PCF) Elastic Runtime](https://network.pivotal.io/products/pivotal-cf) distributes and balances all instances of running applications across remaining AZs. Strategic use of Availability Zones contributes to the fault tolerance and high availability of a Elastic Runtime deployment.
 
-## <a id="azs"></a>Using Availability Zones with Your Infrastructure ##
+## <a id="azs-vmware"></a>AZ Differences Between VMware Products ##
 
-### <a id="azs-in-vsphere"></a> AZs in vSphere ###
-
-Elastic Runtime on vSphere supports distributing deployments across multiple AZs. See the section on AZs in [Configuring Ops Manager Director for VMware vSphere](./vsphere-config.html#az) for information on setting up AZs for your deployment.
-
-### <a id="azs-in-vcloud-vair"></a> AZs in vCloud and vCloud Air ###
-
-The architecture of VMware vCloud and vCloud Air supports the use of only one AZ, the virtual data center you access with <a href="./pcf-vchs-vcloud.html#access-interface">vShield Edge Gateway Services interface</a>. Optionally, Ops Manager can integrate with either of these products. In this case, PCF places all software in the single AZ, the virtual data center.
+Elastic Runtime on VMware vSphere supports distributing deployments across multiple AZs. See the section on AZs in [Configuring Ops Manager Director for VMware vSphere](./vsphere-config.html#az). VMware vCloud and vCloud Air support only one AZ, which is the virtual data center you access with <a href="./pcf-vchs-vcloud.html#access-interface">vShield Edge Gateway Services interface</a>.
 
 ## <a id="example-case"></a>Balancing Across AZs During Failure: Example Scenario ##
 
 An operator scales an application to four instances in an Elastic Runtime environment distributed across three availability zones: A1, A2, and A3. The environment allocates the instances according to the [DEA Placement Algorithm](../concepts/architecture/cloud-controller.html#dea-placement):
 
-<%= image_tag("az_er_1.png") %>
+  <%= image_tag("az_er_1.png") %>
 
-If A1 experiences a power outage or hardware failure, the two application instances running in A1 terminate while the application instances in zones A2 and A3 continue to run.
+If A1 experiences a power outage or hardware failure, the two application instances running in A1 terminate while the application instances in zones A2 and A3 continue to run:
 
-<%= image_tag("az_er_2.png") %>
+  <%= image_tag("az_er_2.png") %>
 
-If A1 remains unavailable, Elastic Runtime balances new instances of the application across the remaining availability zones.
+If A1 remains unavailable, Elastic Runtime balances new instances of the application across the remaining availability zones:
 
-<%= image_tag("az_er_3.png") %>=
+  <%= image_tag("az_er_3.png") %>

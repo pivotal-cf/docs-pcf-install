@@ -1,8 +1,20 @@
 ---
-title: Migrate Apps to Diego
+title: Migrating Apps to Diego
 ---
 
-This topic contains instructions for migrating apps originally deployed with Pivotal Cloud Foundry (PCF) versions prior to 1.6 to Diego, the next-generation architecture for Elastic Runtime.
+This topic contains instructions for migrating apps originally deployed with Pivotal Cloud Foundry (PCF) versions prior to 1.6 to Diego the back-end architecture for Elastic Runtime that is new to PCF 1.6.
+
+The procedure described here does not include upgrading PCF to 1.6. See [Upgrading Elastic Runtime]. Your PCF deployment must be running Elastic Runtime v1.6, which includes Diego, before you can migrate your apps.
+
+
+There are two options for migrating your apps to Diego, the first is simpler but implies a brief downtime interval. The second avoids downtime by employing a Blue-Green 
+
+2 options for procedure:
+- easy with short downtime
+- blue-green
+
+
+Option 1: 
 
 ## <a id='install-plugin'></a>Step 1: Install Cloud Foundry Command Line Interface (CF CLI) Plugin ##
 
@@ -28,5 +40,33 @@ $ cf push
 Using manifest manifest.yml...
 Updating app...
 </pre>
+
+
+Option 2
+
+
+If your application cannot tolerate any downtime, you should use the blue-green deployment technique.  The process would look like this:
+
+Push your application to PWS with a new name and a new route.  This new application will run on Diego, since that is the default. Make sure to use the same version of your application that is currently deployed so that static assets like css and javascript that may be served from your application are consistent across both versions.
+Wait for the cf cli to report that your application has started.  Test your application and make sure it is working as you would expect.  If you encounter problems, refer to the migration guide listed in the Additional Information section below or contact PWS Support.
+Once you have confirmed that the new application deployed to Diego is operational, map the route for your application running on the DEAs to your application running on Diego.  This will result in a second route with half of your traffic going to the DEA’s app and half to Diego’s.
+
+Ex:
+$ cf map-route new-app my-domain.com -n www
+Unmap the route from the application running on the DEAs.  This will send all of the traffic to the application that’s running on Diego.
+
+Ex:
+$ cf unmap-route old-app my-domain.com -n www
+Stop the application that’s running on the DEAs. At this point, all of your traffic will be going to your app running on Diego.  Again, verify that your application is working properly.  Should you encounter any issues, you can rollback to your application on the DEAs by starting it and reversing the route map and unmap commands.
+
+Ex:
+$ cf start old-app
+$ cf map-route old-app my-domain.com -n www
+$ cf unmap-route new-app my-domain.com -n www
+Once you are satisfied that your application is working properly running on Diego, then you can delete the old application.
+
+Ex:
+$ cf delete old-app
+
 
 

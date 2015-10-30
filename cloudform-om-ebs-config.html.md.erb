@@ -2,11 +2,9 @@
 title: Configuring Amazon EBS Encryption 
 ---
 
-Pivotal Cloud Foundry 1.6 supports [Amazon Elastic Block Store (EBS) Encryption](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumes.html) for PCF deployments on AWS. Amazon EBS Encryption allows operators to use full disk encryption for all persistent disks on BOSH-deployed VMs.  
+Pivotal Cloud Foundry supports [Amazon Elastic Block Store (EBS) Encryption](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumes.html) for PCF deployments on AWS. Amazon EBS Encryption allows operators to use full disk encryption for all persistent disks on BOSH-deployed VMs. You can use this feature to meet data-at-rest encryption requirements or as a security best practice.  
 
-You can use this feature to meet data-at-rest encryption requirements or as a security best practice.  
-
-There is no performance penalty for using encrypted EBS volumes. Pivotal advises all AWS customers to check this box.
+There is no performance penalty for using encrypted EBS volumes. Pivotal advises all users of PCF on AWS to check this box.
 
 ## How to Enable EBS Encryption ###
 
@@ -20,31 +18,32 @@ There is no performance penalty for using encrypted EBS volumes. Pivotal advises
 	
 1. Select **Encrypt EBS Volumes**. 
 
-	<p class="note"><strong>Note</strong>: **Encrypt EBS Volumes** is a global setting. If checked, the **Encrypt EBS Volumes** configuration applies encryption to all 
-VMS deployed by BOSH for all product tiles. </p>
+	<p class="note"><strong>Note</strong>: <strong>Encrypt EBS Volumes</strong> is a global setting. When selected, <strong>Encrypt EBS Volumes</strong> enables encryption on all VMs deployed by BOSH for all product tiles.</p>
 
 1. Click **Save**, and then return to the **Installation Dashboard**.
 
-1. Click *Apply Changes** and review any reported errors. The following error message lists jobs that cannot be encrypted due to unsupported instance type. 
+1. In Op Manager, click **Apply Changes** and review any reported errors. The following error message lists jobs that cannot be encrypted due to unsupported instance types. 
 
 	<%= image_tag("cloudform/encrypt-ebs-errors.png") %>
 
-If you find a job that requires encryption, modify the instance type selected that job in the **Resource Config** page of the Elastic Runtime. Use an instance type that supports encryption.Pivotal recommends using <code>t2.large</code>.
+	If you find a job that should be encrypted in the error list, modify the instance type for that job in the **Resource Config** page of the Elastic Runtime. Select an instance type that supports encryption. Pivotal recommends using <code>t2.large</code>.
 
-1. After you make your changes in Elastic Runtime, click **Apply Changes** in Ops Manager.
+1. After you make your changes in Elastic Runtime, return to Ops Manager and click **Apply Changes**.
 
 The next BOSH deploy encrypts all persistent disks on all BOSH-deployed VMs. If you have already deployed VMs with unencrypted EBS volumes, BOSH copies over all the data on those unencrypted EBS volumes to new encrypted volumes and discards the old volumes. 
 
-If you deselect **Encrypt EBS Volumes** later and then redeploy, BOSH overwrites all persistent EBS volumes with unencrypted volumes. 
+If you deselect **Encrypt EBS Volumes** later and then redeploy, BOSH overwrites all EBS  volumes with unencrypted volumes. 
 
-
-## Limitations
+## Limitations ##
 
 Using EBS Encryption is subject to the following limitations:
 
-* The Ops Manager and Director VMs are not encrypted. 
-* Amazon EBS Encryption does not support the AWS instance types <code>t2.micro</code>, <code>t2.small</code> and <code>t2.medium</code>.  
-<p class="note"> Pivotal has been advised by Amazon that all AWS instance types now support EBS encryption.  Therefore, this limitation will be removed in PCF 1.7 and later.</p>
+* Ops Manager and Director VMs are not encrypted. 
+* PCF does not support Amazon EBS Encryption for the following AWS instance types:
+  * <code>t2.micro</code>
+  * <code>t2.small</code>
+  * <code>t2.medium</code>  
+<p class="note">PCF will remove this limitation in a future release.</p>
 * Ephemeral disks are not encrypted. The **Encrypt EBS Volumes** checkbox applies only to persistent disks.
-* Compilation worker VMs will not be encrypted because they do not have persistent disks.
+* Compilation worker VMs are not encrypted because they do not have persistent disks.
 

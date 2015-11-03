@@ -4,26 +4,29 @@ title: Installing Pivotal Cloud Foundry in a C2S Environment
 
 ## <a id="background"></a>Background ##
 
-The goal of this document is to offer operators within critical government or enterprise organizations the hands-on, step-by-step technical documentation to implement an end-to-end automated solution to deploying a private, offline (on-premises) Pivotal Cloud Foundry (PCF). 
+This guide describes how to install [Pivotal Cloud Foundry &reg;](PCF) on Cloud Computing Services (C2S) using the PCF CloudFormation template.
+
+The goal of this document is to offer operators within critical government organizations hands-on, step-by-step technical documentation to implement an end-to-end automated solution to deploying an offline Pivotal Cloud Foundry(PCF) to C2S. 
 
 This document specifically addresses the need for a continuous deployment, continuous integration pipeline of reliable, integration-tested Cloud Foundry deployments which can be operated in a secure environment.
-<!-- JO, DT: Will the ci/cd portion of this be true by phase 1 end? -->
 
-The assumptions made are several: 
+Pivotal recommends the specific course of action described herein based on the following assumptions: 
 
 - That a small team, typically two operators, can deploy, troubleshoot and maintain an entire Cloud Foundry environment which supports thousands of servers and applications; 
 - That the normal release cycle of Pivotal Cloud Foundry’s cf-release provides the most reliable and stable cloud environment possible, leveraging the entire Pivotal Cloud Operations and Engineering teams’ expertise in running the cutting edge Pivotal Web Services, which remains several release versions ahead of cf-release and, therefore, acts as its integration testing suite;
 - That clients require the ability to start with one data image, for example an Amazon Machine Image, securely scan that image, and deploy their entire Cloud Foundry from those contents, in an automated fashion, and in an offline, secure environment.
 
-This guide describes how to install [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Cloud Computing Services (C2S) using the PCF CloudFormation template. The use of term Amazon Web Services (AWS) also refers to the C2S environment throughout this document. 
-<!-- JO, DT: Should the infrastructure be referred to as C2S or AWS? -->
+<!-- Should we mention some of the 12 (or 14) core requirements for this POC as well? -->
 
-The CloudFormation template for Pivotal Cloud Foundry describes the set of necessary AWS
-resources and properties. When you create an AWS stack using the PCF template, CloudFormation provisions all the infrastructure that you need to deploy PCF on AWS.
+<p class="note"><strong>Note</strong>: The use of the term Amazon Web Services (AWS) also refers to the C2S environment throughout this document. 
+</p>
+
 
 ## <a id='prerequisites'></a>Prerequisites ##
 
 You must have the following in order to follow the procedure described here:
+
+<p class="note"><strong>Note</strong>: If you will not have online access while installing PCF, make sure you can complete the prerequisites below without documentation. </p>
 
 * An AWS account that can accomodate the minimum resource requirements for a PCF installation:
     * 1 Elastic Load Balancer
@@ -42,46 +45,69 @@ You must have the following in order to follow the procedure described here:
 * A registered wildcard domain for your PCF installation. You will need this registered domain when configuring your SSL certificate and Cloud Controller.
 * An SSL certificate for your PCF domain. This can be a self-signed cert, but Pivotal recommends using a self-signed certificate only for testing and development. You should obtain a cert from your Certificate Authority for use in your production environment.
 
-<p class="note"><strong>Note</strong>: If you will not have online access while installing PCF, make sure you can complete the prerequisites above without documentation. 
-</p>
 
-The steps below are fully self-contained and where they rely on links to other URLs, the relevant pieces have been provided.
+The steps below are fully self-contained and where they rely on links to other URLs, the relevant information has been provided.
 
 ## <a id="bootstrap-aws"></a>Step 1: Bootstrap AWS Environment ##
 
+When you create an AWS stack using the PCF template, the CloudFormation template for Pivotal Cloud Foundry defines the set of necessary AWS resources and properties required to deploy PCF on AWS.
+
 From an environment with AWS CLI tools and the requisite credentials:
 
-- Copy and modify the PCF Offline cloudformation bootstrap artifacts: [pcf.json](offsite-install-copy-pcf.json) and [pcf_cloudformation.json](offsite-install-copy-pcf-cloudformaiton.json).
-
-    <pre class="terminal">$ aws s3 cp ~/Downloads/pcf.json s3://cf-software-vi/Bootstrap/pcf.json
+1. Copy and modify the PCF Offline cloudformation bootstrap artifacts: [pcf.json](offsite-install-copy-pcf.json) and [pcf_cloudformation.json](offsite-install-copy-pcf-cloudformaiton.json).
+    <pre class="terminal">
+    $ aws s3 cp ~/Downloads/pcf.json s3://cf-software-vi/Bootstrap/pcf.json
     $ aws s3 cp ~/Downloads/pcf_cloudformation.json s3://cf-software-vi/Bootstrap/pcf_cloudformation.json
     </pre>
-
-<p class="note"><strong>Important</strong>: The pcf_cloudformation.json must reference the pcf.json OpsManager template in an S3 bucket accessible from the Chiron environment, as seen below:</p>
-
-<pre>
+    <p class="note"><strong>Important</strong>: The pcf_cloudformation.json must reference the pcf.json (Ops Manager) template in an S3 bucket accessible from your environment, as seen below:</p>
+    <pre>
     "08OpsManagerTemplate": {
       "Type": "String",
       "Default": "https://s3.amazonaws.com/cf-software-vi/Bootstrap/pcf.json",
       "Description": "S3-LOCATION-FOR-CLOUDFORMATION-TEMPLATE"
     }
+    </pre>
+1. Generate server certificate private key, CSR, and approve using existing CA, for example:
+
+  - Use `openssl genrsa` with the `-out` flag to generate a new 2048-bit private key, for example, named `privkey.pem`:
+<pre class="terminal">  $ openssl genrsa -out privkey.pem 2048</pre>
+
+  - Use `openssl req` to generate a new certificate signing request based on your private key.
+<pre class="terminal">  $ openssl req -new -key privkey.pem -out server.csr</pre>
+
+  - Use the command below to create a self-signed certificate, `server.crt`, from the existing private key, `privkey.pem` and the existing certificate signing request, `server.csr`: 
+<pre class="terminal">  $ openssl x509 -req -days 365 -in server.csr -signkey privkey.pem -out server.crt</pre>
+
+1. Upload server cert, private key and CA certificate for chaining:
+
+    <pre class="terminal">
+    $ cd /path/certificates
+    $ aws iam upload-server-certificate --server-certificate-name cf-elb-cert --certificate-body file://cf-certificate.pem --private-key file://cf-private.pem --certificate-chain file://ca-cert.pem
+    </pre>
+
+1. Test your server certificate with the AWS IAM API:
+<pre class="terminal">
+$ aws iam get-server-certificate --server-certificate-name cf-elb-cert
 </pre>
 
-- Create and Upload Server Certificate
+1. The output below shows an example of a successful result. Save the value of the `Arn` field, as it will be required as a specified parameter in the pcf_cloudformation.json.
 
-    - stuff
-    - moar stuff from the 'earlier step'
-(Obtain Server Certificate created and uploaded to AWS IAM in an earlier step ([See guide for configuring Chiron SSL Certs](https://github.com/pivotal-federal-field-engineering/dark-chiron-aws/tree/master/certs "Chiron SSL Certs")):
-This will be a parameter value feeding the CloudFormation script that will be executed next.)
-You will need the value of ____ in the next step. Save it to blah blah, or show pipe command to save.txt or somesuch.
+    <pre class="terminal">
+    "ServerCertificateMetadata": {
+        "ServerCertificateName": "cf-elb-cert",
+        "Arn": "arn:aws:iam::441480984532:server-certificate/cf-elb-cert",
+        "Path": "/",
+        "UploadDate": "2015-10-19T20:13:20Z",
+        "ServerCertificateId": "ASCAI3PBFRUCI4T77A43K",
+        "Expiration": "2016-10-18T18:03:30Z"
+    },
+    </pre>
 
-<!-- Stopped reading & editing here for the day. Still need to deal with server cert from above, though -->
+
+===================TAIL
+
 <!-- This page http://docs.pivotal.io/pivotalcf/customizing/cloudform-template.html needs to be my friend. -->
 
-```
-aws iam get-server-certificate --server-certificate-name cf-elb-cert
-
-```
 
 Example: arn:aws:iam::441480984532:server-certificate/cf-elb-cert
 

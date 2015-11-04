@@ -1,0 +1,137 @@
+---
+title: Bootstrap AWS Environment
+---
+
+When you create an AWS stack using the PCF template, the CloudFormation template for Pivotal Cloud Foundry defines the set of necessary AWS resources and properties required to deploy PCF on AWS.
+
+From an environment with AWS CLI tools and the requisite credentials:
+
+## <a id='upload-bootstrap-artifacts'></a>Step 1: Upload PCF Offline CloudFormation Bootstrap Artifacts ##
+
+1. Upload the PCF CloudFormation Template (what is this thing called?) using the AWS CLI's `cp` command.
+<pre class="terminal">
+    $ aws s3 cp ~/Downloads/pcf.json s3://cf-software-vi/Bootstrap/pcf.json
+</pre>
+
+1. Add an entry in the second `.json` thing for the first `.json` thing (what is it called? It looks like the first thing is an 'Ops Manager Template'), as follows.
+<pre>
+    "08OpsManagerTemplate": {
+      "Type": "String",
+      "Default": "https://s3.amazonaws.com/cf-software-vi/Bootstrap/pcf.json",
+      "Description": "S3-LOCATION-FOR-CLOUDFORMATION-TEMPLATE"
+    }
+</pre>
+
+
+1. Upload this other thing.
+<pre class="terminal">
+    $ aws s3 cp ~/Downloads/pcf\_cloudformation.json s3://cf-software-vi/Bootstrap/pcf\_cloudformation.json
+</pre>
+
+1. Copy and modify the PCF Offline cloudformation bootstrap artifacts: [pcf.json](offsite-install-copy-pcf.json) and [pcf_cloudformation.json](offsite-install-copy-pcf-cloudformaiton.json).
+    <pre class="terminal">
+    $ aws s3 cp ~/Downloads/pcf.json s3://cf-software-vi/Bootstrap/pcf.json
+    $ aws s3 cp ~/Downloads/pcf\_cloudformation.json s3://cf-software-vi/Bootstrap/pcf\_cloudformation.json
+    </pre>
+    <p class="note"><strong>Important</strong>: The pcf_cloudformation.json must reference the pcf.json (Ops Manager) template in an S3 bucket accessible from your environment, as seen below:</p>
+    <pre>
+    "08OpsManagerTemplate": {
+      "Type": "String",
+      "Default": "https://s3.amazonaws.com/cf-software-vi/Bootstrap/pcf.json",
+      "Description": "S3-LOCATION-FOR-CLOUDFORMATION-TEMPLATE"
+    }
+    </pre>
+1. Generate server certificate private key, CSR, and approve using existing CA, for example:
+
+  - Use `openssl genrsa` with the `-out` flag to generate a new 2048-bit private key, for example, named `privkey.pem`:
+<pre class="terminal">  $ openssl genrsa -out privkey.pem 2048</pre>
+
+  - Use `openssl req` to generate a new certificate signing request based on your private key.
+<pre class="terminal">  $ openssl req -new -key privkey.pem -out server.csr</pre>
+
+  - Use the command below to create a self-signed certificate, `server.crt`, from the existing private key, `privkey.pem` and the existing certificate signing request, `server.csr`: 
+<pre class="terminal">  $ openssl x509 -req -days 365 -in server.csr -signkey privkey.pem -out server.crt</pre>
+
+1. Upload server cert, private key and CA certificate for chaining:
+
+    <pre class="terminal">
+    $ cd /path/certificates
+    $ aws iam upload-server-certificate --server-certificate-name cf-elb-cert --certificate-body file://cf-certificate.pem --private-key file://cf-private.pem --certificate-chain file://ca-cert.pem
+    </pre>
+
+1. Test your server certificate with the AWS IAM API:
+<pre class="terminal">
+$ aws iam get-server-certificate --server-certificate-name cf-elb-cert
+</pre>
+
+1. The output below shows an example of a successful result. Save the value of the `Arn` field, as it will be required as a specified parameter in the pcf_cloudformation.json.
+
+    <pre class="terminal">
+    "ServerCertificateMetadata": {
+        "ServerCertificateName": "cf-elb-cert",
+        "Arn": "arn:aws:iam::441480984532:server-certificate/cf-elb-cert",
+        "Path": "/",
+        "UploadDate": "2015-10-19T20:13:20Z",
+        "ServerCertificateId": "ASCAI3PBFRUCI4T77A43K",
+        "Expiration": "2016-10-18T18:03:30Z"
+    },
+    </pre>
+
+
+Example: arn:aws:iam::441480984532:server-certificate/cf-elb-cert
+
+- Log in to AWS Console and create new CloudFormation stack using template uploaded to S3.
+
+Specify an Amazon S3 template URL: https://s3.amazonaws.com/cf-software-vi/Bootstrap/pcf_cloudformation.json
+
+In the Specify Parameters page, complete the following fields:
+
+* 01NATKeyPair: Use the drop-down menu to select the "bosh" key pair.
+* 02NATInstanceType: Do not change this value.
+* 03OpsManagerIngress: Do not change this value.
+* 04RdsDBName: Do not change this value.
+* 05RdsUserName: Enter a user name for the RDS database.  Default: "admin".
+    Note: Do not enter the user name rdsadmin. AWS reserves the rdsadmin user account for internal database instance management.
+* 06RdsPassword: Enter a password for the RDS database.  Must be 8 characters long.
+* 07SSLCertificateARN: Enter your uploaded SSL Certificate ARN.  See above.
+* 08OpsManagerTemplate: Use the default template link (modified above).
+
+- [ ] Run new stack and confirm success.
+
+AWS creates the infrastructure needed to deploy PCF to AWS.  In EC2 dashboard, you should see a NAT instance running in the pcf-vpc.
+
+### Create Instance Profile
+In the Phase 2 customer deployment, we will not be able to use permanent credentials for managing AWS resources on behalf of PCF.  Thus, we'll need to use instance profiles.  An instance profile is a container for an IAM role that you can use to pass role information to an EC2 instance when the instance starts.  Follow along with the [Amazon Documentation](http://docs.aws.amazon.com/codedeploy/latest/userguide/how-to-create-iam-instance-profile.html "AWS Documentation") and the steps below from an environment with the AWS CLI tools installed and the requisite credentials to create an instance profile.
+
+- [ ] Copy the [PCF Instance Profile Configuration Files](https://github.com/pivotal-federal-field-engineering/dark-chiron-aws/tree/master/config/aws-instance-profile "Instance Profile Config Scripts"): director_policy.json  and director_trust.json
+.
+
+- [ ] Create IAM role "director" referencing the policy document copied from above.
+
+```
+aws iam create-role --role-name director --assume-role-policy-document file://director_trust.json
+```
+
+- [ ] Add new role policy for director IAM role created above.  The director role will be granted EC2 and load balancing permissions to install and maintain PCF.
+
+```
+aws iam put-role-policy --role-name director --policy-name Director-EC2-Permissions --policy-document file://director_policy.json
+```
+
+- [ ] Create "director" instance profile.
+
+```
+aws iam create-instance-profile --instance-profile-name director
+```
+
+- [ ] Attach IAM role created above to instance profile.
+
+```
+aws iam add-role-to-instance-profile --instance-profile-name director --role-name director
+```
+
+We will associate this instance profile with the Mega Jumpbox and the Bosh Director to manipulate IaaS constructs to run PCF.  You can confirm the successful creation of the instance profile using the following IAM function:
+
+```
+aws iam list-instance-profiles
+```

@@ -1,33 +1,31 @@
 ---
-title: Deploy Mega Jumpbox
+title: Deploy Jumpbox
 ---
 
-Follow the steps below to deploy the Mega Jumpbox into the Chiron environment.  The Mega Jumpbox will be exposed to as a private AMI containing all the tooling and dependencies (stemcells, releases, etc) to deploy Bosh and PCF.  Follow along with the [Pivotal Documentation](http://docs.pivotal.io/pivotalcf/customizing/cloudform-om-deploy.html "Pivotal Documentation") that deploys a public AMI of Ops Manager as a guide to deploying the Mega Jumpbox in Chiron.
+Follow the steps below to deploy the Mega Jumpbox into the Chiron environment.  The Mega Jumpbox will be exposed to as a private AMI containing all the tooling and dependencies (stemcells, releases, etc) to deploy BOSH and PCF.  Follow along with the [Pivotal Documentation](http://docs.pivotal.io/pivotalcf/customizing/cloudform-om-deploy.html "Pivotal Documentation") that deploys a public AMI of Ops Manager as a guide to deploying the Mega Jumpbox in Chiron.
 
 The starting point of this short guide is the AMI's listed on the AWS EC2 dashboard.  Filter the list of AMIs by Private images only.  You'll see one or more AMIs named like "bosh-jumpbox" followed by an identifier.  Consult the Pivotal team for the correct jumpbox to deploy.  Launching an AMI prompts a 7-step wizard:
 
-- [ ] Step 1: Choose private AMI of desired Mega Jumpbox to launch.
+1. Choose private AMI of desired Mega Jumpbox to launch.
 
+1. Instance type: m3.large (general purpose instance with 2 cpu's and 7.5 GB RAM).
 
-- [ ] Step 2: Instance type: m3.large (general purpose instance with 2 cpu's and 7.5 GB RAM).
+1. Configure Instance.  Change the following options:
+  * Network: pcf-vpc
+  * Subnet: pcf-public-subnet
+  * Auto-assign Public IP: Enable
+  * IAM role: director (see creation of instance profile above)
 
-- [ ] Step 3: Configure Instance.  Change the following options:
+1. Add Storage.  Adjust the size of Root volume to 100 GB.
 
-    * Network: pcf-vpc
-    * Subnet: pcf-public-subnet
-    * Auto-assign Public IP: Enable
-    * IAM role: director (see creation of instance profile above)
+1. Tag Instance.  Add a Name value of Mega Jumpbox.
 
-- [ ] Step 4: Add Storage.  Adjust the size of Root volume to 100 GB.
+1. Configure Security Group.  Select existing group: PcfOpsManagerSecurityGroup.
 
-- [ ] Step 5: Tag Instance.  Add a Name value of Mega Jumpbox.
-
-- [ ] Step 6: Configure Security Group.  Select existing group: PcfOpsManagerSecurityGroup.
-
-- [ ] Step 7: Launch.  Choose existing key pair: "bosh".
+1. Launch.  Choose existing key pair: "bosh".
 
 Once the instance is running, record the public DNS name of the Mega Jumpbox and SSH in as follows:
 
-```ssh
-ssh -i bosh.pem ubuntu@<public-dns-name>
-```
+<pre class='terminal'>
+	ssh -i bosh.pem ubuntu@&#60;public-dns-name>
+</pre>

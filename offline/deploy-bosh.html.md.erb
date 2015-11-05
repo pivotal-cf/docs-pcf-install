@@ -1,49 +1,41 @@
 ---
-title: Deploy Bosh Director
+title: Deploying BOSH Director
 ---
 
-Follow the steps below to deploy Bosh from the Mega Jumpbox into the Chiron environment.  Bosh will be used to deploy PCF.  Follow along with the [Bosh Documentation](http://bosh.io/docs/init-aws.html "Bosh Documentation") that initializes a Bosh environment in AWS as a guide to deploying Bosh from the Mega Jumpbox in Chiron.
+Follow the steps below to deploy BOSH from the Jumpbox into the offline environment.  BOSH will be used to deploy PCF.  Follow along with the [BOSH Documentation](http://bosh.io/docs/init-aws.html "BOSH Documentation") that initializes a BOSH environment in AWS as a guide to deploying BOSH from the Jumpbox.
 
-- [ ] Create an Elastic IP 
+1. Create an Elastic IP.
 
-- [ ] Connected as an authorized user on the Mega Jumpbox (default: ubuntu), create a bosh deployment directory on the Mega Jumpbox.
+1. Connected as an authorized user on the Jumpbox with the `default: ubuntu`, create a BOSH deployment directory on the Jumpbox.
+<pre class='terminal'>
+    $ mkdir ~/deployments
+</pre>
 
-```
-mkdir ~/deployments
-```
-
-- [ ] Copy and modify the [Bosh Deployment Manifest](https://github.com/pivotal-federal-field-engineering/deployment-manifests/blob/master/bosh/bosh.yml "Manifest"): bosh.yml into the deployment directory on the Mega Jumpbox.
-
-```
-scp -i bosh.pem bosh.yml ubuntu@<public-dns-name>:~/deployments
-```
-
+1. Copy and modify the BOSH Deployment Manifest `bosh.yml` into the deployment directory on the Jumpbox.
+<pre class='terminal'>
+	$ scp -i bosh.pem bosh.yml ubuntu@<public-dns-name>:~/deployments
+</pre>
 Modify the following parameters:
-* Elastic IP (created above)
-* Subnet-ID (pcf-public-subnet, AWS Console: VPC)
-* Security Group Name (%PcfVmsSecurityGroup%)
-* Instance Profile Name (created above)
+  * Elastic IP (created above)
+  * Subnet-ID (pcf-public-subnet, AWS Console: VPC)
+  * Security Group Name (%PcfVmsSecurityGroup%)
+  * Instance Profile Name (created above)
+1. Copy the bosh.pem file to the deployment directory on the Jumpbox.
+<pre class='terminal'>
+	$ scp -i bosh.pem bosh.pem ubuntu@&#60;public-dns-name>:~/deployments
+</pre>
 
-- [ ] Copy the bosh.pem file to the deployment directory on the Mega Jumpbox.
+1. Install BOSH.
+<pre class='terminal'>
+	$ bosh-init deploy ./bosh.yml
+</pre>
 
-```
-scp -i bosh.pem bosh.pem ubuntu@<public-dns-name>:~/deployments
-```
+1. Set BOSH Target.
+<pre class='terminal'>
+$ bosh target https:<span>/</span>/10.0.0.6:25555
+</pre>
 
-- [ ] Install Bosh:
-
-```
-bosh-init deploy ./bosh.yml
-```
-
-- [ ] Set Bosh Target
-
-```
-bosh target https://10.0.0.6:25555
-```
-
-- [ ] Confirm Bosh Status: (copy director UUID for CF deployment manifest below)
-
-```
-bosh status
-```
+1. Confirm BOSH Status: (copy **director UUID** for CF deployment manifest below).
+<pre class='terminal'>
+$ bosh status
+</pre>

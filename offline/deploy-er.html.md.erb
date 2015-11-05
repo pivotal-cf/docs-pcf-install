@@ -2,40 +2,37 @@
 title: Deploy PCF Elastic Runtime
 ---
 
-From the Mega Jumpbox, set the deployment and deploy PCF:
+From the Jumpbox, set the deployment and deploy PCF:
 
-- [ ] Set deployment:
+1. Set deployment:
+<pre class="terminal">
+$ bosh -n deployment /home/ubuntu/deployments/cf-manifest.yml
+</pre>
 
-```
-bosh -n deployment /home/ubuntu/deployments/cf-manifest.yml
-```
+1. Deploy:
+<pre class="terminal">
+$ bosh -n deploy
+</pre>
 
-- [ ] Deploy:
+1. Associate PCF Router with ELB:
+  1. In the AWS Console, navigate to the EC2 dashboard and click on **Load Balancers**.
+  1. Find the ELB named `pcf-pcf-elb` and click on the **Instances** tab.
+  1. Click on the **Edit Instances** button and select the **PCF Router** instance to add to the ELB.
+  1. Wait a moment for the health check to run and verify the instance status changes to `InService`.
 
-```
-bosh -n deploy
-``
 
-- [ ] Associate PCF Router with ELB:
+1. Run bosh utilities to confirm successful installation:
+<pre class="terminal">
+$ bosh -n vms cf-899c17563cb354672cb0
+$ bosh -n cck --report
+</pre>
 
-In the AWS Console, navigate to the EC2 dashboard and click on Load Balancers.  Find the ELB named "pcf-pcf-elb" and click on the instances tab.  Click on the Edit Instances button and select the PCF Router instance to add to the ELB.  Wait a moment for the health check to run and verify the instance status changes to "InService". 
-
-- [ ] Run bosh utilities to confirm successful installation:
-
-```
-bosh -n vms cf-899c17563cb354672cb0
-bosh -n cck --report
-```
-
-- [ ] Run bosh errands to test Elastic Runtime features:
-
-```
-bosh -n run errand push-apps-manager
-bosh -n run errand smoke-tests
-bosh -n run errand notifications
-bosh -n run errand autoscaling
-bosh -n run errand autoscaling-register-broker
-```
-
-- [ ] Connect to Pivotal App Manager in Chiron:
-From any browser, navigate to [Chiron Apps Manager](https://apps.chiron.vi-works.io/ "Chiron Apps Manager") and log in using the admin credentials specified in the PCF manifest.
+1. Run bosh errands to test Elastic Runtime features:
+<pre class="terminal">
+$ bosh -n run errand push-apps-manager
+$ bosh -n run errand smoke-tests
+$ bosh -n run errand notifications
+$ bosh -n run errand autoscaling
+$ bosh -n run errand autoscaling-register-broker
+</pre>
+1. Verify that you can log in to your **Apps Manager** using the admin credentials specified in the PCF manifest.

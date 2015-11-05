@@ -1,0 +1,41 @@
+---
+title: Deploying BOSH Director
+---
+
+Follow the steps below to deploy BOSH from the Jumpbox into the offline environment.  BOSH will be used to deploy PCF.  Follow along with the [BOSH Documentation](http://bosh.io/docs/init-aws.html "BOSH Documentation") that initializes a BOSH environment in AWS as a guide to deploying BOSH from the Jumpbox.
+
+1. Create an Elastic IP.
+
+1. Connected as an authorized user on the Jumpbox with the `default: ubuntu`, create a BOSH deployment directory on the Jumpbox.
+<pre class='terminal'>
+    $ mkdir ~/deployments
+</pre>
+
+1. Copy and modify the BOSH Deployment Manifest `bosh.yml` into the deployment directory on the Jumpbox.
+<pre class='terminal'>
+	$ scp -i bosh.pem bosh.yml ubuntu@<public-dns-name>:~/deployments
+</pre>
+Modify the following parameters:
+  * Elastic IP (created above)
+  * Subnet-ID (pcf-public-subnet, AWS Console: VPC)
+  * Security Group Name (%PcfVmsSecurityGroup%)
+  * Instance Profile Name (created above)
+1. Copy the bosh.pem file to the deployment directory on the Jumpbox.
+<pre class='terminal'>
+	$ scp -i bosh.pem bosh.pem ubuntu@&#60;public-dns-name>:~/deployments
+</pre>
+
+1. Install BOSH.
+<pre class='terminal'>
+	$ bosh-init deploy ./bosh.yml
+</pre>
+
+1. Set BOSH Target.
+<pre class='terminal'>
+$ bosh target https:<span>/</span>/10.0.0.6:25555
+</pre>
+
+1. Confirm BOSH Status: (copy **director UUID** for CF deployment manifest below).
+<pre class='terminal'>
+$ bosh status
+</pre>

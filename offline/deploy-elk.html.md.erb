@@ -1,0 +1,48 @@
+---
+title: Deploy ELK Tile
+---
+
+From the Mega Jumpbox, upload the releases and stemcell for the ELK installation:
+
+```
+bosh -n upload release /opt/artifacts/releases/logsearch-boshrelease-23.0.0.tgz --skip-if-exists
+bosh -n upload release /opt/artifacts/releases/logsearch-for-cloudfoundry-7+dev.7.tgz --skip-if-exists
+bosh -n upload release /opt/artifacts/releases/elasticsearch-plugins-1.0.tgz --skip-if-exists
+bosh -n upload release /opt/artifacts/releases/logsearch-for-bosh-0+dev.21.tgz --skip-if-exists
+bosh -n upload stemcell /opt/artifacts/stemcells/bosh-stemcell-3026-aws-xen-ubuntu-trusty-go_agent.tgz --skip-if-exists
+```
+
+Note: the ELK tile depends on stemcell version 3026 as the latest supported/vetted version.
+
+
+- [ ] Modify the [ELK Deployment Manifest](https://github.com/pivotal-federal-field-engineering/dark-chiron-aws/tree/master/deployments/p-elk-chiron.yml "Manifest"): p-elk-chiron.yml in the deployments directory on the Mega Jumpbox to suit the environment.
+
+Configure the following parameters as necessary:
+* Director UUID (using <bosh status> above)
+* Network Cloud Properties, Subnet-ID: (pcf-private-subnet, AWS Console: VPC)
+* CloudFoundry system domain: chiron.vi-works.io 
+
+- [ ] Set deployment:
+
+```
+bosh -n deployment /home/ubuntu/workspace/dark-chiron-aws/deployments/p-elk-chiron.yml
+```
+
+- [ ] Deploy ELK:
+
+```
+bosh -n deploy
+```
+
+- [ ] Run bosh utilities to confirm successful deployment:
+
+```
+bosh -n vms p-elk-chiron
+bosh -n cck --report
+```
+
+- [ ] Run bosh errands to install kibana for ELK:
+
+```
+bosh -n run errand push-kibana
+```

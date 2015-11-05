@@ -1,0 +1,38 @@
+---
+title: Create Instance Profile
+---
+
+In the Phase 2 customer deployment, we will not be able to use permanent credentials for managing AWS resources on behalf of PCF.  Thus, we'll need to use instance profiles.  An instance profile is a container for an IAM role that you can use to pass role information to an EC2 instance when the instance starts.  Follow along with the [Amazon Documentation](http://docs.aws.amazon.com/codedeploy/latest/userguide/how-to-create-iam-instance-profile.html "AWS Documentation") and the steps below from an environment with the AWS CLI tools installed and the requisite credentials to create an instance profile.
+
+- [ ] Copy the [PCF Instance Profile Configuration Files](https://github.com/pivotal-federal-field-engineering/dark-chiron-aws/tree/master/config/aws-instance-profile "Instance Profile Config Scripts"): director_policy.json  and director_trust.json
+.
+
+- [ ] Create IAM role "director" referencing the policy document copied from above.
+
+```
+aws iam create-role --role-name director --assume-role-policy-document file://director_trust.json
+```
+
+- [ ] Add new role policy for director IAM role created above.  The director role will be granted EC2 and load balancing permissions to install and maintain PCF.
+
+```
+aws iam put-role-policy --role-name director --policy-name Director-EC2-Permissions --policy-document file://director_policy.json
+```
+
+- [ ] Create "director" instance profile.
+
+```
+aws iam create-instance-profile --instance-profile-name director
+```
+
+- [ ] Attach IAM role created above to instance profile.
+
+```
+aws iam add-role-to-instance-profile --instance-profile-name director --role-name director
+```
+
+We will associate this instance profile with the Mega Jumpbox and the Bosh Director to manipulate IaaS constructs to run PCF.  You can confirm the successful creation of the instance profile using the following IAM function:
+
+```
+aws iam list-instance-profiles
+```

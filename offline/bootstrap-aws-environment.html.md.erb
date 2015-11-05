@@ -1,0 +1,111 @@
+---
+title: Bootstrap AWS Environment
+---
+
+When you create an AWS stack using the PCF template, the CloudFormation template for Pivotal Cloud Foundry defines the set of necessary AWS resources and properties required to deploy PCF on AWS.
+
+From an environment with AWS CLI tools and the requisite credentials:
+
+## <a id='upload-bootstrap-artifacts'></a>Step 1: Upload PCF Offline CloudFormation Bootstrap Artifacts ##
+
+1. Upload the PCF CloudFormation Template using the AWS CLI's `cp` command.
+<pre class="terminal">
+    $ aws s3 cp ~/Downloads/pcf.json s3://cf-software-vi/Bootstrap/pcf.json
+</pre>
+
+1. Add an entry in the Ops Manager Cloudformation Template for the first `.json` thing (what is it called? It looks like the first thing is an 'Ops Manager Template'), as follows.
+<pre>
+    "08OpsManagerTemplate": {
+      "Type": "String",
+      "Default": "https://s3.amazonaws.com/cf-software-vi/Bootstrap/pcf.json",
+      "Description": "S3-LOCATION-FOR-CLOUDFORMATION-TEMPLATE"
+    }
+</pre>
+
+
+1. Upload this other thing.
+<pre class="terminal">
+    $ aws s3 cp ~/Downloads/pcf\_cloudformation.json s3://cf-software-vi/Bootstrap/pcf\_cloudformation.json
+</pre>
+
+1. Copy and modify the PCF Offline cloudformation bootstrap artifacts: [pcf.json](offsite-install-copy-pcf.json) and [pcf_cloudformation.json](offsite-install-copy-pcf-cloudformaiton.json).
+    <pre class="terminal">
+    $ aws s3 cp ~/Downloads/pcf.json s3://cf-software-vi/Bootstrap/pcf.json
+    $ aws s3 cp ~/Downloads/pcf\_cloudformation.json s3://cf-software-vi/Bootstrap/pcf\_cloudformation.json
+    </pre>
+    <p class="note"><strong>Important</strong>: The pcf_cloudformation.json must reference the pcf.json (Ops Manager) template in an S3 bucket accessible from your environment, as seen below:</p>
+    <pre>
+    "08OpsManagerTemplate": {
+      "Type": "String",
+      "Default": "https://s3.amazonaws.com/cf-software-vi/Bootstrap/pcf.json",
+      "Description": "S3-LOCATION-FOR-CLOUDFORMATION-TEMPLATE"
+    }
+    </pre>
+
+
+## <a id='credentials'></a>Step 2: Generate and Upload Credentials##
+
+Generate server certificate private key, CSR, and approve using existing CA.
+
+1. Use `openssl genrsa` with the `-out` flag to generate a new 2048-bit private key. Save this to a file called `privkey.pem`.
+<pre class="terminal">
+    $ openssl genrsa -out privkey.pem 2048
+</pre>
+
+1. Use `openssl req` to generate a new certificate signing request based on your private key.
+<pre class="terminal">  $ openssl req -new -key privkey.pem -out server.csr</pre>
+
+1. Run the command below to create a self-signed certificate, `server.crt`, from the existing private key, `privkey.pem` and the existing certificate signing request, `server.csr`.
+<pre class="terminal">
+    $ openssl x509 -req -days 365 -in server.csr -signkey privkey.pem -out server.crt
+</pre>
+
+1. Upload server cert, private key and CA certificate for chaining:
+<pre class="terminal">
+    $ cd /path/certificates
+    $ aws iam upload-server-certificate --server-certificate-name cf-elb-cert --certificate-body file://cf-certificate.pem --private-key file://cf-private.pem --certificate-chain file://ca-cert.pem
+</pre>
+
+1. Test your server certificate with the AWS IAM API:
+<pre class="terminal">
+    $ aws iam get-server-certificate --server-certificate-name cf-elb-cert
+</pre>
+
+The output below shows an example of a successful result. Save the value of the `Arn` field, as it will be required as a specified parameter in the pcf_cloudformation.json.
+
+<pre class="terminal">
+    "ServerCertificateMetadata": {
+        "ServerCertificateName": "cf-elb-cert",
+        "Arn": "arn:aws:iam::441480984532:server-certificate/cf-elb-cert",
+        "Path": "/",
+        "UploadDate": "2015-10-19T20:13:20Z",
+        "ServerCertificateId": "ASCAI3PBFRUCI4T77A43K",
+        "Expiration": "2016-10-18T18:03:30Z"
+    },
+</pre>
+
+
+## <a id='create-stack'></a>Step 3: Create CloudFormation Stack ##
+
+1. Log in to AWS Console.
+1. Select **CloudFormation** from the AWS Console **Services** menu.
+1. Click **Create Stack**.
+1. Select **Specify and Amazon S3 template URL**, and enter the URL for the [PCF CloudFormation Template](#upload-bootstrap-artifacts) uploaded to S3 in the step above.
+
+  In the Specify Parameters page, complete the following fields:
+
+| Key | Value |
+| --- | --- |
+| 01NATKeyPair | Use the drop-down menu to select the "bosh" key pair.|
+| 02NATInstanceType | Do not change this value.|
+| 03OpsManagerIngress | Do not change this value.|
+| 04RdsDBName | Do not change this value.|
+| 05RdsUserName | Enter a user name for the RDS database.  Default: "admin".|
+| 06RdsPassword | Enter a password for the RDS database.  Must be 8 characters long.|
+| 07SSLCertificateARN | Enter your uploaded SSL Certificate ARN.  See above.|
+| 08OpsManagerTemplate | Use the default template link (modified above).|
+
+<p class='note'><strong>Note</strong>: Do not enter the user name <code>rdsadmin</code> for <code>05RdsUserName</code>. AWS reserves the <code>rdsadmin</code> user account for internal database instance management.</p>
+
+5\. Run new stack and confirm success.
+AWS creates the infrastructure needed to deploy PCF to AWS.  In EC2 dashboard, you should see a NAT instance running in the pcf-vpc.

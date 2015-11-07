@@ -16,6 +16,18 @@ Mess it up:
 Bring the VMs back up:
 `bosh -n start mysql-partition-16a9c50e8362a5857282 0 && bosh -n start mysql-partition-16a9c50e8362a5857282 1 && bosh -n start mysql-partition-16a9c50e8362a5857282 2`
 
+Log into the first mysql VM:
+1. `bosh ssh mysql-partition-16a9c50e8362a5857282 0`
+1. Become super user using the password you've just specified: `sudo su -`
+1. Check on the status of the jobs: `monit status`
+  - `mariadb_ctrl`, `galera-healthcheck`, etc should all be `running`/`monitored`.
+
+## Common Issues
+- If you experience an error that looks something like:
+> Received disconnect from 10.0.1.19: 2: Too many authentication failures for bosh_64898ue98
+You likely have too many key identities loaded in your authentication agent. You can clear all of them using `ssh-add -D`.
+
+---
 
 First, you need to SSH into Ops Mgr.
 

@@ -1,35 +1,29 @@
 ---
 title: Migrating Apps to Diego
 ---
+This topic contains instructions for migrating apps originally deployed with  DEAs to Diego. The Diego Elastic Runtime architecture replaces the functionality of DEAs with cells.
 
-This topic contains instructions for migrating apps originally deployed with [Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) (PCF) versions prior to 1.6 to Diego, the back-end architecture for Elastic Runtime that is new to PCF 1.6.
+To upgrade Pivotal Cloud Foundry&reg; (PCF) to 1.6, see [Upgrading Elastic Runtime](../upgrading-products.html). In order to migrate your apps, your PCF deployment must be running Elastic Runtime v1.6, which includes Diego.
 
-The procedure described here does not include upgrading PCF to 1.6. See [Upgrading Elastic Runtime](../upgrading-products.html). Your PCF deployment must be running Elastic Runtime v1.6, which includes Diego, before you can migrate your apps.
+There are two options for migrating your apps to Diego. The first is simpler but results in a brief downtime interval, and the second option avoids downtime by employing Blue-Green deployment. 
 
-There are two options for migrating your apps to Diego, the first is simpler but results in a brief downtime interval. The second option avoids downtime by employing Blue-Green deployment. 
+## <a id='simple-migration'></a>Simple Migration (with Downtime)##
 
-## <a id='simple-migration'></a>Simple Migration of Apps (with Downtime)##
+This section describes the easier option for migrating apps. This migration clobbers old instances of the app running under DEA with new instances running under Diego, but results in a brief (~1 minute) downtime.
 
-### <a id='install-plugin'></a>Step 1: Install Cloud Foundry Command Line Interface (cf CLI) Plugin ###
-
-
-Use the cf CLI to install the Diego-Enabler plugin.
+1. Use the Cloud Foundry Command Line Interface (CF CLI) to install the Diego-Enabler plugin.
 <pre class='terminal'>
 $ cf add-plugin-repo CF-Community <span>http:</span>//plugins.cloudfoundry.org/
 $ cf install-plugin Diego-Enabler -r CF-Community
 </pre>
 
-### <a id='enable'></a>Step 2: Enable Diego ###
-
-Run `cf enable-diego APP-NAME` to enable diego in your app manifest.
+1. Run `cf enable-diego APP-NAME` to enable Diego in your app manifest.
 <pre class='terminal'>
-$ cf enable-diego example-app
-Diego support for example-app is set to true
+$ cf enable-diego EXAMPLE-APP
+Diego support for EXAMPLE-APP is set to true
 </pre>
 
-### <a id='push'></a>Step 3: Push Your App ###
-
-Run `cf push` to push your newly Diego-enabled app.
+1. Run `cf push` to push your newly Diego-enabled app.
 <pre class='terminal'>
 $ cf push
 Using manifest manifest.yml...
@@ -38,33 +32,51 @@ Updating app...
 
 ## <a id='blue-green-migration'></a>Migrating Apps with Blue-Green Deployment ##
 
-1. Push your application to PCF with a new name and the route for your application.  
-<pre class="terminal">$ cf push new-app</pre>
-<p class="note"><strong>Note</strong>: This new application will run on Diego, which is the default on Diego. Make sure to use the same version of your application that is currently deployed so that static assets like CSS and Javascript that may be served from your application are consistent across both versions.
+This method migrates your apps with zero downtime, by temporarily running them redundantly with both DEA and Diego. It relies on the ability to push applications with either DEAs or Diego. The default is Diego. This procedure can be rolled back with zero downtime, if necessary.
+
+### <a id="blue-green-procedure"></a>Migration Procedure
+
+1. Push your application to PCF with a new name and the route for your application. The name cannot be the same as the name of the existing application.
+<pre class="terminal">$ cf push NEW-APP</pre>
+<p class="note"><strong>Note</strong>:
+You must push the same release version of your application that is currently deployed and that you are migrating. Otherwise, static assets like CSS and Javascript that may be served from your application will not be consistent across both versions.
 </p>
 
-1. Once you have confirmed that the new application deployed to Diego is operational, map the route for your application running on the DEAs to your application running on Diego.  This mapping will result in a second route with half of your traffic going to the DEA’s app and half to Diego’s.
-<pre class="terminal">$ cf map-route new-app my-domain.com -n www</pre>
-
-1. Unmap the route from the application running on the DEAs.  This action will send all of the traffic to the application that is running on Diego.
-<pre class="terminal">$ cf unmap-route old-app my-domain.com -n www
+1. Confirm that the newly deployed application runs properly.
+<pre class="terminal">
+$ cf app NEW-APP
 </pre>
 
-1. Stop the application that is running on the DEAs. After this point, all of your traffic will be going to your app running on Diego, and the blue-green migration will be complete.  Again, verify that your application is working properly.  
-<pre class="terminal">$ cf stop old-app</pre>
+1. Run `has-diego-enabled` to check that Diego manages the new application.
+<pre class="terminal">
+$ cf has-diego-enabled NEW-APP
+</pre>
+
+1. Map the route for your application running on the DEAs to your application running on Diego.  This remapping will result in a second route which points half of your traffic to applications deployed from DEAs and half to applications from Diego.
+<pre class="terminal">$ cf map-route NEW-APP MY-DOMAIN.COM -n www</pre>
+
+1. Unmap the route from the application running on the DEAs.  This action sends all of the traffic to the application that is running on Diego.
+<pre class="terminal">$ cf unmap-route OLD-APP MY-DOMAIN.COM -n www
+</pre>
+
+1. Stop the application that is running on the DEAs. This routes all of the traffic to your app running on Diego and completes the blue-green migration.
+<pre class="terminal">$ cf stop OLD-APP</pre>
+<p class="note"><strong>Note</strong>:
+Verify that your application is still accessible and runs properly.
+</p>
 
 1. Delete the old application.
-<pre class="terminal">$ cf delete old-app</pre>
+<pre class="terminal">$ cf delete OLD-APP</pre>
 
 ### Application Rollback Procedure <a id='application-rollback'></a>
 
-If you encounter any issues, you can rollback to your application on the DEAs by starting it and reversing the route map and unmap commands.
+If needed, you can roll back to your application running on the DEAs by starting it and reversing the order of the previous `map-route` and `unmap-route` commands.
 
 1. Start the old application.
-<pre class="terminal">$ cf start old-app</pre>
+<pre class="terminal">$ cf start OLD-APP</pre>
 
 1. Map the old application to your domain.
-<pre class="terminal">$ cf map-route old-app my-domain.com -n www</pre>
+<pre class="terminal">$ cf map-route OLD-APP MY-DOMAIN.COM -n www</pre>
 
 1. Unmap the new application to your domain.
-<pre  class="terminal">$ cf unmap-route new-app my-domain.com -n www</pre>
+<pre  class="terminal">$ cf unmap-route NEW-APP MY-DOMAIN.COM -n www</pre>

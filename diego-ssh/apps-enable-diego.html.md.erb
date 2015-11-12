@@ -1,15 +1,15 @@
 ---
 title: Migrating Apps to Diego
 ---
-This topic contains instructions for migrating apps originally deployed with  DEAs to Diego. The Diego Elastic Runtime architecture replaces the functionality of DEAs with cells.
+This topic contains instructions for migrating apps originally deployed with DEAs to Diego. The Diego Elastic Runtime architecture replaces DEAs with cells.
 
 To upgrade Pivotal Cloud Foundry&reg; (PCF) to 1.6, see [Upgrading Elastic Runtime](../upgrading-products.html). In order to migrate your apps, your PCF deployment must be running Elastic Runtime v1.6, which includes Diego.
 
-There are two options for migrating your apps to Diego. The first option has fewer steps but results in a brief downtime interval. The second option avoids downtime by employing Blue-Green deployment. 
+Pivotal recommends two approaches to migrating your apps to Diego. The first migration option includes fewer steps but results in a brief downtime interval. The second option avoids downtime by employing [Blue-Green deployment](../../devguide/deploy-apps/blue-green.html). 
 
 ## <a id='migration-with-downtime'></a>Migration with Downtime##
 
-This section describes the more direct option for migrating apps. This migration clobbers old instances of the app running under DEA with new instances running under Diego, but results in a brief (~1 minute) downtime.
+The more direct option for migrating apps clobbers old instances of the app running under DEA with new instances running under Diego, but results in a brief (~1 minute) downtime.
 
 1. Use the Cloud Foundry Command Line Interface (CF CLI) to install the Diego-Enabler plugin.
 <pre class='terminal'>
@@ -32,14 +32,14 @@ Updating app...
 
 ## <a id='blue-green-migration'></a>Migrating Apps with Blue-Green Deployment ##
 
-This method migrates your apps with zero downtime, by temporarily running them redundantly with both DEA and Diego. It relies on the ability to push applications with either DEAs or Diego. The default is Diego. This procedure can be rolled back with zero downtime, if necessary.
+The blue-green deployment method migrates your apps with zero downtime, by temporarily running them redundantly with both DEA and Diego. It relies on the ability to push applications with either DEAs or Diego (the default is Diego). This procedure can be rolled back with zero downtime, if necessary.
 
 ### <a id="blue-green-procedure"></a>Migration Procedure
 
 1. Push your application to PCF with a new name and the route for your application. The name cannot be the same as the name of the existing application.
 <pre class="terminal">$ cf push NEW-APP</pre>
 <p class="note"><strong>Note</strong>:
-You must push the same release version of your application that is currently deployed and that you are migrating. Otherwise, static assets like CSS and Javascript that may be served from your application will not be consistent across both versions.
+You must push the same release version of the currently deployed application that you are migrating. Otherwise, any static assets served from your application, like CSS and Javascript, will not be consistent across both versions.
 </p>
 
 1. Confirm that the newly deployed application runs properly.

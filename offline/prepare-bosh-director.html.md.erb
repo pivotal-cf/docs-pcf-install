@@ -2,24 +2,34 @@
 title: Prepare Bosh Director for PCF Install
 ---
 
-From the offline Ops Manager, upload the releases and stemcells for the PCF installation:
+This topic describes a subset of the steps to install an [offline Pivotal Cloud Foundry&reg;](./install-pws-dark.html).
 
-```
-bosh -n upload release /opt/artifacts/releases/cf-mysql-20.tgz --skip-if-exists
-bosh -n upload release /opt/artifacts/releases/cf-208.13.tgz --skip-if-exists
-bosh -n upload release /opt/artifacts/releases/push-console-release-console-du-jour-203.tgz --skip-if-exists
-bosh -n upload release /opt/artifacts/releases/notifications-with-ui-18.tgz --skip-if-exists
-bosh -n upload release /opt/artifacts/releases/cf-autoscaling-13.tgz --skip-if-exists
-bosh -n upload stemcell /opt/artifacts/stemcells/bosh-stemcell-3094-aws-xen-ubuntu-trusty-go_agent.tgz
-```
+1. From the offline Ops Manager, upload the releases and stemcells for the PCF installation:
+<pre class="terminal">
+$ bosh -n upload release /opt/artifacts/releases/cf-mysql-20.tgz --skip-if-exists
+$ bosh -n upload release /opt/artifacts/releases/cf-208.13.tgz --skip-if-exists
+$ bosh -n upload release /opt/artifacts/releases/push-console-release-console-du-jour-203.tgz --skip-if-exists
+$ bosh -n upload release /opt/artifacts/releases/notifications-with-ui-18.tgz --skip-if-exists
+$ bosh -n upload release /opt/artifacts/releases/cf-autoscaling-13.tgz --skip-if-exists
+$ bosh -n upload stemcell /opt/artifacts/stemcells/bosh-stemcell-3094-aws-xen-ubuntu-trusty-go_agent.tgz
+</pre>
 
-- [ ] Copy and modify the [CloudFoundry Deployment Manifest](https://github.com/pivotal-federal-field-engineering/deployment-manifests/blob/master/cf/cf-manifest.yml "Manifest"): cf-manifest.yml into the deployment directory on the offline Ops Manager.
+1. Copy and modify the [CloudFoundry Deployment Manifest](https://github.com/pivotal-federal-field-engineering/deployment-manifests/blob/master/cf/cf-manifest.yml "Manifest"): cf-manifest.yml into the deployment directory on the offline Ops Manager.
+<pre class="terminal">
+$ scp -i bosh.pem cf-manifest.yml ubuntu@<public-dns-name>:~/deployments
+</pre>
 
-```
-scp -i bosh.pem cf-manifest.yml ubuntu@<public-dns-name>:~/deployments
-```
+1. Modify the following parameters:
 
-Modify the following parameters:
-* Director UUID (using <bosh status> above)
-* Network Cloud Properties, Subnet-ID: (pcf-private-subnet, AWS Console: VPC)
-* DNS settings.  Domain: chiron.vi-works.io.  Configure URLs (except Support) to use this domain.
+    1. Director UUID (using <bosh status> above)
+
+    1. Network Cloud Properties, Subnet-ID: (pcf-private-subnet, AWS Console: VPC)
+
+    1. DNS settings.  Domain: chiron.vi-works.io.  Configure URLs (except Support) to use this domain.
+
+---
+
+Continue the installation by [Deploying PCF Elastic Runtime](./deploy-er.html).
+
+
+Return to the overview of [Offline Pivotal Cloud Foundry&reg;](./install-pws-dark.html).

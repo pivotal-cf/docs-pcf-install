@@ -1,6 +1,40 @@
 ---
-title: Enterprise Services in an Offline Environment
+title: Enhanced Security Details 
 ---
+
+## <a id="instance-profiles"></a> Instance Profiles
+
+In the Phase 2 customer deployment, we will not be able to use permanent credentials for managing AWS resources on behalf of Pivotal Cloud Foundry&reg; (PCF).  Thus, we'll need to use instance profiles.  An instance profile is a container for an IAM role that you can use to pass role information to an EC2 instance when the instance starts.  Follow along with the [Amazon Documentation](http://docs.aws.amazon.com/codedeploy/latest/userguide/how-to-create-iam-instance-profile.html "AWS Documentation") and the steps below from an environment with the AWS CLI tools installed and the requisite credentials to create an instance profile.
+
+1. Copy the [PCF Instance Profile Configuration Files](https://github.com/pivotal-federal-field-engineering/dark-chiron-aws/tree/master/config/aws-instance-profile "Instance Profile Config Scripts"): director_policy.json  and director_trust.json
+.
+
+1. Create IAM role "director" referencing the policy document copied from above.
+<pre class="terminal">
+$ aws iam create-role --role-name director --assume-role-policy-document file://director_trust.json
+</pre>
+
+1. Add new role policy for director IAM role created above.  The director role will be granted EC2 and load balancing permissions to install and maintain PCF.
+<pre class="terminal">
+$ aws iam put-role-policy --role-name director --policy-name Director-EC2-Permissions --policy-document file://director_policy.json
+</pre>
+
+1. Create "director" instance profile.
+<pre class="terminal">
+$ aws iam create-instance-profile --instance-profile-name director
+</pre>
+
+1. Attach IAM role created above to instance profile.
+<pre class="terminal">
+$ aws iam add-role-to-instance-profile --instance-profile-name director --role-name director
+</pre>
+
+You can associate this instance profile with the offline Ops Manager and the Bosh Director to manipulate infrasturcture constructs to run PCF.  Confirm the successful creation of the instance profile using the following IAM function:
+<pre class="terminal">
+$ aws iam list-instance-profiles
+</pre>
+
+## <a id="id"></a>Enterprise Services in an Offline Environment
 
 <% project_name = "Pivotal Cloud Foundry&reg; (PCF) Offline Ops Manager" %>
 
@@ -8,8 +42,7 @@ The <%= project_name %> release contains everything needed to get BOSH and Cloud
 
 This topic describes the components beyond the PCF platform which may be typical of an offline environment.
 
-
-## <a id='directory'></a>Directory Services
+### <a id='directory'></a>Directory Services
 	
 <table>
 	<tr>
@@ -45,7 +78,7 @@ This topic describes the components beyond the PCF platform which may be typical
 	</tr>
 </table>
 
-## <a id='dns'></a> Domain Name System
+### <a id='dns'></a> Domain Name System
 
 <p class='note'>
 	<strong>Note</strong>: 
@@ -95,7 +128,7 @@ This topic describes the components beyond the PCF platform which may be typical
 	</tr>
 </table> 
  
-## <a id='ca'></a> Certificate Authority
+### <a id='ca'></a> Certificate Authority
 
 <table>
 	<tr>
@@ -118,7 +151,7 @@ This topic describes the components beyond the PCF platform which may be typical
 	</tr>
 </table>
 
-## <a id='dto'></a> DTO Box
+### <a id='dto'></a> DTO Box
 
 <table>
 

@@ -14,6 +14,10 @@ The procedure described here will restore a running <%= vars.product_full %> dep
 
 <p class='note'><strong>Note</strong>: Pivotal recommends that you export your installation settings before importing from a backup. See <a href='./backup-pcf.html#export'>Export Installation Settings</a>.</p>
 
+**Import installation settings** imports the settings and assets of an existing
+PCF installation.
+Importing an installation overwrites any existing installation.
+
 1. From the Product Installation Dashboard, click the gear icon and select **Import installation settings**.
 
 1. Browse to and select a PCF installation file.
@@ -23,10 +27,6 @@ The procedure described here will restore a running <%= vars.product_full %> dep
     <%= image_tag("import-installation-file.png") %>
 
 1. Click **Import**.
-
-**Import installation settings** imports the settings and assets of an existing
-PCF installation.
-Importing an installation overwrites any existing installation.
 
 ## <a id='manifest'></a>Download the BOSH Deployment Manifest ##
 <%= partial 'download_bosh_manifest' %>
@@ -81,7 +81,7 @@ $ root@10.85.52.101:~# /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 
 <pre class='terminal'>
 drop schema public cascade;
 create schema public;
-\q;
+\q
 </pre>
 
 1. Exit the UAA database VM.
@@ -173,7 +173,7 @@ Use the Cloud Controller database password and IP address to restore the Cloud C
 
 1. Use `scp` to send the Cloud Controller database backup file to the Cloud Controller database VM.
 <pre class='terminal'>
-    $ scp ccdb.sql vcap@YOUR-CCDB-VM-IP-ADDRESS
+    $ scp ccdb.sql vcap@YOUR-CCDB-VM-IP-ADDRESS:
 </pre>
 
 1. SSH into the Cloud Controller database VM.
@@ -198,13 +198,13 @@ $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 ccdb < ccdb.sql
 </pre>
 
 
-### <a id='restore-console'></a>Restore the Console Database from its backup state
+### <a id='restore-console'></a>Restore the Apps Manager Database from its backup state
 
-1. Use the Console database password and IP address to restore the Cloud Controller database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+1. Use the Apps Manager Database password and IP address to restore the Cloud Controller database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
 
 1. Use `scp` to copy the database backup file to the UUA database VM.
 <pre class='terminal'>
-$ scp console.sql vcap@YOUR-CONSOLE-DB-VM-IP-ADDRESS
+$ scp console.sql vcap@YOUR-CONSOLE-DB-VM-IP-ADDRESS:
 </pre>
 
 1. SSH into the UUA database VM.
@@ -228,11 +228,9 @@ console=# create schema public;
 $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 console < console.sql
 </pre>
 
-### <a id='restore-mysql-dev'></a>Restore Pivotal MySQL Dev
+### <a id='restore-mysql-dev'></a>Restore MySQL Database
 
-<p class='note'><strong>Note</strong>: Only follow these steps if you have installed the Pivotal MySQL Dev product tile.</p>
-
-1. Use the Pivotal MySQL Dev database password and IP address to restore the Cloud Controller database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+1. Use the MySQL password and IP address to restore the MySQL database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
 <pre class='terminal'>
   mysql -h YOUR-MYSQL-SERVER-IP -u root -p < user_databases.sql
 </pre>

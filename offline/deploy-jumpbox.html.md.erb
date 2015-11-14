@@ -1,0 +1,36 @@
+---
+title: Deploy Offline Ops Manager
+---
+
+This topic describes a subset of the steps to install an [offline Pivotal Cloud Foundry&reg;](./install-pws-dark.html).
+
+Specifically, this section describes how to deploy the available jumpbox as an offline Ops Manager to your environment. The jumpbox will be exposed as a private AMI containing all the tooling and dependencies including stemcells, releases, and manifests, to deploy BOSH and Pivotal Cloud Foundry&reg;. 
+
+1. Begin at your AWS **EC2** dashboard and filter the list of AMIs by **Private Images Only**. You will see one or more AMIs named `bosh-jumpbox` followed by an alpha-numeric identifier.  Consult the Pivotal team for the correct jumpbox to deploy.  
+
+1. Select the appropriate jumpbox and click **Launch** to begin launching an AMI with the 7-step wizard as described below.
+  1. Choose private AMI of desired offline Ops Manager to launch.
+  1. Instance type: m3.large 
+<p class="note"><strong>Note</strong>: The general purpose `m3.large` represents 2 CPUs and 7.5 GB RAM.</p>
+  1. Configure Instance. Modify the following options:
+      1. Network: **pcf-vpc**
+      1. Subnet: **pcf-public-subnet**
+      1. Auto-assign Public IP: **Enable**
+      1. IAM role: **Director** 
+
+  1. Add Storage.  Adjust the size of Root volume to `100 GB`.
+  1. Tag Instance.  Add a Name value of offline Ops Manager.
+  1. Configure Security Group.  Select existing group: `PcfOpsManagerSecurityGroup`.
+  1. Launch with existing key pair: `jumpbox`.
+
+1. Once the instance is running, record the public DNS name of the offline Ops Manager and SSH in as follows:
+
+<pre class='terminal'>
+ $ ssh -i bosh.pem ubuntu@&#60;public-dns-name>
+</pre>
+
+---
+
+Continue the installation by [Deploying Bosh Director](./deploy-bosh.html).
+
+Return to the overview of [Offline Pivotal Cloud Foundry&reg;](./install-pws-dark.html).

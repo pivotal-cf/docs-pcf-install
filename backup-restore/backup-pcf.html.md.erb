@@ -189,16 +189,26 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
       port:
     ```
 
-1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record NFS Server credentials.
+1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the NFS Server credentials.
 
     <%= image_tag("nfs-creds.png") %>
 
-1. SSH into NFS server VM using NFS Server and create a TAR file:
+1. SSH into the NFS server VM and create a TAR file:
     <pre class='terminal'>
         $ ssh vcap@10.0.0.10 'cd /var/vcap/store && tar cz shared' > nfs.tar.gz
     </pre>
     <p class="note"><strong>Note</strong>: The TAR file that you create to back up NFS server might be large. To estimate the size of the TAR file before you create it, run the following command:
     <code class=''>tar -cf - /dir/to/archive/ | wc -c</code></p>
+
+1. Run `scp` to copy the TAR file to the BOSH Director VM. The BOSH Director IP is a public address, and as such, this step is necessary before you copy the TAR file locally. 
+<pre class='terminal'>
+    $ scp vcap@10.0.0.10:nfs.tar.gz \
+      vcap@10.0.0.03:/nfs.tar.gz
+
+1. Run `scp` to copy the TAR file to your local machine.
+<pre class='terminal'>
+    $ scp vcap@10.0.0.10:nfs.tar.gz
+</pre>
 
 ### <a id='backup-mysql'></a>Back Up Pivotal MySQL Server ###
 

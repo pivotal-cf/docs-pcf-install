@@ -1,0 +1,504 @@
+---
+title: Manually Configuring AWS for PCF
+---
+
+This topic describes how to manually configure the AWS components that you need to run <a href="https://network.pivotal.io/products/pivotal-cf">Pivotal Cloud Foundry</a> (PCF) on Amazon Web Services (AWS).
+
+***<p class="tip">CAUTION: Pivotal strongly recommends installing Pivotal Cloud Foundry using AWS CloudFormation, as described in [Installing Pivotal Cloud Foundry&reg; on AWS](./cloudform.html), rather than configuring AWS manually as documented here.</p>***
+
+<p class="note"><strong>Note</strong>: PCF does not support the eu-central-1 (Frankfurt) region because of limitations in Amazon's S3 signature API.</p>
+
+<p class="note"><strong>Note</strong>: PCF for AWS functionality currently does not support the Amazon EC2 Auto Recovery feature. Do not enable this feature for any of your instances.</p>
+
+<p class="note"><strong>Note</strong>: File a ticket with Amazon to ensure that your account can launch more than the default 20 instances. In the ticket, ask for a limit of <strong>50 t2.micro</strong> instances and <strong>20 c4.large</strong> instances in the region you are using. You can check the limits on your account by visiting the EC2 Dashboard on the AWS console and clicking <strong>Limits</strong> on the left navigation.</p>
+
+##<a id='overview'></a> Overview of Amazon Objects to Create ##
+
+The following list describes the objects that you need to create using the AWS console. Complete the steps in order. For more detailed information about a step, click the **Details** link.
+
+<br>
+<dl>
+ <dt><strong>Step 1: S3 Buckets for Ops Manager and Elastic Runtime</strong></dt><dd><strong>Dashboard: S3</strong></dd><dd>OPS\_MANAGER\_S3\_BUCKET</dd>  <dd>ELASTIC\_RUNTIME\_S3\_BUCKET</dd><dd>Must be empty when you install or reinstall PCF.</dd><br>
+
+ <dt><strong>Step 2: IAM User for PCF</strong></dt><dd><strong>Dashboard: Identity & Access Management</strong></dd><dd>Name: pcf-user</dd><dd><a href="./policy-doc.html">Policy document</a></dd><dd><a href="#pcfaws-iam-user">Details</a><br></dd><br>
+
+ <dt><strong>Step 3: Key Pair</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Name: pcf-user</dd><dd>Refer to the <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html">AWS Documentation</a> to add the private key locally.</dd><br>
+
+ <dt><strong>Step 4: VPC (Public and Private Subnets)</strong></dt><dd><strong>Dashboard: VPC</strong></dd>
+    <dd>IP CIDR block: 10.0.0.0/16</dd>
+    <dd>Public subnet: 10.0.0.0/24, public-az1</dd>
+    <dd>Availability Zones: Same zone for both subnets </dd>
+    <dd>Private subnet: 10.0.16.0/20, pcf-private-az1 </dd>
+    <dd>NAT Instance type: m1.small </dd>
+	<dd>Key Pair name: pcf </dd>
+    <dd>Enable DNS hostnames: Yes </dd>
+    <dd>Hardware tenancy: Default</dd>
+    <dd><a href="#pcfaws-vpc">Details</a></dd><br>
+
+ <dt><strong>Step 5: Security Group for Ops Manager</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Name: OpsManager</dd><dd>Source: My IP</dd><dd>HTTP, Port 80</dd><dd>HTTPS, Port 443</dd><dd>SSH, Port 22</dd><dd>BOSH Agent, Port 6868</dd><dd>BOSH Director, Port 25555</dd><dd><a href="#pcfaws-om-secgrp">Details</a></dd><br>
+
+ <dt><strong>Step 6: Security Group for PCF VMs</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Name: pcfVMs</dd><dd>Source: Custom IP, 10.0.0.0/16</dd><dd>All Traffic (0 - 65535)</dd><dd><a href="#pcfaws-om-ersecgrp">Details</a></dd><br>
+
+ <dt><strong>Step 7: Security Group for the ELB</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Name: PCF\_ELB\_SecurityGroup</dd><dd>Source: Anywhere, 0.0.0.0/0</dd><dd>Custom TCP rule, Port 4443</dd><dd>HTTP, Port 80</dd><dd>HTTPS, Port 443</dd><dd><a href="#pcfaws-om-elbsecgrp">Details</a></dd><br>
+
+<dt><strong>Step 8: Security Group for the Outbound NAT</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Name: OutboundNAT</dd><dd>Source: Custom IP, 10.0.0.0/16</dd><dd>All Traffic (0 - 65535)</dd><dd><a href="#pcfaws-om-natsecgrp">Details</a></dd><br>
+
+<dt><strong>Step 9: Security Group for MySQL</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Name: MySQL</dd><dd>Source: Custom IP, 10.0.0.0/16</dd><dd>MySQL, Port 3306</dd><dd><a href="#pcfaws-om-mysqlsecgrp">Details</a></dd><br>
+
+<dt><strong>Step 10: Launch an Ops Manager AMI</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Find the AMI ID in the <em>Ops Manager for AWS</em> PDF on <a href="https://network.pivotal.io/products/pivotal-cf">Pivotal Network</a>.</dd><dd><a href="#pcfaws-om-ami">Details</a></dd><br>
+
+<dt><strong>Step 11: Load Balancer</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Name: pcf-aws-lb</dd><dd>LB Inside: pcf-vpc</dd><dd>Selected Subnet: public-az1</dd><dd>Security Group: PCF\_ELB\_SecurityGroup</dd><dd>Health Check: TCP Port 80</dd><dd>Instances: None</dd><dd><a href="#pcfaws-lb">Details</a></dd><br>
+
+<dt><strong>Step 12: Wildcard DNS</strong></dt><dd><strong>Dashboard: N/A</strong></dd><dd>CNAME Host: *</dd><dd>Points to: pcf-aws-lb URL</dd><dd><a href="#pcfaws-cname">Details</a></dd><br>
+
+<dt><strong>Step 13: Secure the NAT Instance</strong></dt><dd><strong>Dashboard: EC2</strong></dd><dd>Name: OutboundNAT</dd><dd>Assign the NAT instance to the OutboundNAT security group.<dd><a href="#pcfaws-nat">Details</a></dd><br>
+
+<dt><strong>Step 14: Subnets for RDS</strong></dt><dd><strong>Dashboard: VPC</strong></dd><dd>rds-1 (region A)</dd><dd>rds-2 (region B)</dd><dd><a href="#pcfaws-rds-subnets">Details</a></dd><br>
+
+<dt><strong>Step 15: RDS Subnet Group</strong></dt><dd><strong>Dashboard: RDS</strong></dd><dd>Name: PCF_RDSGroup</dd><dd><a href="#pcfaws-rds-subnet-group">Details</a></dd><br>
+
+<dt><strong>Step 16: MySQL Database using AWS RDS</strong></dt><dd><strong>Dashboard: VPC</strong></dd><dd>Name: bosh</dd>
+<dd>DB Instance Class: db.m3.large - 2 vCPU, 7.5 GiB RAM</dd>
+<dd>Multi-AZ Deployment: Yes</dd>
+<dd>Allocated Storage: 100 GB</dd>
+<dd>DB Instance Identifier: pcf-bosh</dd>
+<dd>VPC: pcf-vpc</dd>
+<dd>Subnet Group: PCF_RDSGroup</dd>
+<dd>Publicly Accessible: No</dd>
+<dd>VPC Security Groups: MySQL</dd>
+<dd>Database Name: bosh</dd>
+<dd><a href="#pcfaws-mysql-rds">Details</a></dd>
+
+</dl>
+
+[Next Step: Configure Ops Manager Director for AWS](./pcf-aws-om-config.html)
+
+<a id='pcfaws-iam-user'></a>
+
+##<a id='details'></a>Detailed Instructions ##
+
+The following section contains detailed instructions for completing the steps listed above.
+
+### Create an IAM User for PCF ###
+
+You must create an Amazon Identity and Access Management user (IAM) with the minimal permissions necessary to run and install PCF.
+
+1. Log in to your AWS account.
+1. Select **Identity & Access Management** to access the IAM Dashboard.
+1. Select **Users>Create New Users**.
+1. Enter a user name, such as `pcf-user`.
+
+    <%= image_tag("pcfaws/aws_iam_username.png") %>
+
+
+1. Ensure that the **Generate an access key for each user** checkbox is selected.
+1. Click **Create**.
+1. Click **Download Credentials** to download the user security credentials.
+
+    <p class="note"><strong>Note</strong>: The <code>credentials.csv</code> contains the IDs for your user security access key and secret access key. Be sure to keep the <code>credentials.csv</code> file for your currently active key pairs in a secure directory.</p>
+
+1. Click **Close**.
+1. On the User dashboard, click the user name to access the user details page.
+
+    <%= image_tag("pcfaws/aws_iam_select_pcfuser.png") %>
+
+1. In the **Inline Policies** region, click the down arrow to display the inline policies. Click the **click here** link to create a new policy.
+
+    <%= image_tag("pcfaws/aws_iam_add_policy_cropd.png") %>
+
+
+1. On the Set Permissions page, click **Custom Policy** and click **Select**.
+
+    <%= image_tag("pcfaws/aws_iam_custom_policy.png") %>
+
+1. On the Review Policy page, enter `pcf-iam-policy` in **Policy Name**.
+
+1. Copy and paste the policy document referenced in [this topic](./policy-doc.html) in the **Policy Document** field.
+
+1. Ensure that the **Use autoformatting for policy editing** checkbox is selected.
+
+1. Click **Apply Policy** and review. The Inline Policies region now displays a list of available policies and actions.
+
+<a id='pcfaws-vpc'></a>
+### Create a VPC ###
+
+1. Navigate to the VPC Dashboard.
+1. Click **Start VPC Wizard**.
+
+    <%= image_tag("pcfaws/pcf_aws_vpc_wizard.png") %>
+
+1. Select **VPC with Public and Private Subnets** and click **Select**.
+
+    <%= image_tag("pcfaws/pcf_aws_vpc_config.png") %>
+
+1. Specify the following details for your VPC:
+    * **IP CIDR block**: Enter `10.0.0.0/16`.
+    * Enter a VPC name.
+    * **Public subnet**: Enter `10.0.0.0/24`.
+    * Set both **Availability Zone** fields to an available zone within the region you have selected. You must set both subnets to the same AZ, such as **us-east-1a**.
+    * **Public subnet name**: Enter `public-az1`.
+    * **Private subnet**: Enter `10.0.16.0/20`.
+    * **Private subnet name**: Enter `pcf-private-az1`.
+    * Under **Specify the details of your NAT instance**, set the **Instance type** to **m1.small**.
+    * Select the `pcf` SSH key you created for **Key Pair name**.
+    * **Enable DNS hostnames**: Click `Yes`.
+    * **Hardware tenancy**: Select `Default`.
+    * Click **Create VPC**.
+
+<a id='pcfaws-om-secgrp'></a>
+### Configure a Security Group for Ops Manager ###
+
+1. Return to the EC2 Dashboard.
+1. Select **Security Groups>Create Security Group**.
+1. Enter a security group name and description: `OpsManager`.
+1. Select the VPC to which to deploy Ops Manager.
+1. Click the **Inbound** tab and add rules according to the table below.
+
+    <p class="note"><strong>Note</strong>: You may relax the IP restrictions after setting the password for OpsManager. Pivotal recommends limiting access to Ops Manager to IP ranges within your organization.</p>
+
+    <table border="1" class="nice" >
+<tr>
+  <th><strong>Type </strong></th>
+  <th><strong>Protocol</strong></th>
+  <th><strong>Port Range</strong></th>
+  <th><strong>Source</strong></th>
+</tr>
+<tr>
+  <td>HTTP</td>
+  <td>TCP</td>
+  <td>80</td>
+  <td>My IP</td>
+</tr>
+<tr>
+  <td>HTTPS</td>
+  <td>TCP</td>
+  <td>443</td>
+  <td>My IP</td>
+</tr>
+<tr>
+  <td>SSH</td>
+  <td>TCP</td>
+  <td>22</td>
+  <td>My IP</td>
+</tr>
+<tr>
+  <td>BOSH Agent</td>
+  <td>TCP</td>
+  <td>6868</td>
+  <td>10.0.0.0/16</td>
+</tr>
+<tr>
+  <td>BOSH Director</td>
+  <td>TCP</td>
+  <td>25555</td>
+  <td>10.0.0.0/16</td>
+</tr>
+</table>
+
+1. Click **Create**.
+
+<a id='pcfaws-om-ersecgrp'></a>
+### Configure a Security Group for PCF VMs ###
+
+1. On the EC2 Dashboard, select **Security Groups>Create Security Group**.
+1. Enter a security group name and description: `pcfVMs`.
+1. Select the VPC to which to deploy the PCF VMs.
+1. Click the **Inbound** tab and add rules for all traffic from your public and private subnets to your private subnet, as the table and image show.
+    This rule configuration does the following:
+    * Enables BOSH to deploy ERS and other services.
+    * Enables application VMs to communicate through the router.
+    * Allows the load balancer to send traffic to Elastic Runtime.
+
+    <table border="1" class="nice" >
+<tr>
+  <th><strong>Type </strong></th>
+  <th><strong>Protocol</strong></th>
+  <th><strong>Port Range</strong></th>
+  <th colspan='2'><strong>Source</strong></th>
+</tr>
+<tr>
+  <td>All traffic</td>
+  <td>All</td>
+  <td>0 - 65535</td>
+  <td>Custom IP</td>
+  <td>10.0.0.0/16</td>
+</tr>
+</table>
+
+1. Click **Create**.
+
+    <%= image_tag("pcfaws/pcf_aws_secgrp_er.png") %>
+
+
+<a id='pcfaws-om-elbsecgrp'></a>
+### Configure a Security Group for the Elastic Load Balancer ###
+
+1. On the EC2 Dashboard, select **Security Groups>Create Security Group**.
+1. Enter a security group name and description: `PCF_ELB_SecurityGroup`.
+1. Select the VPC to which to deploy the ELB.
+1. Click the **Inbound** tab and add rules to allow traffic to ports 80, 443, and 4443 from 0.0.0.0/0, as the table and image show.
+
+    <p class="note"><strong>Note</strong>: You can change the 0.0.0.0/0 to be more restrictive if you want finer control over what can reach the Elastic Runtime. This security group governs external access to the Elastic Runtime from applications such as the cf CLI and application URLs.</p>
+
+    <table border="1" class="nice" >
+<tr>
+  <th><strong>Type </strong></th>
+  <th><strong>Protocol</strong></th>
+  <th><strong>Port Range</strong></th>
+  <th colspan='2'><strong>Source</strong></th>
+</tr>
+<tr>
+  <td>Custom TCP rule</td>
+  <td>TCP</td>
+  <td>4443</td>
+  <td>Anywhere</td>
+  <td>0.0.0.0/0</td>
+</tr>
+<tr>
+  <td>HTTP</td>
+  <td>TCP</td>
+  <td>80</td>
+  <td>Anywhere</td>
+  <td>0.0.0.0/0</td>
+</tr>
+<tr>
+  <td>HTTPS</td>
+  <td>TCP</td>
+  <td>443</td>
+  <td>Anywhere</td>
+  <td>0.0.0.0/0</td>
+</tr>
+</table>
+
+1. Click **Create**.
+
+    <%= image_tag("pcfaws/pcf_aws_secgrp_elb.png") %>
+
+<a id='pcfaws-om-natsecgrp'></a>
+### Configure a Security Group for the Outbound NAT ###
+
+1. On the EC2 Dashboard, select **Security Groups>Create Security Group**.
+1. Enter a security group name and description: `OutboundNAT`.
+1. Select the VPC to which to deploy the Outbound NAT.
+1. Click the **Inbound** tab and add a rule to allow all traffic from your VPCs, as the table and image show.
+
+    <table border="1" class="nice" >
+<tr>
+  <th><strong>Type </strong></th>
+  <th><strong>Protocol</strong></th>
+  <th><strong>Port Range</strong></th>
+  <th colspan='2'><strong>Source</strong></th>
+</tr>
+<tr>
+  <td>All traffic</td>
+  <td>All</td>
+  <td>All</td>
+  <td>Custom IP</td>
+  <td>10.0.0.0/16</td>
+</tr>
+</table>
+
+1. Click **Create**.
+
+    <%= image_tag("pcfaws/pcf_aws_secgrp_nat.png") %>
+
+
+<a id='pcfaws-om-mysqlsecgrp'></a>
+### Configure a Security Group for MySQL ###
+
+<p class="note"><strong>Note</strong>: If you plan to use an internal database, you can skip this step. If you are using RDS, you must configure a security group that enables the Ops Manager VM and Ops Manager Director VM to access the database.</p>
+
+1. On the EC2 Dashboard, select **Security Groups>Create Security Group**.
+1. Enter a security group name and description: `MySQL`.
+1. Select the VPC to which to deploy MySQL.
+1. Click the **Inbound** tab. Add a rule of type MYSQL and specify the subnet of your VPC in **Source**, as the table and image show.
+
+    <table border="1" class="nice" >
+<tr>
+  <th><strong>Type </strong></th>
+  <th><strong>Protocol</strong></th>
+  <th><strong>Port Range</strong></th>
+  <th colspan='2'><strong>Source</strong></th>
+</tr>
+<tr>
+  <td>MySQL</td>
+  <td>TCP</td>
+  <td>3306</td>
+  <td>Custom IP</td>
+  <td>10.0.0.0/16</td>
+</tr>
+</table>
+
+1. Click **Create**.
+
+    <%= image_tag("pcfaws/pcf_aws_secgrp_mysql.png") %>
+
+<a id='pcfaws-om-ami'></a>
+### Launch a Pivotal Ops Manager AMI ###
+
+1. Return to the EC2 Dashboard.
+1. Click **AMIs**. Locate the Pivotal Ops Manager public AMI and click **Launch**. You can find the AMI ID in the _Ops Manager for AWS_ PDF that you downloaded from [Pivotal Network](https://network.pivotal.io/products/pivotal-cf).
+
+    <p class="note"><strong>Note</strong>: There is a different AMI for each region. If you cannot locate the AMI for your region, verify that you have set your AWS Management Console to your desired region. If you still cannot locate the AMI, log in to the <a href="https://network.pivotal.io">Pivotal Network</a> and file a support ticket.</p>
+
+    <%= image_tag("pcfaws/pcf_aws_ami.png") %>
+
+1. Choose **m3.large** for your instance type and click **Next: Configure Instance Details**.
+
+    <%= image_tag("pcfaws/aws_ami_m3large.png") %>
+
+1. Configure the following for your instance:
+    * **Network**: Select the VPC that you created.
+    * **Subnet**: Select your public subnet instance.
+    * **Auto-assign for Public IP**: Select **Enable**.
+    * For all other fields, accept the default values.
+
+    <%= image_tag("pcfaws/pcf_aws_configure_instance.png") %>
+
+1. Click **Next: Add Storage** and adjust the **Size (GiB)** value.
+The default persistent disk value is 50 GB. We recommend increasing this value to a minimum of 100 GB.
+
+    <%= image_tag("pcfaws/pcf_aws_add_storage.png") %>
+
+1. Click **Next: Tag Instance** and **Next: Configure Security Group**.
+1. Select the Ops Manager security group that you created in [Configure a Security Group for Ops Manager](#pcfaws-om-secgrp).
+1. Click **Review and Launch** and confirm the instance launch details.
+1. Click **Launch**.
+1. Select the `pcf` key pair, confirm that you have access to the private key file, and click **Launch Instances**.
+
+    You use this key pair only to access the Ops Manager VM.
+
+    <%= image_tag("pcfaws/select_pcfpem_keypair.png") %>
+
+1. Click **View Instances** to access the **Instances** page on the EC2 Dashboard.
+
+
+<a id='pcfaws-lb'></a>
+### Create Load Balancer ###
+
+1. On the EC2 Dashboard, click **Load Balancers**.
+1. Click **Create Load Balancer** and configure a load balancer with the following information:
+    * Enter a load balancer name.
+    * **Create LB Inside**: Select the pcf-vpc VPC that you created in [Create a VPC](#pcfaws-vpc).
+    * Ensure that the **Internal Load Balancer** checkbox is not selected.
+
+    <%= image_tag("pcfaws/config_elb.png") %>
+
+1. Under **Select Subnets**, select the public subnet you configured in [Create a VPC](#pcfaws-vpc), and click **Next: Assign Security Groups**.
+
+1. On the **Assign Security Groups** page, select the security group you configured in [Configure a Security Group for the Elastic Load Balancer](#pcfaws-om-elbsecgrp), and click **Next: Configure Security Settings**.
+
+    <%= image_tag("pcfaws/lb_assign_sec_groups.png") %>
+
+1. The **Configure Security Settings** page displays a security warning because your load balancer is not using a secure listener. You can ignore this warning. Click **Next: Configure Health Check**.
+
+ 	<%= image_tag("pcfaws/secure_listener.png") %>
+
+1. Select **TCP** in **Ping Protocol** on the **Configure Health Check** page. Ensure that the **Ping Port** value is `80` and set the **Health Check Interval** to 10 seconds. Click **Next: Add EC2 Instances**.
+
+    <%= image_tag("pcfaws/lb_health_check.png") %>
+
+1. Accept the defaults on the **Add EC2 Instances** page and click **Next: Add Tags**.
+
+    <p class="note"><strong>Note</strong>: AWS dynamically scales the number of load balancer instances, but you must associate the ELB with your routers. Configure this on the <a href="./pcf-aws-er-config.html#resource">Resource Config page</a> of the Elastic Runtime tile.</p>
+
+1. Accept the defaults on the **Add Tags** page and click **Review and Create**.
+
+1. Review and confirm the load balancer details, and click **Create**.
+  <p class='note'><strong>Note:</strong> Pivotal recommends that you change the timeout setting on your ELB to 10 minutes from the default 60 seconds.</p>
+<a id='pcfaws-cname'></a>
+### Create Wildcard DNS Record ###
+
+Create a CNAME wildcard record with your DNS provider to point to the load balancer domain, as the following image shows.
+
+  <p class="note"><strong>Note</strong>: You finish setting up the load balancer with a HTTPS listener and SSL certification information when you configure Elastic Runtime. For more information, see the [Finalize the Load Balancer Setup](./pcf-aws-er-config.html#lb) sections of the _Configuring Elastic Runtime for AWS_ topic.</p>
+
+  <%= image_tag("pcfaws/cname.png") %>
+
+
+<a id='pcfaws-nat'></a>
+### Secure the NAT Instance ###
+
+1. On the EC2 Dashboard, click **Instances**. Select the NAT instance, which has an instance type of **m1.small**.
+1. From the **Actions** menu, select **Networking>Change Security Groups**.
+1. Change the NAT security group from the default group to the outbound NAT security group that you created in [Configure a Security Group for the Outbound NAT](#pcfaws-om-natsecgrp), and click **Assign Security Groups**.
+
+    <%= image_tag("pcfaws/pcf_aws_select_security_group.png") %>
+
+<a id='pcfaws-rds-subnets'></a>
+### Set up Subnets for RDS ###
+
+1. Navigate to the VPC Dashboard and click **Subnets**.
+1. Click **Create Subnet** and enter the following information for the first subnet:
+    * **Name tag**: `rds-1`
+    * **VPC**: Select the pcf-vpc VPC you created in [Create a VPC](#pcfaws-vpc).
+    * **Availability Zone**: For performance reasons, set this AZ value to the same AZ value that you defined for the private subnet.
+    * **CIDR block**: Define a unique network range, such as `10.0.2.0/24`.
+
+    <%= image_tag("pcfaws/rds_pcf_subnet_rds1.png") %>
+
+1. Click **Create Subnet** and enter the following information for the second subnet:
+    * **Name tag**: `rds-2`
+    * **VPC**: Select the pcf-vpc VPC you created in [Create a VPC](#pcfaws-vpc).
+    * **Availability Zone**: Select a different AZ than what you specified in rds-1.
+    * **CIDR block**: Define a unique network range, such as `10.0.3.0/24`.
+
+    <%= image_tag("pcfaws/rds_pcf_subnet_rds2.png") %>
+
+<a id='pcfaws-rds-subnet-group'></a>
+### Create RDS Subnet Group ###
+
+1. Navigate to the RDS Dashboard.
+
+1. Create a RDS Subnet Group for the two RDS subnets.
+    * Navigate to the RDS Dashboard, click **Subnet Groups>Create DB Subnet Group**.
+    * Enter a name and description.
+    * **VPC ID**: Select pcf-vpc.
+    * **Availability Zone** and **Subnet ID**: Choose the AZ and subnet for rds-1 and click **Add**.
+	* Repeat the process above to add rds-2 to the group.
+    * Click **Create**.
+
+    The image shows a completed subnet group.
+
+    <%= image_tag("pcfaws/rds_pcf_subnet_group.png") %>
+
+    <p class="note"><strong>Note</strong>: On the Subnet Group dashboard page, you might need to refresh the page to view the new group.</p>
+
+<a id='pcfaws-mysql-rds'></a>
+### Create a MySQL Database using AWS RDS ###
+
+<p class="note"><strong>Note</strong>: You must have an empty MySQL database when you install or reinstall PCF for AWS.</p>
+
+1. Navigate to the RDS Dashboard. Click **Instances>Launch DB Instance** to launch the wizard.
+
+1. Select **MySQL**.
+
+1. Select **Yes** to create a database for production environments. Click **Next Step**.
+
+1. Specify the following database details:
+    * **DB Instance Class**: Select **db.m3.large - 2 vCPU, 7.5 GiB RAM**.
+    * **Multi-AZ Deployment**: Select **Yes**.
+    * **Allocated Storage**: Enter **100 GB**.
+    * **DB Instance Identifier**: Enter `pcf-bosh`.
+    * Define a secure **Master Username** and **Master Password**.
+	* Click **Next Step**.
+
+    <p class="note"><strong>Note</strong>: Record the username and password that you entered. You need this later when configuring the <strong>Director Config</strong> page in the Ops Manager Director tile.</p>
+
+	<%= image_tag("pcfaws/db_details.png") %>
+
+1. Configure advanced settings:
+    * **VPC**: Select pcf-vpc.
+    * **Subnet Group**: Select the subnet group you created in [Set up Subnets for RDS](#pcfaws-rds-subnets).
+    * **Publicly Accessible**: Select **No**.
+    * **VPC Security Groups**: Select the security group that you created in [Configure a Security Group for MySQL](#pcfaws-om-mysqlsecgrp).
+    * **Database Name**: Enter `bosh`.
+    * Accept the default values for the remaining fields.
+
+	<%= image_tag("pcfaws/advanced_db_settings.png") %>
+
+1. Click **Launch DB Instance**. The instance generation process might take several minutes.
+
+### Configure Ops Manager Director for AWS
+
+After you complete this procedure, complete all of the steps in the [Configuring Ops Manager Director for AWS](./pcf-aws-om-config.html) topic.

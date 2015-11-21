@@ -1,15 +1,71 @@
 ---
 title: Migrating Apps to Diego
 ---
-This topic contains instructions for migrating apps originally deployed with DEAs to Diego. The Diego Elastic Runtime architecture replaces DEAs with cells.
+This topic contains instructions for migrating apps originally deployed on the DEA architecture to the newer Diego architecture.
 
-To upgrade Pivotal Cloud Foundry&reg; (PCF) to 1.6, see [Upgrading Elastic Runtime](../upgrading-products.html). In order to migrate your apps, your PCF deployment must be running Elastic Runtime v1.6, which includes Diego.
+In order to migrate your apps to Diego, you must deploy [Pivotal Elastic Runtime](https://network.pivotal.io/products/elastic-runtime) 1.6 or higher. To upgrade Elastic Runtime from a prior version, see [Upgrading Elastic Runtime](../upgrading-products.html).
 
-Pivotal recommends two approaches to migrating your apps to Diego. The first migration option includes fewer steps but results in a brief downtime interval. The second option avoids downtime by employing [Blue-Green deployment](../../devguide/deploy-apps/blue-green.html). 
+Pivotal recommends two approaches to migrating your apps to Diego. The first migration option includes fewer steps but results in a brief downtime interval. The second option avoids downtime by employing [Blue-Green deployment](../../devguide/deploy-apps/blue-green.html).
 
-## <a id='migration-with-downtime'></a>Migration with Downtime##
+## <a id='blue-green-migration'></a>Migrating Apps with Blue-Green Deployment ##
 
-The more direct option for migrating apps clobbers old instances of the app running under DEA with new instances running under Diego, but results in a brief (~1 minute) downtime.
+The blue-green deployment method migrates your apps with zero downtime. This method temporarily runs your apps in parallel using both the DEA and Diego architectures.
+
+<p class="note"><strong>Note</strong>: If necessary, complete the Application Rollback procedure below to revert the migration with zero downtime.</p>
+
+### <a id="blue-green-procedure"></a>Migration Procedure
+
+1. Push your application to PCF with a new name and the route for your application. Do not use the name of the existing application.
+<pre class="terminal">$ cf push NEW-APP -d MY-DOMAIN.COM -n MY-SUBDOMAIN</pre>
+<p class="note"><strong>Note</strong>:
+The currently deployed application and the application you are pushing must be the same version. Otherwise, any static assets served from your application, like CSS and Javascript, will not be consistent across both apps. Now is not the time to upgrade your app.
+</p>
+
+1. Confirm that `NEW-APP` runs properly.
+<pre class="terminal">
+$ cf app NEW-APP
+</pre>
+
+1. Run `has-diego-enabled` to confirm that the application is running on the Diego architecture.
+<pre class="terminal">
+$ cf has-diego-enabled NEW-APP
+</pre>
+
+1. Map the route for your application running on the DEA architecture to `NEW-APP`. This remapping creates a second route that splits your traffic between the DEA and Diego architectures.
+<pre class="terminal">$ cf map-route NEW-APP MY-DOMAIN.COM -n MY-SUBDOMAIN</pre>
+
+1. Unmap the route from the application running on the DEA architecture. This action sends all of the traffic to the application that is running on Diego.
+<pre class="terminal">$ cf unmap-route OLD-APP MY-DOMAIN.COM -n MY-SUBDOMAIN
+</pre>
+
+1. Stop `OLD-APP` to route all traffic to `NEW-APP` and complete the blue-green migration.
+<pre class="terminal">$ cf stop OLD-APP</pre>
+<p class="note"><strong>Note</strong>:
+Verify that your application is still accessible and runs properly. If there is a problem with your app, do not complete this procedure. Instead, proceed to the Application Rollback procedure below.
+</p>
+
+1. Delete the old application.
+<pre class="terminal">$ cf delete OLD-APP</pre>
+
+
+### Application Rollback Procedure <a id='application-rollback'></a>
+
+If necessary, complete this procedure to revert your application to the DEA architecture. This procedure only works if you have not deleted your application that runs on the DEA architecture.
+
+1. Start your app using the pre-migration name.
+<pre class="terminal">$ cf start OLD-APP</pre>
+
+1. Map `OLD-APP` to your domain.
+<pre class="terminal">$ cf map-route OLD-APP MY-DOMAIN.COM -n MY-SUBDOMAIN</pre>
+
+1. Unmap the app running on the Diego architecture from your domain.
+<pre  class="terminal">$ cf unmap-route NEW-APP MY-DOMAIN.COM -n MY-SUBDOMAIN</pre>
+
+## <a id='migration-with-downtime'></a>Overwrite-Based Migration##
+
+The second recommended procedure overwrites existing app instances with new ones on the Diego architecture, resulting in a brief (~1 minute) downtime. This approach requires fewer steps than the blue-green deployment procedure.
+
+<p class="note"><strong>Note</strong>: Use overwrite-based migration if a short downtime is acceptable.</p>
 
 1. Use the Cloud Foundry Command Line Interface (CF CLI) to install the Diego-Enabler plugin.
 <pre class='terminal'>
@@ -29,54 +85,3 @@ $ cf push
 Using manifest manifest.yml...
 Updating app...
 </pre>
-
-## <a id='blue-green-migration'></a>Migrating Apps with Blue-Green Deployment ##
-
-The blue-green deployment method migrates your apps with zero downtime, by temporarily running them redundantly with both DEA and Diego. It relies on the ability to push applications with either DEAs or Diego (the default is Diego). This procedure can be rolled back with zero downtime, if necessary.
-
-### <a id="blue-green-procedure"></a>Migration Procedure
-
-1. Push your application to PCF with a new name and the route for your application. The name cannot be the same as the name of the existing application.
-<pre class="terminal">$ cf push NEW-APP</pre>
-<p class="note"><strong>Note</strong>:
-You must push the same release version of the currently deployed application that you are migrating. Otherwise, any static assets served from your application, like CSS and Javascript, will not be consistent across both versions.
-</p>
-
-1. Confirm that the newly deployed application runs properly.
-<pre class="terminal">
-$ cf app NEW-APP
-</pre>
-
-1. Run `has-diego-enabled` to check that Diego manages the new application.
-<pre class="terminal">
-$ cf has-diego-enabled NEW-APP
-</pre>
-
-1. Map the route for your application running on the DEAs to your application running on Diego.  This remapping will result in a second route that points half of your traffic to applications deployed from DEAs and half to applications from Diego.
-<pre class="terminal">$ cf map-route NEW-APP MY-DOMAIN.COM -n www</pre>
-
-1. Unmap the route from the application running on the DEAs.  This action sends all of the traffic to the application that is running on Diego.
-<pre class="terminal">$ cf unmap-route OLD-APP MY-DOMAIN.COM -n www
-</pre>
-
-1. Stop the application that is running on the DEAs. This routes all of the traffic to your app running on Diego and completes the blue-green migration.
-<pre class="terminal">$ cf stop OLD-APP</pre>
-<p class="note"><strong>Note</strong>:
-Verify that your application is still accessible and runs properly.
-</p>
-
-1. Delete the old application.
-<pre class="terminal">$ cf delete OLD-APP</pre>
-
-### Application Rollback Procedure <a id='application-rollback'></a>
-
-If needed, you can roll back to your application running on the DEAs by starting it and reversing the order of the previous `map-route` and `unmap-route` commands.
-
-1. Start the old application.
-<pre class="terminal">$ cf start OLD-APP</pre>
-
-1. Map the old application to your domain.
-<pre class="terminal">$ cf map-route OLD-APP MY-DOMAIN.COM -n www</pre>
-
-1. Unmap the new application to your domain.
-<pre  class="terminal">$ cf unmap-route NEW-APP MY-DOMAIN.COM -n www</pre>

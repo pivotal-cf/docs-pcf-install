@@ -1,31 +1,65 @@
-Things you'll need to start
+Things you'll need to start:
+
 1. the key file from Ops Manager Director > Settings > SSH Private Key
 1. the password for Director in Ops Manager Director > Credentials > Director
-
+1. the IP address for the "Ops Manager Director" which is under the Status tab
 
 Steps:
-1. `ssh-add foo.key`
-1. ssh -A pcf.SYSTEM-DOMAN
+
+1. Copy and paste the private key to a file: `cat > director.key; chmod 600 director.key`
+1. `ssh-add director.key`**
+1. ssh -A pcf.SYSTEM-DOMAIN -l ubuntu
 1. `bosh target BoshDirectorIP`, enter director and the password from above
 1. `bosh deployments`
 1. `bosh vms cf-8c00fbbee829841ddad3 --details | grep mysql-partition`
+1. bosh download manifest cf-64f27267ea9cbfe823e1 /tmp/cf.yml
+> Acting as user 'director' on deployment 'cf-64f27267ea9cbfe823e1' on 'p-bosh-1619138d4e65bbf2138e'
+1. bosh deployment /tmp/cf.yml
+
 
 Mess it up:
+
 `bosh -n stop mysql-partition-16a9c50e8362a5857282 0 --hard && bosh -n stop mysql-partition-16a9c50e8362a5857282 1 --hard && bosh -n stop mysql-partition-16a9c50e8362a5857282 2 --hard`
 
 Bring the VMs back up:
+
 `bosh -n start mysql-partition-16a9c50e8362a5857282 0 && bosh -n start mysql-partition-16a9c50e8362a5857282 1 && bosh -n start mysql-partition-16a9c50e8362a5857282 2`
 
 Log into the first mysql VM:
+
+
 1. `bosh ssh mysql-partition-16a9c50e8362a5857282 0`
 1. Become super user using the password you've just specified: `sudo su -`
 1. Check on the status of the jobs: `monit status`
   - `mariadb_ctrl`, `galera-healthcheck`, etc should all be `running`/`monitored`.
 
-## Common Issues
-- If you experience an error that looks something like:
+### Common Issues
+
+** If you experience an error that looks something like:
+
 > Received disconnect from 10.0.1.19: 2: Too many authentication failures for bosh_64898ue98
+
 You likely have too many key identities loaded in your authentication agent. You can clear all of them using `ssh-add -D`.
+
+
+- If you have an issue with not being able to `monit start` it may be due to a bug in mariadb_ctrl that doesn't collect a defunct process. In that case, you'll need to call support in order to get monit un-stuck. Please also see the Known Issues file.
+
+- FIXME: document the use of `bosh instances --ps`
+
+```
++----------------------------------------------------------------+---------+--------------------------------------------------------------+------------+
+| mysql-partition-672bf7d9fa6b1a201c94/0                         | running | mysql-partition-672bf7d9fa6b1a201c94                         | 10.0.16.12 |
+|   mariadb_ctrl                                                 | running |                                                              |            |
+|   galera-healthcheck                                           | running |                                                              |            |
+|   gra-log-purger-executable                                    | running |                                                              |            |
++----------------------------------------------------------------+---------+--------------------------------------------------------------+------------+
+| mysql-partition-672bf7d9fa6b1a201c94/1                         | stopped | mysql-partition-672bf7d9fa6b1a201c94                         | 10.0.16.60 |
++----------------------------------------------------------------+---------+--------------------------------------------------------------+------------+
+| mysql-partition-672bf7d9fa6b1a201c94/2                         | stopped | mysql-partition-672bf7d9fa6b1a201c94                         | 10.0.16.61 |
++----------------------------------------------------------------+---------+--------------------------------------------------------------+------------+
+```
+
+
 
 ---
 

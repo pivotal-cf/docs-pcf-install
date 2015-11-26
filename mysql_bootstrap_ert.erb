@@ -20,12 +20,12 @@ Here is the manual process necessary to recover an Elastic Runtime cluster that'
 1. Configure BOSH to talk to the Ops Manager Director, using the IP, login, and password from above.
 
     ```
-$ bosh target 10.0.16.5
-Target set to `p-bosh-30c19bdd43c55c627d70'
-Your username: director
-Enter password:
-Logged in as `director'
-```
+    $ bosh target 10.0.16.5
+    Target set to `p-bosh-30c19bdd43c55c627d70'
+    Your username: director
+    Enter password:
+    Logged in as `director'
+    ```
     
 1. Run `bosh deployments` to discover the name of the CF job
 
@@ -46,7 +46,7 @@ Logged in as `director'
     |                         | notifications/19              |                                              |              |
     |                         | push-apps-manager-release/397 |                                              |              |
     +-------------------------+-------------------------------+----------------------------------------------+--------------+
-```
+    ```
 
 1. Download the manifest
 
@@ -152,7 +152,7 @@ Logged in as `director'
     Finished	2015-11-26 01:47:08 UTC
     Duration	00:00:00
     Cloudcheck is finished
-```
+    ```
 1. Modify the deployment
 
     `bosh edit deployment`
@@ -192,24 +192,41 @@ Logged in as `director'
     Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/0 (00:01:54)
     Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/2 (00:01:54)
     Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/1 (00:02:04)
-    ```    
+    ```
+    Ultimately, you will see this:
+    
+    ```
+       Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 > mysql-partition-f8abb6ac43ccc9fe16d7/1: `mysql-partition-f8abb6ac43ccc9fe16d7/1' is not running after update (00:05:57)
+       Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 > mysql-partition-f8abb6ac43ccc9fe16d7/0: `mysql-partition-f8abb6ac43ccc9fe16d7/0' is not running after update (00:05:59)
+       Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 > mysql-partition-f8abb6ac43ccc9fe16d7/2: `mysql-partition-f8abb6ac43ccc9fe16d7/2' is not running after update (00:06:01)
+       Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 (00:06:01)
+
+    Error 400007: `mysql-partition-f8abb6ac43ccc9fe16d7/1' is not running after update
+    ````
+    **This is OK**. Now you can proceed to the standard bootstrap process. You can run `bosh vms` a second time to validate that you now have three VMs all in the failing state:
+    
+    ```
+    | mysql-partition-f8abb6ac43ccc9fe16d7/0                         | failing  | mysql-partition-f8abb6ac43ccc9fe16d7                         | 10.0.16.12 |
+    | mysql-partition-f8abb6ac43ccc9fe16d7/1                         | failing  | mysql-partition-f8abb6ac43ccc9fe16d7                         | 10.0.16.60 |
+    | mysql-partition-f8abb6ac43ccc9fe16d7/2                         | failing  | mysql-partition-f8abb6ac43ccc9fe16d7                         | 10.0.16.61 |
+    ```
 
 ----
 
-Mess it up:
+## Bootstrap
 
-- NEVER DO THIS:
-> `bosh -n stop mysql-partition-16a9c50e8362a5857282 0 --hard && bosh -n stop mysql-partition-16a9c50e8362a5857282 1 --hard && bosh -n stop mysql-partition-16a9c50e8362a5857282 2 --hard`
+- You can now follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) process per normal.
 
-  This is not an adequate way to simulate failure. It tells BOSH to start ignoring this job in subsequent deploys, etc. It's better to Terminate the VMs either in the AWS or vSphere console. Make sure to **retain** your persistent storage in both cases.
+----
 
-Log into the first mysql VM:
+After completing the bootstrap process, you'll be rewarded with a healthy, stable MySQL cluster again:
 
+```
+| mysql-partition-f8abb6ac43ccc9fe16d7/0                         | running | mysql-partition-f8abb6ac43ccc9fe16d7                         | 10.0.16.12 |
+| mysql-partition-f8abb6ac43ccc9fe16d7/1                         | running | mysql-partition-f8abb6ac43ccc9fe16d7                         | 10.0.16.60 |
+| mysql-partition-f8abb6ac43ccc9fe16d7/2                         | running | mysql-partition-f8abb6ac43ccc9fe16d7                         | 10.0.16.61 |
+```
 
-1. `bosh ssh mysql-partition-16a9c50e8362a5857282 0`
-1. Become super user using the password you've just specified: `sudo su -`
-1. Check on the status of the jobs: `monit status`
-  - `mariadb_ctrl`, `galera-healthcheck`, etc should all be `running`/`monitored`.
 
 ### Common Issues
 
@@ -236,13 +253,3 @@ You likely have too many key identities loaded in your authentication agent. You
 | mysql-partition-672bf7d9fa6b1a201c94/2                         | stopped | mysql-partition-672bf7d9fa6b1a201c94                         | 10.0.16.61 |
 +----------------------------------------------------------------+---------+--------------------------------------------------------------+------------+
 ```
-
-
-
----
-
-First, you need to SSH into Ops Mgr.
-
-Bosh deployments, target the cf deployment from the /var/tempest/workspaces/default/deployments folder
-
-bosh vms | grep mysql-partition

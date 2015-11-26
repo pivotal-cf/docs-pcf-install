@@ -1,29 +1,207 @@
-Things you'll need to start:
+
+# Recovering MySQL from Elastic Runtime downtime
+There are times when all of the Elastic Runtime VMs have been removed, such as Terminating all VMs on AWS when Elastic Runtime isn't in use. Now that PCF has HA MySQL as its internal database, it's no longer possible to simply have BOSH restart all of the VMs. In the event that all of the MySQL VMs are gone, the cluster will not automatically start itself.
+
+Here is the manual process necessary to recover an Elastic Runtime cluster that's been shut off.
+
+## Things you'll need to start
 
 1. the key file from Ops Manager Director > Settings > SSH Private Key
 1. the password for Director in Ops Manager Director > Credentials > Director
 1. the IP address for the "Ops Manager Director" which is under the Status tab
 
-Steps:
+## Steps
 
-1. Copy and paste the private key to a file: `cat > director.key; chmod 600 director.key`
+1. Copy and paste the private key to a file. You can use a text editor if you prefer.
+
+   `cat > director.key; chmod 600 director.key`
 1. `ssh-add director.key`**
-1. ssh -A pcf.SYSTEM-DOMAIN -l ubuntu
-1. `bosh target BoshDirectorIP`, enter director and the password from above
-1. `bosh deployments`
-1. `bosh vms cf-8c00fbbee829841ddad3 --details | grep mysql-partition`
-1. bosh download manifest cf-64f27267ea9cbfe823e1 /tmp/cf.yml
-> Acting as user 'director' on deployment 'cf-64f27267ea9cbfe823e1' on 'p-bosh-1619138d4e65bbf2138e'
-1. bosh deployment /tmp/cf.yml
+1. `ssh -A pcf.SYSTEM-DOMAIN -l ubuntu`
+1. Configure BOSH to talk to the Ops Manager Director, using the IP, login, and password from above.
 
+    ```
+$ bosh target 10.0.16.5
+Target set to `p-bosh-30c19bdd43c55c627d70'
+Your username: director
+Enter password:
+Logged in as `director'
+```
+    
+1. Run `bosh deployments` to discover the name of the CF job
+
+    ```
+    $ bosh deployments
+    Acting as user 'director' on 'p-bosh-30c19bdd43c55c627d70'
+
+    +-------------------------+-------------------------------+----------------------------------------------+--------------+
+    | Name                    | Release(s)                    | Stemcell(s)                                  | Cloud Config |
+    +-------------------------+-------------------------------+----------------------------------------------+--------------+
+    | cf-e82cbf44613594d8a155 | cf-autoscaling/28             | bosh-aws-xen-hvm-ubuntu-trusty-go_agent/3140 | none         |
+    |                         | cf-mysql/23                   |                                              |              |
+    |                         | cf/225                        |                                              |              |
+    |                         | diego/0.1441.0                |                                              |              |
+    |                         | etcd/18                       |                                              |              |
+    |                         | garden-linux/0.327.0          |                                              |              |
+    |                         | notifications-ui/10           |                                              |              |
+    |                         | notifications/19              |                                              |              |
+    |                         | push-apps-manager-release/397 |                                              |              |
+    +-------------------------+-------------------------------+----------------------------------------------+--------------+
+```
+
+1. Download the manifest
+
+    ```
+    $ bosh download manifest cf-64f27267ea9cbfe823e1 /tmp/cf.yml
+    Acting as user 'director' on deployment 'cf-e82cbf44613594d8a155' on 'p-bosh-30c19bdd43c55c627d70'
+    Deployment manifest saved to `/tmp/cf.yml'
+    ```
+
+1. Set BOSH to use that deployment
+
+    `bosh deployment /tmp/cf.yml`
+1. Check for place-holder VMs.
+
+    ```
+    $ bosh vms
+    Acting as user 'director' on 'p-bosh-30c19bdd43c55c627d70'
+    Deployment `cf-e82cbf44613594d8a155'
+
+    Director task 33
+
+    Task 33 done
+
+    +----------------------------------------------------------------+--------------------+--------------------------------------------------------------+------------+
+    | Job/index                                                      | State              | Resource Pool                                                | IPs        |
+    +----------------------------------------------------------------+--------------------+--------------------------------------------------------------+------------+
+    | unknown/unknown                                                | unresponsive agent |                                                              |            |
+    | unknown/unknown                                                | unresponsive agent |                                                              |            |
+    | unknown/unknown                                                | unresponsive agent |                                                              |            |
+    ```
+    **Note**: If you do not see these three `unknown/unknown` items at the stop of your list, instead you might see the mysql-partition VMs. If so, that's good, it means that your VMs were not destroyed, merely powered off or otherwise. Skip to Part B, bootstrapping.
+1. Run BOSH's cloud check to clear out the place-holders. Select the option to **Delete VM reference** if given the option.
+
+    ```
+    $ bosh cck
+    Acting as user 'director' on deployment 'cf-e82cbf44613594d8a155' on 'p-bosh-30c19bdd43c55c627d70'
+    Performing cloud check...
+
+    Director task 34
+      Started scanning 22 vms
+      Started scanning 22 vms > Checking VM states. Done (00:00:10)
+      Started scanning 22 vms > 19 OK, 0 unresponsive, 3 missing, 0 unbound, 0 out of sync. Done (00:00:00)
+         Done scanning 22 vms (00:00:10)
+
+      Started scanning 10 persistent disks
+      Started scanning 10 persistent disks > Looking for inactive disks. Done (00:00:02)
+      Started scanning 10 persistent disks > 10 OK, 0 missing, 0 inactive, 0 mount-info mismatch. Done (00:00:00)
+         Done scanning 10 persistent disks (00:00:02)
+
+    Task 34 done
+
+    Started		2015-11-26 01:42:42 UTC
+    Finished	2015-11-26 01:42:54 UTC
+    Duration	00:00:12
+
+    Scan is complete, checking if any problems found...
+
+    Found 3 problems
+
+    Problem 1 of 3: VM with cloud ID `i-afe2801f' missing.
+      1. Skip for now
+      2. Recreate VM
+      3. Delete VM reference
+    Please choose a resolution [1 - 3]: 3
+
+    Problem 2 of 3: VM with cloud ID `i-36741a86' missing.
+      1. Skip for now
+      2. Recreate VM
+      3. Delete VM reference
+    Please choose a resolution [1 - 3]: 3
+
+    Problem 3 of 3: VM with cloud ID `i-ce751b7e' missing.
+      1. Skip for now
+      2. Recreate VM
+      3. Delete VM reference
+    Please choose a resolution [1 - 3]: 3
+
+    Below is the list of resolutions you've provided
+    Please make sure everything is fine and confirm your changes
+
+      1. VM with cloud ID `i-afe2801f' missing.
+         Delete VM reference
+
+      2. VM with cloud ID `i-36741a86' missing.
+         Delete VM reference
+
+      3. VM with cloud ID `i-ce751b7e' missing.
+         Delete VM reference
+
+    Apply resolutions? (type 'yes' to continue): yes
+    Applying resolutions...
+
+    Director task 35
+      Started applying problem resolutions
+      Started applying problem resolutions > missing_vm 11: Delete VM reference. Done (00:00:00)
+      Started applying problem resolutions > missing_vm 27: Delete VM reference. Done (00:00:00)
+      Started applying problem resolutions > missing_vm 26: Delete VM reference. Done (00:00:00)
+         Done applying problem resolutions (00:00:00)
+
+    Task 35 done
+
+    Started		2015-11-26 01:47:08 UTC
+    Finished	2015-11-26 01:47:08 UTC
+    Duration	00:00:00
+    Cloudcheck is finished
+```
+1. Modify the deployment
+
+    `bosh edit deployment`
+    
+    This will launch a `vi` editor. Here are the exact steps you'll need to do inside of `vi`:
+    - Search for the jobs section: `/^jobs`
+    - Search for the mysql-partition: `/name: mysql-partition`
+    - Search for the update section: `/update`
+    - Update max_in_flight to `3`.
+    - Add a line: `canaries: 0` below the `max_in_flight` line.
+
+1. Apply these changes by running: `bosh deploy`
+
+    **BE SURE** to stop and look over the changes carefully. Type `yes` if and only if this is the only change:
+  
+    ```
+    Jobs
+    mysql-partition-f8abb6ac43ccc9fe16d7
+      update
+        ± max_in_flight:
+          - 1
+          + 3
+        + canaries: 0
+        
+    Properties
+    No changes
+
+    Please review all changes carefully
+
+    Deploying
+    ---------
+    Are you sure you want to deploy? (type 'yes' to continue):
+    ```
+    You will see BOSH re-creating the lost VMs:
+    
+    ```
+    Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/0 (00:01:54)
+    Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/2 (00:01:54)
+    Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/1 (00:02:04)
+    ```    
+
+----
 
 Mess it up:
 
-`bosh -n stop mysql-partition-16a9c50e8362a5857282 0 --hard && bosh -n stop mysql-partition-16a9c50e8362a5857282 1 --hard && bosh -n stop mysql-partition-16a9c50e8362a5857282 2 --hard`
+- NEVER DO THIS:
+> `bosh -n stop mysql-partition-16a9c50e8362a5857282 0 --hard && bosh -n stop mysql-partition-16a9c50e8362a5857282 1 --hard && bosh -n stop mysql-partition-16a9c50e8362a5857282 2 --hard`
 
-Bring the VMs back up:
-
-`bosh -n start mysql-partition-16a9c50e8362a5857282 0 && bosh -n start mysql-partition-16a9c50e8362a5857282 1 && bosh -n start mysql-partition-16a9c50e8362a5857282 2`
+  This is not an adequate way to simulate failure. It tells BOSH to start ignoring this job in subsequent deploys, etc. It's better to Terminate the VMs either in the AWS or vSphere console. Make sure to **retain** your persistent storage in both cases.
 
 Log into the first mysql VM:
 

@@ -2,27 +2,39 @@
 title: Deploying BOSH Director
 ---
 
-Follow the steps below to deploy BOSH from the Jumpbox into the offline environment.  BOSH will be used to deploy PCF.  Follow along with the [BOSH Documentation](http://bosh.io/docs/init-aws.html "BOSH Documentation") that initializes a BOSH environment in AWS as a guide to deploying BOSH from the Jumpbox.
+This topic describes a subset of the steps to install an [offline Pivotal Cloud Foundry&reg;](./install-pws-dark.html).
 
-1. Create an Elastic IP.
+## Clone Offline Repository on Jumpbox
 
-1. Connected as an authorized user on the Jumpbox with the `default: ubuntu`, create a BOSH deployment directory on the Jumpbox.
+1. From the `ssh` session in the jumpbox, create a `workspace` directory and clone the [offline repository](https://github.com/pivotal-federal-field-engineering/dark-chiron-aws.git) for this installation. 
+<pre class="terminal">
+mkdir ./workspace
+cd ./workspace && git clone ht<span>t</span>ps://github.com/pivotal-federal-field-engineering/dark-chiron-aws.git
+</pre>
+<p class="note"><strong>Note</strong>: Your Pivotal team may provide you an alternate repository for offline deployments.</p>
+
+1. Supply git or other source control credentials as required.
+
+## Deploy Bosh
+
+Follow the steps below to deploy BOSH from the offline Ops Manager into the offline environment.  BOSH will be used to deploy PCF.  Follow along with the [BOSH Documentation](http://bosh.io/docs/init-aws.html "BOSH Documentation") that initializes a BOSH environment in AWS.
+
+1. Create an Elastic IP in AWS EC2 Console. Record the **IP address**.
+
+1. Connect as an authorized user on the offline Ops Manager with the `default: ubuntu` and go to the BOSH deployment directory on the offline Ops Manager.
+<p class="note"><strong>Note</strong>: Your directory structure may differ in the next several steps.</p>
 <pre class='terminal'>
-    $ mkdir ~/deployments
+    $ cd /home/ubuntu/workspace/dark-chiron-aws/deployments
 </pre>
 
-1. Copy and modify the BOSH Deployment Manifest `bosh.yml` into the deployment directory on the Jumpbox.
-<pre class='terminal'>
-	$ scp -i bosh.pem bosh.yml ubuntu@<public-dns-name>:~/deployments
-</pre>
-Modify the following parameters:
+1. Modify the [Bosh Deployment Manifest](https://github.com/pivotal-federal-field-engineering/dark-chiron-aws/tree/master/deployments/bosh.yml "Manifest") `bosh.yml` in the deployment directory on the offline Ops Manager. Modify the following parameters, as needed:
   * Elastic IP (created above)
   * Subnet-ID (pcf-public-subnet, AWS Console: VPC)
   * Security Group Name (%PcfVmsSecurityGroup%)
   * Instance Profile Name (created above)
-1. Copy the bosh.pem file to the deployment directory on the Jumpbox.
+1. Verify the `bosh.pem` file exists in the deployment directory on the offline Ops Manager.
 <pre class='terminal'>
-	$ scp -i bosh.pem bosh.pem ubuntu@&#60;public-dns-name>:~/deployments
+	$ ls ~/workspace/dark-chiron-aws/config
 </pre>
 
 1. Install BOSH.
@@ -35,7 +47,16 @@ Modify the following parameters:
 $ bosh target https:<span>/</span>/10.0.0.6:25555
 </pre>
 
-1. Confirm BOSH Status: (copy **director UUID** for CF deployment manifest below).
+1. Confirm BOSH Status: 
+<p class="note"><strong>Note</strong>: You must collect the **DIRECTOR UUID** from the CF deployment manifest. It will be used to prepare the BOSH director in subsequent steps.</p>
+
 <pre class='terminal'>
 $ bosh status
 </pre>
+
+---
+
+Continue the installation by [Preparing the Bosh Director for PCF Install](./prepare-bosh-director.html).
+
+
+Return to the overview of [Offline Pivotal Cloud Foundry&reg;](./install-pws-dark.html).

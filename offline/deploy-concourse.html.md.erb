@@ -2,35 +2,38 @@
 title: Deploy Concourse
 ---
 
-From the Mega Jumpbox, upload the releases and stemcell for the Concourse installation:
+This topic describes setting up Concourse for 
+1. From the offline Ops Manager, upload the releases and stemcell for the Concourse installation:
+<p class="terminal">
+$ bosh -n upload release /opt/artifacts/releases/concourse-0.62.0.tgz
+</p>
+<p class="terminal">
+$ bosh -n upload release /opt/artifacts/releases/garden-linux-0.308.0.tgz
+</p>
+<p class="terminal">
+$ bosh -n upload stemcell /opt/artifacts/stemcells/bosh-stemcell-2989-aws-xen-ubuntu-trusty-go_agent.tgz --skip-if-exists
+</p>
 
-```
-bosh -n upload release /opt/artifacts/releases/concourse-0.62.0.tgz
-bosh -n upload release /opt/artifacts/releases/garden-linux-0.308.0.tgz
-bosh -n upload stemcell /opt/artifacts/stemcells/bosh-stemcell-2989-aws-xen-ubuntu-trusty-go_agent.tgz --skip-if-exists
-```
+1. Modify the Concourse Deployment Manifest `p-concourse-chiron.yml` in the deployments directory on the offline Ops Manager to suit the environment. Configure the following parameters as necessary:
+    1. Director UUID: Use value from \<BOSH-STATUS>  above
+    1. Network Cloud Properties:
+    	1. Subnet-ID: Use value from pcf-private-subnet
+    	1. AWS Console: Use VPC value
 
-- [ ] Modify the [Concourse Deployment Manifest](https://github.com/pivotal-federal-field-engineering/dark-chiron-aws/tree/master/deployments/p-concourse-chiron.yml "Manifest"): p-concourse-chiron.yml in the deployments directory on the Mega Jumpbox to suit the environment.
+1. Set deployment:
+<p class="terminal">
+$ bosh -n deployment /home/ubuntu/workspace/dark-chiron-aws/deployments/p-concourse-chiron.yml
+</p>
 
-Configure the following parameters as necessary:
-* Director UUID (using <bosh status> above)
-* Network Cloud Properties, Subnet-ID: (pcf-private-subnet, AWS Console: VPC)
+1. Deploy Concourse:
+<p class="terminal">
+$ bosh -n deploy
+</p>
 
-- [ ] Set deployment:
+1. Run BOSH utilities to confirm successful deployment:
+<p class="terminal">
+$ bosh -n vms p-concourse-chiron
+$ bosh -n cck --report
+</p>
 
-```
-bosh -n deployment /home/ubuntu/workspace/dark-chiron-aws/deployments/p-concourse-chiron.yml
-```
-
-- [ ] Deploy Concourse:
-
-```
-bosh -n deploy
-```
-
-- [ ] Run bosh utilities to confirm successful deployment:
-
-```
-bosh -n vms p-concourse-chiron
-bosh -n cck --report
-```
+<p class="note"><strong>Note</strong>: This deployment contains no BOSH errands.</p>

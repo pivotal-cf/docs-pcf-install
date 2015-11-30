@@ -1,0 +1,66 @@
+---
+title: Installing Pivotal Cloud Foundry in an Offline Environment
+---
+
+This guide describes how to install Pivotal Cloud Foundry&reg; (PCF) PWS-Dark.
+
+This page covers the background, prerequisites and considerations for running an offline PCF, and includes the links for the installation steps.
+
+## <a id="background"></a>Background ##
+
+The goal of this document is to offer operators within critical government organizations hands-on, step-by-step technical documentation to implement an end-to-end automated solution to deploying an offline Pivotal Cloud Foundry&reg; (PCF) to their private cloud infrastructure. 
+
+This guide specifically answers the need for a continuous deployment, continuous integration pipeline of reliable, integration-tested Cloud Foundry deployments which can be operated in a secure environment.
+
+Pivotal recommends the specific course of action contained herein based on the following assumptions:
+
+- A small team, typically two operators, can deploy, troubleshoot and maintain an entire Cloud Foundry environment which supports thousands of servers and applications.
+- The release cycle of Pivotal Cloud Foundry&reg; `cf-release` provides the most reliable and stable cloud environment available. The cycle recommended in this guide uses the same tiles from Pivotal Network that the commercial PCF version uses, and it leverages the expertise of the Pivotal Cloud Operations and Engineering teams. Pivotal Web Services (PWS) acts as an integration testing suite for `cf-release` because it remains several release versions ahead of `cf-release`.
+- Clients require the procedural workflow that begins with a single secure scanned data image, for example an Amazon Machine Image, deploys their entire Cloud Foundry platform from those contents, in an automated fashion, and in an offline, secure environment.
+
+## <a id='prerequisites'></a>Prerequisites ##
+
+To complete the procedure described here, you must address the following prerequisites:
+
+<p class="note"><strong>Note</strong>: If you will not have online access while installing PCF, make sure you can complete this prerequisites section below without documentation. </p>
+
+* An AWS account that can accommodate the minimum resource requirements for a PCF installation:
+    * 1 Elastic Load Balancer
+    * 1 Relational Database Service. We recommend at least a db.m3.large instance with 100 GB of allocated storage (Optional)
+    * 2 S3 Buckets (Optional)
+    * EC2 Instances:
+        * 10 t2.micros
+        * 1 r3.xlarge (1 per DEA)
+        * 1 c4.xlarge
+        * 2 m3.large
+
+* The appropriate region selected within your AWS account. See the [Amazon documentation on regions and availability zones](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-regions-availability-zones) for help selecting the correct region for your deployment.
+* The [AWS CLI](https://aws.amazon.com/cli/) installed on your machine, and configured with user credentials that have admin access to your AWS account.
+* Sufficiently high instance limits (or no instance limits) on your AWS account. Installing Pivotal Cloud Foundry&reg; requires more than the default 20 concurrent instances (how many?? Where is this checked?).
+* A key pair to use with your Pivotal Cloud Foundry&reg; deployment. [Create a key pair in AWS](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-keypair.html).
+* A registered wildcard domain for your PCF installation. You will need this registered domain when configuring your SSL certificate and Cloud Controller.
+* An SSL certificate for your PCF domain. This can be a self-signed cert, but Pivotal recommends using a self-signed certificate only for testing and development. You should obtain a cert from your Certificate Authority for use in your production environment.
+
+## <a id="important-considerations"></a>Important Considerations About Offline Environments
+
+The following list specifically addresses some known differences between a commercial implementation of PCF on AWS and an offline implementation of PCF:
+
+* The offline network will not be internet accessible. All software will need to be scanned and transferred into the customer network.
+* Only a subset of AWS features are available in the customer environment.
+* Internal services control access and provide credentials to the AWS console and AWS API CLIs.  
+* Domains must be requested via internal forms through the appropriate chain of command.
+* VPCs must be created before being referenced in CloudFormation scripts.
+* AWS region names and availability zones will differ from the commercial implementation.
+* The list of Amazon Machine Image (AMI) IDs will differ, which is especially important for Hardware Virtual Machine (HVM) instance types.
+* The list of AWS instance types will differ for customers, and the `T` series will not exist. Contact your liaison or [Pivotal support](http://support.pivotal.io) to determine equivalent substitutions to instances.
+
+## <a id='install-sequence'></a>Installation Sequence
+
+Follow the sequence below to perform an offline PCF installation on AWS infrastructure:
+
+1. [Bootstrap AWS Environment](./bootstrap-pws-dark-environment.html)
+1. [Deploy Offline Ops Manager](./deploy-jumpbox.html)
+1. [Deploy Bosh Director](./deploy-bosh.html)
+1. [Prepare Bosh Director for PCF Install](./prepare-bosh-director.html)
+1. [Deploy PCF Elastic Runtime](./deploy-er.html)
+<p class="note"><strong>Note</strong>: Environment, security, infrastructure, manifest and other details may differ for your installation.</p>

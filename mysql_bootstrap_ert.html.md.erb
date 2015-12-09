@@ -7,13 +7,18 @@ title: Recovering MySQL from Elastic Runtime downtime
 This topic describes the manual process necessary to recover an Elastic Runtime cluster that has been shut off. There are times when all of the Elastic Runtime VMs have been removed, such as Terminating all VMs on AWS when Elastic Runtime is not in use. Now that PCF has HA MySQL as its internal database, it is no longer possible to have BOSH restart all of the VMs. In the event that all of the MySQL VMs are gone, the cluster will not automatically restart.
 
 
-## <a id='export'>Prerequisites </a> ##
+## <a id='credentials'></a>Obtain Credentials from Ops Manager  ##
 
-1. the key file from Ops Manager Director > Settings > SSH Private Key
-1. the password for Director in Ops Manager Director > Credentials > Director
-1. the IP address for the "Ops Manager Director" which is under the Status tab
+Navigate to the Pivotal Cloud Foundry® Operations Manager Installation Dashboard.
 
-## <a id='export'>Part A: Recovering MySQL </a> ##
+1. Find the key file from Ops Manager Director > Settings > SSH Private Key
+1. Locate the password for Director in Ops Manager Director > Credentials > Director
+1. Obtain the IP address for the "Ops Manager Director" which is under the Status tab
+
+These credentials are necessary to perform the recovery instructions below. 
+
+## <a id='mysql'></a>Recovering MySQL  ##
+
 
 1. Copy and paste the private key to a file. 
   ```cat > director.key; chmod 600 director.key```
@@ -83,7 +88,8 @@ This topic describes the manual process necessary to recover an Elastic Runtime 
     | unknown/unknown                                                | unresponsive agent |                                                              |            |
     | unknown/unknown                                                | unresponsive agent |                                                              |            |
     ```
-   <p class="note"><strong>Note</strong>: If you do not see these three `unknown/unknown` items on your list, instead you might see the mysql-partition VMs. If so, that's good, it means that your VMs were not destroyed, merely powered off or otherwise. <strong>Disregard the rest of the instructions in Recovering MySQL and skip to Part B: Bootstrapping.</strong>
+
+   <p class="note"><strong>Note</strong>: If you do not see these three `unknown/unknown` items on your list, instead you might see the mysql-partition VMs. If so, that's good, it means that your VMs were not destroyed, merely powered off or otherwise. <strong>Disregard the rest of the instructions in Recovering MySQL and skip to the Bootstrapping section below.</strong>
    </p>
 
 1. Run BOSH's cloud check to clear out the place-holders. Select the option to **Delete VM reference** if given the option.
@@ -219,15 +225,12 @@ This topic describes the manual process necessary to recover an Elastic Runtime 
     | mysql-partition-f8abb6ac43ccc9fe16d7/2                         | failing  | mysql-partition-f8abb6ac43ccc9fe16d7                         | 10.0.16.61 |
     ```
 
-----
 
-## <a id='export'>Part B: Bootstrapping </a> ##
 
-- Follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) process per normal.
+## <a id='bootstrapping'></a>Bootstrapping  ##
 
-----
+Follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) process per normal. After completing the bootstrap process, you'll be rewarded with a healthy, stable MySQL cluster again:
 
-After completing the bootstrap process, you'll be rewarded with a healthy, stable MySQL cluster again:
 
 ```
 | mysql-partition-f8abb6ac43ccc9fe16d7/0                         | running | mysql-partition-f8abb6ac43ccc9fe16d7                         | 10.0.16.12 |
@@ -236,7 +239,9 @@ After completing the bootstrap process, you'll be rewarded with a healthy, stabl
 ```
 
 
-## <a id='export'>Common Issues </a> ##
+
+## <a id='common'></a>Common Issues  ##
+
 
 **If you experience an error that looks something like:**
 

@@ -1,23 +1,28 @@
+---
+title: Recovering MySQL from Elastic Runtime downtime
+---
 
-# Recovering MySQL from Elastic Runtime downtime
-There are times when all of the Elastic Runtime VMs have been removed, such as Terminating all VMs on AWS when Elastic Runtime isn't in use. Now that PCF has HA MySQL as its internal database, it's no longer possible to simply have BOSH restart all of the VMs. In the event that all of the MySQL VMs are gone, the cluster will not automatically start itself.
+<strong><%= modified_date %></strong>
 
-Here is the manual process necessary to recover an Elastic Runtime cluster that's been shut off.
+This topic describes the manual process necessary to recover an Elastic Runtime cluster that has been shut off. There are times when all of the Elastic Runtime VMs have been removed, such as Terminating all VMs on AWS when Elastic Runtime is not in use. Now that PCF has HA MySQL as its internal database, it is no longer possible to have BOSH restart all of the VMs. In the event that all of the MySQL VMs are gone, the cluster will not automatically restart.
 
-## Things you'll need to start
+
+## <a id='export'>Prerequisites </a> ##
 
 1. the key file from Ops Manager Director > Settings > SSH Private Key
 1. the password for Director in Ops Manager Director > Credentials > Director
 1. the IP address for the "Ops Manager Director" which is under the Status tab
 
-## Steps
+## <a id='export'>Part A: Recovering MySQL </a> ##
 
-1. Copy and paste the private key to a file. You can use a text editor if you prefer.
+1. Copy and paste the private key to a file. 
+  ```cat > director.key; chmod 600 director.key```
 
-   `cat > director.key; chmod 600 director.key`
 1. `ssh-add director.key`**
+
 1. `ssh -A pcf.SYSTEM-DOMAIN -l ubuntu`
-1. Configure BOSH to talk to the Ops Manager Director, using the IP, login, and password from above.
+
+1. Configure BOSH to talk to the Ops Manager Director, using the IP, login, and password obtained in the Prerequisites above.
 
     ```
     $ bosh target 10.0.16.5
@@ -27,7 +32,7 @@ Here is the manual process necessary to recover an Elastic Runtime cluster that'
     Logged in as `director'
     ```
     
-1. Run `bosh deployments` to discover the name of the CF job
+1. Run `bosh deployments` to discover the name of the CF job.
 
     ```
     $ bosh deployments
@@ -48,7 +53,7 @@ Here is the manual process necessary to recover an Elastic Runtime cluster that'
     +-------------------------+-------------------------------+----------------------------------------------+--------------+
     ```
 
-1. Download the manifest
+1. Download the manifest.
 
     ```
     $ bosh download manifest cf-64f27267ea9cbfe823e1 /tmp/cf.yml
@@ -56,9 +61,10 @@ Here is the manual process necessary to recover an Elastic Runtime cluster that'
     Deployment manifest saved to `/tmp/cf.yml'
     ```
 
-1. Set BOSH to use that deployment
+1. Set BOSH to use that deployment.
 
     `bosh deployment /tmp/cf.yml`
+
 1. Check for place-holder VMs.
 
     ```
@@ -77,7 +83,9 @@ Here is the manual process necessary to recover an Elastic Runtime cluster that'
     | unknown/unknown                                                | unresponsive agent |                                                              |            |
     | unknown/unknown                                                | unresponsive agent |                                                              |            |
     ```
-    **Note**: If you do not see these three `unknown/unknown` items at the stop of your list, instead you might see the mysql-partition VMs. If so, that's good, it means that your VMs were not destroyed, merely powered off or otherwise. Skip to Part B, bootstrapping.
+   <p class="note"><strong>Note</strong>: If you do not see these three `unknown/unknown` items on your list, instead you might see the mysql-partition VMs. If so, that's good, it means that your VMs were not destroyed, merely powered off or otherwise. <strong>Disregard the rest of the instructions in Recovering MySQL and skip to Part B: Bootstrapping.</strong>
+   </p>
+
 1. Run BOSH's cloud check to clear out the place-holders. Select the option to **Delete VM reference** if given the option.
 
     ```
@@ -153,7 +161,7 @@ Here is the manual process necessary to recover an Elastic Runtime cluster that'
     Duration	00:00:00
     Cloudcheck is finished
     ```
-1. Modify the deployment
+1. Modify the deployment.
 
     `bosh edit deployment`
     
@@ -164,7 +172,7 @@ Here is the manual process necessary to recover an Elastic Runtime cluster that'
     - Update max_in_flight to `3`.
     - Add a line: `canaries: 0` below the `max_in_flight` line.
 
-1. Apply these changes by running: `bosh deploy`
+1. Apply these changes by running `bosh deploy`.
 
     **BE SURE** to stop and look over the changes carefully. Type `yes` if and only if this is the only change:
   
@@ -213,9 +221,9 @@ Here is the manual process necessary to recover an Elastic Runtime cluster that'
 
 ----
 
-## Bootstrap
+## <a id='export'>Part B: Bootstrapping </a> ##
 
-- You can now follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) process per normal.
+- Follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) process per normal.
 
 ----
 
@@ -228,9 +236,9 @@ After completing the bootstrap process, you'll be rewarded with a healthy, stabl
 ```
 
 
-### Common Issues
+## <a id='export'>Common Issues </a> ##
 
-** If you experience an error that looks something like:
+**If you experience an error that looks something like:**
 
 > Received disconnect from 10.0.1.19: 2: Too many authentication failures for bosh_64898ue98
 

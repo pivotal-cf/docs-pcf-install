@@ -65,7 +65,7 @@ Use the Cloud Controller Database (CCDB) password and IP address to restore the 
 
 1. Use `scp` to send the Cloud Controller Database backup file to the Cloud Controller Database VM.
 <pre class='terminal'>
-    $ scp ccdb.sql vcap@YOUR-CCDB-VM-IP-ADDRESS:
+    $ scp ccdb.sql vcap@YOUR-CCDB-VM-IP-ADDRESS:~/.
 </pre>
 
 1. SSH into the Cloud Controller Database VM.
@@ -86,7 +86,7 @@ ccdb=# create schema public;
 
 1. Restore the database from the backup file.
 <pre class='terminal'>
-$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 ccdb < ccdb.sql
+$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 ccdb < ~/ccdb.sql
 </pre>
 
 
@@ -98,7 +98,7 @@ $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 ccdb < ccdb.sql
 
 1. Use `scp` to copy the database backup file to the UAA Database VM.
 <pre class='terminal'>
-$ scp console.sql vcap@YOUR-CONSOLE-DB-VM-IP-ADDRESS:
+$ scp console.sql vcap@YOUR-CONSOLE-DB-VM-IP-ADDRESS:~/.
 </pre>
 
 1. SSH into the UAA Database VM.
@@ -119,7 +119,7 @@ console=# create schema public;
 
 1. Restore the database from the backup file.
 <pre class='terminal'>
-$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 console < console.sql
+$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 console < ~/console.sql
 </pre>
 
 ### <a id='restore-uaa'></a>Restore UAA Database
@@ -163,7 +163,7 @@ create schema public;
 
 1. Use `scp` to copy the database backup file to the UAA Database VM.
 <pre class='terminal'>
-$ scp uaa.sql vcap@YOUR-UAADB-VM-IP-ADDRESS: #UAADB server
+$ scp uaa.sql vcap@YOUR-UAADB-VM-IP-ADDRESS:~/.
 </pre>
 
 1. SSH into the UAA Database VM.
@@ -173,7 +173,7 @@ $ ssh vcap@YOUR-UAADB-VM-IP-ADDRESS
 
 1. Restore the database from the backup file.
 <pre class='terminal'>
-$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 uaa < uaa.sql
+$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 uaa < ~/uaa.sql
 </pre>
 
 
@@ -183,7 +183,7 @@ Use the NFS password and IP address to restore the NFS by following the steps de
 
 1. Use `scp` to send the NFS backup tarball to the NFS VM.
 <pre class='terminal'>
-    $ scp nfs.tar.gz vcap@YOUR-NFS-VM-IP-ADDRESS
+    $ scp nfs.tar.gz vcap@YOUR-NFS-VM-IP-ADDRESS:~/.
 </pre>
 
 1. Run `ssh YOUR-NFS-VM-IP-ADDRESS` to enter the NFS VM.
@@ -192,55 +192,65 @@ Use the NFS password and IP address to restore the NFS by following the steps de
 </pre>
 
 1. Log in as root user. When prompted for a password, enter the vcap password you used to `ssh` into the VM:
-<pre class='terminal'>$vcap@10.0.0.10 sudo su</pre>
+<pre class='terminal'>$ sudo su</pre>
 
 1. Run the following command to create a store folder if one does not exist:
 <pre class='terminal'>
-    $root@10.0.0.10 [ ! -d /var/vcap/store ] && mkdir -p /var/vcap/store
+    $ mkdir -p /var/vcap/store
 </pre>
 
 1. Record the permissions on `var/vcap/store` so that you can restore them after running the commands below. To view the permissions, run the following command:
 <pre class='terminal'>
-	$root@10.0.0.10 ls -ld /var/vcap/store
+	$ ls -ld /var/vcap/store
 </pre>
 
-1. Change the permissions on `var/vcap/store` to `777`.
+1. Temporarily change the permissions on `var/vcap/store` to `777`.
 <pre class='terminal'>
-	$root@10.0.0.10 chmod 777 /var/vcap/store
+	$ chmod 777 /var/vcap/store
 </pre>
 
 1. Move the backup archive to the `store` folder.
 <pre class='terminal'>
-	$root@10.0.0.10 mv nfs.tar.gz /var/vcap/store
+	$ mv nfs.tar.gz /var/vcap/store
 </pre>
 
 1. `cd` into the `store` folder.
 <pre class='terminal'>
-	$root@10.0.0.10 cd /var/vcap/store
+	$ cd /var/vcap/store
 </pre>
 
 1. Decompress and extract the contents of the backup archive.
 <pre class='terminal'>
-	$root@10.0.0.10 tar zx < nfs.tar.gz</pre>
+	$ tar zxf nfs.tar.gz</pre>
 </pre>
 
 1. Change the permissions on `var/vcap/store` to their prior setting.
 <pre class='terminal'>
-    $root@10.0.0.10 chmod YOUR-PRIOR-PERMISSION /var/vcap/store
+    $ chmod YOUR-PRIOR-PERMISSION /var/vcap/store
 </pre>
 
 1. Exit the NFS VM.
 <pre class='terminal'>
-    $root@10.0.0.10 exit
+    $ exit
 </pre>
 
 
 
 ### <a id='restore-mysql-dev'></a>Restore MySQL Database
 
-1. Use the MySQL password and IP address to restore the MySQL database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+1. Use `scp` to send the MySQL Database backup file to the MySQL Database VM. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
 <pre class='terminal'>
-  mysql -h YOUR-MYSQL-SERVER-IP -u root -p < user_databases.sql
+    $ scp user_databases.sql vcap@YOUR-MYSQL-VM-IP-ADDRESS:~/.
+</pre>
+
+1. SSH into the MySQL Database VM.
+<pre class='terminal'>
+$ ssh vcap@YOUR-MYSQL-VM-IP
+</pre>
+
+1. Use the MySQL password and IP address to restore the MySQL database by running the following command. 
+<pre class='terminal'>
+  mysql -h YOUR-MYSQL-SERVER-IP -u root -p < ~/.user_databases.sql
 </pre>
 
 

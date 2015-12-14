@@ -87,10 +87,10 @@ and
 	Password:***********
     </pre>
 
-1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the CCDB VM. For example:
+1. Run `find /var/vcap | grep 'bin/pg_dump'` to find the locally installed psql client on the CCDB VM. For example:
 <pre class="terminal">
-$ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
-/var/vcap/data/packages/postgres/5.1/bin/psql
+$ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg_dump'
+/var/vcap/data/packages/postgres/5.1/bin/pg_dump
 </pre>
 
 1. Run `pg_dump` from the locally installed psql client to export the database:
@@ -102,7 +102,7 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
 
 1. Run `scp` to copy the exported database to your local machine.
 <pre class="terminal">
-    $ scp vcap@10.85.52.96:ccdb.sql
+    $ scp vcap@10.85.52.96:~/ccdb.sql .
 </pre>
 
 ### <a id='backup-uaadb'></a>Back Up the UAA Database ###
@@ -123,10 +123,10 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
 
 1. SSH into the UAA database VM as the admin using the IP address and password recorded in the previous steps.
 
-1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the UAA database VM.
+1. Run `find /var/vcap | grep 'bin/pg_dump'` to find the locally installed psql client on the UAA database VM.
 <pre class='terminal'>
-    $ root@10.85.52.101:~# find /var/vcap | grep 'bin/psql'
-    /var/vcap/data/packages/postgres/5.1/bin/psql
+    $ root@10.85.52.101:~# find /var/vcap | grep 'bin/pg_dump'
+    /var/vcap/data/packages/postgres/5.1/bin/pg_dump
 </pre>
 
 1. Run `pg_dump` from the locally installed psql client to export the database:
@@ -138,7 +138,7 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
 
 1. Run `scp` to copy the exported database to your local machine.
 <pre class='terminal'>
-    $ scp vcap@10.85.52.101:uaa.sql
+    $ scp vcap@10.85.52.101:~/uaa.sql .
 </pre>
 
 
@@ -168,10 +168,10 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
 
 1. SSH into the Apps Manager database VM as the admin using the IP address and password recorded in the previous steps.
 
-1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the Apps Manager database VM.
+1. Run `find /var/vcap | grep 'bin/pg_dump'` to find the locally installed psql client on the Apps Manager database VM.
 <pre class='terminal'>
-	$ root@10.85.52.104:~# find /var/vcap | grep 'bin/psql'
-    /var/vcap/data/packages/postgres/5.1/bin/psql
+	$ root@10.85.52.104:~# find /var/vcap | grep 'bin/pg_dump'
+    /var/vcap/data/packages/postgres/5.1/bin/pg_dump
 </pre>
 
 1. Run `pg_dump` from the locally installed psql client to export the database:
@@ -183,7 +183,7 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
 
 1. Run `scp` to copy the exported database to your local machine.
 <pre class='terminal'>
-    $ scp vcap@10.85.52.104:console.sql
+    $ scp vcap@10.85.52.104:~/console.sql .
 </pre>
 
 ### <a id='nfs'></a>Back Up NFS Server ###
@@ -208,12 +208,8 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
         $ ssh vcap@10.0.0.10 'cd /var/vcap/store && tar cz shared' > nfs.tar.gz
     </pre>
     <p class="note"><strong>Note</strong>: The TAR file that you create to back up NFS server might be large. To estimate the size of the TAR file before you create it, run the following command:
-    <code class=''>tar -cf - /dir/to/archive/ | wc -c</code></p>
+    <code class=''>ssh vcap@10.0.0.10 'tar -cf - /dir/to/archive/ | wc -c'</code></p>
 
-1. Run `scp` to copy the TAR file to your local machine.
-<pre class='terminal'>
-    $ scp vcap@10.0.0.10:nfs.tar.gz
-</pre>
 
 ### <a id='backup-mysql'></a>Back Up Pivotal MySQL Server ###
 
@@ -227,13 +223,19 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/psql'
 
     <%= image_tag("mysql-cred.png") %>
 
+1. SSH into the Mysql database VM as the admin using the IP address and password recorded in the previous steps.
+
 1. Run the following command to dump the data from the p-mysql database and save it:
 <pre class='terminal'>
     $ mysqldump -u root -p -h 10.0.1.26 --all-databases > user_databases.sql
 </pre>
 
+1. Run `scp` to copy the exported database to your local machine.
+<pre class='terminal'>
+    $ scp vcap@10.0.1.26:~/user_databases.sql .
+</pre>
+
 ### <a id='cc-start'></a>Start Cloud Controller ###
 <%= partial './starting_cc' %>
 
-Follow the steps in the [Restoring Pivotal Cloud Foundry&reg; from Backup](./restore-pcf.html) topic to restore a backup, import an installation to restore your settings or to share your settings with
-another user. 
+Follow the steps in the [Restoring Pivotal Cloud Foundry&reg; from Backup](./restore-pcf.html) topic to restore a backup, import an installation to restore your settings or to share your settings with another user. 

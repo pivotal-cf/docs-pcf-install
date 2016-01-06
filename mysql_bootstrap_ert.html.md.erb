@@ -1,45 +1,51 @@
 ---
-title: Recovering MySQL from Elastic Runtime downtime
+title: Recovering MySQL from Elastic Runtime Downtime
 ---
 
 <strong><%= modified_date %></strong>
 
-This topic describes the manual process necessary to recover an Elastic Runtime cluster that has been shut off. There are times when all of the Elastic Runtime VMs have been removed, such as Terminating all VMs on AWS when Elastic Runtime is not in use. Now that PCF has HA MySQL as its internal database, it is no longer possible to have BOSH restart all of the VMs. In the event that all of the MySQL VMs are gone, the cluster will not automatically restart.
-
+This topic describes the manual process for recovering a terminated Elastic Runtime cluster. For example, this procedure is necessary when all Elastic Runtime VMs are removed on AWS. In the event that all of the MySQL VMs are terminated, the cluster will not automatically restart.
 
 ## <a id='credentials'></a>Obtain Credentials from Ops Manager  ##
 
 Navigate to the Pivotal Cloud Foundry® Operations Manager Installation Dashboard.
 
-1. Find the key file from Ops Manager Director > Settings > SSH Private Key
-1. Locate the password for Director in Ops Manager Director > Credentials > Director
-1. Obtain the IP address for the "Ops Manager Director" which is under the Status tab
+1. Find the key file from <strong>Ops Manager Director > Settings > SSH Private Key</strong>
+1. Locate the password for Director in <strong>Ops Manager Director > Credentials > Director</strong>
+1. Obtain the IP address for the <strong>Ops Manager Director</strong> under the <strong>Status</strong> tab
 
 These credentials are necessary to perform the recovery instructions below. 
 
 ## <a id='mysql'></a>Recovering MySQL  ##
 
-
 1. Copy and paste the private key to a file. 
-  ```cat > director.key; chmod 600 director.key```
+  <pre class="terminal">
+    $ cat > director.key; chmod 600 director.key
+  </pre>
 
-1. `ssh-add director.key`**
+1. Add the directory key. 
+  <pre class="terminal">
+    $ ssh-add director.key
+  </pre>
 
-1. `ssh -A pcf.SYSTEM-DOMAIN -l ubuntu`
+1. `SSH` into the system domain.
+  <pre class="terminal">
+    $ ssh -A pcf.SYSTEM-DOMAIN -l ubuntu
+</pre>
 
-1. Configure BOSH to talk to the Ops Manager Director, using the IP, login, and password obtained in the Prerequisites above.
+1. Configure BOSH to talk to the <strong>Ops Manager Director</strong> using the IP, login, and password obtained in the steps above.
 
-    ```
+    <pre class="terminal">
     $ bosh target 10.0.16.5
     Target set to `p-bosh-30c19bdd43c55c627d70'
     Your username: director
     Enter password:
     Logged in as `director'
-    ```
+    </pre>
     
 1. Run `bosh deployments` to discover the name of the CF job.
 
-    ```
+    <pre class="terminal">
     $ bosh deployments
     Acting as user 'director' on 'p-bosh-30c19bdd43c55c627d70'
 
@@ -56,23 +62,25 @@ These credentials are necessary to perform the recovery instructions below.
     |                         | notifications/19              |                                              |              |
     |                         | push-apps-manager-release/397 |                                              |              |
     +-------------------------+-------------------------------+----------------------------------------------+--------------+
-    ```
+    </pre>
 
 1. Download the manifest.
 
-    ```
+    <pre class="terminal">
     $ bosh download manifest cf-64f27267ea9cbfe823e1 /tmp/cf.yml
     Acting as user 'director' on deployment 'cf-e82cbf44613594d8a155' on 'p-bosh-30c19bdd43c55c627d70'
     Deployment manifest saved to `/tmp/cf.yml'
-    ```
+    </pre>
 
-1. Set BOSH to use that deployment.
+1. Set BOSH to use the deployment manifest you downloaded.
 
-    `bosh deployment /tmp/cf.yml`
+    <pre class="terminal">
+      $ bosh deployment /tmp/cf.yml
+    </pre>
 
 1. Check for place-holder VMs.
 
-    ```
+    <pre class="terminal">
     $ bosh vms
     Acting as user 'director' on 'p-bosh-30c19bdd43c55c627d70'
     Deployment `cf-e82cbf44613594d8a155'
@@ -81,20 +89,17 @@ These credentials are necessary to perform the recovery instructions below.
 
     Task 33 done
 
-    +----------------------------------------------------------------+--------------------+--------------------------------------------------------------+------------+
-    | Job/index                                                      | State              | Resource Pool                                                | IPs        |
-    +----------------------------------------------------------------+--------------------+--------------------------------------------------------------+------------+
-    | unknown/unknown                                                | unresponsive agent |                                                              |            |
-    | unknown/unknown                                                | unresponsive agent |                                                              |            |
-    | unknown/unknown                                                | unresponsive agent |                                                              |            |
-    ```
+    +-------------------------+--------------------+------------------+-------+
+    | Job/index               | State              | Resource Pool    | IPs   |
+    +-------------------------+--------------------+------------------+-------+
+    | unknown/unknown         | unresponsive agent |                  |       |
+    | unknown/unknown         | unresponsive agent |                  |       |
+    | unknown/unknown         | unresponsive agent |                  |       |
+    </pre>
+<p class="note"><strong>Note</strong>: If you do not see these three `unknown/unknown` items on your list, you might see the `mysql-partition` VMs, which indicates that your VMs were not destroyed. <strong>If that is the case, disregard the rest of the instructions in this section, Recovering MySQL, and skip to the <a href="#bootstrapping">Bootstrapping</a> section below.</strong></p>
+1. Run the BOSH `cloud check` to clear out the place holders. If given the option select **Delete VM reference**.
 
-   <p class="note"><strong>Note</strong>: If you do not see these three `unknown/unknown` items on your list, instead you might see the mysql-partition VMs. If so, that's good, it means that your VMs were not destroyed, merely powered off or otherwise. <strong>Disregard the rest of the instructions in Recovering MySQL and skip to the Bootstrapping section below.</strong>
-   </p>
-
-1. Run BOSH's cloud check to clear out the place-holders. Select the option to **Delete VM reference** if given the option.
-
-    ```
+    <pre class="terminal">
     $ bosh cck
     Acting as user 'director' on deployment 'cf-e82cbf44613594d8a155' on 'p-bosh-30c19bdd43c55c627d70'
     Performing cloud check...
@@ -112,42 +117,42 @@ These credentials are necessary to perform the recovery instructions below.
 
     Task 34 done
 
-    Started		2015-11-26 01:42:42 UTC
-    Finished	2015-11-26 01:42:54 UTC
-    Duration	00:00:12
+    Started   2015-11-26 01:42:42 UTC
+    Finished  2015-11-26 01:42:54 UTC
+    Duration  00:00:12
 
-    Scan is complete, checking if any problems found...
+    Scan is complete, checking if any problems found.
 
     Found 3 problems
 
-    Problem 1 of 3: VM with cloud ID `i-afe2801f' missing.
-      1. Skip for now
-      2. Recreate VM
-      3. Delete VM reference
+    Problem 1 of 3: VM with cloud ID <span>`</span>i-afe2801f' missing.
+        1. Skip for now
+        2. Recreate VM
+        3. Delete VM reference
     Please choose a resolution [1 - 3]: 3
 
     Problem 2 of 3: VM with cloud ID `i-36741a86' missing.
-      1. Skip for now
-      2. Recreate VM
-      3. Delete VM reference
+        1. Skip for now
+        2. Recreate VM
+        3. Delete VM reference
     Please choose a resolution [1 - 3]: 3
 
-    Problem 3 of 3: VM with cloud ID `i-ce751b7e' missing.
-      1. Skip for now
-      2. Recreate VM
-      3. Delete VM reference
+    Problem 3 of 3: VM with cloud ID <span>`</span>i-ce751b7e' missing.
+        1. Skip for now
+        2. Recreate VM
+        3. Delete VM reference
     Please choose a resolution [1 - 3]: 3
 
     Below is the list of resolutions you've provided
     Please make sure everything is fine and confirm your changes
 
-      1. VM with cloud ID `i-afe2801f' missing.
+        1. VM with cloud ID `i-afe2801' missing.
          Delete VM reference
 
-      2. VM with cloud ID `i-36741a86' missing.
+        2. VM with cloud ID `i-36741a86' missing.
          Delete VM reference
 
-      3. VM with cloud ID `i-ce751b7e' missing.
+        3. VM with cloud ID `i-ce751b7e' missing.
          Delete VM reference
 
     Apply resolutions? (type 'yes' to continue): yes
@@ -155,114 +160,100 @@ These credentials are necessary to perform the recovery instructions below.
 
     Director task 35
       Started applying problem resolutions
-      Started applying problem resolutions > missing_vm 11: Delete VM reference. Done (00:00:00)
-      Started applying problem resolutions > missing_vm 27: Delete VM reference. Done (00:00:00)
-      Started applying problem resolutions > missing_vm 26: Delete VM reference. Done (00:00:00)
+      Started applying problem resolutions > missing<span>_</span>vm 11: Delete VM reference. Done (00:00:00)
+      Started applying problem resolutions > missing<span>_</span>vm 27: Delete VM reference. Done (00:00:00)
+      Started applying problem resolutions > missing<span>_</span>vm 26: Delete VM reference. Done (00:00:00)
          Done applying problem resolutions (00:00:00)
 
     Task 35 done
 
-    Started		2015-11-26 01:47:08 UTC
-    Finished	2015-11-26 01:47:08 UTC
-    Duration	00:00:00
+    Started   2015-11-26 01:47:08 UTC
+    Finished  2015-11-26 01:47:08 UTC
+    Duration  00:00:00
     Cloudcheck is finished
-    ```
-1. Modify the deployment.
-
-    `bosh edit deployment`
-    
-    This will launch a `vi` editor. Here are the exact steps you'll need to do inside of `vi`:
-    - Search for the jobs section: `/^jobs`
-    - Search for the mysql-partition: `/name: mysql-partition`
-    - Search for the update section: `/update`
-    - Update max_in_flight to `3`.
-    - Add a line: `canaries: 0` below the `max_in_flight` line.
+    </pre>
+1. Launch a `vi` editor to modify the deployment.
+  <pre class="terminal">
+    $ bosh edit deployment
+  </pre>
+    * Search for the jobs section: `/^jobs`
+    * Search for the mysql-partition: `/name: mysql-partition`
+    * Search for the update section: `/update`
+    * Update max\_in\_flight to `3`.
+    * Add a line: `canaries: 0` below the `max_in_flight` line.
 
 1. Apply these changes by running `bosh deploy`.
-
-    **Be Sure** to stop and look over the changes carefully. Type `yes` if and only if this is the only change:
-  
-    ```
+<p class="note"><strong>Note</strong>:Be sure to stop and look over the changes carefully. Only type `yes` if the changes listed are correct.</p>
+<pre class="terminal">
     Jobs
     mysql-partition-f8abb6ac43ccc9fe16d7
       update
         ± max_in_flight:
           - 1
           + 3
-        + canaries: 0
-        
+        + canaries: 0<br>
     Properties
-    No changes
-
-    Please review all changes carefully
-
+    No changes<br>
+    Please review all changes carefully<br>
     Deploying
-    ---------
+    \---------
     Are you sure you want to deploy? (type 'yes' to continue):
-    ```
+</pre>
     You will see BOSH re-creating the lost VMs:
     
-    ```
+    <pre class="terminal">
     Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/0 (00:01:54)
     Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/2 (00:01:54)
     Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/1 (00:02:04)
-    ```
+</pre>
     Ultimately, you will see this:
-    
-    ```
-       Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 > mysql-partition-f8abb6ac43ccc9fe16d7/1: `mysql-partition-f8abb6ac43ccc9fe16d7/1' is not running after update (00:05:57)
-       Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 > mysql-partition-f8abb6ac43ccc9fe16d7/0: `mysql-partition-f8abb6ac43ccc9fe16d7/0' is not running after update (00:05:59)
-       Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 > mysql-partition-f8abb6ac43ccc9fe16d7/2: `mysql-partition-f8abb6ac43ccc9fe16d7/2' is not running after update (00:06:01)
-       Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 (00:06:01)
+<pre class="terminal">
+    Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 > mysql-partition-f8abb6ac43ccc9fe16d7/1: \`mysql-partition-f8abb6ac43ccc9fe16d7/1' is not running after update (00:05:57)
+    Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 > mysql-partition-f8abb6ac43ccc9fe16d7/0: \`mysql-partition-f8abb6ac43ccc9fe16d7/0' is not running after update (00:05:59)
+    Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 > mysql-partition-f8abb6ac43ccc9fe16d7/2: \`mysql-partition-f8abb6ac43ccc9fe16d7/2' is not running after update (00:06:01)
+    Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 (00:06:01)
 
-    Error 400007: `mysql-partition-f8abb6ac43ccc9fe16d7/1' is not running after update
-    ````
-    **This is OK**. Now you can proceed to the standard bootstrap process. You can run `bosh vms` a second time to validate that you now have three VMs all in the failing state:
-    
-    ```
-    | mysql-partition-f8abb6ac43ccc9fe16d7/0                         | failing  | mysql-partition-f8abb6ac43ccc9fe16d7                         | 10.0.16.12 |
-    | mysql-partition-f8abb6ac43ccc9fe16d7/1                         | failing  | mysql-partition-f8abb6ac43ccc9fe16d7                         | 10.0.16.60 |
-    | mysql-partition-f8abb6ac43ccc9fe16d7/2                         | failing  | mysql-partition-f8abb6ac43ccc9fe16d7                         | 10.0.16.61 |
-    ```
+    Error 400007: \`mysql-partition-f8abb6ac43ccc9fe16d7/1' is not running after update
+</pre>
+**This error is OK**. 
 
-
+1. You can run `bosh vms` a second time to validate that you now have three VMs all in the failing state. 
+<pre class="terminal">
+    | mysql-partition-f8abb6ac43ccc9fe16d7/0   |  failing  |  mysql-partition-f8abb6ac43ccc9fe16d7   | 10.0.16.12 |
+    | mysql-partition-f8abb6ac43ccc9fe16d7/1   |  failing  |  mysql-partition-f8abb6ac43ccc9fe16d7   | 10.0.16.60 |
+    | mysql-partition-f8abb6ac43ccc9fe16d7/2   |  failing  |  mysql-partition-f8abb6ac43ccc9fe16d7   | 10.0.16.61 |
+</pre>
+At this point, you can proceed to the standard bootstrap process. 
 
 ## <a id='bootstrapping'></a>Bootstrapping  ##
 
 Follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) process per normal. After completing the bootstrap process, you'll be rewarded with a healthy, stable MySQL cluster again:
-
-
-```
-| mysql-partition-f8abb6ac43ccc9fe16d7/0                         | running | mysql-partition-f8abb6ac43ccc9fe16d7                         | 10.0.16.12 |
-| mysql-partition-f8abb6ac43ccc9fe16d7/1                         | running | mysql-partition-f8abb6ac43ccc9fe16d7                         | 10.0.16.60 |
-| mysql-partition-f8abb6ac43ccc9fe16d7/2                         | running | mysql-partition-f8abb6ac43ccc9fe16d7                         | 10.0.16.61 |
-```
-
-
+  <pre class="terminal">
+| mysql-partition-f8abb6ac43ccc9fe16d7/0   | running | mysql-partition-f8abb6ac43ccc9fe16d7      | 10.0.16.12 |
+| mysql-partition-f8abb6ac43ccc9fe16d7/1   | running | mysql-partition-f8abb6ac43ccc9fe16d7      | 10.0.16.60 |
+| mysql-partition-f8abb6ac43ccc9fe16d7/2   | running | mysql-partition-f8abb6ac43ccc9fe16d7      | 10.0.16.61 |
+  </pre>
 
 ## <a id='common'></a>Common Issues  ##
 
+- You may experience an error for too many key identities loaded in your authentication agent:
+<pre class="terminal">
+\> Received disconnect from 10.0.1.19: 2: Too many authentication failures for bosh_64898ue98
+</pre>
+  If so, you can clear all of them using `ssh-add -D`.
 
-**If you experience an error that looks something like:**
-
-> Received disconnect from 10.0.1.19: 2: Too many authentication failures for bosh_64898ue98
-
-You likely have too many key identities loaded in your authentication agent. You can clear all of them using `ssh-add -D`.
-
-
-- If you have an issue with not being able to `monit start` it may be due to a bug in mariadb_ctrl that doesn't collect a defunct process. In that case, you'll need to call support in order to get monit un-stuck. Please also see the Known Issues file.
+- If you have an issue with not being able to `monit start` it may be due to a bug in `mariadb_ctrl` that does not collect a defunct process. In that case, call Pivotal support to get monit un-stuck. Please also see the [Known Issues](../pcf-release-notes/) page.
 
 - FIXME: document the use of `bosh instances --ps`
-
-```
-+----------------------------------------------------------------+---------+--------------------------------------------------------------+------------+
-| mysql-partition-672bf7d9fa6b1a201c94/0                         | running | mysql-partition-672bf7d9fa6b1a201c94                         | 10.0.16.12 |
-|   mariadb_ctrl                                                 | running |                                                              |            |
-|   galera-healthcheck                                           | running |                                                              |            |
-|   gra-log-purger-executable                                    | running |                                                              |            |
-+----------------------------------------------------------------+---------+--------------------------------------------------------------+------------+
-| mysql-partition-672bf7d9fa6b1a201c94/1                         | stopped | mysql-partition-672bf7d9fa6b1a201c94                         | 10.0.16.60 |
-+----------------------------------------------------------------+---------+--------------------------------------------------------------+------------+
-| mysql-partition-672bf7d9fa6b1a201c94/2                         | stopped | mysql-partition-672bf7d9fa6b1a201c94                         | 10.0.16.61 |
-+----------------------------------------------------------------+---------+--------------------------------------------------------------+------------+
-```
+<pre class="terminal">
++---------------------------------------------+---------+----------------------------------------+------------+
+| mysql-partition-672bf7d9fa6b1a201c94/0      | running | mysql-partition-672bf7d9fa6b1a201c94   | 10.0.16.12 |
+|   mariadb_ctrl                              | running |                                        |            |
+|   galera-healthcheck                        | running |                                        |            |
+|   gra-log-purger-executable                 | running |                                        |            |
++---------------------------------------------+---------+----------------------------------------+------------+
+| mysql-partition-672bf7d9fa6b1a201c94/1      | stopped | mysql-partition-672bf7d9fa6b1a201c94   | 10.0.16.60 |
++---------------------------------------------+---------+----------------------------------------+------------+
+| mysql-partition-672bf7d9fa6b1a201c94/2      | stopped | mysql-partition-672bf7d9fa6b1a201c94   | 10.0.16.61 |
++---------------------------------------------+---------+----------------------------------------+------------+
+</pre>

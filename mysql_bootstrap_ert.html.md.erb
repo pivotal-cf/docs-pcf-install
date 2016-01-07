@@ -6,44 +6,12 @@ title: Recovering MySQL from Elastic Runtime Downtime
 
 This topic describes the manual process for recovering a terminated Elastic Runtime cluster. For example, this procedure is necessary when all Elastic Runtime VMs are removed on AWS. In the event that all of the MySQL VMs are terminated, the cluster will not automatically restart.
 
-## <a id='credentials'></a>Obtain Credentials from Ops Manager  ##
+<p class='note'><strong>Note</strong>: The final step of this procedure, <a href="#bootstrapping">Bootstrapping</a></strong>, requires you to run commands from the <a href="./../customizing/index.html">Ops Manager Director</a>. Follow the instructions to use the <a href="./../customizing/trouble-advanced.html#prepare">BOSH CLI</a> for command-line access.</p>
 
-Navigate to the Pivotal Cloud Foundry® Operations Manager Installation Dashboard.
-
-1. Find the key file from <strong>Ops Manager Director > Settings > SSH Private Key</strong>
-1. Locate the password for Director in <strong>Ops Manager Director > Credentials > Director</strong>
-1. Obtain the IP address for the <strong>Ops Manager Director</strong> under the <strong>Status</strong> tab
-
-These credentials are necessary to perform the recovery instructions below. 
 
 ## <a id='mysql'></a>Recovering MySQL  ##
 
-1. Copy and paste the private key to a file. 
-  <pre class="terminal">
-    $ cat > director.key; chmod 600 director.key
-  </pre>
-
-1. Add the directory key. 
-  <pre class="terminal">
-    $ ssh-add director.key
-  </pre>
-
-1. `SSH` into the system domain.
-  <pre class="terminal">
-    $ ssh -A pcf.SYSTEM-DOMAIN -l ubuntu
-</pre>
-
-1. Configure BOSH to talk to the <strong>Ops Manager Director</strong> using the IP, login, and password obtained in the steps above.
-
-    <pre class="terminal">
-    $ bosh target 10.0.16.5
-    Target set to `p-bosh-30c19bdd43c55c627d70'
-    Your username: director
-    Enter password:
-    Logged in as `director'
-    </pre>
-    
-1. Run `bosh deployments` to discover the name of the CF job.
+1. Run `bosh deployments` on the Ops Manager Director.
 
     <pre class="terminal">
     $ bosh deployments
@@ -183,7 +151,7 @@ These credentials are necessary to perform the recovery instructions below.
     * Add a line: `canaries: 0` below the `max_in_flight` line.
 
 1. Apply these changes by running `bosh deploy`.
-<p class="note"><strong>Note</strong>:Be sure to stop and look over the changes carefully. Only type `yes` if the changes listed are correct.</p>
+<p class="note"><strong>Note</strong>: Be sure to stop and look over the changes carefully. Only type `yes` if the changes listed are correct.</p>
 <pre class="terminal">
     Jobs
     mysql-partition-f8abb6ac43ccc9fe16d7
@@ -227,6 +195,8 @@ At this point, you can proceed to the standard bootstrap process.
 
 ## <a id='bootstrapping'></a>Bootstrapping  ##
 
+<p class='note'><strong>Note</strong>: <a href="#bootstrapping">Bootstrapping</a></strong> requires you to run commands from the <a href="./../customizing/index.html">Ops Manager Director</a>. Follow the instructions to use the <a href="./../customizing/trouble-advanced.html#prepare">BOSH CLI</a> for command-line access.</p>
+
 Follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) process per normal. After completing the bootstrap process, you'll be rewarded with a healthy, stable MySQL cluster again:
   <pre class="terminal">
 | mysql-partition-f8abb6ac43ccc9fe16d7/0   | running | mysql-partition-f8abb6ac43ccc9fe16d7      | 10.0.16.12 |
@@ -244,16 +214,4 @@ Follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) proce
 
 - If you have an issue with not being able to `monit start` it may be due to a bug in `mariadb_ctrl` that does not collect a defunct process. In that case, call Pivotal support to get monit un-stuck. Please also see the [Known Issues](../pcf-release-notes/) page.
 
-- FIXME: document the use of `bosh instances --ps`
-<pre class="terminal">
-+---------------------------------------------+---------+----------------------------------------+------------+
-| mysql-partition-672bf7d9fa6b1a201c94/0      | running | mysql-partition-672bf7d9fa6b1a201c94   | 10.0.16.12 |
-|   mariadb_ctrl                              | running |                                        |            |
-|   galera-healthcheck                        | running |                                        |            |
-|   gra-log-purger-executable                 | running |                                        |            |
-+---------------------------------------------+---------+----------------------------------------+------------+
-| mysql-partition-672bf7d9fa6b1a201c94/1      | stopped | mysql-partition-672bf7d9fa6b1a201c94   | 10.0.16.60 |
-+---------------------------------------------+---------+----------------------------------------+------------+
-| mysql-partition-672bf7d9fa6b1a201c94/2      | stopped | mysql-partition-672bf7d9fa6b1a201c94   | 10.0.16.61 |
-+---------------------------------------------+---------+----------------------------------------+------------+
 </pre>

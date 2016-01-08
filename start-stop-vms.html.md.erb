@@ -4,7 +4,7 @@ title: Starting and Stopping Pivotal Cloud Foundry&reg; Virtual Machines
 
 <strong><%= modified_date %></strong>
 
-This topic describes starting and stopping the virtual machines (VMs) that make
+This topic describes starting and stopping the component virtual machines (VMs) that make
 up a [Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) (PCF)
  deployment. This procedure uses the BOSH CLI. See [Prepare to Use the BOSH CLI](./trouble-advanced.html#prepare) for help setting up this tool.
 
@@ -14,324 +14,346 @@ These orders are specified below in the [start order](#start) and [stop order](#
 
 ## <a id='get-names'></a>Finding the Names for Your PCF Virtual Machines ##
 
-You will need the full names for the VMs to [start](#start) or [stop](#stop) them using the BOSH CLI.
-The name of each VM corresponds to its job as a CF component, but also includes information specific to your deployment.
-To find the full names for the VMs running these components, run:
+You will need the full names for the VMs to [start](#start) or [stop](#stop) them using the BOSH CLI. To find full names for the VMs running these components, run `bosh vms`:
 
 <pre id='term-bosh-vms' class='terminal'>
 ○ → bosh vms
-Deployment `cf-2a2f1a81c2f1d8e1280d'
+Acting as user 'director' on 'p-bosh-399383d4525762cdc35c'
+Deployment `cf-1ef2da789c0ed8f3567f'
 
-Director task 88
+Director task 26
 
-Task 88 done
+Task 26 done
 
-+----------------------------------------------------------------+---------+--------------------------------------------------------------+-------------+
-| Job/index                                                      | State   | Resource Pool                                                | IPs         |
-+----------------------------------------------------------------+---------+--------------------------------------------------------------+-------------+
-| ccdb-partition-a52fa835989ba15a07de/0                          | running | ccdb-partition-a52fa835989ba15a07de                          | 10.85.3.96  |
-| clock_global-partition-a52fa835989ba15a07de/0                  | running | clock_global-partition-a52fa835989ba15a07de                  | 10.85.3.102 |
-| cloud_controller-partition-a52fa835989ba15a07de/0              | running | cloud_controller-partition-a52fa835989ba15a07de              | 10.85.3.99  |
-| cloud_controller_worker-partition-a52fa835989ba15a07de/0       | running | cloud_controller_worker-partition-a52fa835989ba15a07de       | 10.85.3.103 |
-| consoledb-partition-a52fa835989ba15a07de/0                     | running | consoledb-partition-a52fa835989ba15a07de                     | 10.85.3.98  |
-| consul_server-partition-a52fa835989ba15a07de/0                 | running | consul_server-partition-a52fa835989ba15a07de                 | 10.85.3.93  |
-| dea-partition-a52fa835989ba15a07de/0                           | running | dea-partition-a52fa835989ba15a07de                           | 10.85.3.107 |
-| doppler-partition-a52fa835989ba15a07de/0                       | running | doppler-partition-a52fa835989ba15a07de                       | 10.85.3.108 |
-| etcd_server-partition-a52fa835989ba15a07de/0                   | running | etcd_server-partition-a52fa835989ba15a07de                   | 10.85.3.94  |
-| ha_proxy-partition-a52fa835989ba15a07de/0                      | running | ha_proxy-partition-a52fa835989ba15a07de                      | 10.85.3.254 |
-| health_manager-partition-a52fa835989ba15a07de/0                | running | health_manager-partition-a52fa835989ba15a07de                | 10.85.3.101 |
-| loggregator_trafficcontroller-partition-a52fa835989ba15a07de/0 | running | loggregator_trafficcontroller-partition-a52fa835989ba15a07de | 10.85.3.109 |
-| mysql-partition-a52fa835989ba15a07de/0                         | running | mysql-partition-a52fa835989ba15a07de                         | 10.85.3.106 |
-| mysql_proxy-partition-a52fa835989ba15a07de/0                   | running | mysql_proxy-partition-a52fa835989ba15a07de                   | 10.85.3.105 |
-| nats-partition-a52fa835989ba15a07de/0                          | running | nats-partition-a52fa835989ba15a07de                          | 10.85.3.92  |
-| nfs_server-partition-a52fa835989ba15a07de/0                    | running | nfs_server-partition-a52fa835989ba15a07de                    | 10.85.3.95  |
-| router-partition-a52fa835989ba15a07de/0                        | running | router-partition-a52fa835989ba15a07de                        | 10.85.3.100 |
-| uaa-partition-a52fa835989ba15a07de/0                           | running | uaa-partition-a52fa835989ba15a07de                           | 10.85.3.104 |
-| uaadb-partition-a52fa835989ba15a07de/0                         | running | uaadb-partition-a52fa835989ba15a07de                         | 10.85.3.97  |
-+----------------------------------------------------------------+---------+--------------------------------------------------------------+-------------+
++----------------------------------------------------------------+---------+--------------------------------------------------------------+------------+
+| Job/index                                                      | State   | Resource Pool                                                | IPs        |
++----------------------------------------------------------------+---------+--------------------------------------------------------------+------------+
+| clock_global-partition-458f9d7042365ff810e9/0                  | running | clock_global-partition-458f9d7042365ff810e9                  | 10.0.16.14 |
+| cloud_controller-partition-458f9d7042365ff810e9/0              | running | cloud_controller-partition-458f9d7042365ff810e9              | 10.0.16.13 |
+| cloud_controller_worker-partition-458f9d7042365ff810e9/0       | running | cloud_controller_worker-partition-458f9d7042365ff810e9       | 10.0.16.15 |
+| consul_server-partition-458f9d7042365ff810e9/0                 | running | consul_server-partition-458f9d7042365ff810e9                 | 10.0.16.6  |
+| diego_brain-partition-458f9d7042365ff810e9/0                   | running | diego_brain-partition-458f9d7042365ff810e9                   | 10.0.16.17 |
+| diego_cell-partition-458f9d7042365ff810e9/0                    | running | diego_cell-partition-458f9d7042365ff810e9                    | 10.0.16.18 |
+| diego_cell-partition-458f9d7042365ff810e9/1                    | running | diego_cell-partition-458f9d7042365ff810e9                    | 10.0.16.19 |
+| diego_cell-partition-458f9d7042365ff810e9/2                    | running | diego_cell-partition-458f9d7042365ff810e9                    | 10.0.16.20 |
+| diego_database-partition-458f9d7042365ff810e9/0                | running | diego_database-partition-458f9d7042365ff810e9                | 10.0.16.9  |
+| doppler-partition-458f9d7042365ff810e9/0                       | running | doppler-partition-458f9d7042365ff810e9                       | 10.0.16.21 |
+| etcd_server-partition-458f9d7042365ff810e9/0                   | running | etcd_server-partition-458f9d7042365ff810e9                   | 10.0.16.8  |
+| loggregator_trafficcontroller-partition-458f9d7042365ff810e9/0 | running | loggregator_trafficcontroller-partition-458f9d7042365ff810e9 | 10.0.16.22 |
+| mysql-partition-458f9d7042365ff810e9/0                         | running | mysql-partition-458f9d7042365ff810e9                         | 10.0.16.12 |
+| mysql_proxy-partition-458f9d7042365ff810e9/0                   | running | mysql_proxy-partition-458f9d7042365ff810e9                   | 10.0.16.11 |
+| nats-partition-458f9d7042365ff810e9/0                          | running | nats-partition-458f9d7042365ff810e9                          | 10.0.16.7  |
+| router-partition-458f9d7042365ff810e9/0                        | running | router-partition-458f9d7042365ff810e9                        | 10.0.16.10 |
+| uaa-partition-458f9d7042365ff810e9/0                           | running | uaa-partition-458f9d7042365ff810e9                           | 10.0.16.16 |
++----------------------------------------------------------------+---------+--------------------------------------------------------------+------------+
 
-VMs total: 19
+VMs total: 17
 </pre>
 
+The terminal output's Job/index column lists VMs by full names that indicate their CF component jobs by their prefixes. Each full name also includes an identifier specific to your deployment and an /INDEX at the end for each instance running the same job. For component processes that run on a single VM instance, the index will always be 0.
+ 
+The [table](#start-order) below associates each PCF component VM function with its prefix. To find the full name of a VM running a specific job, scan the Job/index column of your `bosh vms` [terminal output](#term-bosh-vms) and find the name that starts with the job's associated prefix. In the example shown here, the full name of the VM instance running the Cloud Controller is `cloud_controller-partition-458f9d7042365ff810e9/0` and one of the three VMs running a Diego Cell is named `diego_cell-partition-458f9d7042365ff810e9/2`.
 
 ## <a id='start'></a>Starting PCF Virtual Machines ##
 
-In the order specified in the [table](#start-order) below, run `bosh start VM-NAME` for each component in your PCF deployment, using the name as displayed in the [output](#term-bosh-vms) of the `bosh vms` command under `Job/index`. Complete each VM name by replacing 'FROM-BOSH-VMS-OUTPUT' in the table with specific information from your `bosh vms` [terminal output](#term-bosh-vms).
-
-For example, in the deployment corresponding to the [example terminal output](#term-bosh-vms), you would run `bosh start nats-partition-a52fa835989ba15a07de` to start the NATS
-virtual machine:
+In the order specified in the [Start Order table](#start-order) below, run `bosh start VM-NAME` for each component in your PCF deployment. Use the component VM's full name as listed in your `bosh vms` [terminal output](#term-bosh-vms), without the /INDEX at the end. In the example here, you would start all allocated instances of the Doppler Server by running `bosh start doppler-partition-458f9d7042365ff810e9`:
 
 <pre class='terminal'>
-$ bosh start nats-partition-a52fa835989ba15a07de
+$ bosh start doppler-partition-458f9d7042365ff810e9
 
 Processing deployment manifest
 ------------------------------
-You are about to start nats-partition-a52fa835989ba15a07de/0
+You are about to start doppler-partition-458f9d7042365ff810e9/0
 
 Detecting deployment changes
 ----------------------------
-Start nats-partition-a52fa835989ba15a07de/0? (type 'yes' to continue): yes
+Start doppler-partition-458f9d7042365ff810e9/0? (type 'yes' to continue): yes
 
-Performing `start nats-partition-a52fa835989ba15a07de/0'...
+Performing `start doppler-partition-458f9d7042365ff810e9/0'...
 
 ...
 
-Started updating job nats-partition-a52fa835989ba15a07de > nats-partition-a52fa835989ba15a07de/0 (canary). Done (00:00:43)
+Started updating job doppler-partition-458f9d7042365ff810e9 > doppler-partition-458f9d7042365ff810e9/0 (canary). Done (00:00:43)
 
 Task 42 done
 
-nats-partition-a52fa835989ba15a07de/0 has been started
+doppler-partition-458f9d7042365ff810e9/0 has been started
 </pre>
 
 <p class='note'><strong>Note</strong>:
-  To start all VM instances of a certain type, run the command as above. You can also start a specific instance by including its index after a '/'. In the example deployment above, to start only the first instance of the NATS VM, run: <code>$ bosh start nats-partition-a52fa835989ba15a07de/0 </code>
+  To start a specific instance of a VM, include the /INDEX at the end of its full name. In the example here, you could start only the first Diego Cell instance by running: <code>$ bosh start diego_cell-partition-458f9d7042365ff810e9/0 </code>
 </p>
 
 <table id='start-order' border="1" class="nice">
   <tr>
     <th>Start Order</th>
     <th>Component</th>
-    <th>VM NAME</th>
+    <th>Job/index name prefix <br>(in <i>bosh vms</i> output)</th>
   </tr>
   <tr>
     <td>1</td>
     <td>NATS</td>
-    <td>nats-FROM-BOSH-VMS-OUTPUT</td>
+    <td>nats-</td>
   </tr>
   <tr>
     <td>2</td>
     <td>consul</td>
-    <td>consul_server-FROM-BOSH-VMS-OUTPUT</td>
+    <td>consul_server-</td>
   </tr>
   <tr>
     <td>3</td>
     <td>etcd</td>
-    <td>etcd_server-FROM-BOSH-VMS-OUTPUT</td>
+    <td>etcd_server-</td>
   </tr>
-  <tr>
+    <tr>
     <td>4</td>
-    <td>NFS Server</td>
-    <td>nfs_server-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Diego Database</td>
+    <td>diego_database-</td>
   </tr>
   <tr>
     <td>5</td>
-    <td>Cloud Controller Database</td>
-    <td>ccdb-FROM-BOSH-VMS-OUTPUT</td>
+    <td>NFS Server</td>
+    <td>nfs_server-</td>
   </tr>
   <tr>
     <td>6</td>
-    <td>UAA Database</td>
-    <td>uaadb-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Router</td>
+    <td>router-</td>
   </tr>
   <tr>
     <td>7</td>
-    <td>Apps Manager Database</td>
-    <td>consoledb-FROM-BOSH-VMS-OUTPUT</td>
+    <td>MySQL Proxy</td>
+    <td>mysql_proxy-</td>
   </tr>
   <tr>
     <td>8</td>
-    <td>Cloud Controller</td>
-    <td>cloud_controller-FROM-BOSH-VMS-OUTPUT</td>
+    <td>MySQL Server</td>
+    <td>mysql-</td>
   </tr>
   <tr>
     <td>9</td>
-    <td>HAProxy</td>
-    <td>ha_proxy-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Cloud Controller Database</td>
+    <td>ccdb-</td>
   </tr>
   <tr>
     <td>10</td>
-    <td>Router</td>
-    <td>router-FROM-BOSH-VMS-OUTPUT</td>
+    <td>UAA Database</td>
+    <td>uaadb-</td>
   </tr>
   <tr>
     <td>11</td>
-    <td>Health Manager</td>
-    <td>health_manager-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Apps Manager Database</td>
+    <td>consoledb-</td>
   </tr>
   <tr>
     <td>12</td>
-    <td>Clock Global</td>
-    <td>clock_global-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Cloud Controller</td>
+    <td>cloud_controller-</td>
   </tr>
   <tr>
     <td>13</td>
-    <td>Cloud Controller Worker</td>
-    <td>cloud_controller_worker-FROM-BOSH-VMS-OUTPUT</td>
+    <td>HAProxy</td>
+    <td>ha_proxy-</td>
   </tr>
   <tr>
     <td>14</td>
-    <td>UAA</td>
-    <td>uaa-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Health Manager</td>
+    <td>health_manager-</td>
   </tr>
   <tr>
     <td>15</td>
-    <td>Login</td>
-    <td>login-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Clock Global</td>
+    <td>clock_global-</td>
   </tr>
   <tr>
     <td>16</td>
-    <td>MySQL Proxy</td>
-    <td>mysql_proxy-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Cloud Controller Worker</td>
+    <td>cloud_controller_worker-</td>
   </tr>
   <tr>
     <td>17</td>
-    <td>MySQL Server</td>
-    <td>mysql-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Collector</td>
+    <td>collector-</td>
   </tr>
   <tr>
     <td>18</td>
-    <td>DEA</td>
-    <td>dea-FROM-BOSH-VMS-OUTPUT</td>
+    <td>UAA</td>
+    <td>uaa-</td>
   </tr>
   <tr>
     <td>19</td>
-    <td>Doppler Server</td>
-    <td>doppler-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Diego Brain</td>
+    <td>diego-brain-</td>
   </tr>
   <tr>
     <td>20</td>
-    <td>Loggregator Trafficcontroller</td>
-    <td>loggregator_trafficcontroller-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Diego Celll</td>
+    <td>diego-cell-</td>
+  </tr>
+  <tr>
+    <td>21</td>
+    <td>DEA</td>
+    <td>dea-</td>
+  </tr>
+  <tr>
+    <td>22</td>
+    <td>Doppler Server</td>
+    <td>doppler-</td>
+  </tr>
+  <tr>
+    <td>23</td>
+    <td>Loggregator Traffic Controller</td>
+    <td>loggregator_trafficcontroller-</td>
   </tr>
 </table>
 
 ## <a id='stop'></a>Stopping PCF Virtual Machines ##
 
-In the order specified in the [table](#stop-order) below, run `bosh stop VM-NAME` for each component in your PCF deployment. Use the name as displayed in the [output](#term-bosh-vms) of the `bosh vms` command under `Job/index` to complete each VM name, i.e. replace 'FROM-BOSH-VMS-OUTPUT' in the table with specific information from your `bosh vms` [terminal output](#term-bosh-vms).
-
-
-For example, in the deployment corresponding to the [example terminal output](#term-bosh-vms), you would run `bosh stop loggregator_trafficcontroller-partition-a52fa835989ba15a07de` to stop the Loggregator
-Trafficcontroller virtual machine:
+In the order specified in the [Stop Order table](#stop-order) below, run `bosh stop VM-NAME` for each component in your PCF deployment. Use the component VM's full name as listed in your `bosh vms` [terminal output](#term-bosh-vms), without the /INDEX at the end. In the example here, you would stop all running instances of the Doppler Server by running `bosh stop doppler-partition-458f9d7042365ff810e9`:
 
 <pre class='terminal'>
-$ bosh stop loggregator_trafficcontroller-partition-a52fa835989ba15a07de
+$ bosh stop doppler-partition-458f9d7042365ff810e9
 
 Processing deployment manifest
 ------------------------------
-You are about to stop loggregator_trafficcontroller-partition-a52fa835989ba15a07de/0
+You are about to stop doppler-partition-458f9d7042365ff810e9/0
 
 Detecting deployment changes
 ----------------------------
-Stop loggregator_trafficcontroller-partition-a52fa835989ba15a07de/0? (type 'yes' to continue): yes
+Stop doppler-partition-458f9d7042365ff810e9/0? (type 'yes' to continue): yes
 
-Performing `stop loggregator_trafficcontroller-partition-a52fa835989ba15a07de/0'...
+Performing `stop doppler-partition-458f9d7042365ff810e9/0'...
 
 ...
 
-Started updating job loggregator_trafficcontroller-partition-a52fa835989ba15a07de > loggregator_trafficcontroller-partition-a52fa835989ba15a07de/0 (canary). Done (00:00:37)
+Started updating job doppler-partition-458f9d7042365ff810e9 > doppler-partition-458f9d7042365ff810e9/0 (canary). Done (00:00:37)
 
-loggregator_trafficcontroller-partition-a52fa835989ba15a07de/0 has been stopped
+doppler-partition-458f9d7042365ff810e9/0 has been stopped
 </pre>
 
 <p class='note'><strong>Note</strong>:
-  To stop all VM instances of a certain type, run the command as above. You can also stop a specific instance by including its index after a '/'. In the example deployment above, to stop only the first instance of the NATS VM, run: <code>$ bosh stop nats-partition-a52fa835989ba15a07de/0 </code>
+  To stop a specific instance of a VM, include the /INDEX at the end of its full name. In the example here, you could stop only the third Diego Cell instance by running: <code>$ bosh stop diego_cell-partition-458f9d7042365ff810e9/2 </code>
 </p>
 
 <table id='stop-order' border="1" class="nice">
   <tr>
     <th>Stop Order</th>
     <th>Component</th>
-    <th>VM NAME</th>
+    <th>Job/index name prefix <br>(in <i>bosh vms</i> output)</th>
   </tr>
   <tr>
     <td>1</td>
-    <td>Loggregator Trafficcontroller</td>
-    <td>loggregator_trafficcontroller-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Loggregator Traffic Controller</td>
+    <td>loggregator_trafficcontroller-</td>
   </tr>
   <tr>
     <td>2</td>
     <td>Doppler Server</td>
-    <td>doppler-FROM-BOSH-VMS-OUTPUT</td>
+    <td>doppler-</td>
   </tr>
   <tr>
     <td>3</td>
     <td>DEA</td>
-    <td>dea-FROM-BOSH-VMS-OUTPUT</td>
+    <td>dea-</td>
   </tr>
   <tr>
     <td>4</td>
-    <td>MySQL Server</td>
-    <td>mysql-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Diego Celll</td>
+    <td>diego-cell-</td>
   </tr>
   <tr>
     <td>5</td>
-    <td>MySQL Proxy</td>
-    <td>mysql_proxy-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Diego Brain</td>
+    <td>diego-brain-</td>
   </tr>
   <tr>
     <td>6</td>
-    <td>Login</td>
-    <td>login-FROM-BOSH-VMS-OUTPUT</td>
+    <td>UAA</td>
+    <td>uaa-</td>
   </tr>
   <tr>
     <td>7</td>
-    <td>UAA</td>
-    <td>uaa-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Collector</td>
+    <td>collector-</td>
   </tr>
   <tr>
     <td>8</td>
     <td>Cloud Controller Worker</td>
-    <td>cloud_controller_worker-FROM-BOSH-VMS-OUTPUT</td>
+    <td>cloud_controller_worker-</td>
   </tr>
-
   <tr>
     <td>9</td>
     <td>Clock Global</td>
-    <td>clock_global-FROM-BOSH-VMS-OUTPUT</td>
+    <td>clock_global-</td>
   </tr>
   <tr>
     <td>10</td>
     <td>Health Manager</td>
-    <td>health_manager-FROM-BOSH-VMS-OUTPUT</td>
+    <td>health_manager-</td>
   </tr>
   <tr>
     <td>11</td>
-    <td>Router</td>
-    <td>router-FROM-BOSH-VMS-OUTPUT</td>
+    <td>HAProxy</td>
+    <td>ha_proxy-</td>
   </tr>
   <tr>
     <td>12</td>
-    <td>HAProxy</td>
-    <td>ha_proxy-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Cloud Controller</td>
+    <td>cloud_controller-</td>
   </tr>
   <tr>
     <td>13</td>
-    <td>Cloud Controller</td>
-    <td>cloud_controller-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Apps Manager Database</td>
+    <td>consoledb-</td>
   </tr>
   <tr>
     <td>14</td>
-    <td>Apps Manager Database</td>
-    <td>consoledb-FROM-BOSH-VMS-OUTPUT</td>
+    <td>UAA Database</td>
+    <td>uaadb-</td>
   </tr>
   <tr>
     <td>15</td>
-    <td>UAA Database</td>
-    <td>uaadb-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Cloud Controller Database</td>
+    <td>ccdb-</td>
   </tr>
   <tr>
     <td>16</td>
-    <td>Cloud Controller Database</td>
-    <td>ccdb-FROM-BOSH-VMS-OUTPUT</td>
+    <td>MySQL Server</td>
+    <td>mysql-</td>
   </tr>
   <tr>
     <td>17</td>
-    <td>NFS Server</td>
-    <td>nfs_server-FROM-BOSH-VMS-OUTPUT</td>
+    <td>MySQL Proxy</td>
+    <td>mysql_proxy-</td>
   </tr>
   <tr>
     <td>18</td>
-    <td>etcd</td>
-    <td>etcd_server-FROM-BOSH-VMS-OUTPUT</td>
+    <td>Router</td>
+    <td>router-</td>
   </tr>
   <tr>
     <td>19</td>
-    <td>consul</td>
-    <td>consul_server-FROM-BOSH-VMS-OUTPUT</td>
+    <td>NFS Server</td>
+    <td>nfs_server-</td>
+  </tr>
+ <tr>
+    <td>20</td>
+    <td>Diego Database</td>
+    <td>diego_database-</td>
   </tr>
   <tr>
-    <td>20</td>
+    <td>21</td>
+    <td>etcd</td>
+    <td>etcd_server-</td>
+  </tr>
+  <tr>
+    <td>22</td>
+    <td>consul</td>
+    <td>consul_server-</td>
+  </tr>
+  <tr>
+    <td>23</td>
     <td>NATS</td>
-    <td>nats-FROM-BOSH-VMS-OUTPUT</td>
+    <td>nats-</td>
   </tr>
 </table>

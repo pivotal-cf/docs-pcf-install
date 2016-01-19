@@ -4,10 +4,7 @@ title: Recovering MySQL from Elastic Runtime Downtime
 
 <strong><%= modified_date %></strong>
 
-This topic describes the manual process for recovering a terminated Elastic Runtime cluster. For example, this procedure is necessary when all Elastic Runtime VMs are removed on AWS. In the event that all of the MySQL VMs are terminated, the cluster will not automatically restart.
-
-<p class='note'><strong>Note</strong>: The final step of this procedure, <a href="#bootstrapping">Bootstrapping</a></strong>, requires you to run commands from the <a href="./../customizing/index.html">Ops Manager Director</a>. Follow the instructions to use the <a href="./../customizing/trouble-advanced.html#prepare">BOSH CLI</a> for command-line access.</p>
-
+This topic describes the manual process for recovering a terminated Elastic Runtime cluster. In the event that all of the MySQL VMs are terminated, the cluster will not automatically restart. For example, this procedure is necessary when all Elastic Runtime VMs are removed on AWS.
 
 ## <a id='mysql'></a>Recovering MySQL  ##
 
@@ -46,7 +43,7 @@ This topic describes the manual process for recovering a terminated Elastic Runt
       $ bosh deployment /tmp/cf.yml
     </pre>
 
-1. Check for place-holder VMs.
+1. Run `bosh vms` to check for placeholder VMs.
 
     <pre class="terminal">
     $ bosh vms
@@ -64,8 +61,8 @@ This topic describes the manual process for recovering a terminated Elastic Runt
     | unknown/unknown         | unresponsive agent |                  |       |
     | unknown/unknown         | unresponsive agent |                  |       |
     </pre>
-<p class="note"><strong>Note</strong>: If you do not see these three `unknown/unknown` items on your list, you might see the `mysql-partition` VMs, which indicates that your VMs were not destroyed. <strong>If that is the case, disregard the rest of the instructions in this section, Recovering MySQL, and skip to the <a href="#bootstrapping">Bootstrapping</a> section below.</strong></p>
-1. Run the BOSH `cloud check` to clear out the place holders. If given the option select **Delete VM reference**.
+<p class="note"><strong>Note</strong>: If you do not see these three <code>unknown/unknown</code> items on your list, you might see the <code>mysql-partition</code> VMs, which indicates that your VMs were not destroyed. <strong>If that is the case, disregard the rest of the instructions in this section, Recovering MySQL, and skip to the <a href="#bootstrapping">Bootstrapping</a> section below.</strong></p>
+1. Run the `bosh cck` to clear out the place holders. If given the option, select **Delete VM reference**.
 
     <pre class="terminal">
     $ bosh cck
@@ -167,14 +164,14 @@ This topic describes the manual process for recovering a terminated Elastic Runt
     \---------
     Are you sure you want to deploy? (type 'yes' to continue):
 </pre>
-    You will see BOSH re-creating the lost VMs:
+    After you type `yes`, BOSH attempts to re-create the lost VMs:
     
     <pre class="terminal">
     Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/0 (00:01:54)
     Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/2 (00:01:54)
     Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/1 (00:02:04)
 </pre>
-    Ultimately, you will see this:
+    Then BOSH fails to update the lost VMs. You can ignore the error message.  
 <pre class="terminal">
     Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 > mysql-partition-f8abb6ac43ccc9fe16d7/1: \`mysql-partition-f8abb6ac43ccc9fe16d7/1' is not running after update (00:05:57)
     Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 > mysql-partition-f8abb6ac43ccc9fe16d7/0: \`mysql-partition-f8abb6ac43ccc9fe16d7/0' is not running after update (00:05:59)
@@ -183,21 +180,20 @@ This topic describes the manual process for recovering a terminated Elastic Runt
 
     Error 400007: \`mysql-partition-f8abb6ac43ccc9fe16d7/1' is not running after update
 </pre>
-**This error is OK**. 
 
-1. You can run `bosh vms` a second time to validate that you now have three VMs all in the failing state. 
+1. Run `bosh vms` a second time to validate that you now have the VMs all in the failing state. 
 <pre class="terminal">
     | mysql-partition-f8abb6ac43ccc9fe16d7/0   |  failing  |  mysql-partition-f8abb6ac43ccc9fe16d7   | 10.0.16.12 |
     | mysql-partition-f8abb6ac43ccc9fe16d7/1   |  failing  |  mysql-partition-f8abb6ac43ccc9fe16d7   | 10.0.16.60 |
     | mysql-partition-f8abb6ac43ccc9fe16d7/2   |  failing  |  mysql-partition-f8abb6ac43ccc9fe16d7   | 10.0.16.61 |
 </pre>
-At this point, you can proceed to the standard bootstrap process. 
+Next, complete the Bootstrapping process in the following section. 
 
 ## <a id='bootstrapping'></a>Bootstrapping  ##
 
 <p class='note'><strong>Note</strong>: <a href="#bootstrapping">Bootstrapping</a></strong> requires you to run commands from the <a href="./../customizing/index.html">Ops Manager Director</a>. Follow the instructions to use the <a href="./../customizing/trouble-advanced.html#prepare">BOSH CLI</a> for command-line access.</p>
 
-Follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) process per normal. After completing the bootstrap process, you'll be rewarded with a healthy, stable MySQL cluster again:
+Follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) process to restart your MySQL cluster.
   <pre class="terminal">
 | mysql-partition-f8abb6ac43ccc9fe16d7/0   | running | mysql-partition-f8abb6ac43ccc9fe16d7      | 10.0.16.12 |
 | mysql-partition-f8abb6ac43ccc9fe16d7/1   | running | mysql-partition-f8abb6ac43ccc9fe16d7      | 10.0.16.60 |
@@ -212,6 +208,6 @@ Follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) proce
 </pre>
   If so, you can clear all of them using `ssh-add -D`.
 
-- If you have an issue with not being able to `monit start` it may be due to a bug in `mariadb_ctrl` that does not collect a defunct process. In that case, call Pivotal support to get monit un-stuck. Please also see the [Known Issues](../pcf-release-notes/) page.
+- If you have an issue with not being able to `monit start`, it may be due to a bug in `mariadb_ctrl` that does not collect a defunct process. In that case, call Pivotal support for help. Please also see the [Known Issues](../pcf-release-notes/) page.
 
 </pre>

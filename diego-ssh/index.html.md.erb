@@ -28,14 +28,6 @@ The Diego-SSH package enables SSH access to [Diego Cell](../../concepts/diego/di
 
 ## <a id='into'></a> Introduction
 
-Diego-SSH contains the following components, which are described in more detail below:
-
-- An implementation of an ssh [proxy server](#proxy).
-- A lightweight ssh [daemon](#daemon).
-- A Cloud Foundry [cli plugin](#cli).
-
-When these components are deployed and configured correctly, they provide a simple and scalable way to access Diego containers apps and other running long running processes.
-
 ## <a id='proxy'></a> Diego-SSH Proxy ##
 
 The ssh proxy hosts the user-accessible ssh endpoint and is responsible for authentication, policy enforcement, and access controls in the context of Cloud Foundry. After a user has successfully authenticated with the proxy, the proxy will attempt to locate the target container and create an ssh session to a daemon running inside the container. After both sessions have been established, the proxy will manage the communication between the user's ssh client and the container's ssh daemon.
@@ -51,60 +43,4 @@ The daemon is focused on delivering basic access to application instances in Clo
 
 The daemon can be made available on a file server and Diego LRPs that want to use it can include a download action to acquire the binary and a run action to start it. Cloud Foundry applications will download the daemon as part of the lifecycle bundle.
 
-## <a id='cli'></a> Diego-SSH CLI Plugin ##
-The Cloud Foundry CLI plugin adds the following commands:
 
-- <code>ssh</code>
-	ssh to an application container instance
-- <code>enable-ssh</code>
-	enable ssh for the application
-- <code>disable-ssh</code>
-	disable ssh for the application
-- <code>ssh-enabled</code>
-	reports whether SSH is enabled on an application container instance
-- <code>allow-space-ssh</code>
-	allow SSH access for the space
-- <code>disallow-space-ssh</code>
-	disallow SSH access for the space
-- <code>space-ssh-allowed</code>
-	reports whether SSH is allowed in a space
-- <code>get-ssh-code</code>
-	obtain a one-time authorization code that can be used as an ssh password
-
-You can use CF CLI v6.10.0 or higher to install the SSH plugin from the CF-Community repo:
-<pre class='terminal'>
-$ cf add-plugin-repo CF-Community http:/<span>/</span>plugins.cloudfoundry.org/
-$ cf install-plugin Diego-SSH -r CF-Community
-</pre>
-
-## <a id='cc-config'></a>Cloud Controller Configuration
-
-The Cloud Controller provides several levels of granularity for enabling or disabling SSH access to CF app instances.
-
-- Each CF app has an `enable_ssh` field that determines whether the Diego SSH server will be invoked alongside the main process in the app and whether users will be authorized to connect to it. Changing the value of `enable_ssh` triggers a new version of the app and hence restarts it on Diego with or without the SSH server running, as desired.
-
-- Each CF space has an `allow_ssh` field that determines whether users are authorized to connect to the SSH server running inside their app instance.
-
-- Cloud Controller has an `allow_app_ssh_access` configuration field that determines whether any user is authorized to connect to the SSH server running inside their app instance.
-
-The Diego-SSH plugin allows users to inspect and alter the app and space fields through plugin commands:
-
-Run `cf enable-ssh APP-NAME` to enable ssh access to the named app.
-<pre class='terminal'>
-$ cf enable-ssh my-example-app
-</pre>
-
-
-Run `cf disable-ssh APP-NAME` to disable ssh access to the named app.
-<pre class='terminal'>
-$ cf disable-ssh my-example-app
-</pre>
-
-Run `cf ssh-enabled APP-NAME` to see whether SSH access is enabled for that app.
-
-Run `cf allow-space-ssh SPACE-NAME` to allow ssh access to the named space.
-
-Run `cf disallow-space-ssh SPACE-NAME` disallow ssh access to the named space.
-
-`cf space-ssh-allowed SPACE-NAME` reports whether SSH access is allowed for apps in that space.
-The `allow\_app\_ssh\_access` property must be changed through Cloud Controller's config file. For a BOSH-deployed CF, an operator can specify this config property via the `cc.allow_app_ssh_access` property.

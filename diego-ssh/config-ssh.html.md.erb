@@ -14,22 +14,22 @@ You can configure SSH access for Cloud Foundry app instances running on Diego. T
 
 - `diego.ssh_proxy.enable_cf_auth`: If CF Authenticator in the proxies. This should be enabled for the `cf ssh` plugin to be able to connect to the Diego SSH server running in the instance.
 
-- `diego.ssh_proxy.enable_cf_auth`: Whether to activate the CF Authenticator in the proxies. This should be enabled for the `cf ssh` plugin to be able to connect to the Diego SSH server running in the instance.
+- `diego.ssh_proxy.enable_cf_auth`: Whether to activate the CF Authenticator in the proxies. This property should be enabled for the `cf ssh` command to connect to the Diego SSH server running in the instance.
 
-- `diego.ssh_proxy.enable_diego_auth`: Whether to activate the Diego Authenticator in the proxies. For a production CF+Diego deployment, this should be disabled, as it allows access to any instance running the Diego SSH server with only the receptor credentials. Development deployments may wish to enable it to provide an alternate mechanism to establish SSH sessions.
+- `diego.ssh_proxy.enable_diego_auth`: Whether to activate the Diego Authenticator in the proxies. For a production deployment, this property should be disabled, as it allows access to any instance running the Diego SSH server with only the receptor credentials. Developers running development deployments can enable it to provide an alternate mechanism to establish SSH sessions.
 
 The properties `diego.ssh_proxy.cc.internal_service_hostname` and `diego.ssh_proxy.cc.external_port` should not require direct configuration if an operator uses the spiff-based manifest-generation scripts to generate the Diego deployment manifest.
 
 ## <a id="cf-configuration"></a> CF configuration
 
-For Cloud Foundry app instances running on DEAs you can configure SSH access wtih these BOSH properties.
+For Cloud Foundry app instances running on DEAs you can configure SSH access with these BOSH properties.
 
 The following BOSH properties are relevant for SSH configuration in [cf-release](https://github.com/cloudfoundry/cf-release):
 
 - `app_ssh.host_key_fingerprint`: Fingerprint of the public key presented by the SSH host (in this case, Diego's layer of SSH proxies). This should be the fingerprint of the public key of the keypair generated for the `diego.ssh_proxy.host_key` value in the Diego deployment manifest.
 - `app_ssh.port`: Port of the externally routable SSH endpoint advertised through the Cloud Controller info endpoint.
 - `cc.allow_app_ssh_access`: As mentioned above, whether to allow SSH access at all for CF app instances.
-
+	
 If SSH access is allowed for the CF deployment, Cloud Controller will advertise the SSH endpoint to be `ssh.<system-domain>`, accepting traffic on the port given in `app_ssh.port`. Cloud Controller's `/v2/info` endpoint provides this SSH endpoint in its `app_ssh_endpoint` field and the host key fingerprint above in its `app_ssh_host_key_fingerprint` field.
 
 ## <a id="ssh-load-balancer-configuration"></a> SSH Load Balancer configuration

@@ -4,7 +4,7 @@ title: Recovering MySQL from Elastic Runtime Downtime
 
 <strong><%= modified_date %></strong>
 
-This topic describes the manual procedure for recovering a terminated Elastic Runtime cluster. In the event that all of the MySQL VMs are terminated, the cluster will not automatically restart. For example, this process is necessary when all Elastic Runtime VMs are removed on AWS.  Follow this procedure to recreate the lost VMs before completing the bootstrapping process to recover the cluster.   
+This topic describes the manual procedure for recovering a terminated Elastic Runtime cluster. In the event that all of the MySQL virtual machines (VMs) are terminated, the cluster will not automatically restart. For example, this process is necessary when all Elastic Runtime VMs are removed on AWS.  Follow this procedure to recreate the lost VMs before completing the bootstrapping process to recover the cluster.   
 
 ## <a id='mysql'></a>Prepare MySQL VMs for Bootstrapping  ##
 
@@ -32,7 +32,7 @@ This topic describes the manual procedure for recovering a terminated Elastic Ru
 1. Download the manifest.
 
     <pre class="terminal">
-    $ bosh download manifest cf-64f27267ea9cbfe823e1 /tmp/cf.yml
+    $ bosh download manifest cf-e82cbf44613594d8a155 /tmp/cf.yml
     Acting as user 'director' on deployment 'cf-e82cbf44613594d8a155' on 'p-bosh-30c19bdd43c55c627d70'
     Deployment manifest saved to `/tmp/cf.yml'
     </pre>
@@ -141,11 +141,12 @@ This topic describes the manual procedure for recovering a terminated Elastic Ru
   <pre class="terminal">
     $ bosh edit deployment
   </pre>
-    * Search for the jobs section: `/^jobs`
+    * Search for the jobs section: `/jobs`
     * Search for the mysql-partition: `/name: mysql-partition`
     * Search for the update section: `/update`
     * Update `max_in_flight` to `3`.
     * Add a line: `canaries: 0` below the `max_in_flight` line.
+    * Set `update.serial` to `false`
 
 1. Apply these changes by running `bosh deploy`.
 <p class="note"><strong>Note</strong>: Be sure to stop and look over the changes carefully. Only type `yes` if the changes listed are correct.</p>
@@ -182,27 +183,42 @@ This topic describes the manual procedure for recovering a terminated Elastic Ru
 </pre>
 
 1. Run `bosh vms` a second time to validate that you now have the VMs all in the failing state. 
-<pre class="terminal">
+
+    <pre class="terminal">
+     $ bosh vms
+    Acting as user 'director' on 'p-bosh-30c19bdd43c55c627d70'
+    Deployment `cf-e82cbf44613594d8a155'
+    
+    Director task 33
+    
+    Task 33 done
     +------------------------------------------+-----------+-----------------------------------------+------------+
     | Job/index                                | State     | Resource Pool                           | IPs        |
     +------------------------------------------+-----------+-----------------------------------------+------------+
     | mysql-partition-f8abb6ac43ccc9fe16d7/0   | failing   | mysql-partition-f8abb6ac43ccc9fe16d7    | 10.0.16.12 |
     | mysql-partition-f8abb6ac43ccc9fe16d7/1   | failing   | mysql-partition-f8abb6ac43ccc9fe16d7    | 10.0.16.60 |
     | mysql-partition-f8abb6ac43ccc9fe16d7/2   | failing   | mysql-partition-f8abb6ac43ccc9fe16d7    | 10.0.16.61 |
-</pre>
+    </pre>
 Next, complete the bootstrapping process in the following section. 
 
 ## <a id='bootstrapping'></a>Bootstrap ##
 
 <p class='note'><strong>Note</strong>: Bootstrapping requires you to run commands from the <a href="./../customizing/index.html">Ops Manager Director</a>. Follow the instructions to use the <a href="./../customizing/trouble-advanced.html#prepare">BOSH CLI</a> for command-line access.</p>
 
-Bootstrapping identifies the primary node in order to synchronize all the nodes in a cluster. 
+Bootstrapping identifies the primary node in order to synchronize all the nodes in a cluster. It is critical that you run all of the steps in this section to ensure successful future deployments and accurate reporting of your job statuses.  
 
 1. Follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) process to restart your MySQL cluster. 
 
 1. Run `bosh vms` to verify that your MySQL cluster is functioning as expected:
 
     <pre class="terminal">
+    $ bosh vms
+    Acting as user 'director' on 'p-bosh-30c19bdd43c55c627d70'
+    Deployment `cf-e82cbf44613594d8a155'
+
+    Director task 33
+
+    Task 33 done
     +------------------------------------------+-----------+-----------------------------------------+------------+
     | Job/index                                | State     | Resource Pool                           | IPs        |
     +------------------------------------------+-----------+-----------------------------------------+------------+

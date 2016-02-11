@@ -5,12 +5,7 @@ title: Backing Up Pivotal Cloud Foundry&reg;
 <strong><%= modified_date %></strong>
 
 <% $this_topic = 'backup-pcf' %>
-
-This topic describes the procedure for backing up each critical backend <%= vars.product_full %> component. Pivotal recommends frequently backing up your installation settings before making any changes to your PCF deployment, such as configuration of any tiles in Ops Manager.
-
-To back up a deployment, export installation settings, download the BOSH Deployment Manifest, temporarily stop the Cloud Controller, create and export backup files for each critical backend component, and restart the Cloud Controller. It is also important to record your Cloud Controller Database encryption credentials which you will need if you contact Pivotal Support for help restoring your installation.
-
-To restore your backup, see the [Restoring Pivotal Cloud Foundry&reg; from Backup](./restore-pcf.html) topic.
+<%= partial 'intro' %>
 
 ## <a id='encrypt-key'></a>Record the Cloud Controller Database Encryption Credentials ##
 
@@ -47,7 +42,7 @@ As a result, an exported installation file can exceed 5 GB in size.
 
 ## <a id='backup-databases'></a>Back Up Critical Backend Components ##
 
-Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore. This section describes the procedure for backing up the databases and the servers associated with your PCF installation. 
+Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore. This section describes the procedure for backing up the databases and the servers associated with your PCF installation.
 
 You must back up each of the following:
 
@@ -220,27 +215,13 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg_dump'
 
 <p class="note"><strong>Note</strong>: The Elastic Runtime deploy contains an embedded MySQL Server that serves as the data store for the Application Usage Events, Notifications, and Autoscaler services. If you are using an internal MySQL, this will also include the Cloud Controller, UAA, and Apps Manager.</p>
 
-1. From the Installation Dashboard in Ops Manager, select **Pivotal Elastic Runtime**. Click **Status** and record the IP address of the first instance of **MySQL Server**.
+The embedded MySQL Server is able to automatically back up its data to an external blobstore periodically. This functionality can be configured in the "MySQL Config" tab in ERT:
 
-    <%= image_tag("mysql-ip.png") %>
+<%= image_tag("mysql-backups-config.png") %>
 
-1. Click **Credentials** and record the Mysql Admin Credentials of **MySQL Server**.
-
-    <%= image_tag("mysql-cred.png") %>
-
-1. SSH into the Mysql database VM as the admin using the IP address and password recorded in the previous steps.
-
-1. Run the following command to dump the data from the p-mysql database and save it:
-<pre class='terminal'>
-    $ mysqldump -u root -p -h 10.0.1.26 --all-databases > user_databases.sql
-</pre>
-
-1. Run `scp` to copy the exported database to your local machine.
-<pre class='terminal'>
-    $ scp vcap@10.0.1.26:~/user_databases.sql .
-</pre>
+For more details, refer to the [P-MySQL backups](/p-mysql/backup.html) topic.
 
 ### <a id='cc-start'></a>Start Cloud Controller ###
 <%= partial './starting_cc' %>
 
-Follow the steps in the [Restoring Pivotal Cloud Foundry&reg; from Backup](./restore-pcf.html) topic to restore a backup, import an installation to restore your settings or to share your settings with another user. 
+Follow the steps in the [Restoring Pivotal Cloud Foundry&reg; from Backup](./restore-pcf.html) topic to restore a backup, import an installation to restore your settings, or to share your settings with another user.

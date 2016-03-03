@@ -1,5 +1,6 @@
 ---
 title: Advanced Troubleshooting with the BOSH CLI
+owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
@@ -11,7 +12,7 @@ Command Line Interface (CLI) to perform advanced troubleshooting.
 
 The BOSH Director runs on the virtual machine (VM) that Ops Manager deploys on the first install of the Ops Manager Director tile.
 BOSH Director diagnostic commands have access to information about your entire
-[Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) 
+[Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf)
 (PCF) installation.
 
 <p class="note"><strong>Note</strong>: For more troubleshooting information, refer to the <a href="./troubleshooting.html">Troubleshooting Guide</a>.</p>
@@ -45,7 +46,7 @@ address of the VM where the BOSH Director runs.
 1. Return to the **Installation Dashboard**.
 
 1. **(Optional)** To prepare to troubleshoot the job VM for any other product,
-click the product tile and repeat the procedure above to record the IP address 
+click the product tile and repeat the procedure above to record the IP address
 and VM credentials for that job VM.
 
 1. Log out of Ops Manager.
@@ -58,12 +59,12 @@ To SSH into the Ops Manager VM:
 
 **vSphere:**
 
-You will need the credentials used to import the PCF .ova or .ovf file into 
+You will need the credentials used to import the PCF .ova or .ovf file into
 your virtualization system.
 
 1. From a command line, run `ssh ubuntu@OPS-MANAGER-IP-ADDRESS`.
 
-1. When prompted, enter the password that you set during the .ova deployment 
+1. When prompted, enter the password that you set during the .ova deployment
 into vCenter:
     <pre class='terminal'>
     $ ssh ubuntu@10.0.0.6
@@ -72,7 +73,7 @@ into vCenter:
 
 **AWS and OpenStack:**
 
-1. Locate the Ops Manager public IP on the AWS EC2 instances page or the 
+1. Locate the Ops Manager public IP on the AWS EC2 instances page or the
 OpenStack Access & Security page.
 
 1. Change the permissions on the `.pem` file to be more restrictive:
@@ -89,10 +90,10 @@ OpenStack Access & Security page.
 
 ### <a id='log-in'></a>Log into the BOSH Director ###
 
-1. To use the BOSH CLI without installing the BOSH CLI gem, set the 
+1. To use the BOSH CLI without installing the BOSH CLI gem, set the
 `BUNDLE_GEMFILE` environment variable to point to the BOSH Gemfile for the Ops
-Manager interface. The following command creates an alias that sets 
-`BUNDLE_GEMFILE` and calls `bundle exec bosh`. This alias allows you to run 
+Manager interface. The following command creates an alias that sets
+`BUNDLE_GEMFILE` and calls `bundle exec bosh`. This alias allows you to run
 `bosh COMMAND` instead of `bundle exec bosh COMMAND`.
 
     <pre class='terminal'>
@@ -101,11 +102,11 @@ Manager interface. The following command creates an alias that sets
 
     <p class="note"><strong>Note</strong>: This alias and the manual change to the <code>BUNDLE_GEMFILE</code> environment variable last only until the end of the current session.</p>
 
-1. Verify that no BOSH processes are running on the Ops Manager VM. You should 
-not proceed with troubleshooting until all BOSH processes have completed or you 
+1. Verify that no BOSH processes are running on the Ops Manager VM. You should
+not proceed with troubleshooting until all BOSH processes have completed or you
 have ended them.
 
-1. Run `bosh target OPS-MANAGER-DIRECTOR-IP-ADDRESS` to target your Ops Manager 
+1. Run `bosh target OPS-MANAGER-DIRECTOR-IP-ADDRESS` to target your Ops Manager
 VM using the BOSH CLI.
 
 1. Log in using the BOSH Director credentials:
@@ -121,16 +122,16 @@ VM using the BOSH CLI.
 ### <a id='product'></a>Select a Product Deployment to Troubleshoot ###
 
 When you import and install a product using Ops Manager, you deploy an instance
-of the product described by a YAML file. Examples of available products include 
+of the product described by a YAML file. Examples of available products include
 Elastic Runtime, MySQL, or any other service that you imported and installed.
 
 Perform the following steps to select a product deployment to troubleshoot:
 
-1. Identify the YAML file that describes the deployment you want to 
+1. Identify the YAML file that describes the deployment you want to
 troubleshoot.
 
     You identify the YAML file that describes a deployment by its filename.
-    For example, to identify Elastic Runtime deployments, run the following 
+    For example, to identify Elastic Runtime deployments, run the following
     command:
 
     `find /var/tempest/workspaces/default/deployments -name cf-*.yml`
@@ -159,14 +160,14 @@ troubleshoot.
 
 1. Run `bosh status` and record the UUID value.
 
-1. Open the `DEPLOYMENT-FILENAME.yml` file in a text editor and compare the 
-`director_uuids` value in this file with the UUID value that you recorded. If 
+1. Open the `DEPLOYMENT-FILENAME.yml` file in a text editor and compare the
+`director_uuids` value in this file with the UUID value that you recorded. If
 the values do not match, perform the following steps:
     1. Replace the `director_uuids` value with the UUID value.
-    1. Run `bosh deployment DEPLOYMENT-FILENAME.yml` to reset the file for your 
+    1. Run `bosh deployment DEPLOYMENT-FILENAME.yml` to reset the file for your
     deployment.
 
-1. Run `bosh deployment DEPLOYMENT-FILENAME.yml` to instruct the BOSH Director 
+1. Run `bosh deployment DEPLOYMENT-FILENAME.yml` to instruct the BOSH Director
 to apply BOSH CLI commands against the deployment described by the YAML file that you identified:
 
     <pre class='terminal'>
@@ -175,7 +176,7 @@ to apply BOSH CLI commands against the deployment described by the YAML file tha
 
 ## <a id='cli'></a>Use the BOSH CLI for Troubleshooting##
 
-This section describes three BOSH CLI commands commonly used during 
+This section describes three BOSH CLI commands commonly used during
 troubleshooting.
 
 * **VMS**: Lists all VMs in a deployment
@@ -234,11 +235,11 @@ troubleshooting.
 
 When troubleshooting an issue with your deployment, `bosh vms` may show a VM in
 an **unknown** state.
-Run [bosh cloudcheck](#cck) on a VM in an **unknown** state to instruct BOSH to 
+Run [bosh cloudcheck](#cck) on a VM in an **unknown** state to instruct BOSH to
 diagnose problems with the VM.
 
-You can also run `bosh vms` to identify VMs in your deployment, then use the 
-[bosh ssh](#ssh) command to SSH into an identified VM for further 
+You can also run `bosh vms` to identify VMs in your deployment, then use the
+[bosh ssh](#ssh) command to SSH into an identified VM for further
 troubleshooting.
 
 `bosh vms` supports the following arguments:
@@ -253,9 +254,9 @@ troubleshooting.
 
 ### <a id='cck'></a>BOSH Cloudcheck ###
 
-Run the `bosh cloudcheck` command to instruct BOSH to detect differences 
-between the VM state database maintained by the BOSH Director and the actual 
-state of the VMs. For each difference detected, `bosh cloudcheck` can offer the 
+Run the `bosh cloudcheck` command to instruct BOSH to detect differences
+between the VM state database maintained by the BOSH Director and the actual
+state of the VMs. For each difference detected, `bosh cloudcheck` can offer the
 following repair options:
 
 * `Reboot VM`: Instructs BOSH to reboot a VM. Rebooting can resolve many
@@ -268,10 +269,10 @@ following repair options:
   Use this option if you believe that the BOSH Director state database is in
   error and that a VM is correctly associated with a job.
 * `Recreate VM using last known apply spec`: Instructs BOSH to destroy the
-  server and recreate it from the deployment manifest that the installer   
+  server and recreate it from the deployment manifest that the installer
   provides. Use this option if a VM is corrupted.
 * `Delete VM reference`: Instructs BOSH to delete a VM reference in the
-  Director state database. If a VM reference exists in the state database, BOSH 
+  Director state database. If a VM reference exists in the state database, BOSH
   expects to find an agent running on the VM.
   Select this option only if you know that this reference is in error.
   Once you delete the VM reference, BOSH can no longer control the VM.

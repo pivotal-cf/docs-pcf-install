@@ -1,10 +1,11 @@
 ---
 title: Recovering MySQL from Elastic Runtime Downtime
+owner: RelEng
 ---
 
 <strong><%= modified_date %></strong>
 
-This topic describes the manual procedure for recovering a terminated Elastic Runtime cluster. In the event that all of the MySQL virtual machines (VMs) are terminated, the cluster will not automatically restart. For example, this process is necessary when all Elastic Runtime VMs are removed on AWS.  Follow this procedure to recreate the lost VMs before completing the bootstrapping process to recover the cluster.   
+This topic describes the manual procedure for recovering a terminated Elastic Runtime cluster. In the event that all of the MySQL virtual machines (VMs) are terminated, the cluster will not automatically restart. For example, this process is necessary when all Elastic Runtime VMs are removed on AWS.  Follow this procedure to recreate the lost VMs before completing the bootstrapping process to recover the cluster.
 
 ## <a id='mysql'></a>Prepare MySQL VMs for Bootstrapping  ##
 
@@ -168,13 +169,13 @@ This topic describes the manual procedure for recovering a terminated Elastic Ru
     Are you sure you want to deploy? (type 'yes' to continue):
 </pre>
     After you type `yes`, BOSH attempts to re-create the lost VMs:
-    
+
     <pre class="terminal">
     Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/0 (00:01:54)
     Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/2 (00:01:54)
     Done creating bound missing vms > mysql-partition-f8abb6ac43ccc9fe16d7/1 (00:02:04)
 </pre>
-    Then BOSH fails to update the lost VMs. You can ignore the error message.  
+    Then BOSH fails to update the lost VMs. You can ignore the error message.
 <pre class="terminal">
     Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 > mysql-partition-f8abb6ac43ccc9fe16d7/1: \`mysql-partition-f8abb6ac43ccc9fe16d7/1' is not running after update (00:05:57)
     Failed updating job mysql-partition-f8abb6ac43ccc9fe16d7 > mysql-partition-f8abb6ac43ccc9fe16d7/0: \`mysql-partition-f8abb6ac43ccc9fe16d7/0' is not running after update (00:05:59)
@@ -184,15 +185,15 @@ This topic describes the manual procedure for recovering a terminated Elastic Ru
     Error 400007: \`mysql-partition-f8abb6ac43ccc9fe16d7/1' is not running after update
 </pre>
 
-1. Run `bosh vms` a second time to validate that you now have the VMs all in the failing state. 
+1. Run `bosh vms` a second time to validate that you now have the VMs all in the failing state.
 
     <pre class="terminal">
      $ bosh vms
     Acting as user 'director' on 'p-bosh-30c19bdd43c55c627d70'
     Deployment `cf-e82cbf44613594d8a155'
-    
+
     Director task 33
-    
+
     Task 33 done
     +------------------------------------------+-----------+-----------------------------------------+------------+
     | Job/index                                | State     | Resource Pool                           | IPs        |
@@ -202,15 +203,15 @@ This topic describes the manual procedure for recovering a terminated Elastic Ru
     | mysql-partition-f8abb6ac43ccc9fe16d7/2   | failing   | mysql-partition-f8abb6ac43ccc9fe16d7    | 10.0.16.61 |
     </pre>
 
-Next, complete the bootstrapping process in the following section. 
+Next, complete the bootstrapping process in the following section.
 
 ## <a id='bootstrapping'></a>Bootstrap ##
 
 <p class='note'><strong>Note</strong>: Bootstrapping requires you to run commands from the <a href="./../customizing/index.html">Ops Manager Director</a>. Follow the instructions to use the <a href="./../customizing/trouble-advanced.html#prepare">BOSH CLI</a> for command-line access.</p>
 
-Bootstrapping identifies the primary node to synchronize all of the nodes in a cluster. You must run all of the steps in this section to ensure successful future deployments and accurate reporting of the status of your jobs.  
+Bootstrapping identifies the primary node to synchronize all of the nodes in a cluster. You must run all of the steps in this section to ensure successful future deployments and accurate reporting of the status of your jobs.
 
-1. Follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) process to restart your MySQL cluster. 
+1. Follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) process to restart your MySQL cluster.
 
 1. Run `bosh vms` to verify that your MySQL cluster is functioning as expected:
 

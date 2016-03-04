@@ -6,13 +6,9 @@ title: Advanced Troubleshooting with the BOSH CLI
 
 _This page assumes you are running cf CLI v6._
 
-You must log into the BOSH Director and run specific commands using the BOSH
-Command Line Interface (CLI) to perform advanced troubleshooting.
+To perform advanced troubleshooting, you must log into the BOSH Director. From there, you can run specific commands using the BOSH Command Line Interface (CLI). BOSH Director diagnostic commands have access to information about your entire [Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) (PCF) installation.
 
 The BOSH Director runs on the virtual machine (VM) that Ops Manager deploys on the first install of the Ops Manager Director tile.
-BOSH Director diagnostic commands have access to information about your entire
-[Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) 
-(PCF) installation.
 
 <p class="note"><strong>Note</strong>: For more troubleshooting information, refer to the <a href="./troubleshooting.html">Troubleshooting Guide</a>.</p>
 
@@ -87,19 +83,36 @@ OpenStack Access & Security page.
 	ssh -i ops_mgr.pem ubuntu@OPS-MGR-IP
 	</pre>
 
-### <a id='log-in'></a>Log into the BOSH Director ###
+### <a id='log-in'></a>Log into BOSH ###
 
-1. To use the BOSH CLI without installing the BOSH CLI gem, set the 
-`BUNDLE_GEMFILE` environment variable to point to the BOSH Gemfile for the Ops
-Manager interface. The following command creates an alias that sets 
-`BUNDLE_GEMFILE` and calls `bundle exec bosh`. This alias allows you to run 
-`bosh COMMAND` instead of `bundle exec bosh COMMAND`.
+Once you have the proper address and credentials, you can log into the BOSH Director to run BOSH CLI commands in two ways:
 
+- With credentials for the internal BOSH UAA, obtain a token from the UAA CLI to log into BOSH.
+
+- If your deployment uses an external user store, log into BOSH using the SAML protocol.
+
+These two procedures are detailed below.
+
+#### <a id='log-in-uaa'></a>Internal UAA Login ####
+
+1. Target the BOSH UAA with the UAA CLI command `uaac target`.
+
+    <pre class='terminal'>
+    $ uaac target --skip-ssl-validation http://BOSH_DIRECTOR_IP:8080
+    </pre>
+
+1. Get a token for the user. The `-s` argument flags the client secret, which is an empty string.
+
+    <pre class='terminal'>
+    $ uaac token owner get bosh_cli director -s "" -p DIRECTOR_USER_PASSWORD
+    </pre>
+
+1. To streamline running the BOSH CLI, run the following command. It sets the `BUNDLE_GEMFILE` environment variable to point to the BOSH Gemfile on the Ops Manager VM, so you do not have to install the BOSH gem locally. It also aliases `bosh` so you can run `bosh COMMAND` instead of `bundle bosh exec COMMAND`.
     <pre class='terminal'>
     $ alias bosh="BUNDLE_GEMFILE=/home/tempest-web/tempest/web/bosh.Gemfile bundle exec bosh"
     </pre>
 
-    <p class="note"><strong>Note</strong>: This alias and the manual change to the <code>BUNDLE_GEMFILE</code> environment variable last only until the end of the current session.</p>
+    <p class="note"><strong>Note</strong>: This alias and the manual change to the <code>BUNDLE_GEMFILE</code> environment variable lasts only until the end of the current session.</p>
 
 1. Verify that no BOSH processes are running on the Ops Manager VM. You should 
 not proceed with troubleshooting until all BOSH processes have completed or you 
@@ -118,7 +131,7 @@ VM using the BOSH CLI.
     Logged in as 'director'
     </pre>
 
-### <a id='log-in'></a>Log into BOSH using SAML ###
+### <a id='log-in-saml'></a>External User Store Login via SAML ###
 
 To log into BOSH you will need browser access to the BOSH Director in order to get a UAA Passcode. If you have browser access, skip to step 1 below.
 
@@ -187,21 +200,6 @@ $ ./sshuttle -r username@opsmanagerIP 0.0.0.0/0 -vv
     $ bosh vms
     Acting as user 'admin@test.org' on 'p-bosh-6a79ef37db71ec6f7eeb'
     Deployment `example-product-2494c267d81bfff769a7'
-    </pre>
-
-### <a id='log-in'></a>Log into BOSH using UAA ###
-
-1. Target the UAA with `uaac`.
-
-    <pre class='terminal'>
-    $ uaac target --skip-ssl-validation http://BOSH_DIRECTOR_IP:8080
-    </pre>
-
-
-2. Get a token for the user. The `-s` argument is the client secret, which is an empty string.
-
-    <pre class='terminal'>
-    $ uaac token owner get bosh_cli director -s "" -p DIRECTOR_USER_PASSWORD
     </pre>
 
 ### <a id='product'></a>Select a Product Deployment to Troubleshoot ###

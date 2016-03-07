@@ -5,20 +5,26 @@ owner: Diego
 
 <strong><%= modified_date %></strong>
 
-This document describes how to configure your Pivotal Cloud Foundry&reg; (PCF) deployment to allow Diego SSH access to application instances, and details about load balancing SSH sessions.
+To help troubleshoot applications hosted by a deployment, [Pivotal Cloud Foundry&reg; (PCF)](https://network.pivotal.io/products/pivotal-cf) supports SSH access into running applications. This document describes how to configure a PCF deployment to allow SSH access to application instances, and how to configure load balancing for those application SSH sessions.
 
-## <a id='diego-configuration'></a> Diego Configuration
+## <a id='diego-configuration'></a> Elastic Runtime Configuration
 
-PCF deployments accept SSH connection to individual app instances for troubleshooting procedures. SSH access can be controlled by platform operators, space administration and app developers.
+This section describes how to configure Elastic Runtime to enable or disable deployment-wide SSH access to application instances. Space administrators and app developers and can also control SSH access to the space and app scope, respectively. See [Application SSH Overview](../devguide/deploy-apps/app-ssh-overview.html) for details on SSH access permissions.
 
-To configure your platform to allow SSH access for PCF app instances running on Diego, check the Diego setting for <strong>Allow SSH access to apps</strong>.
+To configure Elastic Runtime SSH access for application instances:
+
+1. Open the **Pivotal Elastic Runtime** tile in Ops Manager.
+
+1. Under the **Settings** tab, select the **Application Containers** section. 
+
+1. Enable or disable the <strong>Allow SSH access to apps</strong> checkbox.
 
 <%= image_tag("../images/diego-config.png") %>
-
-<p class="note"><strong>Note</strong>: Space level and app level settings can limit, but not exceed, platform settings. Specifically, if you enable SSH access to app instances for your platform, space administrators and app developers can disable access. However, platform disabled SSH access cannot be overridden.</p>
 
 ## <a id="ssh-load-balancer-configuration"></a> SSH Load Balancer Configuration
 
 If you are using HAProxy as a load balancer and SSH access is enabled, SSH requests are load balanced by HAProxy. This configuration relies on the presence of the same consul server cluster that Diego components use for service discovery. This configuration also works well for deployments where all traffic on the system domain and its subdomains is directed towards the HAproxy job, as is the case for a BOSH-Lite Cloud Foundry deployment on the default `10.244.0.34.xip.io` domain.
 
-For AWS deployments, where the infrastructure offers load-balancing as a service through ELBs, the deployment operator can provision an ELB to balance load across the Diego SSH proxy instances. This ELB should be configured to listen to TCP traffic on the port given in `app_ssh.port` and to send it to port 2222. In order to register the SSH proxies with this ELB, the ELB identifier should then be added to the `elbs` property in the `cloud_properties` hash of the Diego manifest's `access_zN` resource pools. If the spiff-based manifest-generation templates are used to produce the Diego manifest, these `cloud_properties` hashes should be specified in the `iaas_settings.resource_pool_cloud_properties` section of the `iaas-settings.yml` stub.
+For AWS deployments, where the infrastructure offers load-balancing as a service through ELBs, the deployment operator can provision an ELB to balance load across the SSH proxy instances. You should configure this ELB to listen to TCP traffic on the port given in `app_ssh.port` and to send it to port 2222.
+
+In order to register the SSH proxies with this ELB, you should then add the ELB identifier to the `elbs` property in the `cloud_properties` hash of the Diego manifest `access_zN` resource pools. If you used the spiff-based manifest-generation templates to produce the Diego manifest, specify these `cloud_properties` hashes in the `iaas_settings.resource_pool_cloud_properties` section of the `iaas-settings.yml` stub.

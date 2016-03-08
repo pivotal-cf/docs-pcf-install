@@ -98,25 +98,22 @@ These two procedures are detailed below.
 1. Target the BOSH UAA with the UAA CLI command `uaac target`.
 
     <pre class='terminal'>
-    $ uaac target --skip-ssl-validation http://BOSH_DIRECTOR_IP:8080
+    $ uaac target http://BOSH_DIRECTOR_IP:8080
     </pre>
+    
+    Alternatively use an ssl certificate.
+    
+    <pre class='terminal'>
+    $ uaac target --ca-cert /var/tempest/workspaces/default/root_ca_certificate https://BOSH_DIRECTOR_IP:8443
+    </pre>
+
+1. Get the UAA admin user password from the Ops Manager Director Credentials tab
 
 1. Get a token for the user. The `-s` argument flags the client secret, which is an empty string.
 
     <pre class='terminal'>
-    $ uaac token owner get bosh_cli director -s "" -p DIRECTOR_USER_PASSWORD
+    $ uaac token owner get bosh_cli admin -s "" -p UAA_ADMIN_PASSWORD
     </pre>
-
-1. To streamline running the BOSH CLI, run the following command. It sets the `BUNDLE_GEMFILE` environment variable to point to the BOSH Gemfile on the Ops Manager VM, so you do not have to install the BOSH gem locally. It also aliases `bosh` so you can run `bosh COMMAND` instead of `bundle bosh exec COMMAND`.
-    <pre class='terminal'>
-    $ alias bosh="BUNDLE_GEMFILE=/home/tempest-web/tempest/web/bosh.Gemfile bundle exec bosh"
-    </pre>
-
-    <p class="note"><strong>Note</strong>: This alias and the manual change to the <code>BUNDLE_GEMFILE</code> environment variable lasts only until the end of the current session.</p>
-
-1. Verify that no BOSH processes are running on the Ops Manager VM. You should 
-not proceed with troubleshooting until all BOSH processes have completed or you 
-have ended them.
 
 1. Run `bosh target OPS-MANAGER-DIRECTOR-IP-ADDRESS` to target your Ops Manager 
 VM using the BOSH CLI.
@@ -130,6 +127,10 @@ VM using the BOSH CLI.
     Enter password: *****
     Logged in as 'director'
     </pre>
+    
+1. Verify that no BOSH processes are running on the Ops Manager VM before running any commands. You should 
+not proceed with troubleshooting until all BOSH processes have completed or you 
+have ended them.
 
 ### <a id='log-in-saml'></a>External User Store Login via SAML ###
 

@@ -5,66 +5,62 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-This topic describes how to configure the Ops Manager Director for VMware vSphere. Before beginning this procedure, ensure that you have successfully completed all steps in the [Installing Pivotal Cloud Foundry on vSphere and vCloud Air] (http://docs.pivotal.io/pivotalcf/customizing/vsphere.html) and [Deploying Operations Manager to vSphere] (http://docs.pivotal.io/pivotalcf/customizing/deploying-vm.html) topics. After you complete this procedure, follow the instructions in the [Configuring Elastic Runtime for vSphere and vCloud](http://docs.pivotal.io/pivotalcf/customizing/config-er-vmware.html) topic.
+This topic describes how to configure the Ops Manager Director for VMware vSphere. Before you begin this procedure, ensure that you have successfully completed all steps in the [Installing Pivotal Cloud Foundry&reg; on vSphere and vCloud Air] (http://docs.pivotal.io/pivotalcf/customizing/vsphere.html) and [Deploying Operations Manager to vSphere] (http://docs.pivotal.io/pivotalcf/customizing/deploying-vm.html) topics. After you complete this procedure, follow the instructions in the [Configuring Elastic Runtime for vSphere and vCloud](http://docs.pivotal.io/pivotalcf/customizing/config-er-vmware.html) topic.
 
-## <a id='access-ops-man'></a>Step 1: Access Ops Manager
+## <a id='vcenter-config'></a>Step 1: vCenter Config Page
 
-1. Log in to Pivotal Cloud Foundry Operations Manager.
-
-1. Click the **Ops Manager Director for VMware vSphere** tile.
+1. Log in to Ops Manager and click the **Ops Manager Director** tile.
 
     <%= image_tag("vsphere-tile.png") %>
 
-## <a id='vcenter-config'></a>Step 2: vCenter Config Page
+1. Select **vCenter Config**.
 
-Select **vCenter Config** and enter the following information:
+    <%= image_tag("vcenter-credentials.png") %>
 
-- **vCenter IP address**
-- **vCenter Username**
-- **vCenter Password**
-- **Datacenter Name**
-- **Datastore Names (comma delimited)**
-- Click **Save**.
-
-<p class="note"><strong>Note</strong>: The vCenter credentials must grant
-    create and delete privileges for VMs and folders.</p>
+1. Enter the following information and click **Save**:
+    * **vCenter Host**: The hostname of the vCenter that manages ESXi/vSphere.
+    * **vCenter Username**: A vCenter username with create and delete privileges for VMs and folders.
+    * **vCenter Password**: The password for the vCenter used specified above.
+    * **Datacenter Name**: The name of the datacenter as it appears in vCenter.
+    * **Virtual Disk Type**: The Virtual Disk Type to provision for all VMs.
+    * **Ephemeral Datastore Names (comma delimited)**: The names of the datastores that will store ephemeral VM disks deployed by Ops Manager.
+    * **Persistent Datastore Names (comma delimited)**: The names of the datastores that will store persistent VM disks deployed by Ops Manager.
+    * **VM Folder**: The vSphere datacenter folder (default: `pcf_vms`) where VMs will be placed.
+    * **Template Folder**: The vSphere datacenter folder (default: `pcf_templates`) where templates will be placed.
+    * **Disk path Folder**: The vSphere datastore folder (default: `pcf_disk`) where attached disk images will be created. This folder must not be nested.
 
 <p class="note"><strong>Note</strong>: After your initial deployment, you will not be able to edit the VM Folder, Template Folder, and Disk path Folder names.</p>
 
-<%= image_tag("vcenter-credentials.png") %>
-
-## <a id='dir-config'></a>Step 3: Director Config Page
+## <a id='dir-config'></a>Step 2: Director Config Page
 
 1. Select **Director Config**.
-    1. Enter a comma-delimited list of NTP server addresses.
-    1. If you have installed and configured the Ops Metrics product, enter the
-    Metrics IP address.
-    1. Click **Enable VM Resurrector Plugin** to enable the Ops Manager
-    Resurrector functionality and increase Elastic Runtime availability.
-    For more information, see the introduction and Limitation sections of the
-    [Using Ops Manager Resurrector on VMware vSphere](./resurrector.html) topic.
-    1. Pivotal recommends that you select **Internal** for your **Blobstore
-    Location**.
-    However, if you choose **S3 Compatible Blobstore** for your blobstore
-    location, complete the **S3 Endpoint**, **Bucket Name**, **Access Key**, and
-    **Secret Key** with information from your blobstore provider.
-    1. Select a **Database Location**.
-    By default, Pivotal Cloud Foundry&reg; deploys and manages a database for
-    you.
-    If you choose to use an **External MySQL Database**, complete the associated
-    fields with information obtained from your external MySQL Database provider.
-    1. **Max Threads** sets the maximum number of threads that the Ops Manager
-    Director can run simultaneously.
-    For vSphere, the default value is 32.
-    Leave the Max Threads field blank to use this default value.
-    Pivotal recommends that you use the default value unless doing so results in
-    rate limiting or errors on your IaaS.
-    1. Click **Save**.
 
-<p class="note"><strong>Note</strong>: After your initial deployment, you will not be able to edit the Blobstore and Database locations.</p>
 <%= image_tag("director-config.png") %>
 
-## <a id='az'></a>Step 4: Availability Zone Pages
+1. Enter the following information and click **Save**:
+    * **NTP Servers (comma delimited)**: Enter a comma-delimited list of NTP server addresses.
+    * **Metrics IP Address**: If you have installed and configured the Ops Metrics product, enter the Metrics IP address.
+    * **Enable VM Resurrector Plugin**: Select this checkbox to enable Resurrector functionality and increase Elastic Runtime availability. For more information, see the introduction and Limitation sections of the [Using Ops Manager Resurrector on VMware vSphere](./resurrector.html) topic.
+    * **Recreate all VMs**: Select this checkbox to force BOSH to recreate all VMs on the next deploy. Persistent disk will be preserved.
+    * **HM Pager Duty Plugin**: Select this checkbox to enable Health Monitor integration with PagerDuty.
+        * **Service Key**: Enter your API service key from PagerDuty.
+        * **HTTP Proxy**: Enter an HTTP proxy for use with PagerDuty.
+    * **HM Email Plugin**: Select this checkbox to enable Health Monitor integration with email.
+        * **Host**: Enter your email hostname.
+        * **Port**: Enter your email port number.
+        * **Domain**: Enter your domain.
+        * **From**: Enter the address that will appear as the sender.
+        * **Recipients**: Enter comma separated addresses of intended recipients.
+        * **Username**: Provide your username for your email server.
+        * **Password**: Provide your password for the username above.
+        * **Enable TLS**: Select this checkbox to enable Transport Layer Security.
+    * **Blobstore Location**: Pivotal recommends that you select **Internal** for your **Blobstore Location**. However, if you choose **S3 Compatible Blobstore** for your blobstore location, complete the **S3 Endpoint**, **Bucket Name**, **Access Key**, **Secret Key**, **V2 Signature/V4 Signature**, and **Region** with information from your blobstore provider.
+    1. **Database Location**: By default, Pivotal Cloud Foundry&reg; deploys and manages a database for you.If you choose to use an **External MySQL Database**, complete the associated fields with information obtained from your external MySQL Database provider: **Host**, **Port**, **Username**, **Password**, and **Database**.
+    1. **Max Threads**: This sets the maximum number of threads that the Ops Manager Director can run simultaneously. For vSphere, the default value is 32. Leave the field blank to use this default value. Pivotal recommends that you use the default value unless doing so results in rate limiting or errors on your IaaS.
+
+<p class="note"><strong>Note</strong>: After your initial deployment, you will not be able to edit the Blobstore and Database locations.</p>
+
+## <a id='az'></a>Step 3: Availability Zone Pages
 
 1. <a id='create-az'></a>Select **Create Availability Zones**.
     Ops Manager Availability Zones correspond to your vCenter clusters and
@@ -96,7 +92,7 @@ Select **vCenter Config** and enter the following information:
 
     <%= image_tag("assign-az.png") %>
 
-## <a id='networks'></a>Step 5: Network Pages
+## <a id='networks'></a>Step 4: Network Pages
 
 1. <a id='create-networks'></a>Select **Create Networks**.
     Having multiple networks allows you to place vCenter on a private network
@@ -135,7 +131,7 @@ Select **vCenter Config** and enter the following information:
 
     <%= image_tag("assign-network.png") %>
 
-## <a id='security-config'></a>Step 6: Security Page
+## <a id='security-config'></a>Step 5: Security Page
 
 1. Select **Security**.
 
@@ -145,7 +141,7 @@ Select **vCenter Config** and enter the following information:
 
 <%= image_tag("security-config.png") %>
 
-## <a id='resource-config'></a>Step 7: Resource Config Page
+## <a id='resource-config'></a>Step 6: Resource Config Page
 
 1. Select **Resource Config**.
 
@@ -158,7 +154,7 @@ choose **Automatic** from the drop-down menu to allocate the recommended resourc
 
 1. Click **Save**.
 
-## <a id='exper-features'></a>Step 8: (Optional) Experimental Features Page
+## <a id='exper-features'></a>Step 7: (Optional) Experimental Features Page
 
 These are features that you should be cautious about enabling if you have other Pivotal Cloud Foundry service tiles installed in your Pivotal Cloud Foundry deployment. Not all of the services are guaranteed to work as expected with these features enabled.
 
@@ -172,7 +168,7 @@ These certificates enable BOSH-deployed VMs to trust a custom root certificate, 
 
 <%= image_tag("exper-features.png") %>
 
-## <a id='complete-installation'></a>Step 9: Complete the Ops Manager Director Installation
+## <a id='complete-installation'></a>Step 8: Complete the Ops Manager Director Installation
 
 Click the **Installation Dashboard** link to return to the Installation Dashboard. Select Apply Changes. Follow the next steps in [Configuring Elastic Runtime for vSphere and vCloud] (http://docs.pivotal.io/pivotalcf/customizing/config-er-vmware.html).
 

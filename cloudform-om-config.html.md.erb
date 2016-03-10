@@ -65,22 +65,22 @@ After you complete this procedure, follow the instructions in the [Deploying Ela
 
 1. Select **AWS Config** to open the **AWS Management Console Config** page.
 
-1. Complete the **AWS Management Console Config** page with information from the
-[**Outputs**](#outputs) tab for your stack in the AWS Console:
+    <%= image_tag("cloudform/aws-config.png") %>
 
-	<%= image_tag("cloudform/aws-config.png") %>
-    * **Access Key ID**: Use the value of **PcfIamUserAccessKey**.
-    * **AWS Secret Key**: Use the value of **PcfIamUserSecretAccessKey**.
-    * **VPC ID**: Use the value of **PcfVpc**.
+1. Select **Use AWS Keys** or **Use AWS Instance Profile**.
+    * If you choose to use AWS keys, complete the fields with information from the [**Outputs**](#outputs) tab for your stack in the AWS Console:
+        * **Access Key ID**: Use the value of **PcfIamUserAccessKey**.
+        * **AWS Secret Key**: Use the value of **PcfIamUserSecretAccessKey**.
+    * If you choose to use an AWS instance profile, enter the name of your AWS Identity and Access Management (IAM) profile.
+
+1. Complete the rest of the **AWS Management Console Config** page.
+    * **VPC ID**: Use the value of **PcfVpc** from your **Outputs** tab.
     * **Security Group ID**: Open the AWS EC2 Dashboard and click **Security
       Groups**. Select the security group with the **Description** `PCF VMs
       Security Group`. Copy the **Group ID** into the Ops Manager **Security
       Group ID** field.
-      </p>
-    * **Key Pair Name**: Use the value of **PcfKeyPairName**.
-    * **SSH Private Key**: Open your pre-existing AWS key pair `.pem` file in a
-		  text editor. Copy the contents of the `.pem` file and paste into the
-		  **SSH Private Key** field.
+    * **Key Pair Name**: Use the value of **PcfKeyPairName** from your **Outputs** tab.
+    * **SSH Private Key**: Open your pre-existing AWS key pair `.pem` file in a text editor. Copy the contents of the `.pem` file and paste it into the **SSH Private Key** field.
     * **Region**: Select the region where you deployed Ops Manager.
     * **Encrypt EBS Volumes**: Select this checkbox to enable full encryption on persistent disks of all BOSH-deployed VMs except the Ops Manager VM and Director VM. See [Configuring Amazon EBS Encryption for PCF on AWS](cloudform-om-ebs-config.html) for details on using EBS encryption.
 
@@ -93,69 +93,74 @@ After you complete this procedure, follow the instructions in the [Deploying Ela
 	<%= image_tag("cloudform/director-config.png") %>
 
 1. Enter at least two of the following NTP servers in the **NTP Servers (comma delimited)** field, separated by a comma:
-    * 0.amazon.pool.ntp.org
-    * 1.amazon.pool.ntp.org
-    * 2.amazon.pool.ntp.org
-    * 3.amazon.pool.ntp.org
+    * `0.amazon.pool.ntp.org`
+    * `1.amazon.pool.ntp.org`
+    * `2.amazon.pool.ntp.org`
+    * `3.amazon.pool.ntp.org`
 
 1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops
 Manager Resurrector functionality and increase Elastic Runtime availability.
 
-1. For **Blobstore Location**, select the **S3 Compatible Blobstore** option.
+1. Select **Recreate all VMs** to force BOSH to recreate all VMs on the next deploy. Any persistent disk data will be preserved.
 
-1. For **S3 Endpoint**:
-    1. In a browser, reference the [**Amazon Simple Storage Service (Amazon S3) table** ](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region), and find the region for your AWS account.
-    1. Prepend `https://` to the **Endpoint** for your region, and copy it into
-      the Ops Manager **S3 Endpoint** field. For example, in the **us-west-2** region, enter `https://s3-us-west-2.amazonaws.com` into the field.
+1. Select **HM Pager Duty Plugin** to enable Health Monitor integration with PagerDuty.
+    * **Service Key**: Enter your API service key from PagerDuty.
+    * **HTTP Proxy**: Enter an HTTP proxy for use with PagerDuty.
 
-1. Complete the **Director Config** page with information from the **Outputs**
-tab in the AWS Console:
-    * **Bucket Name**: Use the value of **PcfOpsManagerS3Bucket**.
-    * **Access Key ID**: Use the value of **PcfIamUserAccessKey**.
-    * **AWS Secret Key**: Use the value of **PcfIamUserSecretAccessKey**.
-    * **Database Location**: Select the **External MySQL Database** option.
+1. Select **HM Email Plugin** to enable Health Monitor integration with email.
+    * **Host**: Enter your email hostname.
+    * **Port**: Enter your email port number.
+    * **Domain**: Enter your domain.
+    * **From**: Enter the address that will appear as the sender.
+    * **Recipients**: Enter comma separated addresses of intended recipients.
+    * **Username**: Provide your username for your email server.
+    * **Password**: Provide your password for the username above.
+    * **Enable TLS**: Select this checkbox to enable Transport Layer Security.
+
+1. For **Blobstore Location**, Pivotal recommends that you select **Internal**. However, if you choose **S3 Compatible Blobstore** for your blobstore location, complete the following steps:
+    * In a browser, reference the [**Amazon Simple Storage Service (Amazon S3) table** ](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region), and find the region for your AWS account.
+    * Prepend `https://` to the **Endpoint** for your region, and copy it into
+    the Ops Manager **S3 Endpoint** field. For example, in the **us-west-2** region, enter `https://s3-us-west-2.amazonaws.com` into the field.
+    * Complete the following fields with information from the **Outputs** tab in the AWS Console:
+        * **Bucket Name**: Use the value of **PcfOpsManagerS3Bucket**.
+        * **Access Key ID**: Use the value of **PcfIamUserAccessKey**.
+        * **AWS Secret Key**: Use the value of **PcfIamUserSecretAccessKey**.
+    * Select **V2 Signature** or **V4 Signature**. If you choose **V4 Signature**, enter your **Region**.
+
+1. By default, Pivotal Cloud Foundry&reg; deploys and manages a database for you. If you choose to use an **External MySQL Database**, complete the following fields with information from the **Outputs** tab in the AWS Console:
     * **Host**: Use the value of **PcfRdsAddress**.
     * **Port**: Use the value of **PcfRdsPort**.
     * **Username**: Use the value of **PcfRdsUsername**.
     * **Password**: Use the value of **PcfRdsPassword**.
     * **Database**: Use the value of **PcfRdsDBName**.
-    * **Max Threads**:
+
+1. **Max Threads** sets the maximum number of threads that the Ops Manager Director can run simultaneously. Pivotal recommends that you leave the field blank to use the default value, unless it results in rate limiting or errors on your IaaS.
 
 1. Click **Save**.
 
-## <a id='az'></a>Step 5: Availability Zones Pages ##
+## <a id='az'></a>Step 5: Create Availability Zones Page ##
 
 1. Select **Create Availability Zones**.
+<%= image_tag("cloudform/create-az.png") %>
+1. Use the following steps to create one or more Availability Zones for your applications to use:
+    * Click **Add**.
+    * For **Amazon Availability Zone**, enter the value of **PcfPrivateSubnetAvailabilityZone** from the **Outputs** tab in the AWS Console.
+    * Click **Save**.
 
-    <%= image_tag("cloudform/create-az.png") %>
-
-1. Enter the value of **PcfPrivateSubnetAvailabilityZone** from the **Outputs**
-tab in the AWS Console. Click **Save**.
-
-1. Select **Assign Availability Zones**.
-
-1. Select the Availability Zone that you created in **Create Availability Zones**.
-
-    <%= image_tag("cloudform/assign-az.png") %>
-
-1. Click **Save**.
-
-## <a id='network'></a>Step 6: Network Pages ##
-
+## <a id='network'></a>Step 6: Create Networks Page ##
 1. Select **Create Networks**.
-
-	<%= image_tag("cloudform/create-networks.png") %>
-
-1. In the **Name** field, enter a name for your PCF Network.
-
-1. In the **VPC Subnet ID** field, use the value of **PcfPrivateSubnetId** from
-the **Outputs** tab in the AWS Console.
-
-1. Complete the **Create Networks** page with the following information:
-    * **Subnet (CIDR Range)**: Enter `10.0.16.0/20`
-    * **Excluded IP Ranges**: Enter `10.0.16.1-10.0.16.9`
-    * **DNS**: Enter `10.0.0.2`
-    * **Gateway**: Enter `10.0.16.1`
+<%= image_tag("cloudform/create-networks.png") %>
+1. Select **Enable ICMP checks** to enable ICMP on your networks.
+1. Use the following steps to create one or more Ops Manager networks:
+    * Click **Add Network**.
+    * Enter a unique **Name** for the network.
+    * Click **Add Subnet** to create one or more subnets for the network.
+    * In the **VPC Subnet ID** field, use the value of **PcfPrivateSubnetId** from the **Outputs** tab in the AWS Console.
+    * For **CIDR**, enter `10.0.16.0/20`. Ops Manager will deploy VMs to this CIDR block. 
+    * For **Reserved IP Ranges**, enter `10.0.16.1-10.0.16.9`. Ops Manager will not deploy VMs to any IP in this range.
+    * Enter `10.0.0.2` for **DNS** and `10.0.16.1` for **Gateway**.
+    * Select which **Availability Zones** to use with the network.
+    * Click **Save**.
 
 1. Click **Save**.
 
@@ -163,24 +168,32 @@ the **Outputs** tab in the AWS Console.
 
     <%= image_tag("cloudform/config-error.png") %>
 
-1. Select **Assign Networks** and assign the Director to the network that you
-created in the **Create Networks** step.
 
-	<%= image_tag("cloudform/assign-networks.png") %>
+## <a id="assign-azs"></a>Step 7: Assign AZs and Networks Page ##
 
+1. Select **Assign AZs and Networks Page**.
+<%= image_tag("cloudform/assign-az.png") %>
+1. Use the drop-down menu to select a **Singleton Availability Zone**. The Ops Manager Director installs in this Availability Zone.
+1. Use the drop-down menu to select a **Network** for your Ops Manager Director.
 1. Click **Save**.
 
-## <a id='resource-config'></a>Step 7: Resource Config Page
+## <a id='resource-config'></a>Step 8: Security Page ##
+
+1. Select **Security**.
+<%= image_tag("cloudform/security-config.png") %>
+1. Choose **Generate passwords** or **Use default BOSH password**. Pivotal recommends that you use the **Generate passwords** option for greater security.
+1. Click **Save**. To view your saved Director password, click the **Credentials** tab.
+
+## <a id='resource-config'></a>Step 9: Resource Config Page
 
 1. Select **Resource Config**.
-1. Adjust any values as necessary for your deployment. Under the **Instances**, **Persistent Disk Type**, and **VM Type** fields,
-choose **Automatic** from the drop-down menu to allocate the recommended resources for the job. If the **Persistent Disk Type** field reads **None**, the job does not require persistent disk space.
+<%= image_tag("cloudform/resource-config-new.png") %>
+1. Adjust any values as necessary for your deployment. Under the **Instances**, **Persistent Disk Type**, and **VM Type** fields, choose **Automatic** from the drop-down menu to allocate the recommended resources for the job. If the **Persistent Disk Type** field reads **None**, the job does not require persistent disk space.
 
     <p class="note"><strong>Note</strong>: If you set a field to <strong>Automatic</strong> and the recommended resource allocation changes in a future version, Ops Manager automatically uses the new recommended allocation.</p> 
 
-    <%= image_tag("cloudform/resource-config-new.png") %>
 
-## <a id='complete'></a>Step 8: Complete the Ops Manager Director Installation ##
+## <a id='complete'></a>Step 10: Complete the Ops Manager Director Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.
@@ -190,8 +203,7 @@ Dashboard.
 
     <%= image_tag("cloudform/install-error.png") %>
 
-1. Ops Manager Director installs. This may take a few moments. The image shows the **Changes Applied** window
-that displays when the installation process successfully completes.
+1. Ops Manager Director installs. This may take a few moments. When the installation process successfully completes, the **Changes Applied** window appears.
 
     <%= image_tag("cloudform/ops-manager-complete.png") %>
 

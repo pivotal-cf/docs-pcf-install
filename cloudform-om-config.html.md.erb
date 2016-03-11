@@ -25,6 +25,8 @@ After you complete this procedure, follow the instructions in the [Deploying Ela
 
     <%= image_tag("cloudform/deployed.png") %>
 
+1. Open this IP address in a web browser. 
+
 1. When Ops Manager starts for the first time, you must choose one of the following:
     * <strong>[Use an Identity Provider](#idp)</strong>: If you use an Identity Provider, an external identity server maintains your user database.
     * <strong>[Internal Authentication](#internal)</strong>: If you use Internal Authentication, PCF maintains your user database.
@@ -34,9 +36,9 @@ After you complete this procedure, follow the instructions in the [Deploying Ela
 
 ### <a id='idp'></a>Use an Identity Provider ###
 
-1. When redirected to the **Use an Identity Provider** page, you must:
+1. When redirected to the **Use an Identity Provider** page, you must complete the following steps:
     * Retrieve the metadata URL from your Identity Provider and copy it into the **Use an Identity Provider** area.
-    * Create a passphrase. The passphrase you entered is a shared secret to encrypt Ops Manager data at rest.
+    * Create a passphrase. Ops Manager encrypts data using the passphrase that you provide.
     * Read the **End User License Agreement**, and select the checkbox to accept the terms.
     * Click **Setup Authentication**.
 
@@ -46,14 +48,14 @@ After you complete this procedure, follow the instructions in the [Deploying Ela
 
 ### <a id='internal'></a>Internal Authentication ###
 
-1.  When redirected to the **Internal Authentication** page, you must:
-    * Enter a **Username** and **Admin password**.
-    * Enter a **Decryption passphrase**. This passphrase encrypts the Ops Manager datastore, and is not recoverable if forgotten.
+1.  When redirected to the **Internal Authentication** page, you must complete the following steps:
+    * Enter a **Username**, **Password**, and **Password confirmation** to create an Admin user.
+    * Enter a **Decryption passphrase** and the **Decryption passphrase confirmation**. This passphrase encrypts the Ops Manager datastore, and is not recoverable.
     * Read the **End User License Agreement**, and select the checkbox to accept the terms.
 
  	<%= image_tag("om-login.png") %>
 
-1. Log in to Ops Manager with the Admin username and password you created on the initial setup page.
+1. Log in to Ops Manager with the Admin username and password you created in the previous step.
 
     <%= image_tag("cf-login.png") %>
 
@@ -101,7 +103,7 @@ After you complete this procedure, follow the instructions in the [Deploying Ela
 1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops
 Manager Resurrector functionality and increase Elastic Runtime availability.
 
-1. Select **Recreate all VMs** to force BOSH to recreate all VMs on the next deploy. Any persistent disk data will be preserved.
+1. Select **Recreate all VMs** to force BOSH to recreate all VMs on the next deploy. This process does not destroy any persistent disk data.
 
 1. Select **HM Pager Duty Plugin** to enable Health Monitor integration with PagerDuty.
     * **Service Key**: Enter your API service key from PagerDuty.
@@ -111,13 +113,13 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
     * **Host**: Enter your email hostname.
     * **Port**: Enter your email port number.
     * **Domain**: Enter your domain.
-    * **From**: Enter the address that will appear as the sender.
+    * **From**: Enter the address for the sender.
     * **Recipients**: Enter comma separated addresses of intended recipients.
-    * **Username**: Provide your username for your email server.
-    * **Password**: Provide your password for the username above.
+    * **Username**: Enter the username for your email server.
+    * **Password**: Enter your username's password.
     * **Enable TLS**: Select this checkbox to enable Transport Layer Security.
 
-1. For **Blobstore Location**, Pivotal recommends that you select **Internal**. However, if you choose **S3 Compatible Blobstore** for your blobstore location, complete the following steps:
+1. For **Blobstore Location**, select **S3 Compatible Blobstore** and complete the following steps:
     * In a browser, reference the [**Amazon Simple Storage Service (Amazon S3) table** ](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region), and find the region for your AWS account.
     * Prepend `https://` to the **Endpoint** for your region, and copy it into
     the Ops Manager **S3 Endpoint** field. For example, in the **us-west-2** region, enter `https://s3-us-west-2.amazonaws.com` into the field.
@@ -125,9 +127,9 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
         * **Bucket Name**: Use the value of **PcfOpsManagerS3Bucket**.
         * **Access Key ID**: Use the value of **PcfIamUserAccessKey**.
         * **AWS Secret Key**: Use the value of **PcfIamUserSecretAccessKey**.
-    * Select **V2 Signature** or **V4 Signature**. If you choose **V4 Signature**, enter your **Region**.
+    * Select **V2 Signature** or **V4 Signature**. If you select **V4 Signature**, enter your **Region**.
 
-1. By default, Pivotal Cloud Foundry&reg; deploys and manages a database for you. If you choose to use an **External MySQL Database**, complete the following fields with information from the **Outputs** tab in the AWS Console:
+1. For **Database Location**, select **External MySQL Database** and complete the following fields with information from the **Outputs** tab in the AWS Console:
     * **Host**: Use the value of **PcfRdsAddress**.
     * **Port**: Use the value of **PcfRdsPort**.
     * **Username**: Use the value of **PcfRdsUsername**.
@@ -160,7 +162,6 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
     * For **Reserved IP Ranges**, enter `10.0.16.1-10.0.16.9`. Ops Manager will not deploy VMs to any IP in this range.
     * Enter `10.0.0.2` for **DNS** and `10.0.16.1` for **Gateway**.
     * Select which **Availability Zones** to use with the network.
-    * Click **Save**.
 
 1. Click **Save**.
 
@@ -169,15 +170,15 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
     <%= image_tag("cloudform/config-error.png") %>
 
 
-## <a id="assign-azs"></a>Step 7: Assign AZs and Networks Page ##
+## <a id="assign-azs"></a>Step 7: Assign AZs and Networks ##
 
-1. Select **Assign AZs and Networks Page**.
+1. Select **Assign AZs and Networks**.
 <%= image_tag("cloudform/assign-az.png") %>
 1. Use the drop-down menu to select a **Singleton Availability Zone**. The Ops Manager Director installs in this Availability Zone.
 1. Use the drop-down menu to select a **Network** for your Ops Manager Director.
 1. Click **Save**.
 
-## <a id='resource-config'></a>Step 8: Security Page ##
+## <a id='security'></a>Step 8: Security Page ##
 
 1. Select **Security**.
 <%= image_tag("cloudform/security-config.png") %>

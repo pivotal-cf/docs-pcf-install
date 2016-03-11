@@ -85,17 +85,15 @@ OpenStack Access & Security page.
 
 ### <a id='log-in'></a>Log into BOSH ###
 
-Once you have the proper address and credentials, you can log into the BOSH Director to run BOSH CLI commands in two ways:
+Once you have the proper address and credentials, log into the BOSH Director using one of the following options below:
 
-- With credentials for the internal BOSH UAA, obtain a token from the UAA CLI to log into BOSH.
+- [Internal UAAC Login](#log-in-uaa) - target the BOSH UAA using the [UAA Command Line Interface (UAAC)](../adminguide/uaa-user-management.html) to log into BOSH.
 
-- If your deployment uses an external user store, log into BOSH using the SAML protocol.
+- [External User Store Login via SAML](#log-in-saml) - use an external user store to log into BOSH.
 
-These two procedures are detailed below.
+#### <a id='log-in-uaa'></a>Internal UAAC Login ####
 
-#### <a id='log-in-uaa'></a>Internal UAA Login ####
-
-1. Target the BOSH UAA with the UAA CLI command `uaac target`.
+1. Target the BOSH UAA with the UAAC command `uaac target`.
 
     <pre class='terminal'>
     $ uaac target http://BOSH_DIRECTOR_IP:8080
@@ -107,25 +105,22 @@ These two procedures are detailed below.
     $ uaac target --ca-cert /var/tempest/workspaces/default/root_ca_certificate https://BOSH_DIRECTOR_IP:8443
     </pre>
 
-1. Get the UAA admin user password from the Ops Manager Director Credentials tab
-
-1. Get a token for the user. The `-s` argument flags the client secret, which is an empty string.
-
-    <pre class='terminal'>
-    $ uaac token owner get bosh_cli admin -s "" -p UAA_ADMIN_PASSWORD
-    </pre>
-
 1. Run `bosh target OPS-MANAGER-DIRECTOR-IP-ADDRESS` to target your Ops Manager 
 VM using the BOSH CLI.
 
-1. Log in using the BOSH Director credentials:
+1. Retrieve the UAA admin user password from the **Credentials** tab in the **Ops Manager Director**. Alternatively, launch a browser and open the following url to obtain the password:
+```
+https://OPS_MAN_IP/api/v0/deployed/director/credentials/uaa_admin_user_credentials
+```
+
+1. Log in using the BOSH Director credentials: 
 
     <pre class='terminal'>
-    $ bosh target 10.0.0.6
-    Target set to 'Ops Manager'
-    Your username: director
-    Enter password: *****
-    Logged in as 'director'
+    $ bosh --ca-cert /var/tempest/workspaces/default/root_ca_certificate target 10.0.0.6
+    Target set to 'DIRECTOR_UUID'
+    Your username: admin
+    Enter password: uaa_admin_user_credentials
+    Logged in as 'admin'
     </pre>
     
 1. Verify that no BOSH processes are running on the Ops Manager VM before running any commands. You should 

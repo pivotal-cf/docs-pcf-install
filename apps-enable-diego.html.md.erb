@@ -3,11 +3,25 @@ title: Migrating Apps to Diego
 owner: Diego
 ---
 
+<style>
+    .note.warning {
+        background-color: #fdd;
+        border-color: #fbb
+    }
+
+    .note.warning:before {
+        color: #f99;
+    }
+</style>
+
 <strong><%= modified_date %></strong>
 
-This topic contains instructions for migrating apps originally deployed on the DEA architecture to the newer Diego architecture.
 
-In order to migrate your apps to Diego, you must deploy [Pivotal Elastic Runtime](https://network.pivotal.io/products/elastic-runtime) 1.6 or higher. To upgrade Elastic Runtime from a prior version, see [Upgrading Elastic Runtime](./upgrading-products.html).
+This topic describes how to migrate applications from the DEA architecture to the Diego architecture if you are upgrading from Pivotal Cloud Foundry 1.6 to 1.7.
+
+<p class="note warning">
+<strong>WARNING: </strong> Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal has deprecated DEA architecture in Pivotal Cloud Foundry 1.7.
+</p>
 
 Pivotal recommends two approaches to migrating your apps to Diego. The first migration option includes fewer steps but results in a brief downtime interval. The second option avoids downtime by employing [Blue-Green deployment](../devguide/deploy-apps/blue-green.html).
 
@@ -17,12 +31,18 @@ The blue-green deployment method migrates your apps with zero downtime. This met
 
 <p class="note"><strong>Note</strong>: If necessary, complete the Application Rollback procedure below to revert the migration with zero downtime.</p>
 
-### <a id="blue-green-procedure"></a>Migration Procedure
+### <a id="blue-green-procedure"></a>Migrate an App from DEA to Diego Architecture
 
-1. Push your application to PCF with a new name and the route for your application. Do not use the name of the existing application.
-<pre class="terminal">$ cf push NEW-APP -d MY-DOMAIN.COM -n MY-SUBDOMAIN</pre>
+1. Use the Cloud Foundry Command Line Interface (CF CLI) to install the Diego-Enabler plugin.
+<pre class='terminal'>
+$ cf add-plugin-repo CF-Community <span>http:</span>//plugins.cloudfoundry.org/
+$ cf install-plugin Diego-Enabler -r CF-Community
+</pre>
+
+1. Push your application to PCF with a new name and a test route for your application. This app will run on the Diego architecture. Do not use the name or route of the existing application.
+<pre class="terminal">$ cf push NEW-APP -d MY-DOMAIN.COM -n TEMP-SUBDOMAIN</pre>
 <p class="note"><strong>Note</strong>:
-The currently deployed application and the application you are pushing must be the same version. Otherwise, any static assets served from your application, like CSS and Javascript, will not be consistent across both apps. Now is not the time to upgrade your app.
+The currently deployed application, OLD-APP, and the application you are pushing, NEW-APP, must be the same version. Otherwise, any static assets served from your application, like CSS and Javascript, will not be consistent across both apps. Now is not the time to upgrade your app.
 </p>
 
 1. Confirm that `NEW-APP` runs properly.
@@ -35,6 +55,11 @@ $ cf app NEW-APP
 $ cf has-diego-enabled NEW-APP
 </pre>
 
+1. If the `has-diego-enabled` command returns false, then set the `diego` boolean to true:
+<pre class="terminal">
+$ cf enable-diego NEW-APP
+</pre>
+
 1. Map the route for your application running on the DEA architecture to `NEW-APP`. This remapping creates a second route that splits your traffic between the DEA and Diego architectures.
 <pre class="terminal">$ cf map-route NEW-APP MY-DOMAIN.COM -n MY-SUBDOMAIN</pre>
 
@@ -42,7 +67,7 @@ $ cf has-diego-enabled NEW-APP
 <pre class="terminal">$ cf unmap-route OLD-APP MY-DOMAIN.COM -n MY-SUBDOMAIN
 </pre>
 
-1. Stop `OLD-APP` to route all traffic to `NEW-APP` and complete the blue-green migration.
+1. After confirming that the new application is running correctly on Diego, stop `OLD-APP` to route all traffic to `NEW-APP` and complete the blue-green migration.
 <pre class="terminal">$ cf stop OLD-APP</pre>
 <p class="note"><strong>Note</strong>:
 Verify that your application is still accessible and runs properly. If there is a problem with your app, do not complete this procedure. Instead, proceed to the Application Rollback procedure below.
@@ -50,6 +75,8 @@ Verify that your application is still accessible and runs properly. If there is 
 
 1. Delete the old application.
 <pre class="terminal">$ cf delete OLD-APP</pre>
+
+1. Optional: Delete the route to the TEMP-SUBDOMAIN that you specified when pushing the Diego app for testing. See [Delete a Route](../devguide/deploy-apps/routes-domains.html#delete-route).
 
 
 ### Application Rollback Procedure <a id='application-rollback'></a>
@@ -87,9 +114,8 @@ $ cf enable-diego EXAMPLE-APP
 Diego support for EXAMPLE-APP is set to true
 </pre>
 
-1. Run `cf push` to push your newly Diego-enabled app.
-<pre class='terminal'>
-$ cf push
-Using manifest manifest.yml...
-Updating app...
+1. Confirm that `APP-NAME` runs properly.
+<pre class="terminal">
+$ cf app EXAMPLE-APP
 </pre>
+

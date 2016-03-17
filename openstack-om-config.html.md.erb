@@ -17,22 +17,23 @@ topic.
 After you complete this procedure, follow the instructions in the [Installing Elastic Runtime after Deploying PCF on OpenStack](./openstack-er-config.html)
 topic.
 
-## <a id='log-in'></a>Step 1: Log in to Ops Manager ##
+## <a id='log-in'></a>Step 1: Access Ops Manager ##
 
 1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Instances** to view the public IP address listed for Ops Manager.
 
-1. When Ops Manager starts for the first time, you must choose one of the following:
-    * <strong>[Use an Identity Provider](#idp)</strong>: If you use an Identity Provider, an external identity server maintains your user database.
-    * <strong>[Internal Authentication](#internal)</strong>: If you use Internal Authentication, PCF maintains your user database.
+1. Navigate to your Ops Manager IP address in a browser.
 
+1. When Ops Manager starts for the first time, you must choose one of the following:
+    * [Use an Identity Provider](#idp): If you use an Identity Provider, an external identity server maintains your user database.
+    * [Internal Authentication](#internal): If you use Internal Authentication, Pivotal Cloud Foundry&reg; (PCF) maintains your user database.
 
     <%= image_tag("select-authentication.png") %>
 
 ### <a id='idp'></a>Use an Identity Provider ###
 
-1. When redirected to the **Use an Identity Provider** page, you must perform the following steps:
+1. When redirected to the **Use an Identity Provider** page, you must complete the following steps:
     * Retrieve the metadata URL from your Identity Provider and copy it into the **Use an Identity Provider** area.
-    * Create a passphrase. The passphrase you entered is a shared secret to encrypt Ops Manager data at rest.
+    * Create a passphrase. Ops Manager encrypts data using the passphrase that you provide.
     * Read the **End User License Agreement**, and select the checkbox to accept the terms.
     * Click **Setup Authentication**.
 
@@ -42,7 +43,7 @@ topic.
 
 ### <a id='internal'></a>Internal Authentication ###
 
-1.  When redirected to the **Internal Authentication** page, you must perform the following steps:
+1.  When redirected to the **Internal Authentication** page, you must complete the following steps:
     * Enter a **Username**, **Password**, and **Password confirmation** to create an Admin user.
     * Enter a **Decryption passphrase** and the **Decryption passphrase confirmation**. This passphrase encrypts the Ops Manager datastore, and is not recoverable.
     * Read the **End User License Agreement**, and select the checkbox to accept the terms.
@@ -163,6 +164,7 @@ You use the contents of this file to complete the Ops Manager **Director Config*
 
 <p class='note'><strong>Note</strong>: If you select to use an internal database, <a href="./../customizing/backup-restore/backup-pcf.html">back up</a> your data frequently to ensure you have saved the latest copy. </p>
 
+
 ## <a id='az-config'></a>Step 5: Complete the Availability Zones Pages ##
 
 1. In Ops Manager, select **Create Availability Zones**.
@@ -212,6 +214,12 @@ network settings.
 
 1. Click **Save**.
 
+
+Assign AZs and Networks Page:    <%= image_tag("openstack/assign-az.png") %>
+
+
+
+
 1. Select **Assign Networks**.
 
     <%= image_tag("openstack/om-assign-networks.png") %>
@@ -237,17 +245,15 @@ network settings.
 
 ## <a id='experimental'></a>Step 9: (Optional) Complete the Experimental Features Page ##
 
-These are features that you should be cautious about enabling if you have other Pivotal Cloud Foundry service tiles installed in your Pivotal Cloud Foundry deployment. Not all of the services are guaranteed to work as expected with these features enabled.
+Pivotal recommends caution using these features if you have other PCF service tiles installed in your deployment. Not all of the services are guaranteed to work as expected with these features enabled.
 
 1. Select the **Experimental Features** tab.
 
+    <%= image_tag("openstack/om-experimental-features.png") %>
+
 1. Enter a trusted certificate and click **Save**.
 
-These certificates enable BOSH-deployed VMs to trust a custom root certificate, but adding certificates in this way does not yet insert them into application containers or into your UAA's JVM store, which would be necessary to enable UAA-to-SASL trust.
-
-<p class='note'><strong>Note:</strong> When the Trusted Certificates functionality is developed to add certificates into containers and the UAA, this feature will be moved out of the Experimental Features section. </p>
-
-<%= image_tag("openstack/om-experimental-features.png") %>
+These certificates enable BOSH-deployed VMs to trust a custom root certificate. However, adding a custom root certificate does not insert it into application containers or into your UAA truststore.
 
 ## <a id='complete-ops'></a>Step 10: Complete Ops Manager Director Installation ##
 

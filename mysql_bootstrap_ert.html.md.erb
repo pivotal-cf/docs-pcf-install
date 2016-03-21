@@ -209,6 +209,60 @@ Next, complete the bootstrapping process in the following section.
 
 <p class='note'><strong>Note</strong>: Bootstrapping requires you to run commands from the <a href="./../customizing/index.html">Ops Manager Director</a>. Follow the instructions to use the <a href="./../customizing/trouble-advanced.html#prepare">BOSH CLI</a> for command-line access.</p>
 
+## <a id="assisted-bootstrap"></a>Assisted Bootstrap ##
+
+1. Elastic Runtime versions 1.7.0 and later include a [BOSH errand](http://bosh.io/docs/jobs.html#jobs-vs-errands) to automate the process of bootstrapping. It is still necessary to manually initiate the bootstrap process, but using this errand reduces the number of manual steps necessary to complete the process.
+
+    In most cases, running the errand is sufficient, however there are some conditions which require additional steps.
+
+    #### <a id="how-it-works"></a>How it works ####
+
+    The bootstrap errand simply automates the steps in the manual bootstrapping process documented below. It finds the node with the highest transaction sequence number, and asks it to start up by itself (i.e. in bootstrap mode), then asks the remaining nodes to join the cluster.
+
+    ### <a id="cluster-disrupted"></a>Scenario 1: Virtual Machines running, Cluster Disrupted ###
+
+    1. If the nodes are up and running, but the cluster has been disrupted, the jobs will appear as `failing.` The output of `bosh instances` will look like this:
+
+            $ bosh instances
+            [...]
+            +--------------------------------------------------+---------+------------------------------------------------+------------+
+            | Instance                                         | State   | Resource Pool                                  | IPs        |
+            +--------------------------------------------------+---------+------------------------------------------------+------------+
+            | mysql-partition-a813339fde9330e9b905/0           | failing | mysql-partition-a813339fde9330e9b905           | 10.0.16.55 |
+            | mysql-partition-a813339fde9330e9b905/1           | failing | mysql-partition-a813339fde9330e9b905           | 10.0.16.56 |
+            | mysql-partition-a813339fde9330e9b905/2           | failing | mysql-partition-a813339fde9330e9b905           | 10.0.16.57 |
+            | proxy-partition-a813339fde9330e9b905/0           | running | proxy-partition-a813339fde9330e9b905           | 10.0.16.59 |
+            | proxy-partition-a813339fde9330e9b905/1           | running | proxy-partition-a813339fde9330e9b905           | 10.0.16.60 |
+            +--------------------------------------------------+---------+------------------------------------------------+------------+
+
+        In this situation, it is OK to immediately try the bootstrap errand:
+
+        1. Log into the BOSH director
+        1. Select the correct deployment
+        1. `bosh run errand bootstrap`
+
+        You will see many lines of output, eventually followed by:
+
+        ```
+        Bootstrap errand completed
+
+        [stderr]
+        + echo 'Started bootstrap errand ...'
+        + JOB_DIR=/var/vcap/jobs/bootstrap
+        + CONFIG_PATH=/var/vcap/jobs/bootstrap/config/config.yml
+        + /var/vcap/packages/bootstrap/bin/cf-mysql-bootstrap -configPath=/var/vcap/jobs/bootstrap/config/config.yml
+        + echo 'Bootstrap errand completed'
+        + exit 0
+
+        Errand `bootstrap' completed successfully (exit code 0)
+        ```
+
+        There are times when this won't work immediately. Unfortunately, sometimes it is best to wait and try again a few minutes later.
+
+---
+
+## <a id="manual-bootstrap"></a>Manual Bootstrap ##
+
 Bootstrapping identifies the primary node to synchronize all of the nodes in a cluster. You must run all of the steps in this section to ensure successful future deployments and accurate reporting of the status of your jobs.
 
 1. Follow the [Bootstrap](https://docs.pivotal.io/p-mysql/bootstrapping.html) process to restart your MySQL cluster.
@@ -238,7 +292,8 @@ Bootstrapping identifies the primary node to synchronize all of the nodes in a c
     1. Set `update.max_in_flight` to `1`.
     1. Set `update.serial` to `true`.
 
-1. Run `bosh deploy` to apply these changes.
+1. Run `bosh deploy` to apply these changes. Note, if you get a 503 error (like `Sending stop request to monit: Request failed, response: Response{ StatusCode: 503, Status: '503 Service Unavailable' }`),
+it means that monit is still trying to stop the vms. Please wait a few minutes and try this step again.
 
 ## <a id='common'></a>Resolve Common Issues ##
 

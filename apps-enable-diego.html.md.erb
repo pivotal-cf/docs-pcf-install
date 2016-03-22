@@ -17,7 +17,7 @@ owner: Diego
 <strong><%= modified_date %></strong>
 
 
-This topic describes how to migrate applications from the DEA architecture to the Diego architecture if you are upgrading from Pivotal Cloud Foundry 1.6 to 1.7 or later.
+This topic describes how to migrate applications from the DEA architecture to the Diego architecture, such as if you are upgrading from Pivotal Cloud Foundry&reg; 1.6 to 1.7 or later.
 
 <p class="note warning">
 <strong>WARNING: </strong> Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal does not support DEA architecture in Pivotal Cloud Foundry 1.7.
@@ -31,12 +31,12 @@ Pivotal provides three approaches to migrating your apps to Diego:
 
 * [Blue-green migration](#blue-green-migration) avoids downtime by employing [Blue-Green deployment](../devguide/deploy-apps/blue-green.html).
 
-## <a id='prep-tools'></a>Preparation and Tools ##
+## <a id='prep-tools'></a>Prepare for Migration ##
 
 Before migrating your apps you may need to:
 
 - [Scale up your Diego VMs to handle the increased load.](#scale-diego) 
-- [Ensure you have the standard cf-client.](#install-cli)
+- [Ensure you have the standard cf CLI.](#install-cli)
 - [Disable any port-based health checks on worker applications.](#disable-health-checks)
 - [Replace environment variables in your app code.](#app-code)
 - [List the apps you need to migrate.](#list-apps)  
@@ -51,20 +51,19 @@ Before migrating your apps, make sure you have enough VMs allocated to support t
 
 <p class="note"><strong>Note:</strong> After migrating, you can scale the <strong>DEA</strong> and <strong>Health Manager</strong> VMs to <code>0</code>.</p>
 
-### <a id='install-cli'></a>Install the cf CLI (Not the Java cf CLI) ##
+### <a id='install-cli'></a>Install the cf CLI ##
 
-If you use a Java-based build system like Eclipse, STS, Maven, or Gradle you may have only the Java cf-client. The Java cf-client does not currently support the migration command nor disabling health checks. Install the standard cf-client before carrying out the tasks in this topic. See [Installing the cf Command Line Interface](../cf-cli/install-go-cli.html).
+If you use a Java-based build system like Eclipse, STS, Maven, or Gradle, you may have only the Java cf-client. The Java cf-client does not currently support the migration command nor disabling health checks. Install the standard cf CLI before carrying out the tasks in this topic. See [Installing the cf Command Line Interface](../cf-cli/install-go-cli.html).
 
 ### <a id='disable-health-checks'></a>Disable Any Port-Based Health Checks ##
 
 Worker applications pushed with the `--no-route` option do not report as healthy after migrating to Diego. To prevent this, disable the port-based health check with `cf set-health-check APP_NAME none`.
 
-### <a id='app-code'></a>Change App Code If Needed ##
+### <a id='app-code'></a>Remove Unsupported Variables from your App Code ##
 
-* The `VCAP_APP_HOST` environment variable has been removed. Replace the `VCAP_APP_HOST` environment variable with `0.0.0.0`.
+* Diego does not use the `VCAP_APP_HOST` environment variable. If your code references this variable, replace it with `0.0.0.0`. 
 
-* The `VCAP_APP_PORT` environment variable has been removed. Replace the `VCAP_APP_PORT` environment variable with `PORT`, which is set to `8080` by default.
-
+* Diego does not use the `VCAP_APP_PORT` environment variable. If your code references this variable, replace it with `PORT`, which is set to `8080` by default. 
 
 
 ### <a id='list-apps'></a>List DEA and Diego Applications ##
@@ -104,7 +103,7 @@ This procedure overwrites existing app instances with new ones on the Diego arch
 
 <p class="note"><strong>Note</strong>: Use overwrite-based migration if a short downtime is acceptable.</p>
 
-1. Use the Cloud Foundry Command Line Interface (CF CLI) to install the Diego-Enabler plugin.
+1. Use the Cloud Foundry Command Line Interface (cf CLI) to install the Diego-Enabler plugin.
 <pre class='terminal'>
 $ cf add-plugin-repo CF-Community <span>http:</span>//plugins.cloudfoundry.org/
 $ cf install-plugin Diego-Enabler -r CF-Community
@@ -129,8 +128,8 @@ This procedure migrates multiple apps in a single command using overwrite-based 
 	- `-o ORG` migrates all apps in an org.
 	- `-s SPACE` migrates all apps in a space.
 	- `-f` suppresses prompts. 
-	- `-p MAX_IN_FLIGHT` specifies how many apps (1-100) to migrate in parallel. Defaults to 1.
-	- `-r (dea | diego)` targets the architecture to migrate to. Defaults to Diego.
+	- `-p MAX_IN_FLIGHT` specifies how many apps to migrate in parallel, up to 100. Defaults to 1. Pivotal recommends first trying a migration with the default and then increasing `-p` if the first migration is stable. Do not set `-p` to a value greater than the number of Diego cells in the deployment. 
+	- `-r (dea | diego)` targets the architecture to migrate to.
 
 
 <p class="note"><strong>Note</strong>: Migrating a running app causes a restart. Migrating a stopped app does not cause a restart.</p>
@@ -138,7 +137,7 @@ This procedure migrates multiple apps in a single command using overwrite-based 
 The following example migrates all DEA apps in a deployment to Diego. The apps migrate in the sequence specified by running `cf dea-apps`.
 
 <pre class="terminal">
-$ cf migrate-apps
+$ cf migrate-apps -r diego
 
 Migrating apps to Diego as example_user....
 
@@ -154,7 +153,7 @@ Migration to Diego completed: 23 apps, 0 warnings
 The following example migrates all DEA apps in `space2` of `org1` to Diego, ten at a time, supressing prompts.
 
 <pre class="terminal">
-$ cf migrate-apps -o org1 -s space2 -f -p 10
+$ cf migrate-apps -o org1 -s space2 -f -p 10 -r diego
 </pre>
 
 ## <a id='blue-green-migration'></a>Blue-Green Migration ##
@@ -164,7 +163,7 @@ The blue-green deployment method migrates your apps with zero downtime. This met
 <p class="note"><strong>Note</strong>: If necessary, complete the <a href="#application-rollback">Application Rollback procedure</a> below to revert the migration with zero downtime.</p>
 ### <a id="blue-green-procedure"></a>Migrate an App from DEA to Diego Architecture
 
-1. Use the Cloud Foundry Command Line Interface (CF CLI) to install the Diego-Enabler plugin.
+1. Use the Cloud Foundry Command Line Interface (cf CLI) to install the Diego-Enabler plugin.
 <pre class='terminal'>
 $ cf add-plugin-repo CF-Community <span>http:</span>//plugins.cloudfoundry.org/
 $ cf install-plugin Diego-Enabler -r CF-Community
@@ -229,14 +228,58 @@ This procedure only works if you have not deleted your application that runs on 
 
 ##<a id="troubleshoot"></a>Troubleshoot Migrated Apps
 
-Because Diego was written to be compatible with DEA, most applications migrated from DEA to Diego continue to run on Diego without change. However, there are differences between DEA and Diego. If you have problems with your application after migrating, review the following changes:  
+Because Diego was written to be compatible with DEA architecture, most applications migrated from DEAs to Diego cells continue to run on Diego without change. However, there are differences between DEA and Diego architectures. If you have problems with your application after migrating, review the following:
 
-* Diego imposes a 4KB limit on the maximum size of application routes.  This gives you space for 40 to 50 medium-sized 50-character routes.  Having too many routes bound to your application results in this error: `Runner error: desire app failed: 503`.  In some cases, you can work around this by using a wildcard route, for example, `*.my-domain.com` instead of mapping individual routes.  If you see this error and you cannot wildcard the routes, create another instance of the same application and bind the remaining routes to the second application instance.
+#### Symptom
 
-* Large applications may fail to stage because of a [known issue](https://github.com/cloudfoundry-incubator/diego-design-notes/blob/master/migrating-to-diego.md#disk-quota-over-enforcement-during-container-setup) where disk usage is over-reported.  This issue typically results in the following error: `Copying into the container failed`.  By default, apps have a 1GB disk quota. If your application files are close to this size, use the `-k` option of `cf push` to increase your disk quota.
+Error: `Runner error: desired app failed: 503`
 
-* Diego does not support the `cf files` command.  Running this command results in the error: `Request failed for app: APP_NAME, instance: INST_NUM and path: PATH` because the instance is not found.  In Diego, use the `cf ssh APP_NAME` command to list files in your application instances.
+#### Explanation
 
-* You can no longer interpolate environment variables. In DEA, when you set environment variables with the `cf set-env` or in your manifest file, you could include one environment variable in the definition of another, for example, `SOMEPATH=$HOME/SOME/PATH`. You cannot do this with Diego.
+Diego places a 4KB limit on the maximum size of application routes, space for 40 to 50 medium-sized 50-character routes. This error indicates you have exceeded the limit.  
 
+#### Solution
 
+In some cases, you can work around this by using a wildcard route, for example, `*.my-domain.com` instead of mapping individual routes.  If you see this error and you cannot wildcard the routes, create another instance of the same application and bind the remaining routes to the second application instance.
+
+<hr>  
+
+#### Symptom
+
+Large applications may fail to stage, typically resulting in the following error: `Copying into the container failed`.
+
+#### Explanation
+
+Large applications may fail to stage because of a [known issue](https://github.com/cloudfoundry-incubator/diego-design-notes/blob/master/migrating-to-diego.md#disk-quota-over-enforcement-during-container-setup) where disk usage is over-reported.
+
+#### Solution
+
+By default, apps have a 1GB disk quota. If your application files are close to this size, use the `-k` option of `cf push` to increase your disk quota.
+
+<hr>  
+
+#### Symptom
+
+Running the `cf files` command results in the error: `Request failed for app: APP_NAME, instance: INST_NUM and path: PATH` 
+
+#### Explanation
+
+Diego does not support the `cf files` command.
+
+#### Solution
+
+Run the `cf ssh APP_NAME` command to list files in your application instances.
+
+<hr>  
+
+#### Symptom
+
+Errors related to environment variables
+
+#### Explanation
+
+Diego does not support the interpolation of environment variables. In DEA, when you set environment variables with the `cf set-env` or in your manifest file, you could include one environment variable in the definition of another, for example, `SOMEPATH=$HOME/SOME/PATH`.
+
+#### Solution
+
+Remove interpolation from any environment variables. 

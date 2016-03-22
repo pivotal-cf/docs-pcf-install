@@ -1,0 +1,44 @@
+---
+title: Creating UAA Clients for Running Bash Scripts
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes how to create a User Account and Authentication (UAA) client on the BOSH Director, in order to run Bash scripts against BOSH. If you use [Internal Authentication](../customizing/cloudform-om-config.html#internal) to log into Ops Manager, you do not need to perform these steps. If you [Use an Identity Provider](../customizing/cloudform-om-config.html#idp), however, you need to create a client on the BOSH Director UAA.
+
+## Create a UAA Client
+
+1. Obtain your Ops Manager Director IP address by logging into the Ops Manager web interface, clicking the **Ops Manager Director** tile, and selecting the **Status** tab. Review the Gather Information section of [Advanced Troubleshooting with the BOSH CLI](trouble-advanced.html#gather) topic for more information.
+
+1. SSH into your Ops Manager, using your private key `.pem` file to authenticate. Consult the [Advanced Troubleshooting with the BOSH CLI](trouble-advanced.html#ssh) topic for infrastructure-specific instructions on how to SSH into your Ops Manager. The following example assumes an Amazon Web Services deployment.
+
+    <pre class="terminal">$ ssh -i ops_mgr.pem ubuntu@OPS-MANAGER--DIRECTOR-IP</pre>
+
+1. Target the BOSH Director's UAA.
+    <pre class="terminal">$ uaac target <span>http:</span>//OPS-MANAGER-DIRECTOR-IP:8080</pre>
+
+1. Retrieve the UAA admin user password from the **Credentials** tab in the **Ops Manager Director**. Alternatively, launch a browser and open the following url to obtain the password: ```https://OPS_MAN_IP/api/v0/deployed/director/credentials/uaa_login_client_credentials```
+```https://OPS_MAN_IP/api/v0/deployed/director/credentials/uaa_admin_user_credentials```
+
+1. Get a token using the UAA Command Line Client. If you do not already have UAAC installed, run `gem install cf-uaac` from a terminal window.
+    <pre class="terminal">$ uaac token -t owner get login admin
+    Client Secret: {uaa\_login\_client\_credentials password}
+    Client Password: {uaa\_admin\_user\_credentials}</pre>
+
+1. Add a client.
+    <pre class="terminal">$ uaac client add foo --authorized\_grant\_types client\_credentials
+    New client secret:  ***
+    Verify new client secret:  ***
+      scope: uaa.none
+      client\_id: foo
+      resource\_ids: none
+      authorized\_grant\_types: client\_credentials
+      autoapprove:
+      action: none
+      authorities: uaa.none
+      name: foo
+      lastmodified: 1457725831413
+      id: foo
+    </pre>
+
+1. You will now be able to run BASH scripts against BOSH.

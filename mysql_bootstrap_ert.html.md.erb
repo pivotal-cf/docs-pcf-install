@@ -13,30 +13,27 @@ owner: RelEng
 
 #### Symptoms of Lost Quorum
 
-<ul>
-  <li>[All nodes appear "Unhealthy" on the proxy dashboard.](quorum-lost.png)</li>
-  <li>All responsive nodes report the value of `wsrep_cluster_status` as `non-Primary`.</li>
-</ul>
+* All nodes appear "Unhealthy" on the proxy dashboard:
+  <img src="https://docs.pivotal.io/edge/p-mysql/quorum-lost.png">
+* All responsive nodes report the value of `wsrep_cluster_status` as `non-Primary`.
 
-    <pre class="terminal">
-    mysql> SHOW STATUS LIKE 'wsrep_cluster_status';
-    +----------------------+-------------+
-    | Variable_name        | Value       |
-    +----------------------+-------------+
-    | wsrep_cluster_status | non-Primary |
-    +----------------------+-------------+
-    </pre>
+<pre class="terminal">
+mysql> SHOW STATUS LIKE 'wsrep_cluster_status';
++----------------------+-------------+
+| Variable_name        | Value       |
++----------------------+-------------+
+| wsrep_cluster_status | non-Primary |
++----------------------+-------------+
+</pre>
 
-<ul>
-  <li>All responsive nodes respond with `ERROR 1047` when queried with most statement types.</li>
-</ul>
+* All responsive nodes respond with `ERROR 1047` when queried with most statement types.
 
-    <pre class="terminal">
-    mysql> select * from mysql.user;
-    ERROR 1047 (08S01) at line 1: WSREP has not yet prepared node for application use
-    </pre>
+<pre class="terminal">
+mysql> select * from mysql.user;
+ERROR 1047 (08S01) at line 1: WSREP has not yet prepared node for application use
+</pre>
 
-See [MySQL Cluster Behavior](https://github.com/cloudfoundry/cf-mysql-release/blob/master/docs/cluster-behavior.md) for more details about determining cluster state.
+See [MySQL Cluster Behavior](https://docs.pivotal.io/edge/p-mysql/cluster-behavior.html) for more details about determining cluster state.
 
 <p>In the event that all of the MySQL virtual machines (VMs) are terminated, the cluster will not automatically restart as it has by definition lost quorum. For example, this process is necessary when all Elastic Runtime VMs are removed on AWS. Follow the below procedure to recreate the lost VMs before completing the bootstrapping process to recover the cluster.</p>
 

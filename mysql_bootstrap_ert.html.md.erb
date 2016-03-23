@@ -5,7 +5,40 @@ owner: RelEng
 
 <strong><%= modified_date %></strong>
 
-This topic describes the manual procedure for recovering a terminated Elastic Runtime cluster. In the event that all of the MySQL virtual machines (VMs) are terminated, the cluster will not automatically restart. For example, this process is necessary when all Elastic Runtime VMs are removed on AWS.  Follow this procedure to recreate the lost VMs before completing the bootstrapping process to recover the cluster.
+<p>This topic describes the manual procedure for recovering a terminated Elastic Runtime cluster, via a process known as bootstrapping.</p>
+
+## When to Bootstrap
+
+<p>Bootstrapping is only required when the cluster has lost quorum. Quorum is lost when less than half of the nodes can communicate with each other (for longer than the configured grace period). If quorum has <strong>not</strong> been lost, individual unhealthy nodes should automatically rejoin the cluster once repaired (error resolved, node restarted, or connectivity restored). </p>
+
+#### Symptoms of Lost Quorum
+
+<ul>
+  <li>[All nodes appear "Unhealthy" on the proxy dashboard.](quorum-lost.png)</li>
+  <li>All responsive nodes report the value of `wsrep_cluster_status` as `non-Primary`.</li>
+</ul>
+
+    <pre class="terminal">
+    mysql> SHOW STATUS LIKE 'wsrep_cluster_status';
+    +----------------------+-------------+
+    | Variable_name        | Value       |
+    +----------------------+-------------+
+    | wsrep_cluster_status | non-Primary |
+    +----------------------+-------------+
+    </pre>
+
+<ul>
+  <li>All responsive nodes respond with `ERROR 1047` when queried with most statement types.</li>
+</ul>
+
+    <pre class="terminal">
+    mysql> select * from mysql.user;
+    ERROR 1047 (08S01) at line 1: WSREP has not yet prepared node for application use
+    </pre>
+
+See [MySQL Cluster Behavior](https://github.com/cloudfoundry/cf-mysql-release/blob/master/docs/cluster-behavior.md) for more details about determining cluster state.
+
+<p>In the event that all of the MySQL virtual machines (VMs) are terminated, the cluster will not automatically restart as it has by definition lost quorum. For example, this process is necessary when all Elastic Runtime VMs are removed on AWS. Follow the below procedure to recreate the lost VMs before completing the bootstrapping process to recover the cluster.</p>
 
 ## <a id='mysql'></a>Prepare MySQL VMs for Bootstrapping  ##
 
@@ -241,7 +274,7 @@ Next, complete the bootstrapping process in the following section.
 
         You will see many lines of output, eventually followed by:
 
-        ```
+        <pre class="terminal">
         Bootstrap errand completed
 
         [stderr]
@@ -253,10 +286,9 @@ Next, complete the bootstrapping process in the following section.
         + exit 0
 
         Errand `bootstrap' completed successfully (exit code 0)
-        ```
+        </pre>
 
-        There are times when this won't work immediately. Unfortunately, sometimes it is best to wait and try again a few minutes later.
-        
+        <p>There are times when this won't work immediately. Unfortunately, sometimes it is best to wait and try again a few minutes later.</p>
     ### <a id="vms-terminated"></a>Scenario 2: Virtual Machines Terminated or Lost ###
     1. In more severe circumstances, such as power failure, it's possible that all of your VMs have been lost. They'll need to be recreated before you can begin to recover the cluster. In this case, you'll see the nodes appear as `unknown/unknown` in the BOSH output.
 

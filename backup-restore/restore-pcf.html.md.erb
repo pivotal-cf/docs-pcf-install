@@ -204,11 +204,6 @@ $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 uaa < ~/uaa.sql
 ### <a id='restore-nfs'></a>Restore NFS
 Use the NFS password and IP address to restore the NFS by following the steps detailed below. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
 
-1. Use `scp` to send the NFS backup tarball to the NFS VM.
-<pre class='terminal'>
-    $ scp nfs.tar.gz vcap@YOUR-NFS-VM-IP-ADDRESS:~/.
-</pre>
-
 1. Run `ssh YOUR-NFS-VM-IP-ADDRESS` to enter the NFS VM.
 <pre class='terminal'>
 	$ ssh vcap@10.0.0.10
@@ -217,27 +212,17 @@ Use the NFS password and IP address to restore the NFS by following the steps de
 1. Log in as root user. When prompted for a password, enter the vcap password you used to `ssh` into the VM:
 <pre class='terminal'>$ sudo su</pre>
 
-1. Run the following command to create a store folder if one does not exist:
+1. Temporarily change the permissions on `var/vcap/store` to add write permissions for all.
 <pre class='terminal'>
-    $ mkdir -p /var/vcap/store
+	$ chmod a+w /var/vcap/store
 </pre>
 
-1. Record the permissions on `var/vcap/store` so that you can restore them after running the commands below. To view the permissions, run the following command:
+1. Use `scp` to send the NFS backup tarball to the NFS VM from your **local machine**.
 <pre class='terminal'>
-	$ ls -ld /var/vcap/store
+    $ scp nfs.tar.gz vcap@YOUR-NFS-VM-IP-ADDRESS:/var/vcap/store
 </pre>
 
-1. Temporarily change the permissions on `var/vcap/store` to `777`.
-<pre class='terminal'>
-	$ chmod 777 /var/vcap/store
-</pre>
-
-1. Move the backup archive to the `store` folder.
-<pre class='terminal'>
-	$ mv nfs.tar.gz /var/vcap/store
-</pre>
-
-1. `cd` into the `store` folder.
+1. `cd` into the `store` folder on the NFS VM.
 <pre class='terminal'>
 	$ cd /var/vcap/store
 </pre>
@@ -249,7 +234,7 @@ Use the NFS password and IP address to restore the NFS by following the steps de
 
 1. Change the permissions on `var/vcap/store` to their prior setting.
 <pre class='terminal'>
-    $ chmod YOUR-PRIOR-PERMISSION /var/vcap/store
+    $ chmod a-w /var/vcap/store
 </pre>
 
 1. Exit the NFS VM.

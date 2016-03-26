@@ -1,0 +1,130 @@
+---
+title: Pivotal Cloud Foundry on Azure Marketplace Deployment Guide
+owner: Partners
+---
+
+This Microsoft Azure Marketplace offering provides a full installation of Pivotal Cloud Foundry (PCF) and several PCF services. This is intended for proof-of-concept or trial workloads, and not intended for production. There is no upgrade path for this marketplace offering to a production deployment.
+
+The installed components include:
+
+* [Elastic Runtime](http://docs.pivotal.io/pivotalcf/installing/pcf-docs.html)
+* [RabbitMQ](http://docs.pivotal.io/rabbitmq-cf/index.html)
+* [MySQL](http://docs.pivotal.io/p-mysql/index.html)
+* [Redis](http://docs.pivotal.io/redis/)
+* [Spring Cloud Services](http://docs.pivotal.io/spring-cloud-services/)
+
+Additionally, the Azure resource footprint consist of the following items:
+* 1 Storage Account
+* 1 Public IP
+* 1 “jumpbox” VM that runs the deployment using [BOSH](http://bosh.io/)
+
+The deployment uses a total of 55 VMs, of which 35 are up and running at the end of the deployment. The other 20 VMs are created to run jobs/errands and subsequently destroyed.
+
+##<a id='prereqs'></a>Prerequisites##
+
+You must have the following in order to use this offering:
+
+* Pay-as-you-go subscription on your Azure account.
+* Sufficiently high quota limits (Recommended: 100 cores) on your Azure account. Installing Pivotal Cloud Foundry® requires more than the default 20 cores.
+	* Please see this [link](https://blogs.msdn.microsoft.com/girishp/2015/09/20/increasing-core-quota-limits-in-azure/) for instructions on requesting a core quota increase.
+	* For more information on Azure subscription and service limits, quota, and constraints, please see [here](https://azure.microsoft.com/en-us/documentation/articles/azure-subscription-service-limits/).
+* Pivotal Network Account: If you do not already have an account, [create one](https://network.pivotal.io/). You will need the API token located in your profile.
+	* Navigate to your name in the top right and select **Edit Profile**. The API token is located at the bottom of the page.
+* Install either the Azure CLI or Azure PowerShell on your machine, using the instructions [here](https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/).
+Create an Azure Service Principal (TENANT-ID, CLIENT-ID, CLIENT-SECRET):
+	* For Linux/Unix, use this [shell script](https://github.com/cf-platform-eng/bosh-azure-template/blob/master/create_azure_principal.sh).
+	* For Windows, use this [PowerShell script](https://github.com/cf-platform-eng/bosh-azure-template/blob/master/create_azure_principal_powershell.txt).
+
+##<a id='getting-started'></a>Getting Started ##
+
+1. Log in to your Microsoft Azure portal at [https://portal.azure.com](https://portal.azure.com).
+1. Select the Azure Marketplace tile.
+1. Search for “Pivotal Cloud Foundry”.
+1. Select **Pivotal Cloud Foundry Proof of Concept**.
+1. Read the brief getting started information.
+1. Click **Create**.
+1. Enter the User Inputs (documented below).
+1. Click **Ok**.
+1. Review the Summary Page.
+1. Click **Ok**.
+1. Read the Terms of Use and Privacy Policy.
+1. Click **Create**.
+1. You will be directed to the main Azure portal page, where a new tile shows the deployment is in progress.
+1. Go watch a movie or two. The deployment process takes approximately 2-3 hours, if all goes well!
+
+##<a id='user-inputs'></a>User Inputs ##
+
+Storage Account Name Prefix:
+
+This deployment creates a new storage account. To ensure that the name is globally unique, use a unique prefix that contains letters and numbers and is no more than 10 characters long. You can learn about Azure Storage Accounts [here](https://azure.microsoft.com/en-us/documentation/articles/storage-create-storage-account/).
+
+SSH public key:
+
+An SSH RSA public key file, as a string, is required. The parameter <code>sshKeyData</code> should be a string starting with ssh-rsa.
+
+Use ssh-keygen to create 2048-bit RSA public and private key files, and unless you have a specific location or specific names for the files, accept the default location and name.
+
+* Max OSX: ssh-keygen -t rsa -b 2048
+* Windows: use [puttygen](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html)
+
+Then, locate your public key in <code>~/.ssh/id_rsa.pub</code>. Copy and paste it as <code>sshKeyData</code>.
+
+Tenant ID:
+
+Copy from the output of the previously run Service Principal creation script.
+
+Client ID:
+
+Copy from the output of the previously run Service Principal creation script.
+
+Client Secret:
+
+Copy from the output of the previously run Service Principal creation script.
+
+Pivotal Network Token:
+
+Copy from the Pivotal Network “Edit Profile” page, as previously described.
+
+Resource Group:
+
+Make sure to use a new resource group with a unique name for each new deployment to avoid resource name collisions. Learn more about Azure Resource groups [here](https://azure.microsoft.com/en-us/documentation/articles/resource-group-portal/).
+
+Location:
+Choose which Azure location you want to deploy to.
+
+
+Verify the Pivotal Cloud Foundry Install
+In your Azure Portal, navigate to Resource Groups and make sure the new Resource Group is created successfully.
+
+
+SSH to the jumpbox. The fully qualified domain name (FQDN) for the jumpbox can be found on the Outputs section of the deployment.
+Click on Last Deployment -> Succeeded -> select your deployment.
+The user name is pivotal.
+ssh pivotal@FQDN. For example:
+
+ssh pivotal@myjumpboxujnk2hiwzqq3y.westus.cloudapp.azure.com
+
+
+
+The entire PCF deployment log, pcf_install.log, is located at /home/pivotal.
+Grep admin password for Apps Manager from the manifest. For example:
+
+cat manifests/elastic-runtime.yml | grep admin
+	 admin_user: admin
+   	 admin_password: "0a0d2a13b6521ee2bf8b"
+
+Connect to the PCF Apps Manager. The Apps Manager IP address is located under Resources, named <jumpbox name–cf>. The resource type is public IP Address.
+
+
+Connect to the PCF Apps Manager:
+https://apps.system.<cf ip address>.xip.io
+user name=admin
+password=obtained in step 4.
+Make sure you can log in to Apps Manager and that services are up and running.
+
+
+
+Troubleshooting
+The goal of this marketplace offering is to automate the deployment of PCF and associated services in a hands-off manner. In the event the deployment errors out, it is best to capture the install logs, assuming the initial jumpbox is created. Please reach out to the mailing list at azure-inquiry@pivotal.io with any issues or questions.
+
+To completely clean up the deployment, delete the created Resource Group.

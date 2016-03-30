@@ -16,10 +16,11 @@ The installed components include:
 Additionally, the Azure resource footprint consist of the following items:
 
 * 1 Storage Account
-* 1 Public IP
+* 3 Public IP
 * 1 “jumpbox” VM that runs the deployment using [BOSH](http://bosh.io/)
 
-The deployment uses a total of 55 VMs, of which 35 are up and running at the end of the deployment. The other 20 VMs are created to run jobs and errands and are subsequently destroyed.
+**The deployment uses a total of 53 VMs, of which 38 are up and running at the end of the deployment. The other 15 VMs are created to run jobs and errands and are subsequently destroyed.** Quota will be checked before deploying Pivotal Cloud Foundry. Please make sure to check output section of template deployment. For Quota failures you will see this message "CRITICAL Insufficient Quota, PCF will NOT deploy"
+<%= image_tag("azure/image_4.png") %>
 
 ##<a id='prereqs'></a>Prerequisites##
 
@@ -41,7 +42,7 @@ Create an Azure Service Principal (TENANT-ID, CLIENT-ID, CLIENT-SECRET):
 1. Log in to your Microsoft Azure portal at [https://portal.azure.com](https://portal.azure.com).
 1. Select the Azure Marketplace tile.
 1. Search for “Pivotal Cloud Foundry”.
-1. Select **Pivotal Cloud Foundry Proof of Concept**.
+1. Select **Pivotal Cloud Foundry on Microsoft Azure**.
 1. Read the brief getting started information.
 1. Click **Create**.
 1. Enter the User Inputs (documented below).
@@ -107,7 +108,16 @@ Choose which Azure location you want to deploy to.
 
 1. The entire PCF deployment log, <code>pcf_install.log</code>, is located at <code>/home/pivotal</code>.
 
-1. Grep the admin password for Apps Manager from the manifest. For example:
+1. At the end of deployment following information gets printed on tmux session. This is used to log in to the Apps Manager console. For example:
+ <pre class="terminal">
+   print "============================================================"
+   print "Apps Manager URL : {0}".format(apps_manager_address)
+   print "Admin password   : {0}".format(admin_password)
+   print "Documentation    : http://docs.pivotal.io/pivotalcf/installing/pcf-docs.html"
+   print "============================================================"
+ </pre>
+
+1. If the tmux session is lost, grep the admin password for Apps Manager from the manifest. For example:
  <pre class="terminal">
   cat manifests/elastic-runtime.yml | grep admin
   admin\_user: admin

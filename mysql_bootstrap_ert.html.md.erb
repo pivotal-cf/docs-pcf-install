@@ -134,7 +134,7 @@ In this scenario, nodes are up and running, but the cluster has been disrupted. 
     </pre>
     <p class="note"><strong>Note</strong>: Sometimes the bootstrap errand fails on the first try. If this happens, run the command again in a few minutes.</p>
 
-1. If the errand fails, try following the procedure described in Scenario 2.
+1. If the errand fails, try performing the steps automated by the  errand manually by following the [Manual Bootstrapping](#manual-bootstrap) procedure.
 
 ### <a id="vms-terminated"></a>Scenario 2: Virtual Machines Terminated or Lost ###
 
@@ -263,36 +263,15 @@ In this scenario, severe circumstances such as power failure have terminated all
 
     <p class="note"><strong>Note:</strong> You must reset the values in the BOSH manifest to ensure successful future deployments and accurate reporting of the status of your jobs.</p>
 
-1. If this procedure fails, follow the steps below for manually bootstrapping your cluster.
+1. If this procedure fails, try performing the steps automated by the errand manually by following the [Manual Bootstrapping](#manual-bootstrap) procedure.
 
 ## <a id="manual-bootstrap"></a>Manual Bootstrapping ##
 
-If the bootstrap errand cannot recover the cluster, you need to perform the steps manually. The following steps are prone to user-error and can result in lost data if followed incorrectly. Please follow the [Run the Bootstrap Errand](#assisted-bootstrap) instructions above first, and only resort to the manual process if the errand fails to repair the cluster.
+<p class="note"><strong>Note</strong>: The following steps are prone to user error and can result in lost data if followed incorrectly. Please follow the <a href="#assisted-bootstrap">Run the Bootstrap Errand</a> instructions above first, and only resort to the manual process if the errand fails to repair the cluster.</p>
 
-1. Ensure that you have deleted any placeholder VMs by using the BOSH cloud check command `bosh cck`. See Step 1 of [Scenario 2](#vms-terminated).
-
-1. Run `bosh instances` and examine the output. The VMs transition from `unresponsive agent` to `starting`. Ultimately, two appear as `failing`. Do not proceed to the next step until all three VMs are in the `starting` or `failing` state.
-
-    <pre class="terminal">
-    $ bosh instances
-    [...]
-    +--------------------------------------------------+----------+------------------------------------------------+------------+
-    | mysql-partition-e97dae91e44681e0b543/0           | starting | mysql-partition-e97dae91e44681e0b543           | 10.0.16.60 |
-    | mysql-partition-e97dae91e44681e0b543/1           | failing  | mysql-partition-e97dae91e44681e0b543           | 10.0.16.61 |
-    | mysql-partition-e97dae91e44681e0b543/2           | failing  | mysql-partition-e97dae91e44681e0b543           | 10.0.16.62 |
-    +--------------------------------------------------+----------+------------------------------------------------+------------+
-    </pre>
-
-1. Complete the following steps to prepare your deployment for bootstrapping:
-
-    1. Run `bosh edit deployment` to launch a `vi` editor and modify the deployment.
-    1. Search for the jobs section: `jobs`.
-    1. Search for the mysql-partition: `mysql-partition`.
-    1. Search for the update section: `update`.
-    1. Change `max_in_flight` to `3`.
-    1. Below the `max_in_flight` line, add a new line: `canaries: 0`.
-    1. Set `update.serial` to `false`.
-    1. Run `bosh deploy`.
+If the bootstrap errand cannot recover the cluster, you need to perform the steps automated by the errand manually. 
+* If the output of `bosh instances` shows the state of the jobs as `failing` ([Scenario 1](#cluster-disrupted)), proceed directly to the manual steps below.
+* If the output of `bosh instances` shows the state of the jobs as `unknown/unknown`, perform Steps 1-3 of [Scenario 2](#vms-terminated), substitute the manual steps below for Step 4, and then perform Steps 5-6 of [Scenario 2](#vms-terminated).
 
 1. SSH to each node in the cluster and, as root, shut down the `mariadb` process.
 

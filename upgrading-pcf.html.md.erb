@@ -19,51 +19,47 @@ owner: Ops Manager
 **Important**: Read the Known Issues section of the [Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) (PCF)
 [Release Notes](../pcf-release-notes/index.html) before getting started.
 
-Complete the following steps to upgrade Pivotal Cloud Foundry&reg; Operations
+To upgrade your Pivotal Cloud Foundry&reg;</a> (PCF) installation to a target release, you must install all releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager release 1.5 and you are upgrading to 1.7, you must sequentially install 1.6 and 1.7.
+
+Complete the following steps to upgrade PCF Operations
 Manager (Ops Manager).
 Select the procedure that corresponds to your upgrading scenario.
 
-Pivotal strongly recommends that you [back up all critical data](./backup-restore/backup-pcf.html) prior to upgrading.
-
-<p class="note"><strong>Note</strong>: To upgrade your <a
-  href="https://network.pivotal.io/products/pivotal-cf">Pivotal Cloud
-  Foundry&reg;</a> (PCF) installation to a target release, you must install all
-  releases from your currently deployed version to the target version in
-  sequential order. For example, if your deployment uses Ops Manager release 1.1
-  and you are upgrading to 1.3, you must sequentially install 1.2 and 1.3.</p>
-
-<p class="note"><strong>Note</strong>: If any of your applications were deployed originally to PCF Elastic Runtime 1.3 or earlier, or were specifically configured to run on Canonical’s lucid64 stack, you must migrate them to a newer OS stack before upgrading to PCF 1.6.<br>
-Pivotal recommends using the cf CLI <a href="https://github.com/simonleung8/cli-stack-changer">stack-changer plugin</a> to move your apps from lucid64, which is no longer supported, to cflinuxfs2, a stack based on Ubuntu Trusty 14.04. See the <a href="https://support.pivotal.io/hc/en-us/articles/205751277-New-cflinuxfs2-Stack">New cflinuxfs2 Stack</a> support page for instructions on how to perform this migration.</p>
+Pivotal strongly recommends that you [back up all critical data](./backup-restore/backup-pcf.html) prior to upgrading. 
 
 <p class="note warning">
 <strong>WARNING: </strong> Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. All apps that do not already run on Diego will terminate during an updgrade from 1.6 to 1.7.
 </p>
 
-## <a id="pcf16upgrade"></a>Upgrading to PCF 1.6
+<p class="note warning">
+<strong>WARNING: </strong> PostgreSQL databases are no longer supported in Pivotal Cloud Foundry 1.7. Data from Postgres databases will transfer automatically to a MySQL database during the upgrade. However, if you are using Postgres databases, review this page for important steps to prevent data loss.
+</p>
 
-This section contains important guidelines that you must follow if you are upgrading an existing PCF 1.5 deployment to PCF 1.6. Failure to follow these instructions may jeopardize your existing deployment data or cause your upgrade to fail.
+## <a id="pcf16upgrade"></a>Upgrading to PCF 1.7
+
+This section contains important guidelines that you must follow if you are upgrading an existing PCF 1.6 deployment to PCF 1.7. Failure to follow these instructions may jeopardize your existing deployment data or cause your upgrade to fail.
 
 ### Before You Upgrade ###
 
-* Migrate any apps from DEAs to Diego cells. See [Migrating Apps to Diego](./apps-enable-diego.html).
+* Ops Manager 1.7 uses the User Account and Authentication (UAA), instead of only local user account authentication. When you import your pre-1.7 file to Ops Manager, your user name changes to `admin` and your `password` remains the same. It also prompts you to create a shared passphrase, which is distinct from your password. Your passphrase on a new import will be the same as your password. However, you must change the passphrase for security purposes.
 
-* In Ops Manager, delete the Diego Beta tile, if installed.
+* Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal does not support DEA architecture in Pivotal Cloud Foundry 1.7. See the [Migrating Apps to Diego](./apps-enable-diego.html) topic for information.
 
-* On the **Resource Config** page of your existing Elastic Runtime 1.5 configuration, scale the number of consul servers down to `1` instance. You can scale the number of instances back up after you have upgraded Elastic Runtime. If you are not running any consul servers as part of your deployment, you can ignore this step.
+* If you have Postgres databases, you must complete the following to prevent data loss:
+      * Ensure you have enough disk space in by navigating to the **Resource Config** tab in **Elastic Runtime**. The MySQL Server must have at least as much persistent and ephemeral disk available to accommodate the data you are transferring from the Cloud Controller Database (Postgres) and UAA Database (Postgres) combined. 
+      * Do not scale down Postgres databases to `0` before you upgrade to 1.7. 
+      * The Apps Man database will be dropped, and there will be data loss in the form of sent emails for users who are invited to join or create accounts on PCF. For example, this affects users who have an existing invitation to join PCF in their email inbox. The link to the invitation will no longer work.
 
-* If you are upgrading PCF on AWS, create and configure an ELB for enabling Diego SSH connections. See [Creating an SSH Proxy for Diego with an AWS ELB](cloudform_elb_ssh_proxy.html) for instructions.
 
 ### During the Elastic Runtime Upgrade ###
 
-* If your existing PCF 1.5 deployment uses internal databases, do not modify the selected Postgres/MySQL configuration on the **System Database Config** page. PCF 1.6 allows you to deploy all of your internal databases to MySQL for improved high-availability. However, you should only select the MySQL option after you have migrated all of your existing Postgres data. If you wish to migrate your data in order to access this feature in PCF 1.6, please contact Pivotal support first.
-
-* If your existing PCF 1.5 deployment uses an external S3 filestore, do not modify the pre-populated value used in the bucket name fields on the **File Storage Config** page. PCF 1.6 allows you to specify four different buckets for various cloud-controller artifacts; however, you should continue to use your existing 1.5 bucket names across all four buckets in order to retain existing data.
-
-* If you wish all new applications pushed to your PCF 1.6 deployment to use [Diego](../concepts/diego/diego-architecture.html) by default, select the **Use Diego by default instead of DEAs** option on the **Diego configuration screen**. If you do not select this option, application developers must explicitly specify to use Diego when pushing their applications. See [Diego Migration](./apps-enable-diego.html).
+* If you are using Postgres databases, in PCF 1.7, these will be migrated to MySQL. During the upgrade, both the Cloud Controller Database (Postgres) and UAA Database (Postgres) will be inaccessible. For example, you will not be able to use the UAA. When the system starts the update process, your Postgres jobs runs on Elastic Runtime, and the port number for the Postgres databases change to prevent the Cloud Controller Database (Postgres) and UAA Database (Postgres) from writing to the Postgres databases during the upgrade. A PHP app, colocated on the Postgres database running on the same virtual machines (VMs), starts the data transfer process to the MySQL cluster. The MySQL cluster updates and installs a new version of MariaDB. Finally, the Cloud Controller Database (Postgres)and UAA Database (Postgres) update and are configured to point to the MySQL cluster instead of the Postgres databases. At this point, both databases will be back online, and they can read and write. 
 
 ### After the Upgrade ###
 
-* On the **Resource Config** page of Elastic Runtime, scale your consul server instances back up to the desired number.
+* Verify that the MySQL cluster is hosting a Cloud Controller Database (Postgres) and UAA Database (Postgres). Retrieve the Postgres Postart logs from `/var/vcap/sys/log/postgres/poststart.std<err/out>.log`. You should see a confirmation message, "Finished migration from Postgres to MySQL" at the end of the stdout log.
+
+* When the upgrade is successful, and you have verified that the Postgres databases transferred to MySQL, you can scale down the Postgres databases to `0` in the Resource Config tab in Elastic Runtime. 
 
 * Advise your application developers on targeting Diego when pushing their applications. See [Diego Migration](./apps-enable-diego.html).
 
@@ -89,7 +85,7 @@ remove the tile before upgrading Ops Manager.
 1. From the Product Dashboard, select **Actions > Export installation
 settings**.
 
-    <%= image_tag("./images/upgrading/export_settings.png") %>
+    <%= image_tag("./images/upgrading/upgrade_to_1.7.png") %>
 
     This exports the current PCF installation with all of its assets.
     When you export an installation, the export contains the base VM images and

@@ -1,5 +1,5 @@
 ---
-title: Upgrading Operations Manager
+title: Upgrading Pivotal Cloud Foundry
 owner: Ops Manager
 ---
  
@@ -22,10 +22,7 @@ owner: Ops Manager
 To upgrade your Pivotal Cloud Foundry&reg;</a> (PCF) installation to a target release, you must install all releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager release 1.5 and you are upgrading to 1.7, you must sequentially install 1.6 and 1.7.
 
 Complete the following steps to upgrade PCF Operations
-Manager (Ops Manager).
-Select the procedure that corresponds to your upgrading scenario.
-
-Pivotal strongly recommends that you [back up all critical data](./backup-restore/backup-pcf.html) prior to upgrading. 
+Manager (Ops Manager). 
 
 <p class="note warning">
 <strong>WARNING: </strong> Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. All apps that do not already run on Diego will terminate during an updgrade from 1.6 to 1.7.
@@ -34,6 +31,7 @@ Pivotal strongly recommends that you [back up all critical data](./backup-restor
 <p class="note warning">
 <strong>WARNING: </strong> PostgreSQL databases are no longer supported in Pivotal Cloud Foundry 1.7. Data from Postgres databases will transfer automatically to a MySQL database during the upgrade. However, if you are using Postgres databases, review this page for important steps to prevent data loss.
 </p>
+
 
 ## <a id="pcf16upgrade"></a>Upgrading to PCF 1.7
 
@@ -45,11 +43,11 @@ This section contains important guidelines that you must follow if you are upgra
 
 * Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal does not support DEA architecture in Pivotal Cloud Foundry 1.7. See the [Migrating Apps to Diego](./apps-enable-diego.html) topic for information.
 
+* [Back up all critical data](./backup-restore/backup-pcf.html) prior to upgrading to PCF 1.7. You do not need to backup the Apps Manager database since it will be deprecated in 1.7. When the database is dropped during the upgrade, there will be data loss in the form of sent emails for users who are invited to join or create accounts on PCF. For example, this affects users who have an existing invitation to join PCF in their email inbox. The link to the invitation will no longer work. 
+
 * If you have Postgres databases, you must complete the following to prevent data loss:
       * Ensure you have enough disk space in by navigating to the **Resource Config** tab in **Elastic Runtime**. The MySQL Server must have at least as much persistent and ephemeral disk available to accommodate the data you are transferring from the Cloud Controller Database (Postgres) and UAA Database (Postgres) combined. 
       * Do not scale down Postgres databases to `0` before you upgrade to 1.7. 
-      * The Apps Man database will be dropped, and there will be data loss in the form of sent emails for users who are invited to join or create accounts on PCF. For example, this affects users who have an existing invitation to join PCF in their email inbox. The link to the invitation will no longer work.
-
 
 ### During the Elastic Runtime Upgrade ###
 
@@ -65,7 +63,7 @@ This section contains important guidelines that you must follow if you are upgra
 
 ## <a id="keep"></a>Upgrading with Installed Products ##
 
-Follow the steps below to keep all installed products when you upgrade Ops Manager.
+Follow the steps below to upgrade Ops Manager and keep all installed products.
 
 <p class="note"><strong>Note</strong>: If you have disabled lifecycle errands
 	for any installed product in order to reduce deployment time, Pivotal
@@ -116,20 +114,15 @@ Network](https://network.pivotal.io/products/pivotal-cf) site.
 See [Deploying Operations Manager to vSphere](./deploying-vm.html) or [Deploying
 Operations Manager to vCloud Air and vCloud](./pcf-vchs-vcloud.html).
 
-1. From the Product Dashboard, select **Actions > Import installation
-settings**.
+1. When redirected to the **Welcome to Ops Manager** page, select **Import Existing Installation**. 
 
-    <%= image_tag("./images/upgrading/import_settings.png") %>
+<%= image_tag("./images/upgrading/welcome.png") %>
 
-1. Click **Choose File**, browse to the installation zip file exported in Step
-1, and click **Choose**.
-1. If the admin password has changed since the file was exported, you must
-select **Need to enter a decryption password?** before you click **Import** to
-prevent an error.
-Enter the original password that was used when the installation was exported.
-If the admin password has not changed, you may skip this step.
+1. When prompted, enter the following:
+  * **Decryption Passphrase**, which is the same as your password. 
+  * Click **Choose File** and browse to the installation zip file exported in Step 3 above.
 
-    <%= image_tag("./images/upgrading/import.png") %>
+<%= image_tag("./images/upgrading/decryption_passphrase.png") %>
 
 1. Click **Import**.
 
@@ -137,18 +130,14 @@ If the admin password has not changed, you may skip this step.
       Some browsers do not provide feedback on the status of the import process,
       and may appear to hang.</p>
 
+1. Before you see the new PCF 1.7 **Installation Dashboard**, a Security Features alert appears. Take note of your new **username**. Click **Continue**.
+
+    <%= image_tag("./images/upgrading/security_features.png") %>
+
 1. A "Successfully imported installation" message appears upon completion.
 
     <%= image_tag("./images/upgrading/success.png") %>
 
-1. Select **Resource Config**.
-
-1. Change the value of the **Ephemeral Disk (MB)** for the Ops Manager Director
-to `32768`.
-
-    <%= image_tag("./images/upgrading/opsmgr-resources.png") %>
-
-1. Click **Save**.
 
 1. Click **Apply Changes**. This immediately imports and applies upgrades to all tiles in a single transaction.
 
@@ -185,6 +174,8 @@ Network](https://network.pivotal.io/products/pivotal-cf) site.
 
 1. Deploy the new Ops Manager VM.
 See one of the following topics:
+    * [Launching an Ops Manager Director Instance on AWS](./cloudform-om-deploy.html)
+    * [Provisioning the OpenStack Infrastructure](./openstack-setup.html)
     * [Deploying Operations Manager to vSphere](./deploying-vm.html)
     * [Deploying Operations Manager to vCloud Air and
       vCloud](./pcf-vchs-vcloud.html)

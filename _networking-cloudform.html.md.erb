@@ -1,11 +1,46 @@
 1. Select **Networking**.
 
 <%= image_tag("cloudform/networking.png") %>
+(image of the three checkboxes (and the page in general) prior to any clicking)
+
+1. Leave the **Router IPs** and **HAProxy IPs** fields blank.
+
+1. Under **Configure the point-of-entry to this environment**, choose one of the following:
+
+	image of first checkbox area >>>>>>>>>>>>>>>>>>
+
+	* Select the first option if you are using an external load balancer that can forward encrypted traffic to the Elastic Runtime Router. You may also select this option for a development environment where load balancing is not required.
+
+		1. Enter your PEM encoded certificate and your PEM encoded private key in the fields under **Router SSL Termination Certificate and Private Key**. This certificate must match the one that you uploaded to AWS earlier in the [Upload an SSL Certificate](./cloudform-template.html#upload-cert) section of the [Deploying the CloudFormation Template for PCF on AWS](./cloudform-template.html) topic.
+		1. If you do not want SSL encryption, click **Generate RSA Certificate** for the Pivotal certificate authority to generate a certificate. You must also select **Disable SSL certificate verification for this environment**. 
+		<p class='note'><strong>Note</strong>: Pivotal does not recommend using a self-signed certificate for production deployments.</p>
+	    <%= partial 'known-issue-self-signed-certs' %>
+	    1. Configure **Router SSL Ciphers**. Leave these fields blank unless you want to use a specific set of SSL ciphers for the Router.
+
+	image of second checkbox area >>>>>>>>>>>>>>>>>>
+
+	* Select the second option if you are using an external load balancer that cannot forward encrypted traffic to the Elastic Runtime Router. You may also select this option for a development environment where load balancing is not required.
+
+	image of third checkbox area >>>>>>>>>>>>>>>>>>
+
+	* Select the third option if you are using HAProxy as your fist point of entry.
+		1. Enter your PEM encoded certificate and your PEM encoded private key in the fields under **SSL Certificate and Private Key** to terminate SSL traffic at HAProxy. This certificate must match the one that you uploaded to AWS earlier in the [Upload an SSL Certificate](./cloudform-template.html#upload-cert) section of the [Deploying the CloudFormation Template for PCF on AWS](./cloudform-template.html) topic.
+		1. If you do not want SSL encryption, click **Change**, and then **Generate RSA Certificate** for the Pivotal certificate authority to generate a certificate. You must also select **Disable SSL certificate verification for this environment**. To change your SSL Private Key, click **Change** and modify the text in the **Private Key PEM** field.
+		<p class='note'><strong>Note</strong>: Pivotal does not recommend using a self-signed certificate for production deployments.</p>
+		<%= partial 'known-issue-self-signed-certs' %>
+		1. Configure **HAProxy SSL Ciphers**. Leave these fields blank unless you want to use a specific set of SSL ciphers for the HAProxy.
 
 
-1. Click **Save**.
 
+	Let Ryan know about:
+		THE CHANGE BUTTON - Achievement Unlocked!! Hides
+		GREYED OUT TEXT ADDITION - Achievement Unlocked!! Must click Generate RSA button, then cancel to LevelUP!
 
+You can use a certificate that has multiple domains attributed to it, if you have separate system and application domains. 
+ou can also generate a self-signed certificate here with your wildcard system domain.
+
+1. If you are not using SSL encryption, select **Disable SSL certificate verification for this environment**.
+(is there other documentation for this item?)
 
 1. For **Router IPs**, enter one or more static IP addresses for your routers. These must be in the subnet that you configured in the Ops Manager **Create Networks** section. If you are using your own load balancer, configure it to point to these IPs. If you are using the Elastic Load Balancer (ELB), add the name of your ELB in the router column of the **Resource Config** section.
 
@@ -14,40 +49,24 @@
 
 1. For **HAProxy IPs**, enter one or more IP addresses for HAProxy. You must point your DNS to this IP unless you are using your own load balancer, and HAProxy's IP must be in your subnet.
 
-1. Under **Configure the point-of-entry to this environment**, choose one of the following:
-	* Select the first option if you are using an external load balancer that can forward encrypted traffic to the Elastic Runtime Router. You may also select this option for a development environment where load balancing is not required.
 
-		  1. Enter your PEM encoded certificate and your PEM encoded private key in the fields under **Router SSL Termination Certificate and Private Key**.
-		  1. If you do not want SSL encryption, click **Generate RSA Certificate** for the Pivotal certificate authority to generate a certificate. You must also select **Disable SSL certificate verification for this environment**. 
-
-	* Select the second option if you are using an external load balancer that cannot forward encrypted traffic to the Elastic Runtime Router. You may also select this option for a development environment where load balancing is not required.
-
-	* Select the third option if you are using HAProxy as your fist point of entry.
-
-1. Leave the **Router IPs** and **HAProxy IPs** fields blank.
 
 
 1. do the point of entry thing - there are a bunch of options for adding or not adding certs and keys -- here's a rough outline
 
 1. Choose the appropriate radio box for your deployment under **Configure the point-of-entry to this environment**
 
+
+=== TO MAYBE GO WHERE? IN THIS DOC OR SOMETHING...===
+
 1. Set **Loggregator Port** to **4443**.
 
+========== END RANT ========== 
 
 
 
-
-1. Provide an **SSL Termination Certificate** for your SSL Termination Point.
-    This certificate must match the one that you uploaded to AWS earlier in the
-    [Upload an SSL Certificate](./cloudform-template.html#upload-cert) section
-    of the [Deploying the CloudFormation Template for PCF on
-    AWS](./cloudform-template.html) topic.
-    <p class='note'><strong>Note</strong>: Pivotal does not recommend using a
-    self-signed certificate for production deployments.</p>
-  <%= partial 'known-issue-self-signed-certs' %>
 
 1. Configure **Ignore SSL certificate verification**. Select this option if you are using self-signed certificates or certificates generated from Ops Manager.
-1. Configure **HAProxy SSL Ciphers** and **Router SSL Ciphers**. Leave these fields blank unless you want to use a specific set of SSL ciphers for HAProxy or the Router.
 
 1. Configure **Disable HTTP traffic to HAProxy**. If you select the **Disable HTTP traffic to HAProxy** checkbox, your deployment rejects all port 80 traffic to HAProxy. Additionally, this option sets the secure flag in the `VCAP_ID` cookie that the Router generates.
 

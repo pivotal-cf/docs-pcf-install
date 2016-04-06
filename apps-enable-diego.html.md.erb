@@ -50,9 +50,17 @@ Ensure you have enough VMs allocated to support the newly-migrated apps. You can
 
 <p class="note"><strong>Note:</strong> After migrating, you can scale the <strong>DEA</strong> and <strong>Health Manager</strong> VMs to <code>0</code>.</p>
 
+### <a id="enable-diego"></a>Enable Diego as Default ###
+
+From the **Settings** tab of the Elastic Runtime tile, click **Diego** and select the **Use Diego by default instead of DEAs** checkbox.
+
+<%= image_tag("diego-ert.png") %>
+
 ### <a id='install-cli'></a>Install the cf CLI ##
 
-If you use a Java-based build system like Eclipse, STS, Maven, or Gradle, you may have only the Java cf-client. The Java cf-client does not currently support the migration command nor disabling health checks. Install the standard cf CLI before carrying out the tasks in this topic. See [Installing the cf Command Line Interface](../cf-cli/install-go-cli.html).
+<p class="note"><strong>Note</strong>: If you use a Java-based build system like Eclipse, STS, Maven, or Gradle, you may have only the Java cf-client. The Java cf-client does not currently support the migration command nor disabling health checks.</p>
+
+You must install both the cf CLI and the [Diego-Enabler CLI Plugin](https://github.com/cloudfoundry-incubator/Diego-Enabler). For more information on installing the cf CLI, see the [Installing the cf Command Line Interface](../cf-cli/install-go-cli.html) topic. For more information on installing the Diego-Enabler CLI Plugin, see the Diego-Enabler [repository readme](https://github.com/cloudfoundry-incubator/Diego-Enabler).
 
 ### <a id='disable-health-checks'></a>Disable Port-Based Health Checks ##
 
@@ -224,6 +232,35 @@ This procedure only works if you have not deleted your application that runs on 
 
 1. Unmap the app running on the Diego architecture from your domain.
 <pre  class="terminal">$ cf unmap-route NEW-APP MY-DOMAIN.COM -n MY-SUBDOMAIN</pre>
+
+##<a id="verify"></a>Verify Migration
+
+To verify a successful migration of your apps from DEA to Diego, perform the following steps:
+
+1. Run `cf dea-apps` to list any apps running on DEAs. Verify that the list returned by the command is empty.
+
+    <pre class="terminal">
+    $ cf dea-apps -o MY-ORG
+
+    Getting apps on the DEA runtime as example_user...
+    OK
+
+    name        org     space
+
+    </pre>
+
+1. Run `cf diego-apps` to list any apps running on Diego. Verify that all of your apps are running on Diego.
+
+    <pre class="terminal">
+    $ cf diego-apps -o MY-ORG
+
+    Getting apps on the DEA runtime as example_user...
+    OK
+
+    name        org     space
+    diego-app1  MY-ORG  MY-SPACE
+    diego-app2  MY-ORG  MY-SPACE
+    </pre>
 
 ##<a id="troubleshoot"></a>Troubleshoot Migrated Apps
 

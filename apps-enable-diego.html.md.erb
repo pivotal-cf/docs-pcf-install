@@ -3,22 +3,34 @@ title: Migrating Apps to Diego
 owner: Diego
 ---
 
+<style>
+    .note.warning {
+        background-color: #fdd;
+        border-color: #fbb
+    }
+
+    .note.warning:before {
+        color: #f99;
+    }
+</style>
+
 <strong><%= modified_date %></strong>
 
+This topic describes how to migrate applications from the DEA architecture to the Diego architecture, such as if you are upgrading from Pivotal Cloud Foundry&reg; 1.6 to 1.7.
 
-This topic contains instructions for migrating apps originally deployed on the DEA architecture to the newer Diego architecture.
+<p class="note warning">
+<strong>WARNING: </strong> Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal does not support DEA architecture in Pivotal Cloud Foundry 1.7.
+</p>
 
-In order to migrate your apps to Diego, you must deploy [Pivotal Elastic Runtime](https://network.pivotal.io/products/elastic-runtime) 1.6 or higher. To upgrade Elastic Runtime from a prior version, see [Upgrading Elastic Runtime](./upgrading-products.html).
-
-<p class="note"><strong>Note</strong>: Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal will not support DEA architecture in Pivotal Cloud Foundry 1.7.</p>
-
-Pivotal provides two approaches to migrating your apps to Diego:
+Pivotal provides three approaches to migrating your apps to Diego:
 
 * [Overwrite-based migration](#migration-with-downtime) migrates an app with a few steps and a brief downtime.
 
+* [Batch migration](#batch-migration) performs overwrite-based migration for all apps in an org, space, or deployment with the single CLI command `cf migrate-apps`.
+
 * [Blue-green migration](#blue-green-migration) avoids downtime by employing [Blue-Green deployment](../devguide/deploy-apps/blue-green.html).
 
-## <a id='prep'></a>Prepare for Migration ##
+## <a id='prep-tools'></a>Prepare for Migration ##
 
 Before migrating your apps you may need to:
 
@@ -26,20 +38,30 @@ Before migrating your apps you may need to:
 - [Ensure you have the standard cf CLI.](#install-cli)
 - [Disable any port-based health checks on worker applications.](#disable-health-checks)
 - [Replace environment variables in your app code.](#app-code)
+- [List the apps you need to migrate.](#list-apps)  
 
 ### <a id='scale-diego'></a>Scale Your VMs ##
 
-Before migrating your apps, ensure you have enough VMs allocated to support the newly-migrated apps. You can scale up your VMs from the Elastic Runtime tile, in the **Settings** tab, under **Resource Config**. Pivotal recommends the following configurations:
+Ensure you have enough VMs allocated to support the newly-migrated apps. You can scale up your VMs from the Elastic Runtime tile, in the **Settings** tab, under **Resource Config**. Pivotal recommends the following configurations:
 
 - **Diego Brain**: Two instances per Availability Zone (AZ).
 - **Diego Cell**: Match this to the total capacity you currently have under **DEA**. For example, if you have allocated three DEA instances with 32 GB of persistent disk and 32 GB of RAM for each, allocate the same total capacity of 96 GB disk and RAM under **Diego Cell**.
-- **Consul**, **etcd**, and **Diego BBS**: For each component, choose the odd number equal to or one greater than the number of AZs you have. For example, if you have four AZs, allocate five instances each for Consul, etcd, and Diego BBS. 
+- **Consul**, **etcd**, and **Diego BBS**: For each component, choose the odd number equal to or one greater than the number of AZs you have. For example, if you have four AZs, allocate five instances each for Consul, etcd, and Diego BBS. Pivotal recommends an odd number of instances because the instances must maintain quorum.
 
 <p class="note"><strong>Note:</strong> After migrating, you can scale the <strong>DEA</strong> and <strong>Health Manager</strong> VMs to <code>0</code>.</p>
 
+### <a id="enable-diego"></a>Enable Diego as Default ###
+
+1. From the **Settings** tab of the Elastic Runtime tile, click **Diego** and select the **Use Diego by default instead of DEAs** checkbox. 
+1. Return to Ops Manager and click **Apply Changes** to apply this new default on Elastic Runtime.
+
+<%= image_tag("diego-ert.png") %>
+
 ### <a id='install-cli'></a>Install the cf CLI ##
 
-If you use a Java-based build system like Eclipse, STS, Maven, or Gradle, you may have only the Java cf-client. The Java cf-client does not currently support the migration command or disabling health checks. Install the standard cf CLI before carrying out the tasks in this topic. See [Installing the cf Command Line Interface](../cf-cli/install-go-cli.html).
+<p class="note"><strong>Note</strong>: If you use a Java-based build system like Eclipse, STS, Maven, or Gradle, you may have only the Java cf-client. The Java cf-client does not currently support the migration command nor disabling health checks.</p>
+
+You must install both the cf CLI and the [Diego-Enabler CLI Plugin](https://github.com/cloudfoundry-incubator/Diego-Enabler). For more information on installing the cf CLI, see the [Installing the cf Command Line Interface](../cf-cli/install-go-cli.html) topic. For more information on installing the Diego-Enabler CLI Plugin, see the Diego-Enabler [repository readme](https://github.com/cloudfoundry-incubator/Diego-Enabler).
 
 ### <a id='disable-health-checks'></a>Disable Port-Based Health Checks ##
 
@@ -51,7 +73,37 @@ Worker applications pushed with the `--no-route` option do not report as healthy
 
 * Diego does not use the `VCAP_APP_PORT` environment variable. If your code references this variable, replace it with `PORT`, which is set to `8080` by default. 
 
-<p class="note"><strong>Note</strong>: If you plan to use the <a href="#migration-with-downtime">Overwrite-Based migration method</a> after removing these environment variables, you must restage your app. The <a href="#blue-green-migration">Blue-Green deployment migration method</a> includes app restaging.</p> 
+
+### <a id='list-apps'></a>List DEA and Diego Applications ##
+
+To find out what apps you have running on DEAs and Diego Cells, use the commands `cf dea-apps` and `cf diego-apps`. See the following example:
+
+<pre class='terminal'>
+$ cf dea-apps
+
+Getting apps on the DEA runtime as example_user...
+OK
+
+name		org		space
+
+dea-app1	org1	space1
+dea-app2	org1	space2
+...
+</pre>
+
+Use the `-s` flag followed by a space name to limit the search to apps running within the space, or the `-o` flag followed by an org name to limit the search to apps running within the org. See the following example:
+
+<pre class='terminal'>
+$ cf dea-apps -o MY-ORG
+
+Getting apps on the DEA runtime in org MY-ORG as example_user...
+OK
+
+name		org		space
+
+dea-app1	MY-ORG	space1
+dea-app2	MY-ORG	space2
+</pre>
 
 ## <a id='migration-with-downtime'></a>Overwrite-Based Migration##
 
@@ -76,6 +128,41 @@ Diego support for EXAMPLE-APP is set to true
 $ cf app EXAMPLE-APP
 </pre>
 
+##<a id="batch-migration"></a>Batch Migration
+
+This procedure migrates multiple apps in a single command using overwrite-based migration. The `cf migrate-apps` command migrates all apps in a deployment unless you specify an org or space. 
+
+- Run `cf migrate-apps`. You can specify the following options:
+	- `-o ORG` migrates all apps in an org.
+	- `-s SPACE` migrates all apps in a space.
+	- `-f` suppresses prompts. 
+	- `-p MAX_IN_FLIGHT` specifies how many apps to migrate in parallel, up to 100. Defaults to 1. Pivotal recommends first trying a migration with the default and then increasing `-p` if the first migration is stable. Do not set `-p` to a value greater than the number of Diego cells in the deployment. 
+	- `-r (dea | diego)` targets the architecture to migrate to.
+
+
+<p class="note"><strong>Note</strong>: Migrating a running app causes a restart. Migrating a stopped app does not cause a restart.</p>
+
+The following example migrates all DEA apps in a deployment to Diego. The apps migrate in the sequence specified by running `cf dea-apps`.
+
+<pre class="terminal">
+$ cf migrate-apps -r diego
+
+Migrating apps to Diego as example_user....
+
+Started migrating app my-app to Diego as example_user...
+
+Completed migrating app my-app to Diego in space with guid a045rw51-o358-4e26-9dfc-4c7365cf987 as example_user
+
+...
+
+Migration to Diego completed: 23 apps, 0 warnings
+</pre>
+
+The following example migrates all DEA apps in `space2` of `org1` to Diego, ten at a time, supressing prompts.
+
+<pre class="terminal">
+$ cf migrate-apps -o org1 -s space2 -f -p 10 -r diego
+</pre>
 
 ## <a id='blue-green-migration'></a>Blue-Green Migration ##
 
@@ -84,7 +171,7 @@ The blue-green deployment method migrates your apps with zero downtime. This met
 <p class="note"><strong>Note</strong>: If necessary, complete the <a href="#application-rollback">Application Rollback procedure</a> below to revert the migration with zero downtime.</p>
 ### <a id="blue-green-procedure"></a>Migrate an App from DEA to Diego Architecture
 
-1. Use the Cloud Foundry Command Line Interface (CF CLI) to install the Diego-Enabler plugin.
+1. Use the Cloud Foundry Command Line Interface (cf CLI) to install the Diego-Enabler plugin.
 <pre class='terminal'>
 $ cf add-plugin-repo CF-Community <span>http:</span>//plugins.cloudfoundry.org/
 $ cf install-plugin Diego-Enabler -r CF-Community
@@ -147,9 +234,38 @@ This procedure only works if you have not deleted your application that runs on 
 1. Unmap the app running on the Diego architecture from your domain.
 <pre  class="terminal">$ cf unmap-route NEW-APP MY-DOMAIN.COM -n MY-SUBDOMAIN</pre>
 
+##<a id="verify"></a>Verify Migration
+
+To verify a successful migration of your apps from DEA to Diego, perform the following steps:
+
+1. Run `cf dea-apps` to list any apps running on DEAs. Verify that the list returned by the command is empty.
+
+    <pre class="terminal">
+    $ cf dea-apps -o MY-ORG
+
+    Getting apps on the DEA runtime as example_user...
+    OK
+
+    name        org     space
+
+    </pre>
+
+1. Run `cf diego-apps` to list any apps running on Diego. Verify that all of your apps are running on Diego.
+
+    <pre class="terminal">
+    $ cf diego-apps -o MY-ORG
+
+    Getting apps on the DEA runtime as example_user...
+    OK
+
+    name        org     space
+    diego-app1  MY-ORG  MY-SPACE
+    diego-app2  MY-ORG  MY-SPACE
+    </pre>
+
 ##<a id="troubleshoot"></a>Troubleshoot Migrated Apps
 
-Because Diego was written to be compatible with DEA, most applications migrated from DEA to Diego continue to run on Diego without change. However, there are differences between DEA and Diego. If you have problems with your application after migrating, review the following:
+Because Diego was written to be compatible with DEA architecture, most applications migrated from DEAs to Diego cells continue to run on Diego without change. However, there are differences between DEA and Diego architectures. If you have problems with your application after migrating, review the following:
 
 #### Symptom
 
@@ -199,7 +315,7 @@ Errors related to environment variables
 
 #### Explanation
 
-Diego does not support the interpolation of environment variables. In DEA, when you set environment variables with the `cf set-env` or in your manifest file, you could include one environment variable in the definition of another, for example, `SOMEPATH=$HOME/SOME/PATH`.
+Diego does not support the interpolation of environment variables. In the DEA architecture, when you set environment variables with the `cf set-env` or in your manifest file, you could include one environment variable in the definition of another variable, such as `SOMEPATH=$HOME/SOME/PATH`.
 
 #### Solution
 

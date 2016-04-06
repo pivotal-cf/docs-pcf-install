@@ -19,41 +19,85 @@ owner: Ops Manager
 **Important**: Read the Known Issues section of the [Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) (PCF)
 [Release Notes](../pcf-release-notes/index.html) before getting started.
 
-To upgrade your Pivotal Cloud Foundry&reg;</a> (PCF) installation to a target release, you must install all releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager release 1.5 and you are upgrading to 1.7, you must sequentially install 1.6 and 1.7.
-
-Complete the following steps to upgrade an existing PCF Operations
-Manager (Ops Manager), and tiles. 
-
+This topic describes upgrading PCF from version 1.6 to 1.7. The upgrade procedures below describe upgrading Ops Manager, Elastic Runtime, and any product tiles that you have installed for which 1.7 versions are available. 
+     
 <p class="note warning">
-<strong>WARNING: </strong> Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. All apps that do not already run on Diego will terminate during an updgrade from 1.6 to 1.7.
-</p>
-
-<p class="note warning">
-<strong>WARNING: </strong> PostgreSQL databases are no longer supported in Pivotal Cloud Foundry 1.7. Data from Postgres databases will transfer automatically to a MySQL database during the upgrade. However, if you are using Postgres databases, review this page for important steps to prevent data loss.
+<strong>WARNING: </strong> Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. All apps that do not already run on Diego will terminate during an upgrade from 1.6 to 1.7.
 </p>
 
 
-## <a id="pcf16upgrade"></a>Upgrading to PCF 1.7
+<p class="note warning">
+<strong>WARNING: </strong> PostgreSQL databases are not supported in Pivotal Cloud Foundry v. 1.7. Data from Postgres databases will transfer automatically to a MySQL database during the upgrade. However, if you are using Postgres databases, review this page for important steps to prevent data loss.
+</p>
 
-This section contains important guidelines that you must follow if you are upgrading an existing PCF 1.6 deployment to PCF 1.7. Failure to follow these instructions may jeopardize your existing deployment data or cause your upgrade to fail.
+## <a id="beforeupgrade"></a>Before You Upgrade
 
-### Before You Upgrade ###
+This section contains important guidelines that you must follow before beginning an upgrade to PCF 1.7. Failure to follow these instructions may jeopardize your existing deployment data or cause your upgrade to fail.
 
-* Ops Manager 1.7 uses the User Account and Authentication (UAA), instead of only local user account authentication. When you import your pre-1.7 file to Ops Manager, your user name changes to `admin` and your `password` remains the same. It also prompts you to create a shared passphrase, which is distinct from your password. Your passphrase on a new import will be the same as your password. However, you must change the passphrase for security purposes.
+The tasks you need to complete before upgrade fall into three categories: 
 
-* If you have disabled lifecycle errands
-  for any installed product in order to reduce deployment time, Pivotal
-  recommends that you re-enable these errands before upgrading. See <a
-  href="./add-delete.html#add-import">Adding and Deleting Products</a> for more
-  information.
++ [Prepare Your Environment](#prepareyourenvironment) — includes making sure you have sufficient disk space.
++ [Prepare Databases and Apps](#prepareyourdatabaseandapps) — includes backing up data and migrating any apps that currently use the DEA architecture to use the Diego architecture.
++ [Check System Health](#checksystemhealth) — perform a health of your virtual machines (VMs) to your service tiles. 
 
-* Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal does not support DEA architecture in Pivotal Cloud Foundry 1.7. See the [Migrating Apps to Diego](./apps-enable-diego.html) topic for information.
+### <a id="prepareyourenvironment"></a>Prepare Your Environment for Upgrade
 
-* [Back up all critical data](./backup-restore/backup-pcf.html) prior to upgrading to PCF 1.7. You do not need to backup the Apps Manager database since it will be deprecated in 1.7. When the database is dropped during the upgrade, there will be data loss in the form of sent emails for users who are invited to join or create accounts on PCF. For example, this affects users who have an existing invitation to join PCF in their email inbox. The link to the invitation will no longer work. 
+1. To upgrade your Pivotal Cloud Foundry&reg;</a> (PCF) installation to a target release, you must install all releases from your currently deployed 
+version to the target version in sequential order. For example, if your deployment uses Ops Manager release 1.5 and you are upgrading to 1.7, 
+you must sequentially install 1.6 and 1.7.
 
-* If you have Postgres databases, you must complete the following to prevent data loss:
-      * Ensure you have enough disk space in by navigating to the **Resource Config** tab in **Elastic Runtime**. The MySQL Server must have at least as much persistent and ephemeral disk available to accommodate the data you are transferring from the Cloud Controller Database (Postgres) and UAA Database (Postgres) combined. 
+    <p class="note"><strong>Note</strong>: Ensure that you are using Elastic Runtime (ERT) v. 1.6.9 or higher.</p>
+
+2. Ensure that every product tile on the Installation Dashboard is compatible with the new version of Ops Manager. For specific compatibility information, refer to the full [Product Version  Matrix](../../compatibility-matrix.pdf).
+If a product does not meet this requirement, you must upgrade the product or
+remove the tile before upgrading Ops Manager.
+
+10. For each product tile you have installed, review the upgrade documentation that is specific to the tile. For example, if you have RabbitMQ, you need to increase the number of HAproxy instances from one to two. See [RabbitMQ for Pivotal Cloud Foundry Upgrades](../../rabbitmq-cf/upgrade.html).
+
+3. <%= partial 'check_disk_before_upgrade' %>
+
+4. If you have disabled lifecycle errands  for any installed product in order to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. See <a href="./add-delete.html#add-import">Adding and Deleting Products</a> for more  information.
+
+5. Ensure that the VM resurrector is turned off:
+   1. From your Installation Dashboard, select the **Ops Manager Director** tile. 
+   2. Click **Director Config**.
+   3. Clear the **Enable VM resurrector plugin** checkbox.
+
+
+### <a id="prepareyourdatabaseandapps"></a>Prepare Databases and Apps for Upgrade
+
+
+6. [Back up all critical data](./backup-restore/backup-pcf.html) prior to upgrading to PCF 1.7. <br>
+You do not need to backup the Apps Manager database because it is deprecated in 1.7. 
+When the database is dropped during the upgrade, you will lose emails bytes. 
+For example, if users have invitations to join PCF accounts in their inboxes, the invitation links will fail.
+
+7. _outstanding question_ The GSS checklist discusses backing up and checking the status of MySQL. Do we need to add a cross-reference to database backup (MySQL and Postgres)?
+
+
+7. If you have Postgres databases, you must complete the following to prevent data loss:
+      * Ensure you have enough disk space in by navigating to the **Resource Config** tab in **Elastic Runtime**. The MySQL Server must have at least as much persistent and ephemeral disk available to accommodate the data you are transferring from the Cloud Controller Database (Postgres) and UAA Database (Postgres) combined.
       * Do not scale down Postgres databases to `0` before you upgrade to 1.7. 
+
+     <p class="note warning">
+    <strong>WARNING: </strong> Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. All apps that do not already run on Diego will terminate during an upgrade from 1.6 to 1.7.
+    </p>
+
+8. Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal does not support DEA architecture in Pivotal Cloud Foundry 1.7. See the [Migrating Apps to Diego](./apps-enable-diego.html) topic for information.
+
+### <a id="checksystemhealth"></a>Check System Health Before Upgrade
+
+9. Run bosh cck to check the VM's are all healthy.  See [bosh cloudcheck](https://docs.pivotal.io/pivotalcf/customizing/trouble-advanced.html#cck)
+
+10. Check system health of installed products: Click each service tile, select the **Status** tab, and confirm that all VMs appear and are in good health.
+
+11. There should be no outstanding changes in Ops Manager or any other tile, and do this check after any config changes, like the one below re: VM resurrector., all tiles should be green.
+Click apply changes (before upgrading) to make sure there are no issues.
+
+
+12. (Optional) Check the logs for errors before proceeding with the upgrade.
+cf logs  See [Viewing Logs for Elastic Runtime Components](https://docs.pivotal.io/pivotalcf/customizing/troubleshooting.html#component_logs) or [Application Logging in Cloud Foundry](https://docs.pivotal.io/pivotalcf/devguide/deploy-apps/streaming-logs.html)? 
+
 
 ### During the Elastic Runtime Upgrade ###
 
@@ -74,15 +118,7 @@ This section contains important guidelines that you must follow if you are upgra
 
 Follow the steps below to upgrade Ops Manager and keep all installed products.
 
-1. <%= partial 'check_disk_before_upgrade' %>
-1. Ensure that every product tile on the Installation Dashboard is compatible
-with the new version of Ops Manager.
-To be compatible, a product must meet the minimum version requirement for that
-product.
-If a product does not meet this requirement, you must upgrade the product or
-remove the tile before upgrading Ops Manager.
-    <br /><br />
-    For specific compatibility information, refer to the full [Product Version  Matrix](../../compatibility-matrix.pdf).
+<p class="note"><strong>Note</strong>: Ops Manager 1.7 uses the User Account and Authentication (UAA), instead of only local user account authentication. When you import your pre-1.7 file to Ops Manager, your user name changes to <code>admin</code> and your password remains the same. It also prompts you to create a shared passphrase, which is distinct from your password. Your passphrase on a new import will be the same as your password. However, you must change the passphrase for security purposes. </p>
 
 1. From the Product Dashboard, select **Actions > Export installation
 settings**.
@@ -160,7 +196,26 @@ href="https://network.pivotal.io/products/pivotal-rabbitmq-service">RabbitMQ</a>
   in your PCF deployment. See <a href="./upgrading-products.html">Upgrading
   Products in a PCF Deployment</a>.</p>
 
+## <a id="aftertheupgrade"></a>After the Upgrade ##
+
+* Verify that the MySQL cluster is hosting a Cloud Controller Database (Postgres) and UAA Database (Postgres). Retrieve the Postgres Postart logs from `/var/vcap/sys/log/postgres/poststart.std<err/out>.log`. You should see a confirmation message, `Finished migration from Postgres to MySQL` at the end of the stdout log.
+
+* When the upgrade is successful, and you have verified that the Postgres databases transferred to MySQL, you can scale down the Postgres databases to `0` in the Resource Config tab in Elastic Runtime. 
+
+* Advise your application developers on targeting Diego when pushing their applications. See [Diego Migration](./apps-enable-diego.html).
+
+* (Optional) You can review your product tiles and configure values accordingly. For example, for Elastic Runtime, review the installation topic for new features:
+     * [Launching an Ops Manager Director Instance on AWS](./cloudform-om-deploy.html)
+     * [Provisioning the OpenStack Infrastructure](./openstack-setup.html)
+     * [Deploying Operations Manager to vSphere](./deploying-vm.html)
+     * [Deploying Operations Manager to vCloud Air and
+       vCloud](./pcf-vchs-vcloud.html) 
+
 ## <a id="lose"></a>Uninstalling and Reinstalling Ops Manager ##
+
+**This procedure needs rework; we think it is a sort of rollback procedure. Why would a customer have
+an Ops Manager installation without ERT or an products?**
+:w
 
 Follow these steps to upgrade Ops Manager if you have no installed products, or
 you have no installed products that you want to keep.

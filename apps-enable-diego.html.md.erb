@@ -132,20 +132,17 @@ $ cf app EXAMPLE-APP
 
 This procedure migrates multiple apps in a single command using overwrite-based migration. The `cf migrate-apps` command migrates all apps in a deployment unless you specify an org or space. 
 
-- Run `cf migrate-apps`. You can specify the following options:
+- Run `cf migrate-apps diego` to migrate apps to Diego. You can specify the following options:
 	- `-o ORG` migrates all apps in an org.
-	- `-s SPACE` migrates all apps in a space.
-	- `-f` suppresses prompts. 
+	- `-s SPACE` migrates all apps in a space that exists in your currently targeted org. If you want to migrate apps in a space from another org, you must target that org before running `cf migrate-apps`.
 	- `-p MAX_IN_FLIGHT` specifies how many apps to migrate in parallel, up to 100. Defaults to 1. Pivotal recommends first trying a migration with the default and then increasing `-p` if the first migration is stable. Do not set `-p` to a value greater than the number of Diego cells in the deployment. 
-	- `-r (dea | diego)` targets the architecture to migrate to.
-
 
 <p class="note"><strong>Note</strong>: Migrating a running app causes a restart. Migrating a stopped app does not cause a restart.</p>
 
 The following example migrates all DEA apps in a deployment to Diego. The apps migrate in the sequence specified by running `cf dea-apps`.
 
 <pre class="terminal">
-$ cf migrate-apps -r diego
+$ cf migrate-apps diego
 
 Migrating apps to Diego as example_user....
 
@@ -158,10 +155,10 @@ Completed migrating app my-app to Diego in space with guid a045rw51-o358-4e26-9d
 Migration to Diego completed: 23 apps, 0 warnings
 </pre>
 
-The following example migrates all DEA apps in `space2` of `org1` to Diego, ten at a time, supressing prompts.
+The following example migrates all DEA apps in `space2` to Diego, ten at a time.
 
 <pre class="terminal">
-$ cf migrate-apps -o org1 -s space2 -f -p 10 -r diego
+$ cf migrate-apps -s space2 -p 10 diego
 </pre>
 
 ## <a id='blue-green-migration'></a>Blue-Green Migration ##

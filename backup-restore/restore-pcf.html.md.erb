@@ -244,11 +244,26 @@ Use the NFS password and IP address to restore the NFS by following the steps de
 
 ### <a id='restore-mysql-dev'></a>Restore MySQL Database
 
-The MySQL server in Elastic Runtime can automatically back up its data to an
-external blobstore on a regular basis.
-Refer to the [Back Up Pivotal MySQL Server]((./backup-pcf.html#backup-mysql) section of the _Backing Up Pivotal Cloud Foundry&reg;_ topic for details on configuring this.
-You can find the encryption / decryption key for the database backup under `ERT > Credentials > Backup Prepare Node > Backup Encryption Key`. You need this key to decrypt the data once it has been restored.
-Follow the instructions in the [P-MySQL backups](/p-mysql/backup.html#restoring) topic to restore from the backup.
+ 1. Use `scp` to send the MySQL Database backup file to the MySQL Database VM. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+	 <pre class='terminal'>
+	    $ scp user_databases.sql vcap@YOUR-MYSQL-VM-IP-ADDRESS:~/.
+	 </pre>
+ 
+ 1. SSH into the MySQL Database VM.
+	 <pre class='terminal'>
+	 $ ssh vcap@YOUR-MYSQL-VM-IP
+	 </pre>
+ 
+ 1. Use the MySQL password and IP address to restore the MySQL database by running the following command. 
+	 <pre class='terminal'>
+	   mysql -h YOUR-MYSQL-SERVER-IP -u root -p < ~/.user_databases.sql
+	 </pre>
+	 
+ 1. Log in to the MySQL client and flush privileges.
+	 <pre class='terminal'>
+	     $ mysql -u root -p -h
+	     mysql > flush privileges;
+	 </pre>
 
 ### <a id='cc-start-2'></a>Start Cloud Controller ###
 <%= partial 'starting_cc' %>

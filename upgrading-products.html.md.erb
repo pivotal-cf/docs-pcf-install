@@ -3,7 +3,22 @@ title: Upgrading Elastic Runtime and Other Pivotal Cloud Foundry&reg; Products
 owner: RelEng
 ---
 
+<style>
+    .note.warning {
+        background-color: #fdd;
+        border-color: #fbb
+    }
+
+    .note.warning:before {
+        color: #f99;
+     }
+</style>
+ 
 <strong><%= modified_date %></strong>
+
+This topic describes how to upgrade Elastic Runtime (ERT) and other product tiles alone, without upgrading Ops Manager. For example, you might need to do this if a security update for ERT is released or if new features are introduced in a point release of a product tile.
+
+The topic [Upgrading Pivotal Cloud Foundry](./upgrading-pcf.html) describes how to perform a complete upgrade of PCF, including Ops Manager, ERT and other installed products. 
 
 ## <a id="runtime_snapshot"></a>Elastic Runtime Snapshot ##
 <dl>
@@ -17,32 +32,18 @@ owner: RelEng
 <dd><strong>OpenStack support?</strong> Yes</dd>
 </dl>
 
-## <a id="aboutpostgres"></a>About Postgres Databases During PCF Upgrade ##
+## <a id="runtime_upgrade"></a>Upgrading Elastic Runtime
 
-If you are using Postgres databases in your PCF v. 1.6 system, there are specific things to know about upgrading PCF including Elastic Runtime to v. 1.7.
-Because Postgres databases are not supported in PCF v. 1.7, the Cloud Controller and UAA databases will be migrated to MySQL during the upgrade. At this time, both the Cloud Controller Database (Postgres) and UAA Database (Postgres) will be inaccessible. For example, you will not be able to use the UAA. In addition, if you are using SSO to authenticate your apps, SSO will not be reachable because UAA will be inaccessible.
-
-  1. When the system starts the update process, your Postgres jobs run on Elastic Runtime and the port number for the Postgres databases changes to prevent the Cloud Controller Database (Postgres) and UAA Database (Postgres) from writing to the Postgres databases during the upgrade.
-  1. A PHP app, colocated on the Postgres database running on the same virtual machines (VMs), starts the data transfer process to the MySQL cluster. The MySQL cluster updates and installs a new version of MariaDB.
-  1. Finally, the Cloud Controller Database (Postgres) and UAA Database (Postgres) update and are configured to point to the MySQL cluster instead of the Postgres databases. At this point, both databases will be back online, and they can read and write.
-  1. The Apps Manager also uses a small Postgres database to store temporary email invitations. Its data is not migrated.
-
-## <a id="runtime_upgrade"></a>Upgrading Elastic Runtime without Upgrading Ops Manager
-
-The previous topic [Upgrading Pivotal Cloud Foundry](./upgrading-products.html) describes how to upgrade PCF, including Ops Manager and ERT. 
-The following describes how to upgrade ERT alone or individual product tiles, without upgrading Ops Manager.
-For example, this might be required if a security update for ERT is released or if new features are introduced in a point release of a product tile. 
-
-Consider the following compatibility information before upgrading Elastic Runtime for Pivotal Cloud Foundry&reg;.
+Refer to the [Product Version Matrix](../../compatibility-matrix.pdf) before upgrading Elastic Runtime for Pivotal Cloud Foundry&reg;.
 
 <p class="note"><strong>Note</strong>: Before you upgrade to Ops Manager 1.7.x, you must first upgrade PCF Elastic Runtime to version 1.6.9 or higher. </p>
 
-For information, refer to the full [Product Version Matrix](../../compatibility-matrix.pdf).
-
+<p class="note warning">
+<strong>WARNING: </strong> Pivotal Cloud Foundry 1.7 does not support PostgreSQL databases. During an upgrade from PCF version 1.6 to 1.7, data from the UAA and Cloud Controller Postgres databases migrate to MySQL. This temporarily disables login through the UAA and SSO and may cause data loss if you have not prepared your databases. If your installation uses Postgres, see <a href="#aboutpostgres">About Postgres Databases During PCF Upgrade</a>.</p>
 
 ### Install using the Pivotal Operations Manager
 
-To install Elastic runtime for PCF, follow the procedure for installing Pivotal Cloud Foundry&reg; Operations Manager tiles:
+To install Elastic runtime for PCF without upgrading Ops Manager, follow the procedure for installing Pivotal Cloud Foundry&reg; Operations Manager tiles:
 
 1. Download the product file from [Pivotal Network](https://network.pivotal.io/).
 1. Upload the product file to your Ops Manager installation.
@@ -92,3 +93,19 @@ downloaded.
     * Click **Save**.
 
 1. Click **Apply changes**.
+
+## <a id="aboutpostgres"></a>About Postgres Databases During PCF Upgrade ##
+
+If your PCF v. 1.6 installation uses Postgres databases, upgrading Elastic Runtime to 1.7 automatically migrates your Cloud Controller and UAA databases from Postgres to MySQL. To avoid data loss during migration, you need to temporarily scale your databases to store their data in both Postgres and MySQL. See [Prepare Databases and Apps for Upgrade](./upgrading-pcf.html#prepareyourdatabaseandapps) for instructions.
+
+The Cloud Controller and UAA databases are also inaccessible during the migration. This means that you temporarily cannot log in through the UAA or use Single Sign-On (SSO).
+
+The UAA and Cloud Controller databases migrate to MySQL through the following process.
+
+  1. When the system starts the update process, your Postgres jobs run on Elastic Runtime and the port number for the Postgres databases changes to prevent the Cloud Controller database and UAA database from writing to the Postgres databases during the upgrade.
+  1. A PHP app, colocated on the Postgres database running on the same virtual machines (VMs), starts the data transfer process to the MySQL cluster. The MySQL cluster updates and installs a new version of MariaDB.
+  1. Finally, the Cloud Controller database and UAA database update and are configured to point to the MySQL cluster instead of the Postgres databases. At this point, both databases will be back online, and they can read and write.
+
+<p class="note"><strong>Note</strong>: The Apps Manager also uses a small Postgres database to store temporary email invitations. This data does not automatically migrate.</p>
+
+

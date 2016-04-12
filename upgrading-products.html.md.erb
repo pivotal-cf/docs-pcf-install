@@ -100,12 +100,8 @@ If your PCF v. 1.6 installation uses Postgres databases, upgrading Elastic Runti
 
 The Cloud Controller and UAA databases are also inaccessible during the migration. This means that you temporarily cannot log in through the UAA or use Single Sign-On (SSO).
 
-The UAA and Cloud Controller databases migrate to MySQL through the following process.
+To migrate the UAA and Cloud Controller databases from Postgres to MySQL, the upgrade process changes the database port number to prevent writing to the Postgres databases. A PHP app colocated on each database VM then copies the Postgres contents to the MySQL cluster, and the two databases are then reconfigured to point to MySQL instead of Postgres.
 
-  1. When the system starts the update process, your Postgres jobs run on Elastic Runtime and the port number for the Postgres databases changes to prevent the Cloud Controller database and UAA database from writing to the Postgres databases during the upgrade.
-  1. A PHP app, colocated on the Postgres database running on the same virtual machines (VMs), starts the data transfer process to the MySQL cluster. The MySQL cluster updates and installs a new version of MariaDB.
-  1. Finally, the Cloud Controller database and UAA database update and are configured to point to the MySQL cluster instead of the Postgres databases. At this point, both databases will be back online, and they can read and write.
-
-<p class="note"><strong>Note</strong>: The Apps Manager also uses a small Postgres database to store temporary email invitations. This data does not automatically migrate.</p>
+<p class="note"><strong>Note</strong>: The Apps Manager 1.6 also uses a small Postgres database to store temporary email invitations. Upgrading destroys this non-critical data.</p>
 
 

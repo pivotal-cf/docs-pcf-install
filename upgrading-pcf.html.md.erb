@@ -28,11 +28,6 @@ href="https://network.pivotal.io/products/pivotal-rabbitmq-service">RabbitMQ</a>
 </p>
 
 
-<p class="note warning">
-<strong>WARNING: </strong> Pivotal Cloud Foundry 1.7 does not support PostgreSQL databases. During an upgrade from PCF version 1.6 to 1.7, data from the UAA and Cloud Controller Postgres databases migrate to MySQL. This temporarily disables login through the UAA and SSO and may cause data loss if you have not prepared your databases. If your installation uses Postgres, review this page and see the <a href="./upgrading-products.html#aboutpostgres">About Postgres Databases During PCF Upgrade</a> section.
-</p>
-
-
 **Important**: Read the Known Issues section of the [Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) (PCF)
 [Release Notes](../pcf-release-notes/index.html) before getting started.
 
@@ -79,12 +74,6 @@ remove the tile before upgrading Ops Manager.
 
 2. Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal does not support DEA architecture in Pivotal Cloud Foundry 1.7. See the [Migrating Apps to Diego](./apps-enable-diego.html) topic for information.
 
-3. If you have Postgres databases, you must complete the following to prevent data loss:
-      * Ensure you have enough disk space in by navigating to the **Resource Config** tab in **Elastic Runtime**. The MySQL Server must have at least as much persistent and ephemeral disk available as the Cloud Controller and UAA Postgres databases combined, to accommodate the data you are transferring.
-      * Do not scale down Postgres databases to `0` before you upgrade to 1.7. 
-    <p class="note"><strong>Note</strong>: The content of the Apps Manager database is not migrated during the upgrade. For this reason, you may experience some trivial data loss; for example if users have invitations to join PCF accounts in their inboxes, the invitation links might fail. </p>
-
-<!-- 4. _outstanding question_ The GSS checklist discusses backing up and checking the status of MySQL. Do we need to add a cross-reference to database backup (MySQL and Postgres)? -->
 
 ### <a id="check-health"></a>Check System Health Before Upgrade
 
@@ -171,8 +160,6 @@ Network](https://network.pivotal.io/products/pivotal-cf) site.
 1. Remove the original Ops Manager VM from your IaaS if the new installation functions correctly.
 
 ## <a id="aftertheupgrade"></a>After the Upgrade
-
-* If your 1.6 installation used Postgres databases, verify that the MySQL cluster is hosting a Cloud Controller Database and UAA Database. Retrieve the Postgres Postart logs from `/var/vcap/sys/log/postgres/poststart.std<err/out>.log`. You should see a confirmation message, `Finished migration from Postgres to MySQL` at the end of the stdout log. After successful migration, you can scale down the Postgres databases to `0` in the Resource Config tab in Elastic Runtime. 
 
 * Advise your application developers on targeting Diego when pushing their applications. See [Diego Migration](./apps-enable-diego.html).
 

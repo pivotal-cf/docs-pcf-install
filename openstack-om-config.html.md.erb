@@ -21,37 +21,15 @@ topic.
 
 1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Instances** to view the public IP address listed for Ops Manager.
 
-1. When Ops Manager boots for the first time, you must choose one of the following:
-    * <strong>[Use an Identity Provider](#idp)</strong>: If you use an Identity Provider, an external identity server maintains your user database.
-    * <strong>[Internal Authentication](#internal)</strong>: If you use Internal Authentication, PCF maintains your user database.
+1. Use the public IP address of your Ops Manager instance to launch Ops Manager
+in a browser.
+    <%= image_tag("om-log-in.png") %>
 
+1. Enter a **Username** and a **Password**.
 
-    <%= image_tag("select-authentication.png") %>
+1. Read the **End User License Agreement**, and select the checkbox to accept.
 
-### <a id='idp'></a>Use an Identity Provider ###
-
-1. When redirected to the **Use an Identity Provider** page, you must:
-    * Retrieve the metadata URL from your Identity Provider and copy it into the **Use an Identity Provider** area.
-    * Create a passphrase. The passphrase you entered is a shared secret to encrypt Ops Manager data at rest.
-    * Read the **End User License Agreement**, and select the checkbox to accept the terms.
-    * Click **Setup Authentication**.
-
-    <%= image_tag("meta-url.png") %>
-
-1.  Your Identity Provider login page appears. Enter your username and password. Click **Login**.
-
-### <a id='internal'></a>Internal Authentication ###
-
-1.  When redirected to the **Internal Authentication** page, you must:
-    * Enter a **Username** and **Admin password**.
-    * Enter a **Decryption passphrase**. This passphrase encrypts the Ops Manager datastore, and is not recoverable if forgotten.
-    * Read the **End User License Agreement**, and select the checkbox to accept the terms.
-
-    <%= image_tag("om-login.png") %>
-
-1. Log in to Ops Manager with the Admin username and password you created on the initial setup page.
-
-    <%= image_tag("cf-login.png") %>
+1. Click **Create Admin User** to create an Ops Manager administrator account.
 
 ## <a id='openstack-config'></a>Step 2: Complete the OpenStack Config Page ##
 
@@ -92,7 +70,7 @@ information:
       step of the [Provisioning the OpenStack
       Infrastructure](./openstack-setup.html) topic. Copy and paste the contents
       of the key pair file into the SSH Private Key field.
-    * **Disable DHCP**: Do not select the checkbox unless your setup requires it.
+    * **Disable DHCP**: Select this checkbox to disable DHCP. Do not select this checkbox unless your setup requires it.
 
 1. Click **Save**.
 
@@ -135,8 +113,7 @@ You use the contents of this file to complete the Ops Manager **Director Config*
 
 1. Click **Enable VM Resurrector Plugin** to enable the Ops Manager Resurrector functionality and increase Elastic Runtime availability.
 
-1. Complete the **Director Config** page using information from the `ec2rc.sh`
-file:
+1. For **Blobstore Location**, select **Internal** if you want PCF to deploy and manage the blobstore. Otherwise, select **S3 Compatible Blobstore** and complete the following fields using information from the `ec2rc.sh` file:
     * **Blobstore Location**: Select the **S3 Compatible Blobstore** option.
     * **S3 Endpoint**: Use **S3_URL** from the `ec2rc.sh` file.
     * **Bucket Name**: Enter `pcf`.
@@ -149,7 +126,6 @@ file:
 1. Click **Save**.
 
 <p class='note'><strong>Note</strong>: If you select to use an internal database, <a href="./../customizing/backup-restore/backup-pcf.html">back up</a> your data frequently to ensure you have saved the latest copy. </p>
-
 
 ## <a id='az-config'></a>Step 5: Complete the Availability Zones Pages ##
 
@@ -195,7 +171,7 @@ network settings.
       that you recorded in the [Associate a Floating IP
       Address](./openstack-setup.html#floating-ip) step of the [Provisioning
       the OpenStack Infrastructure](./openstack-setup.html) topic.
-    * **DNS**: Use `8.8.8.8`.
+    * **DNS**: Enter one or more Domain Name Servers.
     * **Gateway**: Use the **Gateway IP** from the OpenStack page.
 
 1. Click **Save**.
@@ -218,7 +194,7 @@ network settings.
 ## <a id='resource-config'></a>Step 8: Complete the Resource Config Page ##
 
 1. Select **Resource Config**.
-1. Adjust any values as necessary for your deployment, such as increasing the persistent disk size. Select **Automatic** from the drop-down menu to provision the amount of persistent disk predefined by the job. If the persistent disk field reads **None**, the job does not require persistent disk space.
+1. Adjust any values as necessary for your deployment, such as increasing the persistent disk size. 
 1. Click **Save**.
 
 <%= image_tag("openstack/om-resource-config.png") %>
@@ -232,8 +208,6 @@ These are features that you should be cautious about enabling if you have other 
 1. Enter a trusted certificate and click **Save**.
 
 These certificates enable BOSH-deployed VMs to trust a custom root certificate, but adding certificates in this way does not yet insert them into application containers or into your UAA's JVM store, which would be necessary to enable UAA-to-SASL trust.
-
-<p class='note'><strong>Note:</strong> When the Trusted Certificates functionality is developed to add certificates into containers and the UAA, this feature will be moved out of the Experimental Features section. </p>
 
 <%= image_tag("openstack/om-experimental-features.png") %>
 

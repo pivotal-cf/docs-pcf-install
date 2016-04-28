@@ -15,19 +15,42 @@ topic.
 After you complete this procedure, follow the instructions in the [Installing Elastic Runtime after Deploying PCF on OpenStack](./openstack-er-config.html)
 topic.
 
-## <a id='log-in'></a>Step 1: Log in to Ops Manager ##
+## <a id='log-in'></a>Step 1: Access Ops Manager ##
 
-1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Instances** to view the public IP address listed for Ops Manager.
+<p class="note"><strong>Note</strong>: Ops Manager 1.7 security features require that you log in using a fully qualified domain name to access Ops Manager.</a></p> 
 
-1. Use the public IP address of your Ops Manager instance to launch Ops Manager
-in a browser.
-    <%= image_tag("om-log-in.png") %>
+1. In a web browser, navigate to the fully qualified domain you created in the [Create a DNS Entry](./openstack-setup.html#dns-entry) step of [Provisioning the OpenStack Infrastructure](./openstack-setup.html).
+
+1. When Ops Manager starts for the first time, you must choose one of the following:
+    * [Use an Identity Provider](#idp): If you use an Identity Provider, an external identity server maintains your user database.
+    * [Internal Authentication](#internal): If you use Internal Authentication, Pivotal Cloud Foundry&reg; (PCF) maintains your user database.
+
+    <%= image_tag("select-authentication.png") %>
+
+### <a id='idp'></a>Use an Identity Provider ###
+
+1. When redirected to the **Use an Identity Provider** page, you must complete the following steps:
+    * Retrieve the metadata URL from your Identity Provider and copy it into the **Use an Identity Provider** area.
+    * Create a passphrase. Ops Manager encrypts data using the passphrase that you provide.
+    * Read the **End User License Agreement**, and select the checkbox to accept the terms.
+    * Click **Setup Authentication**.
+
+    <%= image_tag("meta-url.png") %>
 
 1. Enter a **Username** and a **Password**.
 
 1. Read the **End User License Agreement**, and select the checkbox to accept.
 
-1. Click **Create Admin User** to create an Ops Manager administrator account.
+1.  When redirected to the **Internal Authentication** page, you must complete the following steps:
+    * Enter a **Username**, **Password**, and **Password confirmation** to create an Admin user.
+    * Enter a **Decryption passphrase** and the **Decryption passphrase confirmation**. This passphrase encrypts the Ops Manager datastore, and is not recoverable.
+    * Read the **End User License Agreement**, and select the checkbox to accept the terms.
+
+    <%= image_tag("om-login.png") %>
+
+1. Log in to Ops Manager with the Admin username and password you created in the previous step.
+
+    <%= image_tag("cf-login.png") %>
 
 ## <a id='openstack-config'></a>Step 2: Complete the OpenStack Config Page ##
 
@@ -45,10 +68,9 @@ later step.
 
 1. Select **OpenStack Config**.
 
-1. Complete the **OpenStack Management Console Config** page with the following
-information:
-
     <%= image_tag("openstack/om-openstack-config.png") %>
+
+1. Complete the **OpenStack Management Console Config** page with the following information:
     * **Authentication URL**: Enter the Service Endpoint for the Identity
       service that you recorded in a previous step.
     * **Username**: Enter your OpenStack Horizon username.
@@ -66,9 +88,8 @@ information:
     * **SSH Private Key**: In a text editor, open the key pair file that you
       downloaded in the [Configure Security](./openstack-setup.html#security)
       step of the [Provisioning the OpenStack
-      Infrastructure](./openstack-setup.html) topic. Copy and paste the contents
-      of the key pair file into the SSH Private Key field.
-    * **Disable DHCP**: Select this checkbox to disable DHCP. Do not select this checkbox unless your setup requires it.
+      Infrastructure](./openstack-setup.html) topic. Copy and paste the contents of the key pair file into the field.
+    * **Disable DHCP**: Do not select the checkbox unless your setup requires it.
 
 1. Click **Save**.
 
@@ -78,10 +99,9 @@ information:
     users leave this field blank.</p>
 
 1. In Ops Manager, select **Advanced Infrastructure Config**.
-<%= image_tag("openstack/om-advanced-infra.png") %>
+    <%= image_tag("openstack/om-advanced-infra.png") %>
 
-1. If your OpenStack environment requires specific connection options, enter them in the **Connection Options** field in JSON format. For example:
-    `'connection_options' => { 'read_timeout' => 200 }`
+1. If your OpenStack environment requires specific connection options, enter them in the **Connection Options** field in JSON format. For example: `'connection_options' => { 'read_timeout' => 200 }`
 
 1.  Click **Save**.
 
@@ -103,11 +123,28 @@ Depending on your configuration, you may use the contents of this file to comple
 1. Enter one or more NTP servers in the **NTP Servers (comma
     delimited)** field. For example, `us.pool.ntp.org`.
 
-1. (Optional) Enter your **Metrics IP Address** if you are [Using Pivotal Ops Metrics](./../customizing/use-metrics.html).
+1. (Optional) Enter your **Metrics IP Address** if you are [Using JMX Bridge](./../customizing/use-metrics.html).
 
 1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops Manager Resurrector functionality and increase Elastic Runtime availability.
 
-1. For **Blobstore Location**, Pivotal recommends you select **Internal** to have PCF deploy and manage the blobstore. However, if you prefer to use an external blobstore, select **S3 Compatible Blobstore** and complete the following fields:
+1. Select **Recreate all VMs** to force BOSH to recreate all VMs on the next deploy. This process does not destroy any persistent disk data.
+
+1. Select **HM Pager Duty Plugin** to enable Health Monitor integration with PagerDuty.
+    * **Service Key**: Enter your API service key from PagerDuty.
+    * **HTTP Proxy**: Enter an HTTP proxy for use with PagerDuty.
+
+1. Select **HM Email Plugin** to enable Health Monitor integration with email.
+    * **Host**: Enter your email hostname.
+    * **Port**: Enter your email port number.
+    * **Domain**: Enter your domain.
+    * **From**: Enter the address for the sender.
+    * **Recipients**: Enter comma-separated addresses of intended recipients.
+    * **Username**: Enter the username for your email server.
+    * **Password**: Enter the password password for your email server.
+    * **Enable TLS**: Select this checkbox to enable Transport Layer Security.
+
+1. For **Blobstore Location**, select **S3 Compatible Blobstore** and complete the following steps using information from the `ec2rc.sh` file:
+    * **Blobstore Location**: Select the **S3 Compatible Blobstore** option.
     * **S3 Endpoint**: Use **S3_URL** from the `ec2rc.sh` file.
     * **Bucket Name**: Enter `pcf`.
     * **Access Key**: Use **EC2\_ACCESS\_KEY** from the `ec2rc.sh` file.
@@ -121,7 +158,8 @@ Depending on your configuration, you may use the contents of this file to comple
 
 <p class='note'><strong>Note</strong>: If you select to use an internal database, <a href="./../customizing/backup-restore/backup-pcf.html">back up</a> your data frequently to ensure you have saved the latest copy. </p>
 
-## <a id='az-config'></a>Step 5: Complete the Availability Zones Pages ##
+
+## <a id='az-config'></a>Step 5: Complete the Create Availability Zones Page ##
 
 1. In Ops Manager, select **Create Availability Zones**.
 
@@ -132,16 +170,7 @@ Depending on your configuration, you may use the contents of this file to comple
 
 1. Click **Save**.
 
-1. Select **Assign Availability Zones**.
-
-    <%= image_tag("openstack/assign-az.png") %>
-
-1. From the **Singleton Availability Zone** drop-down menu, select the
-availability zone that you just created.
-
-1. Click **Save**.
-
-## <a id='networks-config'></a>Step 6: Complete the Networks Pages ##
+## <a id='create-networks'></a>Step 6: Complete the Create Networks Page ##
 
 1. In the left navigation of your OpenStack dashboard, click **Project > Network > Networks**.
 
@@ -153,57 +182,51 @@ network settings.
 
     <%= image_tag("openstack/view-network-info.png") %>
 
-1. Complete the Ops Manager **Create Networks** page using information from your OpenStack network as follows:
+1. In Ops Manager, select **Create Networks**.
 
     <%= image_tag("openstack/om-create-networks-config.png") %>
-    * **Name**: Enter a unique name for this network.
-    * **Network ID**: Use the **ID** from the OpenStack page.
-    * **Subnet (CIDR Range)**: Use the **Network Address** from the OpenStack
-      page.
-    * **Excluded IP Ranges**: Use the first 10 IP addresses of the **Network
-      Address** Range, and the private IP Address of the Ops Manager instances
-      that you recorded in the [Associate a Floating IP
-      Address](./openstack-setup.html#floating-ip) step of the [Provisioning
-      the OpenStack Infrastructure](./openstack-setup.html) topic.
-    * **DNS**: Enter one or more Domain Name Servers.
-    * **Gateway**: Use the **Gateway IP** from the OpenStack page.
 
+1. Select **Enable ICMP checks** to enable ICMP on your networks.
+1. Use the following steps to create one or more Ops Manager networks using information from your OpenStack network:
+    * Click **Add Network**.
+    * Enter a unique **Name** for the network.
+    * Click **Add Subnet** to create one or more subnets for the network.
+    * For **Network ID**, use the **ID** from the OpenStack page.
+    * For **CIDR**, use the **Network Address** from the OpenStack page.
+    * For **Reserved IP Ranges**, use the first 10 IP addresses of the **Network Address** range, and the private IP address of the Ops Manager instance that you recorded in the [Associate a Floating IP Address](./openstack-setup.html#floating-ip) step of the [Provisioning the OpenStack Infrastructure](./openstack-setup.html) topic.
+    * For **DNS**, enter one or more Domain Name Servers.
+    * For **Gateway**, use the **Gateway IP** from the OpenStack page.
 1. Click **Save**.
 
-1. Select **Assign Networks**.
 
-    <%= image_tag("openstack/om-assign-networks.png") %>
-1. Select the network that you created and click **Save**.
+## <a id='assign-az'></a>Step 7: Complete the Assign AZs and Networks Page ##
 
-## <a id='security'></a>Step 7: Complete the Security Page ##
+1. Select **Assign Availability Zones**.
+
+    <%= image_tag("openstack/assign-az.png") %>
+
+1. From the **Singleton Availability Zone** drop-down menu, select the availability zone that you created in a previous step. The Ops Manager Director installs in this Availability Zone.
+1. Use the drop-down menu to select the **Network** that you created in a previous step. Ops Manager Director installs in this network.
+1. Click **Save**.
+
+## <a id='security'></a>Step 8: Complete the Security Page ##
 
 1. Select **Security**.
+    <%= image_tag("openstack/om-security.png") %>
 
+1. In **Trusted Certificates**, enter a custom certificate authority (CA) certificate to insert into your organization's certificate trust chain. This feature enables all BOSH-deployed components in your deployment to trust a custom root certificate. If you want to use Docker Trusted Registries for running app instances in Docker containers, use this field to enter your certificate for your private Docker Trusted Registry. See the [Using Docker Trusted Registries](../opsguide/docker-registry.html) topic for more information.
 1. Choose **Generate passwords** or **Use default BOSH password**. Pivotal recommends that you use the **Generate passwords** option for greater security.
-
 1. Click **Save**. To view your saved Director password, click the **Credentials** tab.
 
-<%= image_tag("openstack/om-security-config.png") %>
-
-## <a id='resource-config'></a>Step 8: Complete the Resource Config Page ##
+## <a id='resource-config'></a>Step 9: Complete the Resource Config Page ##
 
 1. Select **Resource Config**.
-1. Adjust any values as necessary for your deployment, such as increasing the persistent disk size. 
+    <%= image_tag("openstack/om-resource-config.png") %>
+1. Adjust any values as necessary for your deployment, such as increasing the persistent disk size. Select **Automatic** from the drop-down menu to provision the amount of persistent disk predefined by the job. If the persistent disk field reads **None**, the job does not require persistent disk space.
+
+    <p class="note"><strong>Note</strong>: If you set a field to <strong>Automatic</strong> and the recommended resource allocation changes in a future version, Ops Manager automatically uses the updated recommended allocation.</p> 
+
 1. Click **Save**.
-
-<%= image_tag("openstack/om-resource-config.png") %>
-
-## <a id='experimental'></a>Step 9: (Optional) Complete the Experimental Features Page ##
-
-These are features that you should be cautious about enabling if you have other Pivotal Cloud Foundry service tiles installed in your Pivotal Cloud Foundry deployment. Not all of the services are guaranteed to work as expected with these features enabled.
-
-1. Select the **Experimental Features** tab.
-
-1. Enter a trusted certificate and click **Save**.
-
-These certificates enable BOSH-deployed VMs to trust a custom root certificate. However, adding certificates in Ops Manager does not insert them into application containers or into your UAA's JVM store.
-
-<%= image_tag("openstack/om-experimental-features.png") %>
 
 ## <a id='complete-ops'></a>Step 10: Complete Ops Manager Director Installation ##
 

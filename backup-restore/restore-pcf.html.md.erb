@@ -10,33 +10,47 @@ This topic describes the procedure for restoring <%= vars.product_full %> from a
 To restore a deployment, you must import installation settings, temporarily stop the Cloud Controller, restore the state of each critical backend component from its backup file, and restart the Cloud Controller. Using the BOSH manifest to locate your critical backend components is necessary to perform these steps. Manifests are automatically downloaded to the Ops Manager virtual machine. However, if you are using a separate jumpbox, you must manually download the BOSH deployment manifest.
 
 <p class='note'><strong>Note</strong>:
-The procedure described in this topic restores a running <%= vars.product_full %> deployment to the state captured by backup files. This procedure does not deploy <%= vars.product_full %>. See the
-<a href='../../installing/index.html'>Installing PCF Guide</a> for information about deploying <%= vars.product_full %>.
-</p>
+The procedure described in this topic restores a running <%= vars.product_full %> deployment to the state captured by backup files. This procedure does not deploy <%= vars.product_full %>. See the <a href='../../installing/index.html'>Installing PCF Guide</a> for information about deploying <%= vars.product_full %>.</p>
 
 ## <a id='import'></a>Import Installation Settings ##
 
 <p class='note'><strong>Note</strong>: Pivotal recommends that you export your installation settings before importing from a backup. See the <a href='./backup-pcf.html#export'>Export Installation Settings</a> section of the <i>Backing Up Pivotal Cloud Foundry&reg;</i> topic for more information.</p>
 
 **Import installation settings** imports the settings and assets of an existing
-PCF installation.
-Importing an installation overwrites any existing installation.
+PCF installation. Importing an installation overwrites any existing installation. You must provision a new Ops Manager in order to import settings. 
 
-1. From the Product Installation Dashboard, click the gear icon and select **Import installation settings**.
+1. Deploy the new Ops Manager VM:
+  * [Launching an Ops Manager Director Instance on AWS](../cloudform-om-deploy.html)
+  * [Provisioning the OpenStack Infrastructure](../openstack-setup.html)
+  * [Deploying Operations Manager to vSphere](../deploying-vm.html)
+  * [Deploying Operations Manager to vCloud Air and vCloud](../pcf-vchs-vcloud.html)
 
-<%= image_tag("action-import.png") %>
 
-1. Browse to and select a PCF installation file.
+1. When redirected to the **Welcome to Ops Manager** page, select **Import Existing Installation**. 
 
-1. If the admin password has changed since the file was exported, enter your previous Ops Manager password before you click **Import**.
-Enter the original password that was used when the installation was exported.
-If the admin password has not changed, skip this step.
+    <%= image_tag("../images/upgrading/welcome.png") %>
+
+1. When prompted, enter the following:
+  * **Decryption Passphrase**, which is the same as your password. 
+  * Click **Choose File** and browse to the installation zip file that you exported in the [Export Installation Settings](./backup-pcf.html#export) section.
+
+    <%= image_tag("../images/upgrading/decryption_passphrase.png") %>
 
 1. Click **Import**.
 
-    <%= image_tag("import-installation-file.png") %>
+    <p class="note"><strong>Note</strong>: 
+      Some browsers do not provide feedback on the status of the import process,
+      and may appear to hang.</p>
 
-1. Return to the Product Installation Dashboard and click Apply Changes to install the imported installation settings.
+1. Before you see the new PCF 1.7 **Installation Dashboard**, a Security Features alert appears. Take note of your new **username**. Ensure you change your decryption passphrase before sharing it with other users. Click **Continue**.
+
+    <%= image_tag("../images/upgrading/security_features.png") %>
+
+1. A "Successfully imported installation" message appears upon completion.
+
+    <%= image_tag("../images/upgrading/success.png") %>
+
+1. Click **Apply Changes**. This immediately imports and applies upgrades to all tiles in a single transaction.
 
 ## <a id='restore_bosh'></a>Restoring BOSH Using Ops Manager ##
 
@@ -66,7 +80,7 @@ If the admin password has not changed, skip this step.
 
 ## <a id='restore-databases'></a>Restoring Critical Backend Components##
 
-Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore. This section describes the procedure for restoring the databases and the servers associated with your PCF installation..
+Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore. This section describes the procedure for restoring the databases and servers associated with your PCF installation.
 
 You must restore each of the following:
 
@@ -86,7 +100,7 @@ You must restore each of the following:
 
 <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
 
-Use the Cloud Controller Database (CCDB) password and IP address to restore the Cloud Controller Database by following the steps detailed below. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+Use the Cloud Controller Database (CCDB) password and IP address to restore the Cloud Controller Database by following the steps detailed below. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager **Installation Dashboard**, select **Elastic Runtime** and click **Credentials>Link to Credential**.
 
 1. Use `scp` to send the Cloud Controller Database backup file to the Cloud Controller Database VM.
 <pre class='terminal'>
@@ -119,7 +133,7 @@ $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 ccdb < ~/ccdb.sq
 
 <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
 
-1. Use the Apps Manager Database password and IP address to restore the Cloud Controller Database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+1. Use the Apps Manager Database password and IP address to restore the Cloud Controller Database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager **Installation Dashboard**, select **Elastic Runtime** and click **Credentials>Link to Credential**.
 
 1. Use `scp` to copy the database backup file to the UAA Database VM.
 <pre class='terminal'>
@@ -156,7 +170,7 @@ $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 console < ~/cons
 1. Find your UAA Database VM ID. To view all VM IDs, run `bosh vms` from a command line:
 <pre class='terminal'>$ bosh vms</pre>
 
-1. SSH into the UAA Database VM using the vcap user and password. If you do not have this information recorded, find it in the Ops Manager Installation Dashboard. Click the **Elastic Runtime** tile and select **Credentials**.
+1. SSH into the UAA Database VM using the vcap user and password. If you do not have this information recorded, find it in the Ops Manager **Installation Dashboard**. Click the **Elastic Runtime** tile and select **Credentials>Link to Credential**.
 <pre class='terminal'>$ ssh vcap@YOUR-UAADB-VM-IP-ADDRESS</pre>
 
 1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the UAA Database VM.
@@ -184,7 +198,7 @@ create schema public;
 
 <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
 
-1. Use the UAA Database password and IP address to restore the UAA Database by running the following commands. You can find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+1. Use the UAA Database password and IP address to restore the UAA Database by running the following commands. You can find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager **Installation Dashboard**, select **Elastic Runtime** and click **Credentials>Link to Credential**.
 
 1. Use `scp` to copy the database backup file to the UAA Database VM.
 <pre class='terminal'>
@@ -202,7 +216,7 @@ $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 uaa < ~/uaa.sql
 </pre>
 
 ### <a id='restore-nfs'></a>Restore NFS
-Use the NFS password and IP address to restore the NFS by following the steps detailed below. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+Use the NFS password and IP address to restore the NFS by following the steps detailed below. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager **Installation Dashboard**, select **Elastic Runtime** and click **Credentials>Link to Credential**.
 
 1. Run `ssh YOUR-NFS-VM-IP-ADDRESS` to enter the NFS VM.
 <pre class='terminal'>
@@ -242,8 +256,9 @@ Use the NFS password and IP address to restore the NFS by following the steps de
     $ exit
 </pre>
 
-### <a id='restore-mysql-dev'></a>Restore MySQL Database
 
+### <a id='restore-mysql-dev'></a>Restore MySQL Database ###
+  
  1. Use `scp` to send the MySQL Database backup file to the MySQL Database VM. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
 	 <pre class='terminal'>
 	    $ scp user_databases.sql vcap@YOUR-MYSQL-VM-IP-ADDRESS:~/.

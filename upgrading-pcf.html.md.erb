@@ -1,85 +1,116 @@
 ---
-title: Upgrading Operations Manager
+title: Upgrading Pivotal Cloud Foundry
 owner: Ops Manager
 ---
+ 
+<style>
+    .note.warning {
+        background-color: #fdd;
+        border-color: #fbb
+    }
 
+    .note.warning:before {
+        color: #f99;
+     }
+</style>
+ 
 <strong><%= modified_date %></strong>
+
+This topic describes upgrading PCF from version 1.6 to 1.7. The upgrade procedures below describe upgrading Ops Manager, Elastic Runtime, and any product tiles that you have installed for which 1.7 versions are available. 
+     
+If you have already upgraded your Ops Manager to version 1.7 and want to upgrade
+individual products such as Pivotal Cloud Foundry&reg; Elastic Runtime, <a href="https://network.pivotal.io/products/p-mysql">Pivotal MySQL</a>, or <a
+href="https://network.pivotal.io/products/pivotal-rabbitmq-service">RabbitMQ</a> in your PCF deployment, see the <a href="./upgrading-products.html">Upgrading
+  Products in a PCF Deployment</a> topic.
+
+<p class="note warning">
+<strong>WARNING: </strong> Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. All apps that do not already run on Diego will terminate during an upgrade from 1.6 to 1.7.
+</p>
+
 
 **Important**: Read the Known Issues section of the [Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) (PCF)
 [Release Notes](../pcf-release-notes/index.html) before getting started.
 
-Complete the following steps to upgrade Pivotal Cloud Foundry&reg; Operations
-Manager (Ops Manager).
-Select the procedure that corresponds to your upgrading scenario.
+## <a id="beforeupgrade"></a>Before You Upgrade
 
-Pivotal strongly recommends that you [back up all critical data](./backup-restore/backup-pcf.html) prior to upgrading.
+This section contains important guidelines that you must follow before beginning an upgrade to PCF 1.7. Failure to follow these instructions may jeopardize your existing deployment data or cause your upgrade to fail.
 
-<p class="note"><strong>Note</strong>: To upgrade your <a
-  href="https://network.pivotal.io/products/pivotal-cf">Pivotal Cloud
-  Foundry&reg;</a> (PCF) installation to a target release, you must install all
-  releases from your currently deployed version to the target version in
-  sequential order. For example, if your deployment uses Ops Manager release 1.1
-  and you are upgrading to 1.3, you must sequentially install 1.2 and 1.3.</p>
+The tasks you need to complete before upgrade fall into three categories: 
 
-<p class="note"><strong>Note</strong>: If any of your applications were deployed originally to PCF Elastic Runtime 1.3 or earlier, or were specifically configured to run on Canonical’s lucid64 stack, you must migrate them to a newer OS stack before upgrading to PCF 1.6.<br>
-Pivotal recommends using the cf CLI <a href="https://github.com/simonleung8/cli-stack-changer">stack-changer plugin</a> to move your apps from lucid64, which is no longer supported, to cflinuxfs2, a stack based on Ubuntu Trusty 14.04. See the <a href="https://support.pivotal.io/hc/en-us/articles/205751277-New-cflinuxfs2-Stack">New cflinuxfs2 Stack</a> support page for instructions on how to perform this migration.</p>
++ [Prepare Your Environment](#prepare-env) — includes making sure you have sufficient disk space.
++ [Prepare Databases and Apps](#prepare-db) — includes backing up data and migrating any apps 
+that currently use the DEA architecture to use the Diego architecture.  
++ [Check System Health](#check-health) — perform a health check of your system, from virtual machines (VMs) to service tiles. 
 
-## <a id="pcf16upgrade"></a>Upgrading to PCF 1.6
+### <a id="prepare-env"></a>Prepare Your Environment for Upgrade
 
-This section contains important guidelines that you must follow if you are upgrading an existing PCF 1.5 deployment to PCF 1.6. Failure to follow these instructions may jeopardize your existing deployment data or cause your upgrade to fail.
+1. To upgrade your Pivotal Cloud Foundry&reg;</a> (PCF) installation to a target release, you must install the major releases from your currently deployed 
+version to the target version in sequential order. For example, if your deployment uses Ops Manager release 1.5 and you are upgrading to 1.7, 
+you must sequentially install 1.6 and 1.7.
 
-### Before You Upgrade ###
+    <p class="note"><strong>Note</strong>: Ensure that you are using Elastic Runtime (ERT) v. 1.6.9 or higher.</p>
 
-* In Ops Manager, delete the Diego Beta tile, if installed.
+2. Ensure that every product tile on the Installation Dashboard is compatible with the new version of Ops Manager. For specific compatibility information, refer to the full [Product Version  Matrix](../../compatibility-matrix.pdf).
+If a product does not meet this requirement, you must upgrade the product or
+remove the tile before upgrading Ops Manager.
 
-* On the **Resource Config** page of your existing Elastic Runtime 1.5 configuration, scale the number of consul servers down to `1` instance. You can scale the number of instances back up after you have upgraded Elastic Runtime. If you are not running any consul servers as part of your deployment, you can ignore this step.
+3. For each product tile you have installed, review the upgrade documentation that is specific to the tile. For example, if you have RabbitMQ, you need to increase the number of HAproxy instances from one to two. See [RabbitMQ for Pivotal Cloud Foundry Upgrades](../../rabbitmq-cf/upgrade.html).
 
-* If you are upgrading PCF on AWS, create and configure an ELB for enabling Diego SSH connections. See [Creating an SSH Proxy for Diego with an AWS ELB](cloudform_elb_ssh_proxy.html) for instructions.
+4. <%= partial 'check_disk_before_upgrade' %>
 
-### During the Elastic Runtime Upgrade ###
+5. If you have disabled lifecycle errands  for any installed product in order to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. See <a href="./add-delete.html#add-import">Adding and Deleting Products</a> for more  information.
 
-* If your existing PCF 1.5 deployment uses internal databases, do not modify the selected Postgres/MySQL configuration on the **System Database Config** page. PCF 1.6 allows you to deploy all of your internal databases to MySQL for improved high-availability. However, you should only select the MySQL option after you have migrated all of your existing Postgres data. If you wish to migrate your data in order to access this feature in PCF 1.6, please contact Pivotal support first.
+6. Ensure that the VM resurrector is turned off:
+   1. From your Installation Dashboard, select the **Ops Manager Director** tile. 
+   2. Click **Director Config**.
+   3. Clear the **Enable VM resurrector plugin** checkbox.
 
-* If your existing PCF 1.5 deployment uses an external S3 filestore, do not modify the pre-populated value used in the bucket name fields on the **File Storage Config** page. PCF 1.6 allows you to specify four different buckets for various cloud-controller artifacts; however, you should continue to use your existing 1.5 bucket names across all four buckets in order to retain existing data.
 
-* If you wish all new applications pushed to your PCF 1.6 deployment to use [Diego](../concepts/diego/diego-architecture.html) by default, select the **Use Diego by default instead of DEAs** option on the **Diego configuration screen**. If you do not select this option, application developers must explicitly specify to use Diego when pushing their applications. See [Diego Migration](./apps-enable-diego.html).
+### <a id="prepare-db"></a>Prepare Databases and Apps for Upgrade
 
-### After the Upgrade ###
 
-* On the **Resource Config** page of Elastic Runtime, scale your consul server instances back up to the desired number.
+1. Back up all critical data prior to upgrading to PCF 1.7. Follow these instructions in the version 1.6 topic <a href="http://docs.pivotal.io/1.6/pivotalcf/customizing/backup-restore/backup-pcf.html">Backing Up Pivotal Cloud Foundry</a>. <br>
+ 
 
-* Advise your application developers on targeting Diego when pushing their applications. See [Diego Migration](./apps-enable-diego.html).
+2. Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal does not support DEA architecture in Pivotal Cloud Foundry 1.7. See the [Migrating Apps to Diego](./apps-enable-diego.html) topic for information.
+
+
+### <a id="check-health"></a>Check System Health Before Upgrade
+
+5. Run `bosh cloudcheck` to confirm that the VMs are healthy.  See the [BOSH Cloudcheck](../customizing/trouble-advanced.html#cck) topic.
+
+6. Check the system health of installed products. In the Installation Dashboard, select the **Status** tab for each service tile. Confirm that all jobs are healthy.
+
+7. (Optional) Check the logs for errors before proceeding with the upgrade.
+See the [Viewing Logs in the Command Line Interface](../devguide/deploy-apps/streaming-logs.html#view) topic.  
+
+8. There should be no outstanding changes in Ops Manager or any other tile. All tiles should be green.
+Click **Apply Changes** if necessary.
+
+9. After applying changes, click **Recent Install Logs** to confirm that the changes completed cleanly:
+    ```
+    Cleanup complete
+    {"type": "step\_finished", "id": "clean\_up\_bosh.cleaning\_up"}
+    Exited with 0.
+    ```
+
 
 ## <a id="keep"></a>Upgrading with Installed Products ##
 
-Follow the steps below to keep all installed products when you upgrade Ops Manager.
+Follow the steps below to upgrade Ops Manager and keep all installed products.
 
-<p class="note"><strong>Note</strong>: If you have disabled lifecycle errands
-	for any installed product in order to reduce deployment time, Pivotal
-	recommends that you re-enable these errands before upgrading. See <a
-	href="./add-delete.html#add-import">Adding and Deleting Products</a> for more
-	information. </p>
-1. <%= partial 'check_disk_before_upgrade' %>
-1. Ensure that every product tile on the Installation Dashboard is compatible
-with the new version of Ops Manager.
-To be compatible, a product must meet the minimum version requirement for that
-product.
-If a product does not meet this requirement, you must upgrade the product or
-remove the tile before upgrading Ops Manager.
-    <br /><br />
-    For specific compatibility information, refer to the full [Product Version  Matrix](../../compatibility-matrix.pdf).
+<p class="note"><strong>Note</strong>: Ops Manager 1.7 uses the User Account and Authentication (UAA), instead of only local user account authentication. When you import your pre-1.7 file to Ops Manager, your user name changes to <code>admin</code> and your password remains the same. It also prompts you to create a shared passphrase, which is distinct from your password. Your passphrase on a new import will be the same as your password. However, you must change the passphrase for security purposes. </p>
 
 1. From the Product Dashboard, select **Actions > Export installation
 settings**.
 
-    <%= image_tag("./images/upgrading/export_settings.png") %>
+    <%= image_tag("./images/upgrading/upgrade_to_1.7.png") %>
 
     This exports the current PCF installation with all of its assets.
     When you export an installation, the export contains the base VM images and
     necessary packages, and references to the installation IP addresses.
     As a result, an exported file can be very large, as much as 5 GB or more.
-    * Because of the size of the exported file, exporting can take tens of
-      minutes.
+    * The export time depends on the size of the exported file.
     * Some browsers do not provide feedback on the status of the export
       process, and may appear to hang.
     * Some operating systems may automatically unzip the exported installation.
@@ -92,50 +123,42 @@ settings**.
 
     <%= image_tag("./images/upgrading/compress.png") %>
 
-1. Download the latest Ops Manager VM Template from the [Pivotal
+2. Download the latest Ops Manager VM Template from the [Pivotal
 Network](https://network.pivotal.io/products/pivotal-cf) site.
 
 1. Record the IP address of the existing Ops Manager VM.
 
 1. To avoid IP conflicts, power off the existing Ops Manager VM.
 
-1. Deploy the new Ops Manager VM.
-See [Deploying Operations Manager to vSphere](./deploying-vm.html) or [Deploying
-Operations Manager to vCloud Air and vCloud](./pcf-vchs-vcloud.html).
+1. Deploy the new Ops Manager VM:
+    * [Launching an Ops Manager Director Instance on AWS](./cloudform-om-deploy.html)
+    * [Provisioning the OpenStack Infrastructure](./openstack-setup.html)
+    * [Deploying Operations Manager to vSphere](./deploying-vm.html)
+    * [Deploying Operations Manager to vCloud Air and vCloud](./pcf-vchs-vcloud.html)
 
-1. From the Product Dashboard, select **Actions > Import installation
-settings**.
+1. When redirected to the **Welcome to Ops Manager** page, select **Import Existing Installation**. 
 
-    <%= image_tag("./images/upgrading/import_settings.png") %>
+    <%= image_tag("./images/upgrading/welcome.png") %>
 
-1. Click **Choose File**, browse to the installation zip file exported in Step
-1, and click **Choose**.
-1. If the admin password has changed since the file was exported, you must
-select **Need to enter a decryption password?** before you click **Import** to
-prevent an error.
-Enter the original password that was used when the installation was exported.
-If the admin password has not changed, you may skip this step.
+1. When prompted, enter the following:
+  * **Decryption Passphrase**, which is the same as your password. 
+  * Click **Choose File** and browse to the installation zip file exported in Step 3 above.
 
-    <%= image_tag("./images/upgrading/import.png") %>
+    <%= image_tag("./images/upgrading/decryption_passphrase.png") %>
 
 1. Click **Import**.
 
-    <p class="note"><strong>Note</strong>: Importing can take tens of minutes.
+    <p class="note"><strong>Note</strong>: 
       Some browsers do not provide feedback on the status of the import process,
       and may appear to hang.</p>
+
+1. Before you see the new PCF 1.7 **Installation Dashboard**, a Security Features alert appears. Take note of your new **username**. Ensure you change your decryption passphrase before sharing it with other users. Click **Continue**.
+
+    <%= image_tag("./images/upgrading/security_features.png") %>
 
 1. A "Successfully imported installation" message appears upon completion.
 
     <%= image_tag("./images/upgrading/success.png") %>
-
-1. Select **Resource Config**.
-
-1. Change the value of the **Ephemeral Disk (MB)** for the Ops Manager Director
-to `32768`.
-
-    <%= image_tag("./images/upgrading/opsmgr-resources.png") %>
-
-1. Click **Save**.
 
 1. Click **Apply Changes**. This immediately imports and applies upgrades to all tiles in a single transaction.
 
@@ -143,68 +166,16 @@ to `32768`.
 
 1. Remove the original Ops Manager VM from your IaaS if the new installation functions correctly.
 
-<p class="note"><strong>Note</strong>: Independently from upgrading Ops Manager,
-  you can upgrade individual products such as Pivotal Cloud Foundry&reg; Elastic
-  Runtime, <a href="https://network.pivotal.io/products/p-mysql">Pivotal
-  MySQL</a>, or <a
-href="https://network.pivotal.io/products/pivotal-rabbitmq-service">RabbitMQ</a>
-  in your PCF deployment. See <a href="./upgrading-products.html">Upgrading
-  Products in a PCF Deployment</a>.</p>
+## <a id="aftertheupgrade"></a>After the Upgrade
 
-## <a id="lose"></a>Uninstalling and Reinstalling Ops Manager ##
+* Advise your application developers on targeting Diego when pushing their applications. See [Diego Migration](./apps-enable-diego.html).
 
-Follow these steps to upgrade Ops Manager if you have no installed products, or
-you have no installed products that you want to keep.
+* Ops Manager 1.7 defines specific instance types instead of custom sizes for vSphere or vCloud. Each instance adopts an instance type that is the closest match to its previous custom size for CPU, memory, and disk space. After the upgrade, you can modify the automatically selected instance size by selecting a different <code>type</code> under <strong>Resource Config</strong> for each of your installed tiles.
 
-<p class="note"><strong>Note</strong>: If you want to reinstall Ops Manager, and
-  would like to import your information to the new installation, you will need
-  the exported Cloud Controller database and the configuration from the previous
-  installation.</p>
+* (Optional) You can review your product tiles and configure values accordingly. For example, for Elastic Runtime, review the installation topic for new features:
+     * [Launching an Ops Manager Director Instance on AWS](./cloudform-om-deploy.html)
+     * [Provisioning the OpenStack Infrastructure](./openstack-setup.html)
+     * [Deploying Operations Manager to vSphere](./deploying-vm.html)
+     * [Deploying Operations Manager to vCloud Air and
+       vCloud](./pcf-vchs-vcloud.html) 
 
-1. Browse to the Ops Manager web interface and select **Delete this
-installation**.
-
-1. In vSphere, vCloud Air, or vCloud, power off and delete your existing Ops
-Manager VM.
-
-1. Download the latest Ops Manager VM Template from the [Pivotal
-Network](https://network.pivotal.io/products/pivotal-cf) site.
-
-1. Deploy the new Ops Manager VM.
-See one of the following topics:
-    * [Deploying Operations Manager to vSphere](./deploying-vm.html)
-    * [Deploying Operations Manager to vCloud Air and
-      vCloud](./pcf-vchs-vcloud.html)
-
-## <a id="rollback"></a>Rolling Back an Upgraded Installation ##
-
-<p class="note"><strong>Note</strong>: To roll back an installation, or if
-  upgrading fails, Pivotal recommends that you contact Pivotal Support.</p>
-
-If you want to roll back or troubleshoot a failed installation on your own,
-consult the table below.
-The table shows guidelines for compatibility between your exported configuration
-and available Ops Manager versions.
-
-<table border="1" class="nice" >
-<tr>
-  <th><strong>Current Version</strong></th>
-  <th><strong>Can import into 1.2</strong></th>
-  <th><strong>Can import into 1.3</strong></th>
-  <th><strong>Notes</strong></th>
-</tr>
-<tr>
-  <td>1.2</td>
-  <td>&#10003;</td>
-  <td>&#10003;</td>
-  <td>After successful import to 1.3, 1.2 export configuration is no longer
-	  valid.
-	</td>
-</tr>
-<tr>
-  <td>1.3</td>
-  <td></td>
-  <td>&#10003;</td>
-  <td></td>
-</tr>
-</table>

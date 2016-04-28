@@ -3,7 +3,26 @@ title: Upgrading Elastic Runtime and Other Pivotal Cloud Foundry&reg; Products
 owner: RelEng
 ---
 
+<style>
+    .note.warning {
+        background-color: #fdd;
+        border-color: #fbb
+    }
+
+    .note.warning:before {
+        color: #f99;
+     }
+</style>
+ 
 <strong><%= modified_date %></strong>
+
+This topic describes how to upgrade Elastic Runtime (ERT) and other product tiles alone, without upgrading Ops Manager. For example, you might need to do this if a security update for ERT is released or if new features are introduced in a point release of a product tile.
+
+The topic [Upgrading Pivotal Cloud Foundry](./upgrading-pcf.html) describes how to perform a complete upgrade of PCF, including Ops Manager, ERT and other installed products. 
+
+<p class="note warning">
+<strong>WARNING: </strong> Before you upgrade to Elastic Runtime 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. All apps that do not already run on Diego will terminate during an upgrade from 1.6 to 1.7.
+</p>
 
 ## <a id="runtime_snapshot"></a>Elastic Runtime Snapshot ##
 <dl>
@@ -17,96 +36,17 @@ owner: RelEng
 <dd><strong>OpenStack support?</strong> Yes</dd>
 </dl>
 
-## <a id="runtime_upgrade"></a>Upgrading Elastic Runtime to the Latest Version ##
+## <a id="runtime_upgrade"></a>Upgrading Elastic Runtime
 
-Consider the following compatibility information before upgrading Elastic Runtime for Pivotal Cloud Foundry&reg;.
+Refer to the [Product Version Matrix](../../compatibility-matrix.pdf) before upgrading Elastic Runtime for Pivotal Cloud Foundry&reg;.
 
-<p class="note"><strong>Note</strong>: Before you upgrade to Ops Manager 1.5.x, you must first upgrade PCF Elastic Runtime to any version in its 1.3.x minor release. This allows PCF Elastic Runtime upgrades after you install OpsManager 1.5.x. </p>
+<p class="note"><strong>Note</strong>: Before you upgrade to Ops Manager 1.7.x, you must first upgrade PCF Elastic Runtime to version 1.6.9 or higher. </p>
 
-For more information, refer to the full [Product Version Matrix](../../compatibility-matrix.pdf).
-
-<table border="1" class="nice">
-<tr>
-  <th>Ops Manager Version</th>
-  <th>Supported Upgrades from Imported Elastic Runtime Installation</th>
-</tr>
-<tr>
-  <th>1.3.x</th>
-  <td><ul>
-      <li>From 1.2.0 to 1.3.0, 1.3.1, 1.3.2, 1.3.3, 1.3.4, or 1.3.5</li>
-      <li>From 1.2.1 to 1.3.0, 1.3.1, 1.3.2, 1.3.3, 1.3.4, or 1.3.5</li>
-      <li>From 1.2.2 to 1.3.0, 1.3.1, 1.3.2, 1.3.3, 1.3.4, or 1.3.5</li>
-      <li>From 1.3.0 to 1.3.1, 1.3.2, 1.3.3, 1.3.4, or 1.3.5</li>
-      <li>From 1.3.1 to 1.3.2, 1.3.3, 1.3.4, or 1.3.5</li>
-      <li>From 1.3.2 to 1.3.3, 1.3.4, or 1.3.5</li>
-      <li>From 1.3.3 to 1.3.4 or 1.3.5</li>
-      <li>From 1.3.4 to 1.3.5</li>
-    </ul>
-  </td>
-</tr>
-<tr>
-  <th>1.4.x</th>
-  <td><ul>
-      <li>From 1.3.0 to 1.4.0</li>
-      <li>From 1.3.1 to 1.4.0</li>
-      <li>From 1.3.2 to 1.4.0</li>
-      <li>From 1.3.3 to 1.4.0, 1.4.1, 1.4.2, 1.4.3, 1.4.4, or 1.4.5</li>
-      <li>From 1.3.4 to 1.4.0, 1.4.1, 1.4.2, 1.4.3, 1.4.4, or 1.4.5</li>
-      <li>From 1.3.5 to 1.4.0, 1.4.1, 1.4.2, 1.4.3, 1.4.4, or 1.4.5</li>
-      <li>From 1.4.0 to 1.4.1, 1.4.2, 1.4.3, 1.4.4, or 1.4.5</li>
-      <li>From 1.4.1 to 1.4.2, 1.4.3, 1.4.4, or 1.4.5</li>
-      <li>From 1.4.2 to 1.4.3, 1.4.4, or 1.4.5</li>
-      <li>From 1.4.3 to 1.4.4 or 1.4.5</li>
-      <li>From 1.4.4 to 1.4.5</li>
-    </ul>
-  </td>
-</tr>
-<tr>
-  <th>1.5.x</th>
-  <td><ul>
-      <li>From 1.3.0 to 1.4.0</li>
-      <li>From 1.3.1 to 1.4.0</li>
-      <li>From 1.3.2 to 1.4.0</li>
-      <li>From 1.3.3 to 1.4.0, 1.4.1, 1.4.2, 1.4.3, 1.4.4, or 1.4.5</li>
-      <li>From 1.3.4 to 1.4.0, 1.4.1, 1.4.2, 1.4.3, 1.4.4, or 1.4.5</li>
-      <li>From 1.3.5 to 1.4.0, 1.4.1, 1.4.2, 1.4.3, 1.4.4, or 1.4.5</li>
-      <li>From 1.4.0 to 1.4.1, 1.4.2, 1.4.3, 1.4.4, 1.4.5, or 1.5.0</li>
-      <li>From 1.4.1 to 1.4.2, 1.4.3, 1.4.4, 1.4.5, or 1.5.0</li>
-      <li>From 1.4.2 to 1.4.3, 1.4.4, 1.4.5, or 1.5.0</li>
-      <li>From 1.4.3 to 1.4.4, 1.4.5, or 1.5.0</li>
-      <li>From 1.4.4 to 1.4.5 or 1.5.0</li>
-      <li>From 1.4.5 to 1.5.0</li>
-    </ul>
-  </td>
-</tr>
-  <th>1.6.x</th>
-  <td><ul>
-      <li>From 1.3.0 to 1.4.0</li>
-      <li>From 1.3.1 to 1.4.0</li>
-      <li>From 1.3.2 to 1.4.0</li>
-      <li>From 1.3.3 to 1.4.0, 1.4.1, 1.4.2, 1.4.3, 1.4.4, or 1.4.5</li>
-      <li>From 1.3.4 to 1.4.0, 1.4.1, 1.4.2, 1.4.3, 1.4.4, or 1.4.5</li>
-      <li>From 1.3.5 to 1.4.0, 1.4.1, 1.4.2, 1.4.3, 1.4.4, or 1.4.5</li>
-      <li>From 1.4.0 to 1.4.1, 1.4.2, 1.4.3, 1.4.4, 1.4.5, or 1.5.0</li>
-      <li>From 1.4.1 to 1.4.2, 1.4.3, 1.4.4, 1.4.5, or 1.5.0</li>
-      <li>From 1.4.2 to 1.4.3, 1.4.4, 1.4.5, or 1.5.0</li>
-      <li>From 1.4.3 to 1.4.4, 1.4.5, or 1.5.0</li>
-      <li>From 1.4.4 to 1.4.5 or 1.5.0</li>
-      <li>From 1.4.5 to 1.5.0</li>
-      <li>From 1.5.0 to 1.5.1, 1.5.2, 1.5.3, 1.5.4, 1.5.5, 1.5.6, or 1.6.0</li>
-      <li>From 1.5.1 to 1.5.2, 1.5.3, 1.5.4, 1.5.5, 1.5.6, or 1.6.0</li>
-      <li>From 1.5.2 to 1.5.3, 1.5.4, 1.5.5, 1.5.6, or 1.6.0</li>
-      <li>From 1.5.3 to 1.5.4, 1.5.5, 1.5.6, or 1.6.0</li>
-      <li>From 1.5.4 to 1.5.5, 1.5.6, or 1.6.0 </li>
-      <li>From 1.5.5 to 1.5.6 or 1.6.0</li>
-      <li>From 1.5.6 to 1.6.0</li>
-    </ul>
-  </td>
-</tr></table>
+<p class="note"><strong>Note</strong>: Ops Manager 1.7 defines specific instance types instead of custom sizes for vSphere or vCloud. Each instance adopts an instance type that is the closest match to its previous custom size for CPU, memory, and disk space. You can modify the automatically selected instance size by selecting a different <code>type</code> under <strong>Resource Config</strong> for each of your installed tiles.</p>
 
 ### Install using the Pivotal Operations Manager
 
-To install Elastic runtime for PCF, follow the procedure for installing Pivotal Cloud Foundry&reg; Operations Manager tiles:
+To install Elastic runtime for PCF without upgrading Ops Manager, follow the procedure for installing Pivotal Cloud Foundry&reg; Operations Manager tiles:
 
 1. Download the product file from [Pivotal Network](https://network.pivotal.io/).
 1. Upload the product file to your Ops Manager installation.
@@ -114,15 +54,23 @@ To install Elastic runtime for PCF, follow the procedure for installing Pivotal 
 1. Click the newly added tile to review any configurable options.
 1. Click **Apply Changes** to install the service.
 
-##<a id="other-products"></a>Upgrading PCF Products ##
+##<a id="other-products"></a>Before You Upgrade ##
 
+Before you upgrade to Elastic Runtime 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal does not support DEA architecture in Pivotal Cloud Foundry 1.7. See the [Migrating Apps to Diego](./apps-enable-diego.html) topic for information.
+
+##<a id="other-products"></a>Upgrading PCF Products ##
 
 **Important**: Read the Known Issues section of the [Pivotal Cloud Foundry&reg; Release Notes](../pcf-release-notes/index.html) before getting started.
 
 This section describes how to upgrade individual products like Pivotal Cloud Foundry&reg; Elastic Runtime,
 [Pivotal MySQL](https://network.pivotal.io/products/p-mysql), or [RabbitMQ](https://network.pivotal.io/products/pivotal-rabbitmq-service) in your [Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) (PCF) deployment.
 
-<p class="note"><strong>Note</strong>: To upgrade your PCF product to a target release, you must install all releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Elastic Runtime release 1.1 and you are upgrading to 1.3, you must sequentially install 1.2 and 1.3.</p>
+<p class="note"><strong>Note</strong>: To upgrade your PCF product to a target release, you must install all releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Elastic Runtime release 1.5 and you are upgrading to 1.7, you must sequentially install 1.6 and 1.7.</p>
+
+<div class="note"><strong>Note</strong>: <a href="http://docs.pivotal.io/p-identity/index.html">The Single Sign-On service tile</a> operates in lockstep with Pivotal Elastic Runtime.
+    <ul><li> The SSO v1.0.x tiles are compatible with PCF v1.6.x </li>
+    <li> The SSO v1.1.x tiles are compatible with PCF v1.7.x </li></ul>
+If you are a customer upgrading from PCF 1.6 to PCF 1.7 and you are using SSO v1.0.x, you must update to the SSO v1.1.0 service tile before proceeding with the upgrade.</div>
 
 1. Browse to [Pivotal Network](https://network.pivotal.io/) and sign in.
 
@@ -156,3 +104,9 @@ downloaded.
     * Click **Save**.
 
 1. Click **Apply changes**.
+
+    <p class="note"><strong>Note</strong>:Advise your application developers on targeting Diego when pushing their applications. See Diego Migration.</p>
+
+
+
+

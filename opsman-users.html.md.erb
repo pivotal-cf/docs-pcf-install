@@ -1,0 +1,48 @@
+---
+title: Creating and Managing Ops Manager User Accounts
+---
+
+<strong><%= modified_date %></strong>
+
+[Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf)  supports multiple user accounts in Ops Manager. A User Account and Authentication (UAA) module co-located on the Ops Manager VM manages access permissions to Ops Manager. 
+
+When Ops Manager boots for the first time, you create an admin user. However, you do not create additional users through the Ops Manager web interface. If you want to create additional users who can log into Ops Manager, you must use the UAA API, either through `curl` or the UAA Command Line Client (UAAC). 
+
+<p class="note"><strong>Note:</strong> You can only manage users on the Ops Manager UAA module if you chose to use Internal Authentication instead of an external Identity Provider when configuring Ops Manager.</p>
+
+Follow these steps to add or remove users via the UAAC. If you do not already have the UAAC installed, run `gem install uaac` from a terminal window.
+
+## <a id='add-user'></a>Adding Users to Ops Manager
+
+1. Target your Ops Manager UAA:
+<pre class='terminal'>$ uaac target <span>http</span>://YOUR-OPSMAN-IP:8080/uaa/</pre>
+1. Get your token:
+<pre class='terminal'>$ uaac token owner get
+	Client ID: opsman
+	Client Secret: [Press Enter]
+	Username: Admin
+	Password: *******
+
+	Successfully fetched token via client credentials grant.
+	Target <span>http</span>://YOUR-OPSMAN-IP:8080/uaa/
+</pre>
+1. Add a user:
+<pre class="terminal">$ uaac user add YOUR-USER-NAME -p YOUR-USER-PASSWORD --emails YOUR-USER-EMAIL<span>@</span>EXAMPLE.COM</pre>
+
+## <a id='remove-user'></a>Removing Users from Ops Manager
+1. Target your Ops Manager UAA:
+<pre class='terminal'>$ uaac target <span>http</span>://YOUR-OPSMAN-IP:8080/uaa/</pre>
+1. Get your token:
+<pre class='terminal'>
+	$ uaac token owner get
+	Client ID: opsman
+	Client Secret: [Press Enter]
+	Username: Admin
+	Password: *******
+
+	Successfully fetched token via client credentials grant.
+	Target <span>http</span>://YOUR-OPSMAN-IP:8080/uaa/
+</pre>
+
+1. Delete a user:
+<pre class="terminal">$ uaac user delete YOUR-USER-NAME</pre>

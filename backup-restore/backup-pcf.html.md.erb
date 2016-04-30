@@ -15,8 +15,8 @@ To restore your backup, see the [Restoring Pivotal Cloud Foundry&reg; from Backu
 
 ## <a id='encrypt-key'></a>Record the Cloud Controller Database Encryption Credentials ##
 
-From the Product Installation Dashboard, select **Pivotal Elastic Runtime > Credentials** and locate the Cloud Controller section.
-Record the Cloud Controller **DB encryption credentials**.
+From the **Installation Dashboard**, select **Pivotal Elastic Runtime > Credentials** and locate the Cloud Controller section.
+Record the Cloud Controller **DB Encryption Credentials**.
 You must provide these credentials if you contact Pivotal Support for help
 restoring your installation.
 
@@ -30,7 +30,7 @@ Always export an installation before following the steps in the [Import Installa
 
 <p class="note"><strong>Note</strong>: Exporting your installation only backs up your installation settings. It does not back up your virtual machines (VMs) or any external MySQL databases.</p>
 
-From the Product Installation Dashboard in the Ops Manager interface, click the gear icon and select **Export installation settings**.
+From the **Installation Dashboard** in the Ops Manager interface, click the gear icon and select **Export installation settings**.
 This option is only available after you have deployed at least one time.
 
 **Export installation settings** exports the current PCF installation
@@ -73,19 +73,18 @@ and
 <%= partial './stopping_cc' %>
 
 ### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
-
-<p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
+ 
+ <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
 
 1. In the BOSH deployment manifest, `cf.yml`, locate the Cloud Controller database (CCDB) component under the `ccdb` key and record the IP address:
-
+ 
     ```
     ccdb:
-	      address: 10.85.52.96
-	      port: 2544
-	      db_scheme: postgres
-	```
-
-1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the Cloud Controller database credentials.
+        address: 10.85.52.96
+        port: 2544
+        db_scheme: postgres
+    ```
+1. From the **Installation Dashboard** in Ops Manager, select **Elastic Runtime** and click **Credentials>Link to Credential**. Record the Cloud Controller database credentials.
 
     <%= image_tag("ccdb-creds.png") %>
 
@@ -93,18 +92,18 @@ and
 
     <pre class="terminal">
     $ ssh vcap@10.85.52.96
-	Password:***********
+  Password:***********
     </pre>
 
 1. Run `find /var/vcap | grep 'bin/pg_dump'` to find the locally installed psql client on the CCDB VM. For example:
 <pre class="terminal">
-$ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg_dump'
-/var/vcap/data/packages/postgres/5.1/bin/pg_dump
+$ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg\_dump'
+/var/vcap/data/packages/postgres/5.1/bin/pg\_dump
 </pre>
 
 1. Run `pg_dump` from the locally installed psql client to export the database:
 <pre class="terminal">
-    $ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 10.85.52.96 -U admin -p 2544 ccdb > ccdb.sql
+     $ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 10.85.52.96 -U admin -p 2544 ccdb > ccdb.sql
 </pre>
 
 1. Exit from the Cloud Controller database VM.
@@ -126,74 +125,74 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg_dump'
           port: 2544
           db_scheme: postgresql
     ```
-1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the UAA database credentials.
+1. From the **Installation Dashboard** in Ops Manager, select **Elastic Runtime** and click **Credentials>Link to Credential**. Record the UAA database credentials.
 
     <%= image_tag("uaadb-creds.png") %>
-
+ 
 1. SSH into the UAA database VM as the admin using the IP address and password recorded in the previous steps.
 
 1. Run `find /var/vcap | grep 'bin/pg_dump'` to find the locally installed psql client on the UAA database VM.
 <pre class='terminal'>
-    $ root@10.85.52.101:~# find /var/vcap | grep 'bin/pg_dump'
-    /var/vcap/data/packages/postgres/5.1/bin/pg_dump
+    $ root@10.85.52.101:~# find /var/vcap | grep 'bin/pg\_dump'
+    /var/vcap/data/packages/postgres/5.1/bin/pg\_dump
 </pre>
 
 1. Run `pg_dump` from the locally installed psql client to export the database:
 <pre class='terminal'>
-    $ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 10.85.52.101 -U root -p 2544 uaa > uaa.sql
-</pre>
-
-1. Exit from the UAA database VM.
-
-1. Run `scp` to copy the exported database to your local machine.
-<pre class='terminal'>
-    $ scp vcap@10.85.52.101:~/uaa.sql .
-</pre>
-
-
-### <a id='apps-manager'></a>Back Up the Apps Manager Database ###
-
+     $ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 10.85.52.101 -U root -p 2544 uaa > uaa.sql
+ </pre>
+ 
+ 1. Exit from the UAA database VM.
+ 
+ 1. Run `scp` to copy the exported database to your local machine.
+ <pre class='terminal'>
+     $ scp vcap@10.85.52.101:~/uaa.sql .
+ </pre>
+ 
+### <a id='appsmanager'></a>Back Up the Apps Manager Database ###
+ 
 <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
-
+ 
 1. In the BOSH deployment manifest, `cf.yml`, locate the `databases` component and record the IP address and password:
-
-    ```
-    databases:
-      address: 10.85.52.104
-      port: 2544
-      db_scheme: postgresql
-      roles:
-      - tag: admin
-        name: root
-        password: *****************
-      databases:
-      - tag: console
-        name: console
-    ```
-
-1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the Apps Manager database credentials.
-
-    <%= image_tag("appsmgr-creds.png") %>
+ 
+     ```
+     databases:
+       address: 10.85.52.104
+       port: 2544
+       db_scheme: postgresql
+       roles:
+        - tag: admin
+         name: root
+          password: *****************
+        databases:
+       - tag: console
+         name: console
+     ```
+ 
+1. From the **Installation Dashboard** in Ops Manager, select **Elastic Runtime** and click **Credentials>Link to Credential**. Record the Apps Manager database credentials.
+ 
+     <%= image_tag("appsmgr-creds.png") %>
 
 1. SSH into the Apps Manager database VM as the admin using the IP address and password recorded in the previous steps.
 
 1. Run `find /var/vcap | grep 'bin/pg_dump'` to find the locally installed psql client on the Apps Manager database VM.
 <pre class='terminal'>
-	$ root@10.85.52.104:~# find /var/vcap | grep 'bin/pg_dump'
-    /var/vcap/data/packages/postgres/5.1/bin/pg_dump
+ $ root@10.85.52.104:~# find /var/vcap | grep 'bin/pg\_dump'
+   /var/vcap/data/packages/postgres/5.1/bin/pg\_dump
 </pre>
 
 1. Run `pg_dump` from the locally installed psql client to export the database:
 <pre class='terminal'>
-    $ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 10.85.52.104 -U root -p 2544 console > console.sql
+   $ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 10.85.52.104 -U root -p 2544 console > console.sql
 </pre>
 
 1. Exit from the Apps Manager database VM.
 
 1. Run `scp` to copy the exported database to your local machine.
 <pre class='terminal'>
-    $ scp vcap@10.85.52.104:~/console.sql .
+   $ scp vcap@10.85.52.104:~/console.sql .
 </pre>
+
 
 ### <a id='nfs'></a>Back Up NFS Server ###
 
@@ -208,21 +207,32 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg_dump'
       port:
     ```
 
-1. From the Installation Dashboard in Ops Manager, select **Elastic Runtime** and click **Credentials**. Record the NFS Server credentials.
+1. From the **Installation Dashboard** in Ops Manager, select **Elastic Runtime** and click **Credentials>Link to Credential**. Record the NFS Server credentials.
 
     <%= image_tag("nfs-creds.png") %>
 
 1. SSH into the NFS server VM and create a TAR file:
     <pre class='terminal'>
-        $ ssh vcap@10.0.0.10 'cd /var/vcap/store && tar cz shared' > nfs.tar.gz
+        $ ssh vcap<span>@</span>10.0.0.10 'cd /var/vcap/store && tar cz shared' > nfs.tar.gz
     </pre>
     <p class="note"><strong>Note</strong>: The TAR file that you create to back up NFS server might be large. To estimate the size of the TAR file before you create it, run the following command:
-    <code class=''>ssh vcap@10.0.0.10 'tar -cf - /dir/to/archive/ | wc -c'</code></p>
+    <code class=''>ssh vcap<span>@</span>10.0.0.10 tar -cf - /dir/to/archive/ | wc -c</code></p>
 
 
 ### <a id='backup-mysql'></a>Back Up Pivotal MySQL Server ###
 
-<p class="note"><strong>Note</strong>: The Elastic Runtime deploy contains an embedded MySQL Server that serves as the data store for the Application Usage Events, Notifications, and Autoscaler services. If you are using an internal MySQL, this will also include the Cloud Controller, UAA, and Apps Manager.</p>
+<p class="note"><strong>Note</strong>: The Elastic Runtime deploy contains an embedded MySQL Server that serves as the data store for the Application Usage Events, Notifications, and Autoscaler services. If you are using an internal MySQL, this will also include the Cloud Controller, UAA, and Apps Manager. </p>
+
+There are two ways to backup the MySQL Server:
+
+* [Manual backup](#manual-mysql): If you have not set up automatic backups, you need to do a manual backup of your MySQL server.
+* Automatic backup: If you set automatic backup in your ERT configuration, you do not need to manually backup your MySQL Server. Automatic backup requires S3-compatible blobstores. For more information, see:
+  * AWS: [Configure Internal MySQL](../../customizing/cloudform-er-config.html#internal-mysql)
+  * OpenStack: [Configure Internal MySQL](../../customizing/openstack-er-config.html#internal-mysql)
+  * vSphere [Configure Internal MySQL](../../customizing/config-er-vmware.html#internal-mysql)
+
+
+#### <a id='manual-mysql'></a>Backing up MySQL Server Manually ####
 
 1. From the Installation Dashboard in Ops Manager, select **Pivotal Elastic Runtime**. Click **Status** and record the IP address of the first instance of **MySQL Server**.
  
@@ -232,7 +242,7 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg_dump'
 
     <%= image_tag("mysql-cred.png") %>
 
-1. SSH into the Mysql database VM as the admin using the IP address and password recorded in the previous steps.
+1. SSH into the MySQL database VM as the admin using the IP address and password recorded in the previous steps.
 
 1. Run the following command to dump the data from the p-mysql database and save it:
  <pre class='terminal'>
@@ -248,3 +258,4 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg_dump'
 <%= partial './starting_cc' %>
 
 Follow the steps in the [Restoring Pivotal Cloud Foundry&reg; from Backup](./restore-pcf.html) topic to restore a backup, import an installation to restore your settings, or to share your settings with another user.
+

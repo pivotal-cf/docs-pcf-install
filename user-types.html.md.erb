@@ -1,0 +1,176 @@
+---
+title: Understanding Pivotal Cloud Foundry User Types
+owners: CAPI, Identity
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes the types of users in a Pivotal Cloud Foundry (<%= vars.product_name %>)  deployment, their roles and permissions, and who creates and manages their accounts. 
+
+A <%= vars.product_name %> deployment incorporates three main user types: Operators, Elastic Runtime Users, and End Users. Each user within a type can serve in one or more associated roles:
+
+- [Operators](#operator) have the highest, admin-level permissions and perform an Admin role. They deploy and configure Ops Manager, Elastic Runtime, and other product and service tiles. They create the Organizations that Elastic Runtime users work within. They also create the user accounts for Elastic Runtime users, and the service plans that define the access granted to End Users. Operators work primarily with Cloud Foundry component VMs to manage and support the VMs that host applications.
+- [Elastic Runtime Users](#er-user) are application developers, managers, and auditors who work within allocated Organizations or Spaces. A Role-Based Access Control (RBAC) system lets Org and Space managers invite new users and assign their roles and permissions. Elastic Runtime users work with system applications such as Apps Manager, the cf CLI, and PCF Metrics. They also work with the applications deployed on host VMs. Elastic Runtime users can have one or more of the following roles: 
+	- Org Manager, Org Auditor, Org Billing Manager
+	- Space Manager, Space Developer, Space Auditor
+- [End Users](#end-user) are the people who use the applications hosted on PCF.
+
+The following table summarizes PCF user types, their roles, the tools they use, the System of Record (SOR) that stores their accounts, and who provisions their accounts.
+
+## <a id='table'></a>User Types Summary
+
+<table id='users-summary' border='1' class='nice'>
+	<col width="20%">
+	<col width="20%">
+	<col width="20%">
+	<col width="20%">
+	<col width="20%">
+	<tr>
+		<th>User Type</th>
+		<th>Available Roles</th>
+		<th>Tools They Use</th>
+		<th>Account SOR</th>
+		<th>Accounts They Can Provision</th>
+	</tr><tr>
+		<th>Operators</th>
+		<td>Admin (UAA Admin, SSO Plan Admin, other system admins)</td>
+		<td>
+			<ul>
+				<li>
+					IaaS UI
+				</li>
+				<li>
+					PivNet
+				</li>
+				<li>
+					Ops Manager
+				</li>
+				<li>
+					cf CLI
+				</li>
+				<li>
+					UAA CLI (UAAC)
+				</li>
+				<li>
+					SSO Dashboard
+				</li>
+				<li>
+					Marketplace
+				</li>
+			</ul>
+		</td>
+		<td>
+			Ops Manager user store via UAA<br>
+			&nbsp;&nbsp;<i>or</i><br>
+			External store via SAML or LDAP</td>
+		<td>Operators and Elastic Runtime Users</td>
+	</tr><tr>
+		<th>Elastic Runtime Users</th>
+		<td>
+			<ul>
+				<li>
+					UAA Administrator
+				</li>
+				<li>
+					Org Manager
+				</li>
+				<li>
+					Org Auditor
+				</li>
+				<li>
+					Org Billing Manager
+				</li>
+				<li>
+					Space Manager
+				</li>
+				<li>
+					Space Developer
+				</li>
+				<li>
+					Space Auditor
+				</li>
+			</ul>
+		</td>
+
+		<td>
+		 	<ul>
+				<li>
+					cf CLI
+				</li>
+				<li>
+					CAPI
+				</li>
+				<li>
+					Apps Manager
+				</li>
+				<li>
+					PCF Metrics
+				</li>
+				<li>
+					Marketplace
+				</li>
+			</ul>
+		</td>
+		<td>Elastic Runtime user store via UAA<br>
+			&nbsp;&nbsp;<i>or</i><br>
+			External store via SAML or LDAP</td>
+		<td>Elastic Runtime Users within permitted orgs and spaces, and <br>
+		End Users</td>
+	</tr><tr>
+		<th>End Users</th>
+		<td>Defined by applications they use</td>
+		<td>Hosted applications</td>
+		<td>Individual applications<br>
+			&nbsp;&nbsp;<i>or</i><br>
+			Elastic Runtime user store via SSO</td>
+		<td></td>
+	</tr>
+</table>
+
+## <a id="operator"></a>Operator
+
+An Operator fulfills one or more system administrator roles that cover the entire <%= vars.product_name %> deployment. They have the highest-level permissions to configure a deployment, create user accounts, and perform other administrative functions. Operators deploy and manage Ops Manager, and then deploy and manage Elastic Runtime and other products and services running on top of the Ops Manager layer.
+
+We also refer to Operators as Ops Manager Admins and Elastic Runtime Admins because they perform an admin role within these contexts.
+
+When Ops Manager boots for the first time, the Operator specifies one of the following authentication systems:
+
+1. Internal authentication, using a new UAA database that Ops Manager creates.
+1. External authentication, through an existing identity provider accessed via SAML or LDAP protocol.
+
+The Operator can use the UAAC to create [additional Operator](../customizing/opsman-users.html) accounts.
+
+The Operator also configures the Elastic Runtime tile to specify whether Elastic Runtime User account information comes from an internal UAA or from an external identity provider.
+
+<p class="note"><strong>Note</strong>: The internal UAA for Elastic Runtime is the system-wide UAA for storing user information. It differs from the Ops Manager internal UAA, which only stores Ops Manager Admin accounts.</p>
+
+The next section describes Elastic Runtime user roles.
+
+## <a id="er-user"></a>Elastic Runtime User
+
+Elastic Runtime Users include application developers, managers, and auditors. Cloud Foundry manages these roles with an RBAC system that grants user permissions in Orgs or Spaces. Orgs contain Spaces, and Spaces contain applications. Both serve as virtual compartments within a deployment where Elastic Runtime Users can run apps and self-administer user accounts, roles, and permissions.
+
+Cloud Foundry keeps user roles in the internal Cloud Controller Database, not the internal or external Elastic Runtime user store.
+
+The [Orgs, Roles, Spaces, Permissions](../concepts/roles.html) topic describes different Elastic Runtime user roles, and what actions they can take within the Orgs and Spaces they belong to. Some of these permissions depend on the values of [environment variables](../customizing/console-env-variables.html).
+
+[Apps Manager](../console/index.html) provides a visual interface for managing Elastic Runtime Users, Orgs, Spaces, and applications. Org and Space Managers use Apps Manager to manage other Elastic Runtime Users within their orgs and spaces.
+
+<p class="note"><strong>Note</strong>: Elastic Runtime users with proper permissions can also use the cf CLI to assign user roles.</p>
+
+Operators can log into Apps Manager in the Org Manager role with permissions in all orgs by using the **UAA Administrator User** credentials under the **Credentials** tab of the Elastic Runtime tile.
+
+<p class="note"><strong>Note</strong>: The UAA Admin can also use the UAAC to create new user accounts and the cf CLI to assign user roles.</p>
+
+##<a id="end-user"></a>End User
+
+End users log into and use applications hosted by Elastic Runtime, but do not interact directly with Elastic Runtime components or interfaces. Any interactions or roles they perform within the applications are defined by the applications themselves, not <%=vars.product_full %>.
+
+Application developers can configure applications any way they want to grant access individually. In a deployment with [Single Sign-On Service for Pivotal Cloud Foundry&reg;](../../p-identity/index.html) installed, they can also offer end users a single login that accesses multiple applications.
+
+Like the Ops Manager and Elastic Runtime user stores, user account information for Single Sign-On (SSO) service can store in an external database accessed via SAML or LDAP, or in the internal Elastic Runtime user store, along with the Elastic Runtime User accounts.
+
+To make the SSO service available to developers, an Operator creates service plans that give login access to specific groups of end users. A Space Manager can then create a local instance of the service plan, and register applications with it. Applications registered to the plan instance then become available via SSO to all end users covered by the plan.
+
+
+

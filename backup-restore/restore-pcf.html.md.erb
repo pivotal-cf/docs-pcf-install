@@ -259,26 +259,16 @@ Use the NFS password and IP address to restore the NFS by following the steps de
 
 ### <a id='restore-mysql-dev'></a>Restore MySQL Database ###
   
- 1. Use `scp` to send the MySQL Database backup file to the MySQL Database VM. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
-	 <pre class='terminal'>
-	    $ scp user_databases.sql vcap@YOUR-MYSQL-VM-IP-ADDRESS:~/.
-	 </pre>
- 
- 1. SSH into the MySQL Database VM.
-	 <pre class='terminal'>
-	 $ ssh vcap@YOUR-MYSQL-VM-IP
-	 </pre>
- 
- 1. Use the MySQL password and IP address to restore the MySQL database by running the following command. 
-	 <pre class='terminal'>
-	   mysql -h YOUR-MYSQL-SERVER-IP -u root -p < ~/.user_databases.sql
-	 </pre>
-	 
- 1. Log in to the MySQL client and flush privileges.
-	 <pre class='terminal'>
-	     $ mysql -u root -p -h
-	     mysql > flush privileges;
-	 </pre>
+Restoring from a backup is the same whether one or multiple databases were backed up. Executing the SQL dump will drop, recreate, and refill the specified databases and tables.
+
+  <p class="note"><strong>Warning:</strong> Restoring a database will delete all data that existed in the database prior to the restore. Restoring a database using a full backup artifact, produced by `mysqldump --all-databases` for example, will replace all data and user permissions.</p>
+
+1. From the same VM you used to perform the manual backup, or a similar VM, restore from the data dump:
+  <pre class="terminal">$ mysql -u root -p -h $MYSQL\_NODE\_IP < user_databases.sql</pre>
+
+1. Re-apply user privileges:
+  <pre class="terminal">$ mysql -u root -p -h $MYSQL\_NODE\_IP -e "FLUSH PRIVILEGES"</pre>
+  This command tells the cluster to re-load user permissions using the data that has just been restored.
 
 ### <a id='cc-start-2'></a>Start Cloud Controller ###
 <%= partial 'starting_cc' %>

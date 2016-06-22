@@ -70,15 +70,9 @@ VM count (Number of VMs with Cores ):<br>
 1. Select the Azure Marketplace tile.
 1. Search for “Pivotal Cloud Foundry” and select **Pivotal Cloud Foundry on Microsoft Azure** or navigate directly to the [Pivotal Cloud Foundry on Azure Marketplace](https://azure.microsoft.com/en-us/marketplace/partners/pivotal/pivotal-cloud-foundryazure-pcf/) page.
  <%= image_tag("azure/marketplace.png") %>
-1. Click **Deploy >**.
+4. Click **Deploy >**.
    
-    Azure checks your quota before deploying PCF. Check the output section of the deployment template. 
-If you see this message: "CRITICAL Insufficient Quota, PCF will NOT deploy", you have insufficient quota. 
-For more information, see <a href="#raising-quota">Raise Your Quota</a>.
-
-   <%= image_tag("azure/quota.png") %>
-
-1. Enter the following **User Inputs**:
+5. Enter the following **User Inputs**:
     * **Storage Account Name Prefix**: Installing PCF on Microsoft Azure creates a new storage account. Use a unique prefix that contains letters and numbers and is no more than 10 characters long. For more information, see [About Azure storage accounts](https://azure.microsoft.com/en-us/documentation/articles/storage-create-storage-account/).
     * **SSH public key**: You must generate 2048-bit RSA public and private key files.
     	* Linux/Unix/Mac OS X: From the command line, run `ssh-keygen -t rsa -b 2048`. Locate your public key in `~/.ssh/id_rsa.pub` and paste the contents into the parameter **sshKeyData**.
@@ -91,7 +85,11 @@ For more information, see <a href="#raising-quota">Raise Your Quota</a>.
     * **Location**: Choose which Azure location you want to deploy to. If you requested a quota increase, you must choose the same region that you submitted in your request.
 1. Click **OK** and review the Summary Page.
 1. Click **OK** and read the Terms of Use and Privacy Policy.
-1. Click **Create** to be directed to the main Azure portal page, where a new tile shows the deployment is in progress. The full deployment takes approximately two hours.
+1. Click **Create** to be directed to the main Azure portal page, where a new tile shows the deployment is in progress. The full deployment takes approximately two hours.<br>
+Azure checks your quota before deploying PCF. Check the output section of the deployment template. 
+If you see this message in the output section of the deployment template: "CRITICAL Insufficient Quota, PCF will NOT deploy", you need to raise your quota. For information, see <a href="#raising-quota">Raise Your Quota</a>.
+
+   <%= image_tag("azure/quota.png") %>
 
 <p class="note"><strong>Note</strong>: The tile deployment progress shows completed when the initial jumpbox VM is provisioned. This does not indicate the deployment is complete.</p>
 
@@ -104,14 +102,14 @@ For more information, see <a href="#raising-quota">Raise Your Quota</a>.
 	1. Navigate to **Resource groups** > **cf** > **Deployment history** and select your deployment.
 	1. Under the **Outputs** section, record the **JUMPBOX-FQDN**. This is the fully qualified domain name (FQDN) for the jumpbox VM.
 	1. Use a SSH client to open an SSH connection to the jumpbox VM, with the username `pivotal`. <br>
-Linux/Unix/Mac OS X: For example, run the command `ssh pivotal@myjumpboxujnk2hiwzqq3y.westus.cloudapp.azure.com`.
-Windows: For example, use PuTTY to SSH into the jumpbox VM. 
+          * Linux/Unix/Mac OS X: For example, run the command `ssh pivotal@myjumpboxujnk2hiwzqq3y.westus.cloudapp.azure.com`.
+          * Windows: For example, use PuTTY to SSH into the jumpbox VM. Locate your public key file and paste the contents into the appropriate text field in PuTTY.
 
- <%= image_tag("azure/jumpbox.png") %>
+    <%= image_tag("azure/jumpbox.png") %>
 
 1. From the jumpbox VM, locate <code>pcf_install.log</code> at <code>/home/pivotal</code> to view the entire PCF deployment log.
 
-1. At the end of deployment, the following information is printed on tmux session. This is used to log in to the Apps Manager console. For example:
+1. From your Azure Portal, return to the **Outputs** section of your deployment. The Microsoft portal template screen have an output section with a URL to the tmux session referenced with the login informationfollowing information is printed on tmux session. This is used to log in to the Apps Manager console. For example:
  <pre class="terminal">
    print "============================================================"
    print "Apps Manager URL : {0}".format(apps\_manager\_address)
@@ -143,3 +141,4 @@ To remove the deployment, navigate to your Azure Portal and delete the **Resourc
 ##<a id='troubleshooting'></a>Troubleshooting ##
 
 PCF on Microsoft Azure automates the deployment of PCF and associated services. If the deployment fails after the jumpbox VM has been created, please capture the PCF deployment log as described in the [verification procedure above](#verify) and send it to azure-inquiry@pivotal.io with any additional information about the installation that you can provide. 
+

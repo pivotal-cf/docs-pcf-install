@@ -46,7 +46,8 @@ You must have the following in order to use PCF on Microsoft Azure:
 
 * To request a core quota increase, follow these [instructions](https://blogs.msdn.microsoft.com/girishp/2015/09/20/increasing-core-quota-limits-in-azure/).
 
-* When filling in the Details section of the Support Request Description, provide the following information to expedite your request, replacing REGION with your region of choice: 
+* When filling in the Details section of the Support Request Description, provide the following information to expedite your request, 
+replacing REGION with your region of choice: 
 
 <blockquote>"We are preparing to roll out Pivotal Cloud Foundry from the Azure Marketplace.<br>
 We would like to raise our ARM (Azure Resource Manager) core limits.<br>
@@ -68,48 +69,58 @@ VM count (Number of VMs with Cores ):<br>
 
 1. Log in to your Microsoft Azure [portal](https://portal.azure.com). 
 1. Select the Azure Marketplace tile.
-1. Search for “Pivotal Cloud Foundry” and select **Pivotal Cloud Foundry on Microsoft Azure** or navigate directly to the [Pivotal Cloud Foundry on Azure Marketplace](https://azure.microsoft.com/en-us/marketplace/partners/pivotal/pivotal-cloud-foundryazure-pcf/) page.
+1. Search for “Pivotal Cloud Foundry” and select **Pivotal Cloud Foundry on Microsoft Azure** or 
+navigate directly to the [Pivotal Cloud Foundry on Azure Marketplace](https://azure.microsoft.com/en-us/marketplace/partners/pivotal/pivotal-cloud-foundryazure-pcf/) page.
  <%= image_tag("azure/marketplace.png") %>
 4. Click **Deploy >**.
    
 5. Enter the following **User Inputs**:
-    * **Storage Account Name Prefix**: Installing PCF on Microsoft Azure creates a new storage account. Use a unique prefix that contains letters and numbers and is no more than 10 characters long. For more information, see [About Azure storage accounts](https://azure.microsoft.com/en-us/documentation/articles/storage-create-storage-account/).
+    * **Storage Account Name Prefix**: Installing PCF on Microsoft Azure creates a new storage account. Use a unique prefix that contains letters and numbers and is no more 
+than 10 characters long. For more information, see [About Azure storage accounts](https://azure.microsoft.com/en-us/documentation/articles/storage-create-storage-account/).
     * **SSH public key**: You must generate 2048-bit RSA public and private key files.
-    	* Linux/Unix/Mac OS X: From the command line, run `ssh-keygen -t rsa -b 2048`. Locate your public key in `~/.ssh/id_rsa.pub` and paste the contents into the parameter **sshKeyData**.
-    	* Windows: Download, install, and use [PuTTYgen](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html). Locate your public key file and paste the contents into the parameter **sshKeyData**.
+    	* Linux/Unix/Mac OS X: From the command line, run `$ ssh-keygen -t rsa -b 2048`. Locate your public key in `~/.ssh/id_rsa.pub` and paste the contents into the parameter **sshKeyData**.
+    	* Windows: Download, install, and use [PuTTYgen](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html). 
+Locate your public key file and paste the contents into the parameter **sshKeyData**.
 	* **Tenant ID**: Enter the `TENANT-ID` output from the Azure Service Principal creation script you ran in the [Prerequisites](#prereqs) section.
     * **Client ID**: Enter the `CLIENT-ID` output from the Azure Service Principal creation script you ran in the [Prerequisites](#prereqs) section.
     * **Client Secret**: Enter the `CLIENT-SECRET` output from the Azure Service Principal creation script you ran in the [Prerequisites](#prereqs) section.
     * **Pivotal Network Token**: Enter the API token of your Pivotal Network Account that you recorded in the [Prerequisites](#prereqs) section.
-    * **Resource Group**: Use a new resource group with a unique name for each new deployment. For more information about Azure resource groups, see [Manage Azure resources through portal](https://azure.microsoft.com/en-us/documentation/articles/resource-group-portal/).
+    * **Resource Group**: Use a new resource group with a unique name for each new deployment. For more information about Azure resource groups, 
+see [Manage Azure resources through portal](https://azure.microsoft.com/en-us/documentation/articles/resource-group-portal/).
     * **Location**: Choose which Azure location you want to deploy to. If you requested a quota increase, you must choose the same region that you submitted in your request.
 1. Click **OK** and review the Summary Page.
 1. Click **OK** and read the Terms of Use and Privacy Policy.
 1. Click **Create** to be directed to the main Azure portal page, where a new tile shows the deployment is in progress. The full deployment takes approximately two hours.<br>
 Azure checks your quota before deploying PCF. Check the output section of the deployment template. 
-If you see this message in the output section of the deployment template: "CRITICAL Insufficient Quota, PCF will NOT deploy", you need to raise your quota. For information, see <a href="#raising-quota">Raise Your Quota</a>.
+If you see this message in the output section of the deployment template: "CRITICAL Insufficient Quota, PCF will NOT deploy", you need to raise your quota. 
+For information, see <a href="#raising-quota">Raise Your Quota</a>.
 
    <%= image_tag("azure/quota.png") %>
 
-<p class="note"><strong>Note</strong>: The tile deployment progress shows completed when the initial jumpbox VM is provisioned. This does not indicate the deployment is complete.</p>
+<p class="note"><strong>Note</strong>: The tile deployment progress shows completed when the initial jumpbox VM is provisioned. 
+This does not indicate the deployment is complete.</p>
 
 ##<a id='verify'></a>Verify the PCF on Microsoft Azure Installation ##
 
 1. From your Azure Portal, navigate to **Resource Groups** and ensure the new **Resource Group** has been created.
 	<%= image_tag("azure/resource_group.png") %>
 
-1. SSH into the jumpbox VM by performing the following steps:
+2. SSH into the jumpbox VM by performing the following steps:
 	1. Navigate to **Resource groups** > **cf** > **Deployment history** and select your deployment.
 	1. Under the **Outputs** section, record the **JUMPBOX-FQDN**. This is the fully qualified domain name (FQDN) for the jumpbox VM.
 	1. Use a SSH client to open an SSH connection to the jumpbox VM, with the username `pivotal`. <br>
-          * Linux/Unix/Mac OS X: For example, run the command `ssh pivotal@myjumpboxujnk2hiwzqq3y.westus.cloudapp.azure.com`.
+          * Linux/Unix/Mac OS X: For example, run the command `$ ssh pivotal@myjumpboxujnk2hiwzqq3y.westus.cloudapp.azure.com`.
           * Windows: For example, use PuTTY to SSH into the jumpbox VM. Locate your public key file and paste the contents into the appropriate text field in PuTTY.
 
     <%= image_tag("azure/jumpbox.png") %>
 
-1. From the jumpbox VM, locate <code>pcf_install.log</code> at <code>/home/pivotal</code> to view the entire PCF deployment log.
+3. View the PCF deployment log on the jumpbox VM at <code>/home/pivotal/pcf\_install.log</code>.
 
-1. From your Azure Portal, return to the **Outputs** section of your deployment. The Microsoft portal template screen have an output section with a URL to the tmux session referenced with the login informationfollowing information is printed on tmux session. This is used to log in to the Apps Manager console. For example:
+4. Find the Apps Manager URL and the admin password:
+
+  1. In the Azure Portal, return to the **Outputs** section of your deployment. 
+  2. Navigate to the URL shown in **PROGRESSMONITORURL** textbox. This is the URL to a tmux session in which you find the Apps Manager URL and admin password that 
+you use to log in to the Apps Manager console:
  <pre class="terminal">
    print "============================================================"
    print "Apps Manager URL : {0}".format(apps\_manager\_address)
@@ -117,21 +128,15 @@ If you see this message in the output section of the deployment template: "CRITI
    print "Documentation    : <span>http:</span>//docs.pivotal.io/pivotalcf/installing/pcf-docs.html"
    print "============================================================"
  </pre>
+ If the URL not longer shows the tmux session, see [Cannot find the admin password or Apps Manager URL](#cantfindpsswd) below.
 
-1. If the tmux session is lost, you can retrieve the admin password for Apps Manager from the Elastic Runtime manifest by performing the following command:
- <pre class="terminal">
-$ cat manifests/elastic-runtime.yml | grep admin
-  admin\_user: admin
-  admin\_password: "0a0d3a14b6520ea2bf7b"
- </pre>
-
-1. From your Azure Portal, navigate to **Resources** and find the **Public IP address** resource named <code>YOUR-JUMPBOX-NAME–cf</code> and select it. 
+6. From your Azure Portal, navigate to **Resources** and find the **Public IP address** resource named <code>YOUR-JUMPBOX-NAME–cf</code> and select it. 
 	<%= image_tag("azure/app_manager_one.png") %>
-1. Record the **IP address**. This is the IP address of Apps Manager.
+7. Record the **IP address**. This is the IP address of Apps Manager.
 	<%= image_tag("azure/app_manager_two.png") %>
-1. Navigate to the URL `https://apps.system.APPS-MANAGER-IP-ADDRESS.cf.pcfazure.com`, and log in to Apps Manager with the username `admin` and the password obtained above. 
+8. Navigate to the URL `https://apps.system.APPS-MANAGER-IP-ADDRESS.cf.pcfazure.com`, and log in to Apps Manager with the username `admin` and the password obtained above. 
 
-1. From Apps Manager, verify that your services are running.
+9. From Apps Manager, verify that your services are running.
 <%= image_tag("azure/console.png") %>
 
 ##<a id='delete'></a>Delete a Deployment of PCF on Microsoft Azure
@@ -140,5 +145,23 @@ To remove the deployment, navigate to your Azure Portal and delete the **Resourc
 
 ##<a id='troubleshooting'></a>Troubleshooting ##
 
-PCF on Microsoft Azure automates the deployment of PCF and associated services. If the deployment fails after the jumpbox VM has been created, please capture the PCF deployment log as described in the [verification procedure above](#verify) and send it to azure-inquiry@pivotal.io with any additional information about the installation that you can provide. 
+* [Deployment fails](#deployfails)
+* [Cannot find the admin password or Apps Manager URL](#cantfindpsswd)
+
+###<a id='deployfails'></a>Deployment fails
+
+**Symptom:** PCF on Azure fails to deploy. 
+
+**Solution**: If the deployment fails after the jumpbox VM has been created, capture the PCF deployment log as described in the [verification procedure above](#verify) and send it to azure-inquiry@pivotal.io with any additional information about the installation that you can provide. 
+
+###<a id='cantfindpsswd'></a>Cannot Find the Admin Password or Apps Manager URL
+
+**Symptom**: The URL in the PROGRESSMONITORURL field no longer takes you to the tmux session to locate the Apps Manager URL and admin password.
+
+**Solution**: Even though the tmux session has been lost, you can retrieve the Apps Manager URL and admin password by searching for `admin` in the `manifests/elastic-runtime.yml` file on the jumpbox VM:
+ <pre class="terminal">
+$ cat manifests/elastic-runtime.yml | grep admin
+  admin\_user: admin
+  admin\_password: "0a0d3a14b6520ea2bf7b"
+ </pre>
 

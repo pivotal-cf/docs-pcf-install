@@ -89,16 +89,22 @@ Locate your public key file and paste the contents into the parameter **sshKeyDa
 see [Manage Azure resources through portal](https://azure.microsoft.com/en-us/documentation/articles/resource-group-portal/).
     * **Location**: Choose which Azure location you want to deploy to. If you requested a quota increase, you must choose the same region that you submitted in your request.
 1. Click **OK** and review the Summary Page.
-1. Click **OK** and read the Terms of Use and Privacy Policy.
-1. Click **Create** to be directed to the main Azure portal page, where a new tile shows the deployment is in progress. The full deployment takes approximately two hours.<br>
-Azure checks your quota before deploying PCF. Check the output section of the deployment template. 
-If you see this message in the output section of the deployment template: "CRITICAL Insufficient Quota, PCF will NOT deploy", you need to raise your quota. 
-For information, see <a href="#raising-quota">Raise Your Quota</a>.
-
-   <%= image_tag("azure/quota.png") %>
-
+7. Click **OK** and read the Terms of Use and Privacy Policy.
+8. Click **Create** to be directed to the main Azure portal page, where a new tile shows the deployment is in progress.
 <p class="note"><strong>Note</strong>: The tile deployment progress shows completed when the initial jumpbox VM is provisioned. 
 This does not indicate the deployment is complete.</p>
+  
+    The full deployment takes approximately two hours.
+
+9. Check the **Outputs** section of the deployment template. Azure confirms your quota before deploying PCF. 
+If you see this message in the **Outputs** section of the deployment template `CRITICAL Insufficient Quota, PCF will NOT deploy`, you need to raise your quota. 
+See <a href="#raising-quota">Raise Your Quota</a>.
+
+    <%= image_tag("azure/quota.png") %>
+
+10. (Optional) In the **Outputs** section of the deployment template, navigate to the URL shown in **PROGRESSMONITORURL** textbox. 
+In the tmux session on this page, follow the progress of the deployment. 
+The deployment is complete when the Apps Manager URL is written to the page. 
 
 ##<a id='verify'></a>Verify the PCF on Microsoft Azure Installation ##
 
@@ -120,14 +126,7 @@ This does not indicate the deployment is complete.</p>
 
   1. In the Azure Portal, return to the **Outputs** section of your deployment. 
   2. Navigate to the URL shown in **PROGRESSMONITORURL** textbox. This is the URL to a tmux session in which you find the Apps Manager URL and admin password that 
-you use to log in to the Apps Manager console:
- <pre class="terminal">
-   print "============================================================"
-   print "Apps Manager URL : {0}".format(apps\_manager\_address)
-   print "Admin password   : {0}".format(admin\_password)
-   print "Documentation    : <span>http:</span>//docs.pivotal.io/pivotalcf/installing/pcf-docs.html"
-   print "============================================================"
- </pre>
+you use to log in to the Apps Manager console.
  If the URL not longer shows the tmux session, see [Cannot find the admin password or Apps Manager URL](#cantfindpsswd) below.
 
 6. From your Azure Portal, navigate to **Resources** and find the **Public IP address** resource named <code>YOUR-JUMPBOX-NAME–cf</code> and select it. 
@@ -156,7 +155,7 @@ To remove the deployment, navigate to your Azure Portal and delete the **Resourc
 
 ###<a id='cantfindpsswd'></a>Cannot Find the Admin Password or Apps Manager URL
 
-**Symptom**: The URL in the PROGRESSMONITORURL field no longer takes you to the tmux session to locate the Apps Manager URL and admin password.
+**Symptom**: The URL in the **PROGRESSMONITORURL** textbox no longer takes you to the tmux session to locate the Apps Manager URL and admin password.
 
 **Solution**: Even though the tmux session has been lost, you can retrieve the Apps Manager URL and admin password by searching for `admin` in the `manifests/elastic-runtime.yml` file on the jumpbox VM:
  <pre class="terminal">

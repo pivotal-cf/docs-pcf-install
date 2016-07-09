@@ -27,7 +27,7 @@ After you complete this procedure, follow the instructions in the [Deploying Ela
     * [Use an Identity Provider](#idp): If you use an Identity Provider, an external identity server maintains your user database.
     * [Internal Authentication](#internal): If you use Internal Authentication, PCF maintains your user database.
 
-<%= image_tag("select-authentication.png") %>
+    <%= image_tag("select-authentication.png") %>
 
 ### <a id='idp'></a>Use an Identity Provider ###
 
@@ -54,7 +54,9 @@ After you complete this procedure, follow the instructions in the [Deploying Ela
 1. When redirected to the **Internal Authentication** page, you must complete the following steps:
     * Enter a **Username**, **Password**, and **Password confirmation** to create an Admin user.
     * Enter a **Decryption passphrase** and the **Decryption passphrase confirmation**. This passphrase encrypts the Ops Manager datastore, and is not recoverable if lost.
+    * If you are using an **Http proxy** or **Https proxy**, enter the proxy URL. If specified, Ops Manager will redirect traffic to a designated proxy server. If there are addresses that should not be used to access the proxy, enter them in the **No proxy** field. Pivotal recommends listing the Bosh Director IP address in the **No proxy field.** To find the Bosh Director IP, review the [Create Network](#network) section below, and consider the **Reserved IP Ranges**. The Bosh Director IP is the first IP after the range. For example, if you enter `10.0.16.0-10.0.16.10` in the **Reserved IP Ranges** field, the Bosh Director IP will be `10.0.16.11`. 
     * Read the **End User License Agreement**, and select the checkbox to accept the terms.
+    * Click **Setup Authentication**.
 
  	<%= image_tag("om-login.png") %>
 
@@ -86,9 +88,10 @@ After you complete this procedure, follow the instructions in the [Deploying Ela
       Groups**. Select the security group with the **Description** `PCF VMs
       Security Group`. Copy the **Group ID** of this group into the Ops Manager 
       **Security Group ID** field.
-    * **Key Pair Name**: Use the value of **PcfKeyPairName** from your 
-      **Outputs** tab.
-    * **SSH Private Key**: Open your pre-existing AWS key pair `.pem` file in a 
+    * **Key Pair Name**: Use the name of your pre-existing AWS key pair.
+      You selected this key pair name when you first 
+      [deployed Ops Manager Director](cloudform-om-deploy.html#deploy).
+    * **SSH Private Key**: Open your AWS key pair `.pem` file in a 
       text editor. Copy the contents of the `.pem` file and paste it into the 
       **SSH Private Key** field.
     * **Region**: Select the region where you deployed Ops Manager.
@@ -165,7 +168,7 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
 ## <a id='network'></a>Step 6: Create Networks Page ##
 1. Select **Create Networks**.
 <%= image_tag("cloudform/create-networks.png") %>
-1. Select **Enable ICMP checks** to enable ICMP on your networks.
+1. Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
 1. Use the following steps to create one or more Ops Manager networks:
     * Click **Add Network**.
     * Enter a unique **Name** for the network.

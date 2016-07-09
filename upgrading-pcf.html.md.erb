@@ -27,6 +27,7 @@ href="https://network.pivotal.io/products/pivotal-rabbitmq-service">RabbitMQ</a>
 <strong>WARNING: </strong> Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. All apps that do not already run on Diego will terminate during an upgrade from 1.6 to 1.7.
 </p>
 
+<p class="note"><strong>Note</strong>: The apps in your deployment continue to run during the upgrade. However, you cannot write to your deployment or make changes to apps during the upgrade.</p>
 
 **Important**: Read the Known Issues section of the [Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) (PCF)
 [Release Notes](../pcf-release-notes/index.html) before getting started.
@@ -37,10 +38,24 @@ This section contains important guidelines that you must follow before beginning
 
 The tasks you need to complete before upgrade fall into three categories: 
 
++ [Choose Single-AZ or Multi-AZ](#choose-az) - choose a single-AZ or multi-AZ deployment.
 + [Prepare Your Environment](#prepare-env) — includes making sure you have sufficient disk space.
-+ [Prepare Databases and Apps](#prepare-db) — includes backing up data and migrating any apps 
++ [Prepare Databases and Apps](#prepare-db) — includes backing up data and migrating any apps.
 that currently use the DEA architecture to use the Diego architecture.  
 + [Check System Health](#check-health) — perform a health check of your system, from virtual machines (VMs) to service tiles. 
+
+###<a id="choose-az"></a>Choose Single-AZ or Multi-AZ
+
+Ops Manager 1.7 ships with a new multi-AZ functionality that results in multiple networks. 
+
+When you upgrade to PCF 1.7 from a previous version instead of performing a new full install, you have a single-AZ deployment. If you want to use PCF 1.7 with multi-AZ functionality, choose one of the following procedures:
+
+* Upgrade and then apply multi-AZ:
+  1. Follow the upgrade instructions on this page to upgrade to PCF 1.7.
+  2. Follow the instructions in this [Knowledge Base article](https://discuss.zendesk.com/hc/en-us/articles/219118768-How-to-enable-advanced-mode-in-the-Ops-Manager) to enable advanced mode in Ops Manager. 
+  3. Follow the instructions in this [Knowledge Base article](https://discuss.zendesk.com/hc/en-us/articles/219119508-How-to-add-or-modify-my-Availability-Zones-without-the-need-to-reinstall-Pivotal-Cloud-Foundry-) to apply the multi-AZ feature to your deployment. 
+
+* Perform a [new installation](../installing/index.html) of PCF 1.7.   
 
 ### <a id="prepare-env"></a>Prepare Your Environment for Upgrade
 
@@ -85,7 +100,7 @@ client, **Manage** > **Settings** > **VM Hardware**.
 
 1. Back up all critical data prior to upgrading to PCF 1.7. For example, to backup a 1.6 environment, follow these instructions <a href="http://docs.pivotal.io/pivotalcf/1.6/customizing/backup-restore/backup-pcf.html">Backing Up Pivotal Cloud Foundry</a>. <br>
  
-2. Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal does not support DEA architecture in Pivotal Cloud Foundry 1.7. See the [Migrating Apps to Diego](./apps-enable-diego.html) topic for information.
+2. Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal does not support DEA architecture in Pivotal Cloud Foundry 1.7. See the [Migrating Apps to Diego](../adminguide/apps-enable-diego.html) topic for information.
 
 ### <a id="check-health"></a>Check System Health Before Upgrade
 
@@ -179,7 +194,7 @@ Network](https://network.pivotal.io/products/pivotal-cf) site.
 
 ## <a id="aftertheupgrade"></a>After the Upgrade
 
-* Advise your application developers about the Diego architecture. See the [Migrating Apps to Diego](./apps-enable-diego.html) and [Diego Architecture](./../concepts/diego/diego-architecture.html) topics for more information.
+* Advise your application developers about the Diego architecture. See the [Migrating Apps to Diego](../adminguide/apps-enable-diego.html) and [Diego Architecture](./../concepts/diego/diego-architecture.html) topics for more information.
 
 * Ops Manager 1.7 defines specific instance types instead of custom sizes for vSphere or vCloud. Each instance adopts an instance type that is the closest match to its previous custom size for CPU, memory, and disk space. After the upgrade, you can modify the automatically selected instance size by selecting a different <code>type</code> under <strong>Resource Config</strong> for each of your installed tiles.
 

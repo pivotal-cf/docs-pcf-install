@@ -27,12 +27,6 @@ infrastructure that you need to deploy PCF to AWS.
 
 ## <a id='upload-cert'></a>Step 2: Upload an SSL Certificate to AWS ##
 
-You can add an SSL Certificate using two methods:
-
-  * The [AWS CLI](#aws-cli)
-  * The [AWS Certificate Manager](#aws-certificate-manager)
-
-### <a id="aws-cli"></a>(Option) Create SSL Certificate using the AWS CLI 
 The [AWS CLI](https://aws.amazon.com/cli/) must be installed on your machine and configured to a user account with admin access privileges on your AWS account.
 
 1. Obtain or create an SSL server certificate. See the [AWS docs on SSL certificates](http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/ssl-server-cert.html). When you create a certificate signing request (CSR) in the “Create a Server Certificate” instructions, you must use your system wildcard domain (example: `*.my-pcf-apps-domain.com`) as the Common Name input.
@@ -71,10 +65,6 @@ $ aws iam upload-server-certificate \
    </pre>
 1. Record the value of the <code>Arn</code> key to use when configuring your AWS resource stack. Alternatively, if you know the name of the certificate, you can run the following command to retrieve certificate metadata at a later point: <pre class='terminal'>$ aws iam get-server-certificate --server-certificate-name YOUR-CERT-NAME</pre> For example: <pre class='terminal'>$ aws iam get-server-certificate --server-certificate-name myServerCertificate</pre>
 
-### <a id="aws-certificate-manager"></a> (Option) Create SSL Certificate using the AWS Certificate Manager
-
-Refer to the [Amazon Certificate Manager](https://aws.amazon.com/certificate-manager/) documentation to use the AWS Certificate Manager to manage your SSL certificates and generate a certificate ARN. You will need the ARN in the next step.
-
 ## <a id='create-stack'></a>Step 3: Create a Resource Stack Using the CloudFormation Template ##
 
 1. Log in to the [AWS Console](https://console.aws.amazon.com/).
@@ -107,9 +97,8 @@ following fields:
         <code>rdsadmin</code>. AWS reserves the <code>rdsadmin</code> user
         account for internal database instance management.
       </p>
-      <p class="note"><strong>Note</strong>: Your username must include only numbers, letters or the `_` character or your deployment will fail without a useful error.</p>
     * **06RdsPassword**: Enter a password for the RDS database.
-    * **07SSLCertificateARN**: Enter your SSL Certificate ARN.
+    * **07SSLCertificateARN**: Enter your uploaded SSL Certificate ARN.
     * **08OpsManagerTemplate**: The default template link provided here works. Otherwise you can enter your own S3 bucket location of the Ops Manager CloudFormation script.
     * **09ElbPrefix**: Prefix for the generated names of the ELBs. Any string you specify in this field will be prefixed to `-pcf-elb` to form the name of your ELBs. Leave empty to use the default prefix of <code>AWS::StackName</code>.
     * **10AllowHttpOnElb**: Set this to `true` to listen for HTTP traffic on port 80. This is the default. Set it to `false` to only listen for traffic on ports 443 and 4443.

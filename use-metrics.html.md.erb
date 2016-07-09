@@ -1,0 +1,197 @@
+---
+title: Using JMX Bridge
+owner: PCF Metrics
+---
+
+<strong><%= modified_date %></strong>
+
+JMX Bridge is a Java Management Extensions (JMX) tool for Elastic
+Runtime.
+To help you monitor your installation and assist in troubleshooting, JMX Bridge collects and exposes system data from Cloud Foundry components via a JMX
+endpoint.
+
+## <a id="cc"></a>Cloud Controller Metrics ##
+
+JMX Bridge reports the number of Cloud Controller API requests
+completed and the requests sent but not completed.
+
+The number of requests sent but not completed represents the pending activity in
+your system, and can be higher under load.
+This number will vary over time, and the range it can vary over depends on
+specifics of your environment such as hardware, OS, processor speeds, load, etc.
+In any given environment, though, you can establish a typical range of values
+and maximum for this number.
+
+Use the Cloud Controller metrics to ensure that the Cloud Controller is processing API requests in a timely manner.
+If the pending activity in your system increases significantly past the typical
+maximum and stays at an elevated level, Cloud Controller requests may be failing
+and additional troubleshooting may be necessary.
+
+The following table shows the name of the Cloud Controller metric, what the
+metric represents, and the metric type (data type).
+
+<table border="1" class="nice" >
+<tr>
+  <th><strong>METRIC NAME</strong></th>
+  <th><strong>DEFINITION</strong></th>
+  <th><strong>METRIC TYPE (DATA TYPE)</strong></th>
+</tr>
+<tr>
+  <td>cc.requests.completed</td><td>Number of Cloud Controller API requests completed since this instance of Cloud Controller started</td><td>Counter (Integer)</td>
+</tr>
+<tr>
+  <td>cc.requests.outstanding</td><td>Number of Cloud Controller API requests made but not completed since this instance of Cloud Controller started</td><td>Counter (Integer)</td>
+</tr>
+</table>
+
+See the [Cloud Controller](../concepts/architecture/cloud-controller.html) topic for more
+information about the Cloud Controller.
+
+## <a id="router"></a>Router Metrics ##
+
+JMX Bridge reports the number of sent requests and the number of
+completed requests for each Cloud Foundry component.
+
+The difference between these two metrics is the number of requests made to a
+component but not completed, and represents the pending activity for that
+component.
+The number for each component can vary over time, and is typically higher under
+load.
+In any given environment, though, you can establish a typical range of values
+and maximum for this number for each component.
+
+Use these metrics to ensure that the Router is passing requests to other
+components in a timely manner.
+If the pending activity for a particular component increase significantly past
+the typical maximum and stays at an elevated level, additional troubleshooting
+of that component may be necessary.
+If the pending activity for most or all components increases significantly and
+stays at elevated values, troubleshooting of the router may be necessary.
+
+The following table shows the name of the Router metric, what the metric
+represents, and the metric type (data type).
+
+<table border="1" class="nice" >
+<tr>
+  <th><strong>METRIC NAME</strong></th>
+  <th><strong>DEFINITION</strong></th>
+  <th><strong>METRIC TYPE (DATA TYPE)</strong></th>
+</tr>
+<tr>
+  <td>router.requests<br />[component=c]</td><td>Number of requests the router has received for component <strong>c</strong> since this instance of the router has started<br /><strong>c</strong> can be CloudController or route-emitter</td><td>Counter (Integer)</td>
+</tr>
+<tr>
+  <td>router.responses<br />[status=s,component=c]</td><td>Number of requests completed by component <strong>c</strong> since this instance of the router has started<br /><strong>c</strong> can be CloudController or route-emitter<br/><strong>s</strong> is http status family: 2xx, 3xx, 4xx, 5xx, and other</td><td>Counter (Integer)</td>
+</tr>
+</table>
+
+See the [Router](../concepts/architecture/router.html) topic for more information about the
+Router.
+
+## <a id="diego"></a>Diego Metrics ##
+
+Pivotal JMX Bridge reports metrics for the Diego cells and from the Diego Bulletin Board System (BBS). The following tables show the name of the Diego metric, what the metric represents, and the metric type (data type).  
+
+For general information about Diego, see the [Diego Architecture](../concepts/diego/diego-architecture.html) topic. 
+
+### Diego Cell Metrics
+
+Pivotal JMX Bridge reports the following metrics for each Diego cell. If you have multiple cells, JMX Bridge reports metrics for each cell individually. The metrics are not summed across cells. 
+
+Use these metrics to determine the size of your deployment or when to scale up a deployment, and to track the status of Long Running Processes (LRP) in the Diego life cycle.
+
+<table border="1" class="nice" >
+<tr>
+  <th><strong>METRIC NAME</strong></th>
+  <th><strong>DEFINITION</strong></th>
+  <th><strong>METRIC TYPE (DATA TYPE)</strong></th>
+</tr>
+<tr>
+  <td>rep.CapacityTotalMemory</td><td>Total amount of memory available for this cell to allocate to containers.</td><td>Gauge (Float)</td>
+</tr>
+<tr>
+  <td>rep.CapacityRemainingMemory</td><td>Remaining amount of memory available for this cell to allocate to containers.</td><td>Gauge (Float)</td>
+</tr>
+<tr>
+  <td>rep.CapacityTotalDisk</td><td>Total amount of disk available for this cell to allocate to containers.</td><td>Gauge (Float)</td>
+</tr>
+<tr>
+  <td>rep.CapacityRemainingDisk</td><td>Remaining amount of disk available for this cell to allocate to containers.</td><td>Gauge (Float)</td>
+</tr>
+<tr>
+  <td>rep.ContainerCount</td><td>Number of containers hosted on the cell.</td><td>Gauge (Integer)</td>
+</tr>
+
+</table>
+
+### Diego BBS Metrics
+
+Pivotal JMX Bridge reports these metrics from the Diego BBS, and are deployment-wide metrics. Use these metrics to inspect the state of the apps running on the deployment as a whole.
+
+<table border="1" class="nice" >
+<tr>
+  <th><strong>METRIC NAME</strong></th>
+  <th><strong>DEFINITION</strong></th>
+  <th><strong>METRIC TYPE (DATA TYPE)</strong></th>
+</tr>
+<tr>
+  <td>bbs.CrashedActualLRPs</td><td>Total number of LRP instances that have crashed.</td><td>Gauge (Integer)</td>
+</tr>
+<tr>
+  <td>bbs.LRPsRunning</td><td>Total number of LRP instances that are running on cells.</td><td>Gauge (Integer)</td>
+</tr>
+<tr>
+  <td>bbs.LRPsUnclaimed</td><td>Total number of LRP instances that have not yet been claimed by a cell.</td><td>Gauge (Integer)</td>
+</tr>
+<tr>
+  <td>bbs.LRPsClaimed</td><td>Total number of LRP instances that have been claimed by some cell.</td><td>Gauge (Integer)</td>
+</tr>
+<tr>
+  <td>bbs.LRPsDesired</td><td>Total number of LRP instances desired across all LRPs.</td><td>Gauge (Integer)</td>
+</tr>
+<tr>
+  <td>bbs.LRPsExtra</td><td>Total number of LRP instances that are no longer desired but still have a BBS record.</td><td>Gauge (Integer)</td>
+</tr>
+<tr>
+  <td>bbs.LRPsMissing</td><td>Total number of LRP instances that are desired but have no record in the BBS.</td><td>Gauge (Integer)</td>
+</tr>
+</table>
+
+
+
+## <a id="vm"></a>Virtual Machine Metrics ##
+
+JMX Bridge reports data for each virtual machine (VM) in a deployment.
+Use these metrics to monitor the health of your Virtual Machines.
+
+The following table shows the name of the Virtual Machine metric, what the
+metric represents, and the metric type (data type).
+
+<table border="1" class="nice" >
+<tr>
+  <th><strong>METRIC NAME</strong></th>
+  <th><strong>DEFINITION</strong></th>
+  <th><strong>METRIC TYPE (DATA TYPE)</strong></th>
+</tr>
+<tr>
+  <td>system.mem.percent</td><td>Percentage of memory used on the VM</td><td>Gauge (Float, 0-100)</td>
+</tr>
+<tr>
+  <td>system.swap.percent</td><td>Percentage of swap used on the VM</td><td>Gauge (Float, 0-100)</td>
+</tr>
+<tr>
+  <td>system.disk.ephemeral.percent</td><td>Percentage of ephemeral disk used on the VM</td><td>Gauge (Float, 0-100)</td>
+</tr>
+<tr>
+  <td>system.disk.system.percent</td><td>Percentage of system disk used on the VM</td><td>Gauge (Float, 0-100)</td>
+</tr>
+<tr>
+  <td>system.cpu.sys</td><td>Amount of CPU spent in system processes</td><td>Gauge (Float)</td>
+</tr>
+<tr>
+  <td>system.cpu.user</td><td>Amount of CPU spent in user processes</td><td>Gauge (Float)</td>
+</tr>
+<tr>
+  <td>system.cpu.wait</td><td>Amount of CPU spent in waiting processes</td><td>Gauge (Float)</td>
+</tr>
+</table>

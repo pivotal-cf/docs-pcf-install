@@ -61,14 +61,13 @@ PCF installation. Importing an installation overwrites any existing installation
 1. Follow the instructions in [SSH into Ops Manager](../../customizing/trouble-advanced.html#ssh). This example assumes an Amazon Web Services deployment:
 
 	<pre class='terminal'>
-	$ ssh -i ops_mgr.pem ubuntu@OPS-MGR-IP
+	ssh -i ops_mgr.pem ubuntu@OPS-MGR-IP
 	</pre>
 
-1. Rename, move, or delete the `bosh-state.json` file. Removing `bosh-state.json` causes Ops Manager to treat the deploy as a new deployment, recreating missing Virtual Machines(VMs) including BOSH. The new deployment ignores existing VMs such as your Pivotal Cloud Foundry deployment.
+1. Delete the `bosh-deployments.yml` file. Deleting `bosh-deployments.yml` causes Ops Manager to treat the deploy as a new deployment, recreating missing Virtual Machines(VMs) including BOSH. The new deployment ignores existing VMs such as your Pivotal Cloud Foundry deployment.
 
 	<pre class='terminal'>
-  $ cd /var/tempest/workspaces/default/deployments/
-	$ sudo mv bosh-state.json bosh-state.json.old
+	sudo rm /var/tempest/workspaces/default/deployments/bosh-deployments.yml
 	</pre>
 
 1. Return to the **Product Installation Dashboard**, and click **Apply Changes**. 
@@ -82,15 +81,16 @@ PCF installation. Importing an installation overwrites any existing installation
 ## <a id='restore-databases'></a>Restoring Critical Backend Components##
 
 Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore. This section describes the procedure for restoring the databases and servers associated with your PCF installation.
-For more information about which data stores you may be using, see [Backing Up and Restoring PCF](./index.html).
 
 You must restore each of the following:
 
-* <a href="#restore-ccdb">Cloud Controller database</a> (Only if you are using PostgreSQL databases)
-* <a href="#restore-console">Apps Manager database</a> (Only if you are using PostgreSQL databases)
-* <a href="#restore-uaa">UAA database</a> (Only if you are using PostgreSQL databases)
-* <a href="#restore-nfs">NFS server</a> (In all cases)
-* <a href="#restore-mysql-dev">MySQL server</a> (In all cases except if you are using external databases)
+* Cloud Controller Database
+* Apps Manager Database
+* UAA Database
+* NFS Server
+* Pivotal MySQL Server
+
+<p class="note"><strong>Note</strong>: If you are running PostgreSQL and are on the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard instructions for restoring the Cloud Controller, Apps Manager, and UAA Databases. </p>
 
 ### <a id='stop-cc'></a>Stop Cloud Controller###
 
@@ -186,10 +186,10 @@ $ vcap@10.85.52.101:~# /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 
 
 1. Run the following commands to drop the tables:
 <pre class='terminal'>
-uaa=# drop schema public cascade;
-uaa=# create schema public;
+drop schema public cascade;
+create schema public;
 \q
-uaa=# </pre>
+</pre>
 
 1. Exit the UAA Database VM.
 <pre class='terminal'>$ exit</pre>
@@ -259,16 +259,26 @@ Use the NFS password and IP address to restore the NFS by following the steps de
 
 ### <a id='restore-mysql-dev'></a>Restore MySQL Database ###
   
-Restoring from a backup is the same whether one or multiple databases were backed up. Executing the SQL dump will drop, recreate, and refill the specified databases and tables.
-
-  <p class="note"><strong>Warning:</strong> Restoring a database will delete all data that existed in the database prior to the restore. Restoring a database using a full backup artifact, produced by `mysqldump --all-databases` for example, will replace all data and user permissions.</p>
-
-1. From the same VM you used to perform the manual backup, or a similar VM, restore from the data dump:
-  <pre class="terminal">$ mysql -u root -p -h $MYSQL\_NODE\_IP < user_databases.sql</pre>
-
-1. Re-apply user privileges:
-  <pre class="terminal">$ mysql -u root -p -h $MYSQL\_NODE\_IP -e "FLUSH PRIVILEGES"</pre>
-  This command tells the cluster to re-load user permissions using the data that has just been restored.
+ 1. Use `scp` to send the MySQL Database backup file to the MySQL Database VM. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+	 <pre class='terminal'>
+	    $ scp user_databases.sql vcap@YOUR-MYSQL-VM-IP-ADDRESS:~/.
+	 </pre>
+ 
+ 1. SSH into the MySQL Database VM.
+	 <pre class='terminal'>
+	 $ ssh vcap@YOUR-MYSQL-VM-IP
+	 </pre>
+ 
+ 1. Use the MySQL password and IP address to restore the MySQL database by running the following command. 
+	 <pre class='terminal'>
+	   mysql -h YOUR-MYSQL-SERVER-IP -u root -p < ~/.user_databases.sql
+	 </pre>
+	 
+ 1. Log in to the MySQL client and flush privileges.
+	 <pre class='terminal'>
+	     $ mysql -u root -p -h
+	     mysql > flush privileges;
+	 </pre>
 
 ### <a id='cc-start-2'></a>Start Cloud Controller ###
 <%= partial 'starting_cc' %>

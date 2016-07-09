@@ -6,9 +6,10 @@ owner: Ops Manager
 <strong><%= modified_date %></strong>
 
 This guide describes how to provision the OpenStack infrastructure that you
-need to install [Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) (PCF) OpenStack. This document uses Mirantis Openstack. Use this topic when [Installing Pivotal Cloud Foundry&reg; on OpenStack](./openstack.html).
+need to install [Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) (PCF) on Mirantis Express hosted OpenStack.
+Use this topic when [Installing Pivotal Cloud Foundry&reg; on OpenStack](./openstack.html).
 
-After completing this procedure, complete all of the steps in the [Configuring Ops Manager Director for OpenStack](./openstack-om-config.html) and [Installing Elastic Runtime on OpenStack](./openstack-er-config.html) topics.
+After completing this procedure, complete all of the steps in the [Configuring Ops Manager Director after Deploying PCF on OpenStack](./openstack-om-config.html) and [Installing Elastic Runtime after Deploying PCF on OpenStack](./openstack-er-config.html) topics.
 
 ## <a id='log-in'></a>Step 1: Log In to the OpenStack Horizon Dashboard ##
 
@@ -17,9 +18,6 @@ After completing this procedure, complete all of the steps in the [Configuring O
     <%= image_tag("openstack/log-in.png") %>
 
 ## <a id='security'></a>Step 2: Configure Security ##
-This section describes adding key pairs for your PCF deployment.
-
-<p class='note'><strong>Note</strong>: OpenStack 8 uses the Python Paramiko library, which uses the BER or DER format instead of PEM. If you are using OpenStack 8, import your own key using <code>ssh-keygen</code>, and skip to Step 3 below.</p>
 
 1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Access & Security**.
 
@@ -44,13 +42,11 @@ create a group with the following properties:
 
     <%= image_tag("openstack/manage-security-rules.png") %>
 
-1. Add the access rules for HTTP, HTTPS, and SSH as shown in the table below. The rules with <code>opsmanager</code> in the Remote column have restricted access to that particular Security Group.
+1. Add the access rules for HTTP, HTTPS, and SSH as shown in the table below. The rules with 'opsmanager' in the Remote column have restricted access to that particular Security Group.
 
     <p class='note'><strong>Note</strong>: Adjust the remote sources as
     necessary for your own security compliance. Pivotal recommends limiting
     remote access to Ops Manager to IP ranges within your organization.</p>
-
-    <p class="note"><strong>Note</strong>: If you intend to set up ICMP for your PCF deployment, you should add those rules here.</p>
 
     <table class='nice' border='1'>
       <tr>
@@ -63,42 +59,42 @@ create a group with the following properties:
       <tr>
         <td>Ingress</td>
         <td>IPv4</td>
-        <td>Custom TCP</td>
+        <td>TCP</td>
         <td>22 (SSH)</td>
         <td>0.0.0.0/0 (CIDR)</td>
       </tr>
       <tr>
         <td>Ingress</td>
         <td>IPv4</td>
-        <td>Custom TCP</td>
+        <td>TCP</td>
         <td>80 (HTTP)</td>
         <td>0.0.0.0/0 (CIDR)</td>
       </tr>
       <tr>
         <td>Ingress</td>
         <td>IPv4</td>
-        <td>Custom TCP</td>
+        <td>TCP</td>
         <td>443 (HTTPS)</td>
         <td>0.0.0.0/0 (CIDR)</td>
       </tr>
       <tr>
         <td>Ingress</td>
         <td>IPv4</td>
-        <td>Custom TCP</td>
+        <td>TCP</td>
         <td>25555</td>
         <td>0.0.0.0/0 (CIDR)</td>
       </tr>
       <tr>
         <td>Ingress</td>
         <td>IPv4</td>
-        <td>Custom TCP</td>
+        <td>TCP</td>
         <td>1-65535</td>
         <td>opsmanager</td>
       </tr>
       <tr>
         <td>Ingress</td>
         <td>IPv4</td>
-        <td>Custom UDP</td>
+        <td>UDP</td>
         <td>1-65535</td>
         <td>opsmanager</td>
       </tr>
@@ -106,15 +102,14 @@ create a group with the following properties:
 
 ## <a id='create-om-image'></a>Step 3: Create Ops Manager Image ##
 
-Use one of the following tools to create the Ops Manager image in OpenStack:
-
-  * [The OpenStack GUI](#openstack-gui)
-  * [The Glance CLI client](#glance-cli)
+You can create the Ops Manager image in OpenStack using the OpenStack GUI or
+using the [Glance CLI](http://docs.openstack.org/developer/python-glanceclient/man/glance.html)
+client.
 
 <p class='note'><strong>Note</strong>: If your Horizon Dashboard does not
 support file uploads, you must use the Glance client.</p>
 
-### <a id='openstack-gui'></a> (Option) OpenStack GUI ###
+### OpenStack GUI ###
 
 1. Download the **Pivotal Cloud Foundry&reg; Ops Manager for OpenStack** image file from [Pivotal Network](https://network.pivotal.io).
 
@@ -129,18 +124,23 @@ following information:
     * **Format**: Select **Raw**.
     * **Minimum Disk (GB)**: Enter `40`.
     * **Minimum RAM (MB)**: Enter `4096`.
-    * Ensure that the **Public** checkbox is not selected.
+    * Deselect the **Public** checkbox.
     * Select the **Protected** checkbox.
 
 1. Click **Create Image**.
 
     <%= image_tag("openstack/create-image.png") %>
 
-### <a id='glance-cli'></a> (Option) Glance CLI ###
-
-1. Install the [Glance CLI client](http://docs.openstack.org/user-guide/common/cli_install_openstack_command_line_clients.html).
+### Glance CLI ###
 
 1. Download the **Pivotal Cloud Foundry&reg; Ops Manager for OpenStack** image file from [Pivotal Network](https://network.pivotal.io).
+
+1. In a terminal window, run the following command to install the Glance CLI
+client:
+
+    <pre class='terminal'>
+    $ apt-get install python-glanceclient
+    </pre>
 
 1. Run `admin-openrc.sh` to download your `openstack.rc` file and target your
 OpenStack environment.
@@ -150,7 +150,7 @@ OpenStack environment.
     Please enter your OpenStack Password:
     </pre>
 
-1. Run the following Glance command to upload the image file that you downloaded from [Pivotal Network](https://network.pivotal.io):
+1. Run the following command to use the Glance CLI client to upload the image file that you downloaded from [Pivotal Network](https://network.pivotal.io):
 
     <pre class='terminal'>
     $ glance image-create --progress --disk-format raw --name "Ops Manager" --container-format bare --file PATH/DOWNLOADED-FILE
@@ -160,11 +160,12 @@ OpenStack environment.
 
 1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Images**.
 
+1. Click **Launch**.
+
     <%= image_tag("openstack/launch-image.png") %>
 
-1. Click **Launch** to initate your project image.
-
-1. Complete the **Details**, **Access & Security**, and **Networking** tabs of the **Launch Instance** form with the information below.
+1. Complete the **Details**, **Access & Security**, and **Networking** tabs of
+the **Launch Instance** form with the information below.
 
 ### Details Tab ###
 
@@ -205,7 +206,7 @@ to this network in a later step.
 
     <%= image_tag("openstack/instance-networking.png") %>
 
-## <a id='floating-ip'></a>Step 5: Associate Floating IP Address ##
+## <a id='floating-ip'></a>Step 5: Associate a Floating IP Address ##
 
 1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Instances**.
 
@@ -253,7 +254,7 @@ Create a DNS entry for the IP address that you used for Ops Manager. You must us
 
 ## <a id='configure-ops'></a>Step 8: Configure Ops Manager Director for OpenStack
 
-Now that you have completed this procedure, complete all of the steps in the [Configuring Ops Manager Director for OpenStack](./openstack-om-config.html) and [Installing Elastic Runtime on OpenStack](./openstack-er-config.html) topics.
+After completing this procedure, complete all of the steps in the [Configuring Ops Manager Director after Deploying PCF on OpenStack](./openstack-om-config.html) and [Installing Elastic Runtime after Deploying PCF on OpenStack](./openstack-er-config.html) topics.
 
 ---
 

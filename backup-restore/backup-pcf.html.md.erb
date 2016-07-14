@@ -63,10 +63,10 @@ You must back up each of the following:
 
 <p class="note"><strong>Note</strong>: If you are running PostgreSQL and are on the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard instructions for backing up the Cloud Controller, UAA, and Apps Manager Databases and ensure that you back up your external databases and filestores. </p>
 
-<p class="note"><strong>Note</strong>: To follow the backup instructions below, your network must be configured to allow access to the BOSH Director virtual machine (VM) from your local machine. If you do not have local administrator access, use the <code>scp</code> command to copy the TAR file to the BOSH Director VM. For example:
-<code> scp vcap@10.0.0.10:nfs.tar.gz \ </code>
+<p class="note"><strong>Note</strong>: To follow the backup instructions below, your network must be configured to allow access to the BOSH Director VM from your local machine. If you do not have local administrator access, use the <code>scp</code> command to copy the TAR file to the BOSH Director VM. For example:
+<code> scp vcap@192.0.2.10:nfs.tar.gz \ </code>
 and
-<code>vcap@10.0.0.03:/nfs.tar.gz</code></p>
+<code>vcap@192.0.2.3:/nfs.tar.gz</code></p>
 
 
 ### <a id='stop-cc-2'></a>Stop Cloud Controller###
@@ -80,7 +80,7 @@ and
  
     ```
     ccdb:
-        address: 10.85.52.96
+        address: 192.0.2.96
         port: 2544
         db_scheme: postgres
     ```
@@ -91,26 +91,26 @@ and
 1. SSH into the Cloud Controller database VM as the admin using the IP address and password recorded in the previous steps.
 
     <pre class="terminal">
-    $ ssh vcap@10.85.52.96
+    $ ssh vcap@192.0.2.96
   Password:***********
     </pre>
 
 1. Run `find /var/vcap | grep 'bin/pg_dump'` to find the locally installed psql client on the CCDB VM. For example:
 <pre class="terminal">
-$ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg\_dump'
+$ root@192.0.2.96:~# find /var/vcap | grep 'bin/pg\_dump'
 /var/vcap/data/packages/postgres/5.1/bin/pg\_dump
 </pre>
 
 1. Run `pg_dump` from the locally installed psql client to export the database:
 <pre class="terminal">
-     $ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 10.85.52.96 -U admin -p 2544 ccdb > ccdb.sql
+     $ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 192.0.2.96 -U admin -p 2544 ccdb > ccdb.sql
 </pre>
 
 1. Exit from the Cloud Controller database VM.
 
 1. Run `scp` to copy the exported database to your local machine.
 <pre class="terminal">
-    $ scp vcap@10.85.52.96:~/ccdb.sql .
+    $ scp vcap@192.0.2.96:~/ccdb.sql .
 </pre>
 
 ### <a id='backup-uaadb'></a>Back Up the UAA Database ###
@@ -121,7 +121,7 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg\_dump'
 
     ```
     uaadb:
-          address: 10.85.52.101
+          address: 192.0.2.101
           port: 2544
           db_scheme: postgresql
     ```
@@ -133,20 +133,20 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg\_dump'
 
 1. Run `find /var/vcap | grep 'bin/pg_dump'` to find the locally installed psql client on the UAA database VM.
 <pre class='terminal'>
-    $ root@10.85.52.101:~# find /var/vcap | grep 'bin/pg\_dump'
+    $ root@192.0.2.101:~# find /var/vcap | grep 'bin/pg\_dump'
     /var/vcap/data/packages/postgres/5.1/bin/pg\_dump
 </pre>
 
 1. Run `pg_dump` from the locally installed psql client to export the database:
 <pre class='terminal'>
-     $ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 10.85.52.101 -U root -p 2544 uaa > uaa.sql
+     $ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 192.0.2.101 -U root -p 2544 uaa > uaa.sql
  </pre>
  
  1. Exit from the UAA database VM.
  
  1. Run `scp` to copy the exported database to your local machine.
  <pre class='terminal'>
-     $ scp vcap@10.85.52.101:~/uaa.sql .
+     $ scp vcap@192.0.2.101:~/uaa.sql .
  </pre>
  
 ### <a id='appsmanager'></a>Back Up the Apps Manager Database ###
@@ -157,7 +157,7 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg\_dump'
  
      ```
      databases:
-       address: 10.85.52.104
+       address: 192.0.2.104
        port: 2544
        db_scheme: postgresql
        roles:
@@ -177,20 +177,20 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg\_dump'
 
 1. Run `find /var/vcap | grep 'bin/pg_dump'` to find the locally installed psql client on the Apps Manager database VM.
 <pre class='terminal'>
- $ root@10.85.52.104:~# find /var/vcap | grep 'bin/pg\_dump'
+ $ root@192.0.2.104:~# find /var/vcap | grep 'bin/pg\_dump'
    /var/vcap/data/packages/postgres/5.1/bin/pg\_dump
 </pre>
 
 1. Run `pg_dump` from the locally installed psql client to export the database:
 <pre class='terminal'>
-   $ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 10.85.52.104 -U root -p 2544 console > console.sql
+   $ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 192.0.2.104 -U root -p 2544 console > console.sql
 </pre>
 
 1. Exit from the Apps Manager database VM.
 
 1. Run `scp` to copy the exported database to your local machine.
 <pre class='terminal'>
-   $ scp vcap@10.85.52.104:~/console.sql .
+   $ scp vcap@192.0.2.104:~/console.sql .
 </pre>
 
 
@@ -200,8 +200,8 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg\_dump'
 
     ```
     nfs_server:
-      address: 10.0.0.10
-      network: 10.0.0.0/24
+      address: 192.0.2.10
+      network: 192.0.2.0/24
     syslog_aggregator:
       address:
       port:
@@ -213,10 +213,10 @@ $ root@10.85.52.96:~# find /var/vcap | grep 'bin/pg\_dump'
 
 1. SSH into the NFS server VM and create a TAR file:
     <pre class='terminal'>
-        $ ssh vcap<span>@</span>10.0.0.10 'cd /var/vcap/store && tar cz shared' > nfs.tar.gz
+        $ ssh vcap<span>@</span>192.0.2.10 'cd /var/vcap/store && tar cz shared' > nfs.tar.gz
     </pre>
     <p class="note"><strong>Note</strong>: The TAR file that you create to back up NFS server might be large. To estimate the size of the TAR file before you create it, run the following command:
-    <code class=''>ssh vcap<span>@</span>10.0.0.10 tar -cf - /dir/to/archive/ | wc -c</code></p>
+    <code class=''>ssh vcap<span>@</span>192.0.2.10 tar -cf - /dir/to/archive/ | wc -c</code></p>
 
 
 ### <a id='backup-mysql'></a>Back Up Pivotal MySQL Server ###

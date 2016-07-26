@@ -3,7 +3,7 @@ title: Installing PCF on Microsoft Azure
 owner: Partners
 ---
 
-This topic describes how to deploy Pivotal Cloud Foundry&reg; (PCF) on Microsoft Azure. This deployment is suitable for proof-of-concept or trial workloads, not for production.
+This topic describes how to deploy Pivotal Cloud Foundry (PCF) on Microsoft Azure. This deployment is suitable for proof-of-concept or trial workloads, not for production.
 
 PCF on Microsoft Azure is available as an offering in [Azure Marketplace](https://azure.microsoft.com/en-us/marketplace/partners/pivotal/pivotal-cloud-foundryazure-pcf/). The Azure Marketplace offering installs a pre-configured deployment of PCF and key PCF services. No upgrade path is available for this offering to a production deployment.
 
@@ -25,16 +25,16 @@ You must have the following in order to use PCF on Microsoft Azure:
 
 * A Pivotal Network account: If you do not already have an account, [create one](https://network.pivotal.io/). Retrieve the API token for your profile by performing the following steps:
     1. Sign into the Pivotal Network.
-    1. Navigate to your name in the top right and click **Edit Profile**. 
+    1. Navigate to your name in the top right and click **Edit Profile**.
     1. Record the API token located at the bottom of the page.
 
-* An Azure command line tool on your machine. 
+* An Azure command line tool on your machine.
     * For Linux/Unix/Mac OS X, follow these [instructions](https://azure.microsoft.com/en-us/documentation/articles/xplat-cli-install/) to install the Azure CLI. Then use this [shell script](https://github.com/cf-platform-eng/bosh-azure-template/blob/master/create_azure_principal.sh) to create an Azure Service Principal. Record the `TENANT-ID`, `CLIENT-ID`, `CLIENT-SECRET` produced by the script.
     * For Windows, follow these [instructions](https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/) to install the Azure PowerShell. Then use this [PowerShell script](https://github.com/cf-platform-eng/bosh-azure-template/blob/master/create_azure_principal_powershell.txt) to create an Azure Service Principal. Record the `TENANT-ID`, `CLIENT-ID`, `CLIENT-SECRET` produced by the script.
 
 * Sufficient resources for your Azure account. PCF on Azure allocates the following resources during deployment:
-  * 53 VMs: The deployment uses a total of 53 VMs during the installation. 
-15 VMs are created to run jobs and errands and are subsequently destroyed. 38 VMs continue to run after installation. 
+  * 53 VMs: The deployment uses a total of 53 VMs during the installation.
+15 VMs are created to run jobs and errands and are subsequently destroyed. 38 VMs continue to run after installation.
   * 1 storage account
   * 3 public IPs
   * 1 jumpbox VM that runs the deployment using [BOSH](http://bosh.io/)
@@ -46,8 +46,8 @@ You must have the following in order to use PCF on Microsoft Azure:
 
 * To request a core quota increase, follow these [instructions](https://blogs.msdn.microsoft.com/girishp/2015/09/20/increasing-core-quota-limits-in-azure/).
 
-* When filling in the Details section of the Support Request Description, provide the following information to expedite your request, 
-replacing REGION with your region of choice: 
+* When filling in the Details section of the Support Request Description, provide the following information to expedite your request,
+replacing REGION with your region of choice:
 
 <blockquote>"We are preparing to roll out Pivotal Cloud Foundry from the Azure Marketplace.<br>
 We would like to raise our ARM (Azure Resource Manager) core limits.<br>
@@ -67,44 +67,44 @@ VM count (Number of VMs with Cores ):<br>
 
 ##<a id='getting-started'></a>Install PCF on Microsoft Azure##
 
-1. Log in to your Microsoft Azure [portal](https://portal.azure.com). 
+1. Log in to your Microsoft Azure [portal](https://portal.azure.com).
 1. Select the Azure Marketplace tile.
-1. Search for “Pivotal Cloud Foundry” and select **Pivotal Cloud Foundry on Microsoft Azure** or 
+1. Search for “Pivotal Cloud Foundry” and select **Pivotal Cloud Foundry on Microsoft Azure** or
 navigate directly to the [Pivotal Cloud Foundry on Azure Marketplace](https://azure.microsoft.com/en-us/marketplace/partners/pivotal/pivotal-cloud-foundryazure-pcf/) page.
  <%= image_tag("azure/marketplace.png") %>
 4. Click **Deploy >**.
-   
+
 5. Enter the following **User Inputs**:
-    * **Storage Account Name Prefix**: Installing PCF on Microsoft Azure creates a new storage account. Use a unique prefix that contains letters and numbers and is no more 
+    * **Storage Account Name Prefix**: Installing PCF on Microsoft Azure creates a new storage account. Use a unique prefix that contains letters and numbers and is no more
 than 10 characters long. For more information, see [About Azure storage accounts](https://azure.microsoft.com/en-us/documentation/articles/storage-create-storage-account/).
     * **SSH public key**: You must generate 2048-bit RSA public and private key files.
     	* Linux/Unix/Mac OS X: From the command line, run `$ ssh-keygen -t rsa -b 2048`. Locate your public key in `~/.ssh/id_rsa.pub` and paste the contents into the parameter **sshKeyData**.
-    	* Windows: Download, install, and use [PuTTYgen](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html). 
+    	* Windows: Download, install, and use [PuTTYgen](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html).
 Locate your public key file and paste the contents into the parameter **sshKeyData**.
 	* **Tenant ID**: Enter the `TENANT-ID` output from the Azure Service Principal creation script you ran in the [Prerequisites](#prereqs) section.
     * **Client ID**: Enter the `CLIENT-ID` output from the Azure Service Principal creation script you ran in the [Prerequisites](#prereqs) section.
     * **Client Secret**: Enter the `CLIENT-SECRET` output from the Azure Service Principal creation script you ran in the [Prerequisites](#prereqs) section.
     * **Pivotal Network Token**: Enter the API token of your Pivotal Network Account that you recorded in the [Prerequisites](#prereqs) section.
-    * **Resource Group**: Use a new resource group with a unique name for each new deployment. For more information about Azure resource groups, 
+    * **Resource Group**: Use a new resource group with a unique name for each new deployment. For more information about Azure resource groups,
 see [Manage Azure resources through portal](https://azure.microsoft.com/en-us/documentation/articles/resource-group-portal/).
     * **Location**: Choose which Azure location you want to deploy to. If you requested a quota increase, you must choose the same region that you submitted in your request.
 1. Click **OK** and review the Summary Page.
 7. Click **OK** and read the Terms of Use and Privacy Policy.
 8. Click **Create** to be directed to the main Azure portal page, where a new tile shows the deployment is in progress.
-<p class="note"><strong>Note</strong>: The tile deployment progress shows completed when the initial jumpbox VM is provisioned. 
+<p class="note"><strong>Note</strong>: The tile deployment progress shows completed when the initial jumpbox VM is provisioned.
 This does not indicate the deployment is complete.</p>
-  
+
     The full deployment takes approximately two hours.
 
-9. Check the **Outputs** section of the deployment template. Azure confirms your quota before deploying PCF. 
-If you see this message in the **Outputs** section of the deployment template `CRITICAL Insufficient Quota, PCF will NOT deploy`, you need to raise your quota. 
+9. Check the **Outputs** section of the deployment template. Azure confirms your quota before deploying PCF.
+If you see this message in the **Outputs** section of the deployment template `CRITICAL Insufficient Quota, PCF will NOT deploy`, you need to raise your quota.
 See <a href="#raising-quota">Raise Your Quota</a>.
 
     <%= image_tag("azure/quota.png") %>
 
-10. (Optional) In the **Outputs** section of the deployment template, navigate to the URL shown in **PROGRESSMONITORURL** textbox. 
-In the tmux session on this page, follow the progress of the deployment. 
-The deployment is complete when the Apps Manager URL is written to the page. 
+10. (Optional) In the **Outputs** section of the deployment template, navigate to the URL shown in **PROGRESSMONITORURL** textbox.
+In the tmux session on this page, follow the progress of the deployment.
+The deployment is complete when the Apps Manager URL is written to the page.
 
 ##<a id='verify'></a>Verify the PCF on Microsoft Azure Installation ##
 
@@ -124,16 +124,16 @@ The deployment is complete when the Apps Manager URL is written to the page.
 
 4. Find the Apps Manager URL and the admin password:
 
-  1. In the Azure Portal, return to the **Outputs** section of your deployment. 
-  2. Navigate to the URL shown in **PROGRESSMONITORURL** textbox. This is the URL to a tmux session in which you find the Apps Manager URL and admin password that 
+  1. In the Azure Portal, return to the **Outputs** section of your deployment.
+  2. Navigate to the URL shown in **PROGRESSMONITORURL** textbox. This is the URL to a tmux session in which you find the Apps Manager URL and admin password that
 you use to log in to the Apps Manager console.
  If the URL not longer shows the tmux session, see [Cannot find the admin password or Apps Manager URL](#cantfindpsswd) below.
 
-6. From your Azure Portal, navigate to **Resources** and find the **Public IP address** resource named <code>YOUR-JUMPBOX-NAME–cf</code> and select it. 
+6. From your Azure Portal, navigate to **Resources** and find the **Public IP address** resource named <code>YOUR-JUMPBOX-NAME–cf</code> and select it.
 	<%= image_tag("azure/app_manager_one.png") %>
 7. Record the **IP address**. This is the IP address of Apps Manager.
 	<%= image_tag("azure/app_manager_two.png") %>
-8. Navigate to the URL `https://apps.system.APPS-MANAGER-IP-ADDRESS.cf.pcfazure.com`, and log in to Apps Manager with the username `admin` and the password obtained above. 
+8. Navigate to the URL `https://apps.system.APPS-MANAGER-IP-ADDRESS.cf.pcfazure.com`, and log in to Apps Manager with the username `admin` and the password obtained above.
 
 9. From Apps Manager, verify that your services are running.
 <%= image_tag("azure/console.png") %>
@@ -149,9 +149,9 @@ To remove the deployment, navigate to your Azure Portal and delete the **Resourc
 
 ###<a id='deployfails'></a>Deployment fails
 
-**Symptom:** PCF on Azure fails to deploy. 
+**Symptom:** PCF on Azure fails to deploy.
 
-**Solution**: If the deployment fails after the jumpbox VM has been created, capture the PCF deployment log as described in the [verification procedure above](#verify) and send it to azure-inquiry@pivotal.io with any additional information about the installation that you can provide. 
+**Solution**: If the deployment fails after the jumpbox VM has been created, capture the PCF deployment log as described in the [verification procedure above](#verify) and send it to azure-inquiry@pivotal.io with any additional information about the installation that you can provide.
 
 ###<a id='cantfindpsswd'></a>Cannot Find the Admin Password or Apps Manager URL
 

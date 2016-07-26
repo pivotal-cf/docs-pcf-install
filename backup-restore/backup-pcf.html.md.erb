@@ -1,5 +1,5 @@
 ---
-title: Backing Up Pivotal Cloud Foundry&reg;
+title: Backing Up Pivotal Cloud Foundry
 owner: RelEng
 ---
 
@@ -11,7 +11,7 @@ This topic describes the procedure for backing up each critical backend <%= vars
 
 To back up a deployment, export installation settings, download the BOSH Deployment Manifest, temporarily stop the Cloud Controller, create and export backup files for each critical backend component, and restart the Cloud Controller. It is also important to record your Cloud Controller Database encryption credentials which you will need if you contact Pivotal Support for help restoring your installation.
 
-To restore your backup, see the [Restoring Pivotal Cloud Foundry&reg; from Backup](./restore-pcf.html) topic.
+To restore your backup, see the [Restoring Pivotal Cloud Foundry from Backup](./restore-pcf.html) topic.
 
 ## <a id='encrypt-key'></a>Record the Cloud Controller Database Encryption Credentials ##
 
@@ -26,7 +26,7 @@ restoring your installation.
 
 Pivotal recommends that you back up your installation settings by exporting
 frequently.
-Always export an installation before following the steps in the [Import Installation Settings](./restore-pcf.html#import) section of the [Restoring Pivotal Cloud Foundry&reg; from Backup](./restore-pcf.html) topic.
+Always export an installation before following the steps in the [Import Installation Settings](./restore-pcf.html#import) section of the [Restoring Pivotal Cloud Foundry from Backup](./restore-pcf.html) topic.
 
 <p class="note"><strong>Note</strong>: Exporting your installation only backs up your installation settings. It does not back up your virtual machines (VMs) or any external MySQL databases.</p>
 
@@ -53,8 +53,8 @@ As a result, an exported installation file can exceed 5 GB in size.
 
 Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore. This section describes the procedure for backing up the databases and the servers associated with your PCF installation. For more information about which data stores you might be using, see [Backing Up and Restoring PCF](./index.html).
 
-If you are running PostgreSQL and are on the default internal databases, follow the instructions below for 
-backing up the <a href="#ccdb">Cloud Controller database</a>, the <a href="#backup-uaadb">UAA database</a>, 
+If you are running PostgreSQL and are on the default internal databases, follow the instructions below for
+backing up the <a href="#ccdb">Cloud Controller database</a>, the <a href="#backup-uaadb">UAA database</a>,
 the <a href="#appsmanager"> Apps Manager database</a>, <a href="#backup-mysql"> MySQL server</a>, and the <a href="#nfs"> NFS server</a>.
 
 If you are running your databases on the internal MySQL database only, follow the instructions below for backing up the <a href="#backup-mysql"> MySQL server</a> and <a href="#nfs">the NFS server</a>.
@@ -71,11 +71,11 @@ and
 <%= partial './stopping_cc' %>
 
 ### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
- 
+
  <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
 
 1. In the BOSH deployment manifest, `cf.yml`, locate the Cloud Controller database (CCDB) component under the `ccdb` key and record the IP address:
- 
+
     ```
     ccdb:
         address: 192.0.2.96
@@ -126,7 +126,7 @@ $ root@192.0.2.96:~# find /var/vcap | grep 'bin/pg\_dump'
 1. From the **Installation Dashboard** in Ops Manager, select **Elastic Runtime** and click **Credentials>Link to Credential**. Record the UAA database credentials.
 
     <%= image_tag("uaadb-creds.png") %>
- 
+
 1. SSH into the UAA database VM as the admin using the IP address and password recorded in the previous steps.
 
 1. Run `find /var/vcap | grep 'bin/pg_dump'` to find the locally installed psql client on the UAA database VM.
@@ -139,20 +139,20 @@ $ root@192.0.2.96:~# find /var/vcap | grep 'bin/pg\_dump'
 <pre class='terminal'>
      $ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 192.0.2.101 -U root -p 2544 uaa > uaa.sql
  </pre>
- 
+
  1. Exit from the UAA database VM.
- 
+
  1. Run `scp` to copy the exported database to your local machine.
  <pre class='terminal'>
      $ scp vcap@192.0.2.101:~/uaa.sql .
  </pre>
- 
+
 ### <a id='appsmanager'></a>Back Up the Apps Manager Database ###
- 
+
 <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
- 
+
 1. In the BOSH deployment manifest, `cf.yml`, locate the `databases` component and record the IP address and password:
- 
+
      ```
      databases:
        address: 192.0.2.104
@@ -166,9 +166,9 @@ $ root@192.0.2.96:~# find /var/vcap | grep 'bin/pg\_dump'
        - tag: console
          name: console
      ```
- 
+
 1. From the **Installation Dashboard** in Ops Manager, select **Elastic Runtime** and click **Credentials>Link to Credential**. Record the Apps Manager database credentials.
- 
+
      <%= image_tag("appsmgr-creds.png") %>
 
 1. SSH into the Apps Manager database VM as the admin using the IP address and password recorded in the previous steps.
@@ -235,5 +235,5 @@ There are two ways to backup the MySQL Server:
 ### <a id='cc-start'></a>Start Cloud Controller ###
 <%= partial './starting_cc' %>
 
-Follow the steps in the [Restoring Pivotal Cloud Foundry&reg; from Backup](./restore-pcf.html) topic to restore a backup, import an installation to restore your settings, or to share your settings with another user.
+Follow the steps in the [Restoring Pivotal Cloud Foundry from Backup](./restore-pcf.html) topic to restore a backup, import an installation to restore your settings, or to share your settings with another user.
 

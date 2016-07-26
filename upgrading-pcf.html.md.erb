@@ -2,7 +2,7 @@
 title: Upgrading Pivotal Cloud Foundry
 owner: Ops Manager
 ---
- 
+
 <style>
     .note.warning {
         background-color: #fdd;
@@ -13,14 +13,14 @@ owner: Ops Manager
         color: #f99;
      }
 </style>
- 
+
 <strong><%= modified_date %></strong>
 
-This topic describes upgrading Pivotal Cloud Foundry&reg; to version 1.7. The upgrade procedures below describe upgrading Ops Manager, Elastic Runtime, and product tiles. 
-     
+This topic describes upgrading Pivotal Cloud Foundry to version 1.7. The upgrade procedures below describe upgrading Ops Manager, Elastic Runtime, and product tiles.
+
 If you have already upgraded your Ops Manager to version 1.7 and want to upgrade
 individual products such as PCF Elastic Runtime, <a href="https://network.pivotal.io/products/p-mysql">Pivotal MySQL</a>, or <a
-href="https://network.pivotal.io/products/pivotal-rabbitmq-service">RabbitMQ</a> in your PCF deployment, see the <a href="./upgrading-products.html">Upgrading
+href="https://network.pivotal.io/products/pivotal-rabbitmq-service">RabbitMQ&reg;</a> in your PCF deployment, see the <a href="./upgrading-products.html">Upgrading
   Products in a PCF Deployment</a> topic.
 
 <p class="note warning">
@@ -29,38 +29,38 @@ href="https://network.pivotal.io/products/pivotal-rabbitmq-service">RabbitMQ</a>
 
 <p class="note"><strong>Note</strong>: The apps in your deployment continue to run during the upgrade. However, you cannot write to your deployment or make changes to apps during the upgrade.</p>
 
-**Important**: Read the Known Issues section of the [Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) (PCF)
+**Important**: Read the Known Issues section of the [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF)
 [Release Notes](../pcf-release-notes/index.html) before getting started.
 
 ## <a id="beforeupgrade"></a>Before You Upgrade
 
 This section contains important guidelines that you must follow before beginning an upgrade to PCF 1.7. Failure to follow these instructions may jeopardize your existing deployment data or cause your upgrade to fail.
 
-The tasks you need to complete before upgrade fall into three categories: 
+The tasks you need to complete before upgrade fall into three categories:
 
 + [Choose Single-AZ or Multi-AZ](#choose-az) - choose a single-AZ or multi-AZ deployment.
 + [Prepare Your Environment](#prepare-env) — includes making sure you have sufficient disk space.
 + [Prepare Databases and Apps](#prepare-db) — includes backing up data and migrating any apps.
-that currently use the DEA architecture to use the Diego architecture.  
-+ [Check System Health](#check-health) — perform a health check of your system, from virtual machines (VMs) to service tiles. 
+that currently use the DEA architecture to use the Diego architecture.
++ [Check System Health](#check-health) — perform a health check of your system, from virtual machines (VMs) to service tiles.
 
 ###<a id="choose-az"></a>Choose Single-AZ or Multi-AZ
 
-Ops Manager 1.7 ships with a new multi-AZ functionality that results in multiple networks. 
+Ops Manager 1.7 ships with a new multi-AZ functionality that results in multiple networks.
 
 When you upgrade to PCF 1.7 from a previous version instead of performing a new full install, you have a single-AZ deployment. If you want to use PCF 1.7 with multi-AZ functionality, choose one of the following procedures:
 
 * Upgrade and then apply multi-AZ:
   1. Follow the upgrade instructions on this page to upgrade to PCF 1.7.
-  2. Follow the instructions in this [Knowledge Base article](https://discuss.zendesk.com/hc/en-us/articles/219118768-How-to-enable-advanced-mode-in-the-Ops-Manager) to enable advanced mode in Ops Manager. 
-  3. Follow the instructions in this [Knowledge Base article](https://discuss.zendesk.com/hc/en-us/articles/219119508-How-to-add-or-modify-my-Availability-Zones-without-the-need-to-reinstall-Pivotal-Cloud-Foundry-) to apply the multi-AZ feature to your deployment. 
+  2. Follow the instructions in this [Knowledge Base article](https://discuss.zendesk.com/hc/en-us/articles/219118768-How-to-enable-advanced-mode-in-the-Ops-Manager) to enable advanced mode in Ops Manager.
+  3. Follow the instructions in this [Knowledge Base article](https://discuss.zendesk.com/hc/en-us/articles/219119508-How-to-add-or-modify-my-Availability-Zones-without-the-need-to-reinstall-Pivotal-Cloud-Foundry-) to apply the multi-AZ feature to your deployment.
 
-* Perform a [new installation](../installing/index.html) of PCF 1.7.   
+* Perform a [new installation](../installing/index.html) of PCF 1.7.
 
 ### <a id="prepare-env"></a>Prepare Your Environment for Upgrade
 
-1. Install the releases from your currently deployed 
-version to the target version in sequential order. For example, if your deployment uses Ops Manager release 1.5 and you are upgrading to 1.7, 
+1. Install the releases from your currently deployed
+version to the target version in sequential order. For example, if your deployment uses Ops Manager release 1.5 and you are upgrading to 1.7,
 you must sequentially install 1.6 and 1.7.
 
 1. Ensure that you are using [Elastic Runtime (ERT)](./upgrading-products.html) v. 1.6.9 or higher.
@@ -76,19 +76,19 @@ remove the tile before upgrading Ops Manager.
 5. If you have disabled lifecycle errands  for any installed product in order to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. See <a href="./add-delete.html#add-import">Adding and Deleting Products</a> for more  information.
 
 6. Ensure that the VM resurrector is turned off:
-   1. From your Installation Dashboard, select the **Ops Manager Director** tile. 
+   1. From your Installation Dashboard, select the **Ops Manager Director** tile.
    2. Click **Director Config**.
    3. Clear the **Enable VM resurrector plugin** checkbox.
 
 7. If you are upgrading a vSphere environment, ensure that you have the following information about your existing environment before starting the upgrade:
   * Note these IP addresses, which can be found in the vSphere web client, **Manage** > **Settings** > **vApp Options**.
-    This is the same information you entered at the end of deploying [Ops Manager on vSphere](http://docs.pivotal.io/1.6/pivotalcf/customizing/deploying-vm.html). 
+    This is the same information you entered at the end of deploying [Ops Manager on vSphere](http://docs.pivotal.io/1.6/pivotalcf/customizing/deploying-vm.html).
      * IP Address of the Ops Manager
      * Netmask
      * Default Gateway
      * DNS Servers
      * NTP Servers
-  * Note this VM hardware information so you can set up the new VM with similar settings. You can find this in the vSphere web 
+  * Note this VM hardware information so you can set up the new VM with similar settings. You can find this in the vSphere web
 client, **Manage** > **Settings** > **VM Hardware**.
      * CPU
      * Memory
@@ -99,7 +99,7 @@ client, **Manage** > **Settings** > **VM Hardware**.
 
 
 1. Back up all critical data prior to upgrading to PCF 1.7. For example, to backup a 1.6 environment, follow these instructions <a href="http://docs.pivotal.io/pivotalcf/1.6/customizing/backup-restore/backup-pcf.html">Backing Up Pivotal Cloud Foundry</a>. <br>
- 
+
 2. Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal does not support DEA architecture in Pivotal Cloud Foundry 1.7. See the [Migrating Apps to Diego](../adminguide/apps-enable-diego.html) topic for information.
 
 ### <a id="check-health"></a>Check System Health Before Upgrade
@@ -109,7 +109,7 @@ client, **Manage** > **Settings** > **VM Hardware**.
 6. Check the system health of installed products. In the Installation Dashboard, select the **Status** tab for each service tile. Confirm that all jobs are healthy.
 
 7. (Optional) Check the logs for errors before proceeding with the upgrade.
-See the [Viewing Logs in the Command Line Interface](../devguide/deploy-apps/streaming-logs.html#view) topic.  
+See the [Viewing Logs in the Command Line Interface](../devguide/deploy-apps/streaming-logs.html#view) topic.
 
 8. There should be no outstanding changes in Ops Manager or any other tile. All tiles should be green.
 Click **Apply Changes** if necessary.
@@ -162,19 +162,19 @@ Network](https://network.pivotal.io/products/pivotal-cf) site.
     * [Deploying Operations Manager to vSphere](./deploying-vm.html)
     * [Deploying Operations Manager to vCloud Air and vCloud](./pcf-vchs-vcloud.html)
 
-1. When redirected to the **Welcome to Ops Manager** page, select **Import Existing Installation**. 
+1. When redirected to the **Welcome to Ops Manager** page, select **Import Existing Installation**.
 
     <%= image_tag("./images/upgrading/welcome.png") %>
 
 1. When prompted, enter the following:
-  * **Decryption Passphrase**, which is the same as your password. 
+  * **Decryption Passphrase**, which is the same as your password.
   * Click **Choose File** and browse to the installation zip file exported in Step 3 above.
 
     <%= image_tag("./images/upgrading/decryption_passphrase.png") %>
 
 1. Click **Import**.
 
-    <p class="note"><strong>Note</strong>: 
+    <p class="note"><strong>Note</strong>:
       Some browsers do not provide feedback on the status of the import process,
       and may appear to hang.</p>
 
@@ -198,12 +198,12 @@ Network](https://network.pivotal.io/products/pivotal-cf) site.
 
 * Ops Manager 1.7 defines specific instance types instead of custom sizes for vSphere or vCloud. Each instance adopts an instance type that is the closest match to its previous custom size for CPU, memory, and disk space. After the upgrade, you can modify the automatically selected instance size by selecting a different <code>type</code> under <strong>Resource Config</strong> for each of your installed tiles.
 
-* In Ops Manager 1.7, all product tiles use floating stemcells by default. This increases the security of your deployment by enabling tiles to automatically use the latest patched version of a stemcell, but it may significantly increase the amount of time required by a tile upgrade. Review the [Understanding Floating Stemcells](./understanding-stemcells.html) topic for more information.  
+* In Ops Manager 1.7, all product tiles use floating stemcells by default. This increases the security of your deployment by enabling tiles to automatically use the latest patched version of a stemcell, but it may significantly increase the amount of time required by a tile upgrade. Review the [Understanding Floating Stemcells](./understanding-stemcells.html) topic for more information.
 
 * (Optional) You can review your product tiles and configure values accordingly. For example, for Elastic Runtime, review the installation topic for new features:
      * [Launching an Ops Manager Director Instance on AWS](./cloudform-om-deploy.html)
      * [Provisioning the OpenStack Infrastructure](./openstack-setup.html)
      * [Deploying Operations Manager to vSphere](./deploying-vm.html)
      * [Deploying Operations Manager to vCloud Air and
-       vCloud](./pcf-vchs-vcloud.html) 
+       vCloud](./pcf-vchs-vcloud.html)
 

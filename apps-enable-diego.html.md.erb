@@ -16,7 +16,7 @@ owner: Diego
 
 <strong><%= modified_date %></strong>
 
-This topic describes how to migrate applications from the DEA architecture to the Diego architecture, such as if you are upgrading from Pivotal Cloud Foundry&reg; 1.6 to 1.7.
+This topic describes how to migrate applications from the DEA architecture to the Diego architecture, such as if you are upgrading from Pivotal Cloud Foundry 1.6 to 1.7.
 
 <p class="note warning">
 <strong>WARNING: </strong> Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal does not support DEA architecture in Pivotal Cloud Foundry 1.7.
@@ -34,12 +34,12 @@ Pivotal provides three approaches to migrating your apps to Diego:
 
 Before migrating your apps you may need to:
 
-- [Scale up your Diego VMs to handle the increased load.](#scale-diego) 
+- [Scale up your Diego VMs to handle the increased load.](#scale-diego)
 - [Enable Diego as the default runtime for your apps from the Elastic Runtime tile.](#enable-diego)
 - [Ensure you have the standard cf CLI.](#install-cli)
 - [Disable any port-based health checks on worker applications.](#disable-health-checks)
 - [Replace environment variables in your app code.](#app-code)
-- [List the apps you need to migrate.](#list-apps)  
+- [List the apps you need to migrate.](#list-apps)
 
 ### <a id='scale-diego'></a>Scale Your VMs ##
 
@@ -49,14 +49,14 @@ Ensure you have enough VMs allocated to support the newly-migrated apps. You can
 - **Diego Cell**: The **Diego Cell** VM has similar responsibility to the DEA VM to run applications. For example, if you have allocated three DEA instances with 32 GB of persistent disk and 32 GB of RAM for each, allocate three Diego Cell instances with 32 GB of persistent disk and 32 GB of RAM for each to have similar capacity on Diego as with DEAs.
 - **Consul**, **etcd**, and **Diego BBS**: For each component, choose the odd number equal to or one greater than the number of AZs you have. For example, if you have four AZs, allocate five instances each for Consul, etcd, and Diego BBS. Pivotal recommends an odd number of instances because the instances must maintain quorum.
 
-After scaling your virtual machines (VMs), click **Save** on the **Resource Config** page. Navigate to the **Installation Dashboard** and click **Apply Changes**. 
+After scaling your virtual machines (VMs), click **Save** on the **Resource Config** page. Navigate to the **Installation Dashboard** and click **Apply Changes**.
 
 <p class="note"><strong>Note</strong>: After performing a full migration to Diego in Elastic Runtime 1.6.x, and <strong>Enabling Diego as Default</strong>, you can scale the <strong>DEA</strong> and <strong>Health Manager</strong> VMs to 0 since they are not used in Diego deployments. You must <strong>Save</strong> and <strong>Apply Changes</strong> in Ops Manager to confirm these additional changes.</p>
 
 
 ### <a id="enable-diego"></a>Enable Diego as Default ###
 
-1. From the **Settings** tab of the Elastic Runtime tile, click **Diego** and select the **Use Diego by default instead of DEAs** checkbox. 
+1. From the **Settings** tab of the Elastic Runtime tile, click **Diego** and select the **Use Diego by default instead of DEAs** checkbox.
 
 1. Return to Ops Manager and click **Apply Changes** to apply this new default on Elastic Runtime.
 
@@ -74,9 +74,9 @@ Worker applications pushed with the `--no-route` option do not report as healthy
 
 ### <a id='app-code'></a>Remove Unsupported Variables from your App Code ##
 
-* Diego does not use the `VCAP_APP_HOST` environment variable. If your code references this variable, replace it with `0.0.0.0`. 
+* Diego does not use the `VCAP_APP_HOST` environment variable. If your code references this variable, replace it with `0.0.0.0`.
 
-* Diego does not use the `VCAP_APP_PORT` environment variable. If your code references this variable, replace it with `PORT`, which is set to `8080` by default. 
+* Diego does not use the `VCAP_APP_PORT` environment variable. If your code references this variable, replace it with `PORT`, which is set to `8080` by default.
 
 
 ### <a id='list-apps'></a>List DEA and Diego Applications ##
@@ -135,12 +135,12 @@ $ cf app EXAMPLE-APP
 
 ##<a id="batch-migration"></a>Batch Migration
 
-This procedure migrates multiple apps in a single command using overwrite-based migration. The `cf migrate-apps` command migrates all apps in a deployment unless you specify an org or space. 
+This procedure migrates multiple apps in a single command using overwrite-based migration. The `cf migrate-apps` command migrates all apps in a deployment unless you specify an org or space.
 
 - Run `cf migrate-apps diego` to migrate apps to Diego. You can specify the following options:
 	- `-o ORG` migrates all apps in an org.
 	- `-s SPACE` migrates all apps in a space that exists in your currently targeted org. If you want to migrate apps in a space from another org, you must target that org before running `cf migrate-apps`.
-	- `-p MAX_IN_FLIGHT` specifies how many apps to migrate in parallel, up to 100. Defaults to 1. Pivotal recommends first trying a migration with the default and then increasing `-p` if the first migration is stable. Do not set `-p` to a value greater than the number of Diego cells in the deployment. 
+	- `-p MAX_IN_FLIGHT` specifies how many apps to migrate in parallel, up to 100. Defaults to 1. Pivotal recommends first trying a migration with the default and then increasing `-p` if the first migration is stable. Do not set `-p` to a value greater than the number of Diego cells in the deployment.
 
 <p class="note"><strong>Note</strong>: Migrating a running app causes a restart. Migrating a stopped app does not cause a restart.</p>
 
@@ -275,13 +275,13 @@ Error: `Runner error: desired app failed: 503`
 
 #### Explanation
 
-Diego places a 4KB limit on the maximum size of application routes, space for 40 to 50 medium-sized 50-character routes. This error indicates you have exceeded the limit.  
+Diego places a 4KB limit on the maximum size of application routes, space for 40 to 50 medium-sized 50-character routes. This error indicates you have exceeded the limit.
 
 #### Solution
 
 In some cases, you can work around this by using a wildcard route, for example, `*.my-domain.com` instead of mapping individual routes.  If you see this error and you cannot wildcard the routes, create another instance of the same application and bind the remaining routes to the second application instance.
 
-<hr>  
+<hr>
 
 #### Symptom
 
@@ -295,11 +295,11 @@ Large applications may fail to stage because of a [known issue](https://github.c
 
 By default, apps have a 1GB disk quota. If your application files are close to this size, use the `-k` option of `cf push` to increase your disk quota.
 
-<hr>  
+<hr>
 
 #### Symptom
 
-Running the `cf files` command results in the error: `Request failed for app: APP_NAME, instance: INST_NUM and path: PATH` 
+Running the `cf files` command results in the error: `Request failed for app: APP_NAME, instance: INST_NUM and path: PATH`
 
 #### Explanation
 
@@ -309,7 +309,7 @@ Diego does not support the `cf files` command.
 
 Run the `cf ssh APP_NAME` command to list files in your application instances.
 
-<hr>  
+<hr>
 
 #### Symptom
 
@@ -321,4 +321,4 @@ Diego does not support the interpolation of environment variables. In the DEA ar
 
 #### Solution
 
-Remove interpolation from any environment variables. 
+Remove interpolation from any environment variables.

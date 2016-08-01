@@ -85,12 +85,11 @@ Your Elastic Runtime deployment contains several critical data stores that must 
 You must restore each of the following:
 
 * Cloud Controller Database
-* Apps Manager Database
 * UAA Database
 * NFS Server
 * Pivotal MySQL Server
 
-<p class="note"><strong>Note</strong>: If you are running PostgreSQL and are on the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard instructions for restoring the Cloud Controller, Apps Manager, and UAA Databases. </p>
+<p class="note"><strong>Note</strong>: If you are running PostgreSQL and are on the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard instructions for restoring the Cloud Controller and UAA Databases. </p>
 
 ### <a id='stop-cc'></a>Stop Cloud Controller###
 
@@ -127,43 +126,6 @@ ccdb=# create schema public;
 <pre class='terminal'>
 $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 ccdb < ~/ccdb.sql
 </pre>
-
-
-### <a id='restore-console'></a>Restore the Apps Manager Database from its backup state
-
-<p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
-
-1. Use the Apps Manager Database password and IP address to restore the Cloud Controller Database by running the following command. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager **Installation Dashboard**, select **Elastic Runtime** and click **Credentials>Link to Credential**.
-
-1. Use `scp` to copy the database backup file to the UAA Database VM.
-<pre class='terminal'>
-$ scp console.sql vcap@YOUR-CONSOLE-DB-VM-IP-ADDRESS:~/.
-</pre>
-
-1. SSH into the UAA Database VM.
-<pre class='terminal'>
-$ ssh vcap@YOUR-CONSOLE-DB-VM-IP-ADDRESS
-</pre>
-
-1. Log into the psql client.
-<pre class='terminal'>
-$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 console
-</pre>
-
-1. Drop the existing database schema and create a new one to replace it.
-<pre class='terminal'>
-console=# drop schema public cascade;
-console=# create schema public;
-</pre>
-
-1. Restore the database from the backup file.
-<pre class='terminal'>
-$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 console < ~/console.sql
-</pre>
-
-### <a id='restore-uaa'></a>Restore UAA Database
-
-<p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
 
 #### Drop the UAA Database tables
 

@@ -57,11 +57,10 @@ You must back up each of the following:
 
 * Cloud Controller Database
 * UAA Database
-* Apps Manager Database
 * NFS Server
 * Pivotal MySQL Server
 
-<p class="note"><strong>Note</strong>: If you are running PostgreSQL and are on the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard instructions for backing up the Cloud Controller, UAA, and Apps Manager Databases and ensure that you back up your external databases and filestores. </p>
+<p class="note"><strong>Note</strong>: If you are running PostgreSQL and are on the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard instructions for backing up the Cloud Controller, and UAA Databases, and ensure that you back up your external databases and filestores. </p>
 
 <p class="note"><strong>Note</strong>: To follow the backup instructions below, your network must be configured to allow access to the BOSH Director VM from your local machine. If you do not have local administrator access, use the <code>scp</code> command to copy the TAR file to the BOSH Director VM. For example:
 <code> scp vcap@192.0.2.10:nfs.tar.gz \ </code>
@@ -148,51 +147,6 @@ $ root@192.0.2.96:~# find /var/vcap | grep 'bin/pg\_dump'
  <pre class='terminal'>
      $ scp vcap@192.0.2.101:~/uaa.sql .
  </pre>
- 
-### <a id='appsmanager'></a>Back Up the Apps Manager Database ###
- 
-<p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
- 
-1. In the BOSH deployment manifest, `cf.yml`, locate the `databases` component and record the IP address and password:
- 
-     ```
-     databases:
-       address: 192.0.2.104
-       port: 2544
-       db_scheme: postgresql
-       roles:
-        - tag: admin
-         name: root
-          password: *****************
-        databases:
-       - tag: console
-         name: console
-     ```
- 
-1. From the **Installation Dashboard** in Ops Manager, select **Elastic Runtime** and click **Credentials>Link to Credential**. Record the Apps Manager database credentials.
- 
-     <%= image_tag("appsmgr-creds.png") %>
-
-1. SSH into the Apps Manager database VM as the admin using the IP address and password recorded in the previous steps.
-
-1. Run `find /var/vcap | grep 'bin/pg_dump'` to find the locally installed psql client on the Apps Manager database VM.
-<pre class='terminal'>
- $ root@192.0.2.104:~# find /var/vcap | grep 'bin/pg\_dump'
-   /var/vcap/data/packages/postgres/5.1/bin/pg\_dump
-</pre>
-
-1. Run `pg_dump` from the locally installed psql client to export the database:
-<pre class='terminal'>
-   $ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 192.0.2.104 -U root -p 2544 console > console.sql
-</pre>
-
-1. Exit from the Apps Manager database VM.
-
-1. Run `scp` to copy the exported database to your local machine.
-<pre class='terminal'>
-   $ scp vcap@192.0.2.104:~/console.sql .
-</pre>
-
 
 ### <a id='nfs'></a>Back Up NFS Server ###
 
@@ -221,7 +175,7 @@ $ root@192.0.2.96:~# find /var/vcap | grep 'bin/pg\_dump'
 
 ### <a id='backup-mysql'></a>Back Up Pivotal MySQL Server ###
 
-<p class="note"><strong>Note</strong>: The Elastic Runtime deploy contains an embedded MySQL Server that serves as the data store for the Application Usage Events, Notifications, and Autoscaler services. If you are using an internal MySQL, this will also include the Cloud Controller, UAA, and Apps Manager. </p>
+<p class="note"><strong>Note</strong>: The Elastic Runtime deploy contains an embedded MySQL Server that serves as the data store for the Application Usage Events, Notifications, and Autoscaler services. If you are using an internal MySQL, this will also include the Cloud Controller and UAA. </p>
 
 There are two ways to backup the MySQL Server:
 

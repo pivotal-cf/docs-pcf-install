@@ -16,56 +16,61 @@ owner: Ops Manager
  
 <strong><%= modified_date %></strong>
 
-This topic describes upgrading Pivotal Cloud Foundry&reg; to version 1.7. The upgrade procedures below describe upgrading Ops Manager, Elastic Runtime, and product tiles. 
-     
-If you have already upgraded your Ops Manager to version 1.7 and want to upgrade
-individual products such as PCF Elastic Runtime, <a href="https://network.pivotal.io/products/p-mysql">Pivotal MySQL</a>, or <a
-href="https://network.pivotal.io/products/pivotal-rabbitmq-service">RabbitMQ</a> in your PCF deployment, see the <a href="./upgrading-products.html">Upgrading
-  Products in a PCF Deployment</a> topic.
+This topic describes upgrading Pivotal Cloud Foundry to version 1.8. The upgrade procedures below describe upgrading Ops Manager, Elastic Runtime, RabbitMQ&reg;, Pivotal Cloud Foundry Metrics, and other product tiles. 
 
 <p class="note warning">
-<strong>WARNING: </strong> Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. All apps that do not already run on Diego will terminate during an upgrade from 1.6 to 1.7.
+<strong>WARNING: </strong> Ops Manager operates in lockstep with Pivotal Elastic Runtime and other service tiles. You must <a href="#review-lockstep"> Review Product Lockstep Versions</a> before proceeding with the upgrade procedure. Your upgrade will fail if you do not have compatible product versions associated with your Ops Manager installation.
 </p>
 
+<p class="note"><strong>Note</strong>: The apps in your deployment continue to run during the upgrade. However, you cannot write to your deployment or make changes to apps during the upgrade.</p>
 
 **Important**: Read the Known Issues section of the [Pivotal Cloud Foundry&reg;](https://network.pivotal.io/products/pivotal-cf) (PCF)
 [Release Notes](../pcf-release-notes/index.html) before getting started.
 
 ## <a id="beforeupgrade"></a>Before You Upgrade
 
-This section contains important guidelines that you must follow before beginning an upgrade to PCF 1.7. Failure to follow these instructions may jeopardize your existing deployment data or cause your upgrade to fail.
+This section contains important guidelines that you must follow before beginning an upgrade to PCF 1.8. Failure to follow these instructions may jeopardize your existing deployment data or cause your upgrade to fail.
 
 The tasks you need to complete before upgrade fall into three categories: 
 
 + [Prepare Your Environment](#prepare-env) — includes making sure you have sufficient disk space.
-+ [Prepare Databases and Apps](#prepare-db) — includes backing up data and migrating any apps 
-that currently use the DEA architecture to use the Diego architecture.  
++ [Prepare Databases and Apps](#prepare-db) — includes backing up data  
 + [Check System Health](#check-health) — perform a health check of your system, from virtual machines (VMs) to service tiles. 
+
+### <a id="review-lockstep"></a>Review Product Lockstep Versions
+
+1. Before you [export your installation](#keep), you must be using [Elastic Runtime (ERT)](./upgrading-products.html) version 1.7.12 or higher. 
+
+1. Before you [export your installation](#keep) settings below, and if you are using RabbitMQ&reg;, you must upgrade to [version 1.6.4](http://docs.pivotal.io/rabbitmq-cf/index.html) or higher. 
+
+1. After you import your installation setting, you must upgrade the following tiles if you use them before clicking **Apply Changes** in the new Ops Manager 1.8. **Installation Dashboard**. You cannot complete the upgrade if you fail to upgrade to these product versions:
+    * Upgrade [Elastic Runtime](https://network.pivotal.io/products/elastic-runtime) to 1.8.x
+    * Upgrade [RabbitMQ](http://docs.pivotal.io/rabbitmq-cf/index.html) to 1.7.x
+    * Upgrade Pivotal [Single Sign-On Service](http://docs.pivotal.io/p-identity/index.html) to 1.2.x
+    * Upgrade [PCF Metrics](http://docs.pivotal.io/pcf-metrics/index.html) to 1.1.x
 
 ### <a id="prepare-env"></a>Prepare Your Environment for Upgrade
 
 1. Install the releases from your currently deployed 
-version to the target version in sequential order. For example, if your deployment uses Ops Manager release 1.5 and you are upgrading to 1.7, 
-you must sequentially install 1.6 and 1.7.
+version to the target version in sequential order. For example, if your deployment uses Ops Manager release 1.6 and you are upgrading to 1.8, 
+you must sequentially install 1.7 and 1.8.
 
-1. Ensure that you are using [Elastic Runtime (ERT)](./upgrading-products.html) v. 1.6.9 or higher.
-
-2. Ensure that every product tile on the Installation Dashboard is compatible with the new version of Ops Manager. For specific compatibility information, refer to the full [Product Version  Matrix](http://docs-pivotal.io/compatibility-matrix.pdf).
+1. Ensure that every product tile on the Installation Dashboard is compatible with the new version of Ops Manager. For specific compatibility information, refer to the full [Product Version  Matrix](http://docs-pivotal.io/compatibility-matrix.pdf).
 If a product does not meet this requirement, you must upgrade the product or
 remove the tile before upgrading Ops Manager.
 
-3. For each product tile you have installed, review the upgrade documentation that is specific to the tile. For example, if you have RabbitMQ, you need to increase the number of HAproxy instances from one to two. See [RabbitMQ for Pivotal Cloud Foundry Upgrades](http://docs.pivotal.io/rabbitmq-cf/upgrade.html).
+1. For each product tile you have installed, review the upgrade documentation that is specific to the tile. For example, if you have RabbitMQ, you need to increase the number of HAproxy instances from one to two. See [RabbitMQ for Pivotal Cloud Foundry Upgrades](http://docs.pivotal.io/rabbitmq-cf/upgrade.html).
 
-4. <%= partial 'check_disk_before_upgrade' %>
+1. <%= partial 'check_disk_before_upgrade' %>
 
-5. If you have disabled lifecycle errands  for any installed product in order to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. See <a href="./add-delete.html#add-import">Adding and Deleting Products</a> for more  information.
+1. If you have disabled lifecycle errands  for any installed product in order to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. See <a href="./add-delete.html#add-import">Adding and Deleting Products</a> for more  information.
 
-6. Ensure that the VM resurrector is turned off:
+1. Ensure that the VM resurrector is turned off:
    1. From your Installation Dashboard, select the **Ops Manager Director** tile. 
    2. Click **Director Config**.
    3. Clear the **Enable VM resurrector plugin** checkbox.
 
-7. If you are upgrading a vSphere environment, ensure that you have the following information about your existing environment before starting the upgrade:
+1. If you are upgrading a vSphere environment, ensure that you have the following information about your existing environment before starting the upgrade:
   * Note these IP addresses, which can be found in the vSphere web client, **Manage** > **Settings** > **vApp Options**.
     This is the same information you entered at the end of deploying [Ops Manager on vSphere](http://docs.pivotal.io/1.6/pivotalcf/customizing/deploying-vm.html). 
      * IP Address of the Ops Manager
@@ -82,24 +87,22 @@ client, **Manage** > **Settings** > **VM Hardware**.
 
 ### <a id="prepare-db"></a>Prepare Databases and Apps for Upgrade
 
+Back up all critical data prior to upgrading to PCF 1.8. For example, to backup a 1.7 environment, follow these instructions <a href="http://docs.pivotal.io/pivotalcf/1.7/customizing/backup-restore/backup-pcf.html">Backing Up Pivotal Cloud Foundry</a>. <br>
 
-1. Back up all critical data prior to upgrading to PCF 1.7. For example, to backup a 1.6 environment, follow these instructions <a href="http://docs.pivotal.io/pivotalcf/1.6/customizing/backup-restore/backup-pcf.html">Backing Up Pivotal Cloud Foundry</a>. <br>
- 
-2. Before you upgrade to Pivotal Cloud Foundry 1.7, you must migrate all apps that are currently running on DEA architecture to run on Diego architecture. Pivotal does not support DEA architecture in Pivotal Cloud Foundry 1.7. See the [Migrating Apps to Diego](./apps-enable-diego.html) topic for information.
 
 ### <a id="check-health"></a>Check System Health Before Upgrade
 
-5. Run `bosh cloudcheck` to confirm that the VMs are healthy.  See the [BOSH Cloudcheck](./trouble-advanced.html#cck) topic.
+1. Run `bosh cloudcheck` to confirm that the VMs are healthy.  See the [BOSH Cloudcheck](./trouble-advanced.html#cck) topic.
 
-6. Check the system health of installed products. In the Installation Dashboard, select the **Status** tab for each service tile. Confirm that all jobs are healthy.
+1. Check the system health of installed products. In the Installation Dashboard, select the **Status** tab for each service tile. Confirm that all jobs are healthy.
 
-7. (Optional) Check the logs for errors before proceeding with the upgrade.
+1. (Optional) Check the logs for errors before proceeding with the upgrade.
 See the [Viewing Logs in the Command Line Interface](../devguide/deploy-apps/streaming-logs.html#view) topic.  
 
-8. There should be no outstanding changes in Ops Manager or any other tile. All tiles should be green.
+1. There should be no outstanding changes in Ops Manager or any other tile. All tiles should be green.
 Click **Apply Changes** if necessary.
 
-9. After applying changes, click **Recent Install Logs** to confirm that the changes completed cleanly:
+1. After applying changes, click **Recent Install Logs** to confirm that the changes completed cleanly:
     ```
     Cleanup complete
     {"type": "step\_finished", "id": "clean\_up\_bosh.cleaning\_up"}
@@ -108,9 +111,11 @@ Click **Apply Changes** if necessary.
 
 ## <a id="keep"></a>Upgrading with Installed Products ##
 
-Follow the steps below to upgrade Ops Manager and keep all installed products.
+<p class="note warning">
+<strong>WARNING: </strong> Before you export your installation settings below, you must be using Elastic Runtime 1.7.12 or higher.  If you are using RabbitMQ, you must be using 1.6.4 or higher.
+</p>
 
-<p class="note"><strong>Note</strong>: Ops Manager 1.7 uses the User Account and Authentication (UAA), instead of only local user account authentication. When you import your pre-1.7 file to Ops Manager, your user name changes to <code>admin</code> and your password remains the same. It also prompts you to create a shared passphrase, which is distinct from your password. Your passphrase on a new import will be the same as your password. However, you must change the passphrase for security purposes. </p>
+Follow the steps below to upgrade Ops Manager and keep all installed products.
 
 1. From the Product Dashboard, select **Actions > Export installation
 settings**.
@@ -137,9 +142,9 @@ settings**.
 2. Download the latest Ops Manager VM Template from the [Pivotal
 Network](https://network.pivotal.io/products/pivotal-cf) site.
 
-1. Record the IP address of the existing Ops Manager VM.
+1. Record the FQDN address of the existing Ops Manager VM.
 
-1. To avoid IP conflicts, power off the existing Ops Manager VM.
+1. To avoid conflicts, power off the existing Ops Manager VM.
 
 1. Deploy the new Ops Manager VM:
     * [Launching an Ops Manager Director Instance on AWS](./cloudform-om-deploy.html)
@@ -163,13 +168,21 @@ Network](https://network.pivotal.io/products/pivotal-cf) site.
       Some browsers do not provide feedback on the status of the import process,
       and may appear to hang.</p>
 
-1. Before you see the new PCF 1.7 **Installation Dashboard**, a Security Features alert appears. Take note of your new **username**. Ensure you change your decryption passphrase before sharing it with other users. Click **Continue**.
-
-    <%= image_tag("./images/upgrading/security_features.png") %>
-
 1. A "Successfully imported installation" message appears upon completion.
 
     <%= image_tag("./images/upgrading/success.png") %>
+
+1. Before clicking **Apply Changes** in the new Ops Manager 1.8.**Installation Dashboard**, you must upgrade these tiles if you use them:
+    * Upgrade [Elastic Runtime](https://network.pivotal.io/products/elastic-runtime) to 1.8.x
+    * Upgrade [RabbitMQ](http://docs.pivotal.io/rabbitmq-cf/index.html) to 1.7.x
+    * Upgrade Pivotal [Single Sign-On Service](http://docs.pivotal.io/p-identity/index.html) to 1.2.x
+    * Upgrade [PCF Metrics](http://docs.pivotal.io/pcf-metrics/index.html) to 1.1.x
+
+<p class="note warning">
+<strong>WARNING: </strong> It is important to upgrade the products listed in the steps above before you click <strong>Apply Changes</strong>. You can optionally upgrade other products that are not listed in the steps above, but you will not be able to proceed until the step above is performed. 
+</p>
+
+1. (Optional) If you are using other service tiles, you can upgrade them now.
 
 1. Click **Apply Changes**. This immediately imports and applies upgrades to all tiles in a single transaction.
 
@@ -177,18 +190,5 @@ Network](https://network.pivotal.io/products/pivotal-cf) site.
 
 1. Remove the original Ops Manager VM from your IaaS if the new installation functions correctly.
 
-## <a id="aftertheupgrade"></a>After the Upgrade
 
-* Advise your application developers about the Diego architecture. See the [Migrating Apps to Diego](./apps-enable-diego.html) and [Diego Architecture](./../concepts/diego/diego-architecture.html) topics for more information.
-
-* Ops Manager 1.7 defines specific instance types instead of custom sizes for vSphere or vCloud. Each instance adopts an instance type that is the closest match to its previous custom size for CPU, memory, and disk space. After the upgrade, you can modify the automatically selected instance size by selecting a different <code>type</code> under <strong>Resource Config</strong> for each of your installed tiles.
-
-* In Ops Manager 1.7, all product tiles use floating stemcells by default. This increases the security of your deployment by enabling tiles to automatically use the latest patched version of a stemcell, but it may significantly increase the amount of time required by a tile upgrade. Review the [Understanding Floating Stemcells](./understanding-stemcells.html) topic for more information.  
-
-* (Optional) You can review your product tiles and configure values accordingly. For example, for Elastic Runtime, review the installation topic for new features:
-     * [Launching an Ops Manager Director Instance on AWS](./cloudform-om-deploy.html)
-     * [Provisioning the OpenStack Infrastructure](./openstack-setup.html)
-     * [Deploying Operations Manager to vSphere](./deploying-vm.html)
-     * [Deploying Operations Manager to vCloud Air and
-       vCloud](./pcf-vchs-vcloud.html) 
 

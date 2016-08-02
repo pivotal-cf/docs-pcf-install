@@ -1,11 +1,11 @@
 ---
-title: Restoring Pivotal Cloud Foundry&reg; from Backup
+title: Restoring Pivotal Cloud Foundry from Backup
 owner: RelEng
 ---
 
 <strong><%= modified_date %></strong>
 
-This topic describes the procedure for restoring <%= vars.product_full %> from a backup. To create a backup, see the [Backing Up Pivotal Cloud Foundry&reg;](./backup-pcf.html) topic.
+This topic describes the procedure for restoring <%= vars.product_full %> from a backup. To create a backup, see the [Backing Up Pivotal Cloud Foundry](./backup-pcf.html) topic.
 
 To restore a deployment, you must import installation settings, temporarily stop the Cloud Controller, restore the state of each critical backend component from its backup file, and restart the Cloud Controller. Using the BOSH manifest to locate your critical backend components is necessary to perform these steps. Manifests are automatically downloaded to the Ops Manager virtual machine. However, if you are using a separate jumpbox, you must manually download the BOSH deployment manifest.
 
@@ -14,10 +14,10 @@ The procedure described in this topic restores a running <%= vars.product_full %
 
 ## <a id='import'></a>Import Installation Settings ##
 
-<p class='note'><strong>Note</strong>: Pivotal recommends that you export your installation settings before importing from a backup. See the <a href='./backup-pcf.html#export'>Export Installation Settings</a> section of the <i>Backing Up Pivotal Cloud Foundry&reg;</i> topic for more information.</p>
+<p class='note'><strong>Note</strong>: Pivotal recommends that you export your installation settings before importing from a backup. See the <a href='./backup-pcf.html#export'>Export Installation Settings</a> section of the <i>Backing Up Pivotal Cloud Foundry</i> topic for more information.</p>
 
 **Import installation settings** imports the settings and assets of an existing
-PCF installation. Importing an installation overwrites any existing installation. You must provision a new Ops Manager in order to import settings. 
+PCF installation. Importing an installation overwrites any existing installation. You must provision a new Ops Manager in order to import settings.
 
 1. Deploy the new Ops Manager VM:
   * [Launching an Ops Manager Director Instance on AWS](../cloudform-om-deploy.html)
@@ -26,19 +26,19 @@ PCF installation. Importing an installation overwrites any existing installation
   * [Deploying Operations Manager to vCloud Air and vCloud](../pcf-vchs-vcloud.html)
 
 
-1. When redirected to the **Welcome to Ops Manager** page, select **Import Existing Installation**. 
+1. When redirected to the **Welcome to Ops Manager** page, select **Import Existing Installation**.
 
     <%= image_tag("../images/upgrading/welcome.png") %>
 
 1. When prompted, enter the following:
-  * **Decryption Passphrase**, which is the same as your password. 
+  * **Decryption Passphrase**, which is the same as your password.
   * Click **Choose File** and browse to the installation zip file that you exported in the [Export Installation Settings](./backup-pcf.html#export) section.
 
     <%= image_tag("../images/upgrading/decryption_passphrase.png") %>
 
 1. Click **Import**.
 
-    <p class="note"><strong>Note</strong>: 
+    <p class="note"><strong>Note</strong>:
       Some browsers do not provide feedback on the status of the import process,
       and may appear to hang.</p>
 
@@ -54,9 +54,9 @@ PCF installation. Importing an installation overwrites any existing installation
 
 ## <a id='restore_bosh'></a>Restoring BOSH Using Ops Manager ##
 
-1. From the **Product Installation Dashboard**, click the **Ops Manager Director** tile. 
+1. From the **Product Installation Dashboard**, click the **Ops Manager Director** tile.
 
-1. Make a change to your configuration in order to trigger a new deployment. For example, you can adjust the number of NTP servers in your deployment. Choose a change in configuration which suits your specific deployment. 
+1. Make a change to your configuration in order to trigger a new deployment. For example, you can adjust the number of NTP servers in your deployment. Choose a change in configuration which suits your specific deployment.
 
 1. Follow the instructions in [SSH into Ops Manager](../../customizing/trouble-advanced.html#ssh). This example assumes an Amazon Web Services deployment:
 
@@ -70,7 +70,7 @@ PCF installation. Importing an installation overwrites any existing installation
 	sudo rm /var/tempest/workspaces/default/deployments/bosh-deployments.yml
 	</pre>
 
-1. Return to the **Product Installation Dashboard**, and click **Apply Changes**. 
+1. Return to the **Product Installation Dashboard**, and click **Apply Changes**.
 
 ## <a id="bosh-target-director"></a> Target the BOSH Director
 <%= partial 'bosh_target_director' %>
@@ -128,7 +128,7 @@ $ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 ccdb < ~/ccdb.sq
 </pre>
 
 ### <a id='restore-uaa'></a>Restore UAA Database
- 
+
  <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
 
 #### Drop the UAA Database tables
@@ -224,22 +224,22 @@ Use the NFS password and IP address to restore the NFS by following the steps de
 
 
 ### <a id='restore-mysql-dev'></a>Restore MySQL Database ###
-  
+
  1. Use `scp` to send the MySQL Database backup file to the MySQL Database VM. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
 	 <pre class='terminal'>
 	    $ scp user_databases.sql vcap@YOUR-MYSQL-VM-IP-ADDRESS:~/.
 	 </pre>
- 
+
  1. SSH into the MySQL Database VM.
 	 <pre class='terminal'>
 	 $ ssh vcap@YOUR-MYSQL-VM-IP
 	 </pre>
- 
- 1. Use the MySQL password and IP address to restore the MySQL database by running the following command. 
+
+ 1. Use the MySQL password and IP address to restore the MySQL database by running the following command.
 	 <pre class='terminal'>
 	   mysql -h YOUR-MYSQL-SERVER-IP -u root -p < ~/.user_databases.sql
 	 </pre>
-	 
+
  1. Log in to the MySQL client and flush privileges.
 	 <pre class='terminal'>
 	     $ mysql -u root -p -h

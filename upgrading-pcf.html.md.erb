@@ -35,17 +35,16 @@ This section contains important guidelines that you must follow before beginning
 The tasks you need to complete before upgrade fall into three categories: 
 
 + [Review Product Lockstep Versions](#review-lockstep) - review prerequisite product version before exporting your installation and applying changes
-+ [Prepare Your Environment](#prepare-env) — includes making sure you have sufficient disk space.
-+ [Prepare Databases and Apps](#prepare-db) — includes backing up data  
++ [Prepare Your Environment](#prepare-env) — includes making sure you have sufficient disk space. 
 + [Check System Health](#check-health) — perform a health check of your system, from virtual machines (VMs) to service tiles. 
 
 ### <a id="review-lockstep"></a>Review Product Lockstep Versions
 
-1. Before you [export your installation](#keep), you must be using [Elastic Runtime (ERT)](./upgrading-products.html) version 1.7.12 or higher. 
+* While on Ops Manager version 1.7, and before you [export your installation](#keep), you must be using [Elastic Runtime (ERT)](./upgrading-products.html) version 1.7.12 or higher. 
 
-1. Before you [export your installation](#keep) settings below, and if you are using RabbitMQ&reg;, you must upgrade to [version 1.6.4](http://docs.pivotal.io/rabbitmq-cf/index.html) or higher. 
+* While on Ops Manager version 1.7, a before you [export your installation](#keep) settings below, and if you are using RabbitMQ&reg;, you must upgrade to [version 1.6.4](http://docs.pivotal.io/rabbitmq-cf/index.html) or higher. 
 
-1. After you import your installation setting, you must upgrade the following tiles if you use them before clicking **Apply Changes** in the new Ops Manager 1.8. **Installation Dashboard**. You cannot complete the upgrade if you fail to upgrade to these product versions:
+* After you import your installation setting, you must upgrade the following tiles if you use them before clicking **Apply Changes** in the new Ops Manager 1.8. **Installation Dashboard**. You cannot complete the upgrade if you fail to upgrade to these product versions:
     * Upgrade [Elastic Runtime](https://network.pivotal.io/products/elastic-runtime) to 1.8.x
     * Upgrade [RabbitMQ](http://docs.pivotal.io/rabbitmq-cf/index.html) to 1.7.x
     * Upgrade Pivotal [Single Sign-On Service](http://docs.pivotal.io/p-identity/index.html) to 1.2.x
@@ -63,7 +62,7 @@ remove the tile before upgrading Ops Manager.
 
 1. For each product tile you have installed, review the upgrade documentation that is specific to the tile. For example, if you have RabbitMQ, you need to increase the number of HAproxy instances from one to two. See [RabbitMQ for Pivotal Cloud Foundry Upgrades](http://docs.pivotal.io/rabbitmq-cf/upgrade.html).
 
-1. Back up all critical data prior to upgrading to PCF 1.8. For example, to backup a 1.7 environment, follow these instructions <a href="http://docs.pivotal.io/pivotalcf/1.7/customizing/backup-restore/backup-pcf.html">Backing Up Pivotal Cloud Foundry</a>. <br>
+1. Back up all critical data prior to upgrading to PCF 1.8. For example, to backup a 1.7 environment, follow these instructions <a href="http://docs.pivotal.io/pivotalcf/1.7/customizing/backup-restore/backup-pcf.html">Backing Up Pivotal Cloud Foundry</a>. You do not need to backup the Apps Manager database since it will be deprecated in 1.8. When the database is dropped during the upgrade, there will be data loss in the form of sent emails for users who are invited to join or create accounts on PCF. For example, this affects users who have an existing invitation to join PCF in their email inbox. The link to the invitation will no longer work. 
 
 1. <%= partial 'check_disk_before_upgrade' %>
 
@@ -112,7 +111,7 @@ Click **Apply Changes** if necessary.
 ## <a id="keep"></a>Upgrading with Installed Products ##
 
 <p class="note warning">
-<strong>WARNING: </strong> Before you export your installation settings below, you must be using Elastic Runtime 1.7.12 or higher.  If you are using RabbitMQ, you must be using 1.6.4 or higher.
+<strong>WARNING: </strong> While on Ops Manager version 1.7, and before you export your installation settings below, you must be using Elastic Runtime 1.7.12 or higher.  If you are using RabbitMQ, you must be using 1.6.4 or higher. You cannot complete your upgrade to Ops Manager version 1.8 if you do not upgrade to these product versions.
 </p>
 
 Follow the steps below to upgrade Ops Manager and keep all installed products.
@@ -189,6 +188,10 @@ Network](https://network.pivotal.io/products/pivotal-cf) site.
 1. Click each service tile, select the **Status** tab, and confirm that all VMs appear and are in good health.
 
 1. Remove the original Ops Manager VM from your IaaS if the new installation functions correctly.
+
+## <a id="after"></a>After You Upgrade ##
+
+* The `collector` job which was used to retrieve logs from Elastic Runtime components is removed in 1.8. Metrics are now emitted using Metron/Firehose rather than variables. After you complete the upgrade to Ops Manager version 1.8, you can scale this job to `0` by navigating to **Pivotal Elastic Runtime** >> **Resource Config**. 
 
 
 

@@ -57,15 +57,15 @@ You must back up each of the following:
 
 * Cloud Controller Database
 * UAA Database
-* NFS Server
+* WebDAV Server
 * Pivotal MySQL Server
 
 <p class="note"><strong>Note</strong>: If you are running PostgreSQL and are on the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard instructions for backing up the Cloud Controller, and UAA Databases, and ensure that you back up your external databases and filestores. </p>
 
 <p class="note"><strong>Note</strong>: To follow the backup instructions below, your network must be configured to allow access to the BOSH Director VM from your local machine. If you do not have local administrator access, use the <code>scp</code> command to copy the TAR file to the BOSH Director VM. For example:
-<code> scp vcap@192.0.2.10:nfs.tar.gz \ </code>
+<code> scp vcap@192.0.2.10:webdav.tar.gz \ </code>
 and
-<code>vcap@192.0.2.3:/nfs.tar.gz</code></p>
+<code>vcap@192.0.2.3:/webdav.tar.gz</code></p>
 
 
 ### <a id='stop-cc-2'></a>Stop Cloud Controller###
@@ -148,7 +148,7 @@ $ root@192.0.2.96:~# find /var/vcap | grep 'bin/pg\_dump'
      $ scp vcap@192.0.2.101:~/uaa.sql .
  </pre>
 
-### <a id='nfs'></a>Back Up NFS Server ###
+### <a id='webdav'></a>Back Up WebDAV Server ###
 
 1. In the BOSH deployment manifest, `cf.yml`, locate the `nfs_server` component and record the address:
 
@@ -161,15 +161,17 @@ $ root@192.0.2.96:~# find /var/vcap | grep 'bin/pg\_dump'
       port:
     ```
 
-1. From the **Installation Dashboard** in Ops Manager, select **Elastic Runtime** and click **Credentials>Link to Credential**. Record the NFS Server credentials.
+<p class="note"><strong>Note</strong>: The job name associated with the WebDAV server is <code>nfs_server</code> for historical reasons. The server is not based on NFS.</p>
 
-    <%= image_tag("nfs-creds.png") %>
+1. From the **Installation Dashboard** in Ops Manager, select **Elastic Runtime** and click **Credentials>Link to Credential**. Record the File Storage server credentials.
 
-1. SSH into the NFS server VM and create a TAR file:
+    <%= image_tag("file-store-creds.png") %>
+
+1. SSH into the WebDAV server VM and create a TAR file:
     <pre class='terminal'>
-        $ ssh vcap<span>@</span>192.0.2.10 'cd /var/vcap/store && tar cz shared' > nfs.tar.gz
+        $ ssh vcap<span>@</span>192.0.2.10 'cd /var/vcap/store && tar cz shared' > webdav.tar.gz
     </pre>
-    <p class="note"><strong>Note</strong>: The TAR file that you create to back up NFS server might be large. To estimate the size of the TAR file before you create it, run the following command:
+    <p class="note"><strong>Note</strong>: The TAR file that you create to back up WebDAV server might be large. To estimate the size of the TAR file before you create it, run the following command:
     <code class=''>ssh vcap<span>@</span>192.0.2.10 tar -cf - /dir/to/archive/ | wc -c</code></p>
 
 

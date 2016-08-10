@@ -17,10 +17,10 @@ owner: Ops Manager
 <strong><%= modified_date %></strong>
 
 
-This topic describes upgrading Pivotal Cloud Foundry (PCF) to version 1.8. The upgrade procedure below describe upgrading Pivotal Cloud Foundry Operations Manager (Ops Manager), Elastic Runtime (ERT), and product tiles.
+This topic describes upgrading Pivotal Cloud Foundry (PCF) to v1.8. The upgrade procedure below describes upgrading Pivotal Cloud Foundry Operations Manager (Ops Manager), Pivotal Elastic Runtime, and product tiles.
 
 <p class="note warning">
-<strong>WARNING: </strong> Ops Manager operates in lockstep with Pivotal Elastic Runtime and other service products. You must Review Product Compatibility Prerequisites below before proceeding with this upgrade procedure. Your upgrade will fail if you do not have compatible product versions associated with your Ops Manager installation.
+<strong>WARNING: </strong> Ops Manager operates in lockstep with Elastic Runtime and other service products. You must Review Product Compatibility Prerequisites below before proceeding with this upgrade procedure. Your upgrade will fail if you do not have compatible product versions associated with your Ops Manager installation.
 </p>
 
 <p class="note"><strong>Note</strong>: The apps in your deployment continue to run during the upgrade. However, you cannot write to your deployment or make changes to apps during the upgrade.</p>
@@ -29,51 +29,51 @@ This topic describes upgrading Pivotal Cloud Foundry (PCF) to version 1.8. The u
 
 ## <a id="beforeupgrade"></a>Before You Upgrade
 
-<p class="note warning">This section contains important guidelines that you must follow before beginning an upgrade to Ops Manager 1.8. Failure to follow these instructions may jeopardize your existing deployment data or cause your upgrade to fail.</p>
+<p class="note warning">This section contains important guidelines that you must follow before beginning an upgrade to Ops Manager v1.8. Failure to follow these instructions may jeopardize your existing deployment data or cause your upgrade to fail.</p>
 
 ### <a id="review-lockstep"></a>Review Product Compatibility Prerequisites
 
-* Before upgrading to Ops Manager version 1.8, you must be on the following product versions. Download the compatible product versions on [Pivotal Network](https://network.pivotal.io/). 
-    * Elastic Runtime version 1.7.14 or higher 
-    * RabbitMQ&reg; version 1.6.5 or higher (if you are using this product) 
+* Before upgrading to Ops Manager v1.8, you must be on the following product versions. Download the compatible product versions on [Pivotal Network](https://network.pivotal.io/). 
+    * Elastic Runtime v1.7.14 or higher 
+    * RabbitMQ&reg; v1.6.5 or higher (if you are using this product) 
     
 ### <a id="prepare-env"></a>Prepare Your Environment
 
 1. Install the releases from your currently deployed 
-version to the target version in sequential order. For example, if your deployment uses Ops Manager release 1.6 and you are upgrading to 1.8, 
-you must sequentially install 1.7 and 1.8.
+version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.6 and you are upgrading to v1.8, 
+you must sequentially install v1.7 and v1.8.
 
 1. Ensure that every product tile on the Installation Dashboard is compatible with the new version of Ops Manager. For specific compatibility information, refer to the full [Product Version  Matrix](http://docs-pivotal.io/compatibility-matrix.pdf).
 If a product does not meet this requirement, you must upgrade the product or
 remove the tile before upgrading Ops Manager. For each product tile you have installed, review the upgrade documentation that is specific to the tile. 
 
-1. Back up all critical data prior to upgrading to Ops Manager 1.8. For example, to backup a 1.7 environment, follow these instructions <a href="http://docs.pivotal.io/pivotalcf/1.7/customizing/backup-restore/backup-pcf.html">Backing Up Pivotal Cloud Foundry</a>. 
+1. Back up all critical data prior to upgrading to Ops Manager v1.8. For example, to backup a v1.7 environment, follow these instructions <a href="http://docs.pivotal.io/pivotalcf/1.7/customizing/backup-restore/backup-pcf.html">Backing Up Pivotal Cloud Foundry</a>. 
 
-    <p class="note"><strong>Note</strong>: You do not need to backup the Apps Manager database since it is deprecated in 1.8. When the database is dropped during the upgrade, there will be data loss in the form of sent emails for users who are invited to join or create accounts on Pivotal Cloud Foundry (PCF). For example, this affects users who have an existing invitation to join PCF in their email inbox. The link to the invitation will no longer work.</p>
+    <p class="note"><strong>Note</strong>: You do not need to backup the Apps Manager database since it is deprecated in 1.8. When the database is dropped during the upgrade, there will be data loss in the form of sent emails for users who are invited to join or create accounts on PCF. For example, this affects users who have an existing invitation to join PCF in their email inbox. The link to the invitation will no longer work.</p>
 
 1. If you have disabled lifecycle errands  for any installed product in order to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. See <a href="./add-delete.html#add-import">Adding and Deleting Products</a> for more  information.
 
 1. <%= partial 'check_disk_before_upgrade' %>
 
-1. Ensure that the VM resurrector is turned off:
+1. Ensure that the VM Resurrector is turned off:
    1. From your Installation Dashboard, select the **Ops Manager Director** tile. 
    2. Click **Director Config**.
    3. Clear the **Enable VM resurrector plugin** checkbox.
 
 1. If you are upgrading a vSphere environment, ensure that you have the following information about your existing environment before starting the upgrade:
-  * Note these IP addresses, which can be found in the vSphere web client, **Manage** > **Settings** > **vApp Options**.
+  * Record these IP addresses, which can be found in the vSphere web client, **Manage** > **Settings** > **vApp Options**.
     This is the same information you entered at the end of deploying [Ops Manager on vSphere](http://docs.pivotal.io/1.6/pivotalcf/customizing/deploying-vm.html). 
      * IP Address of the Ops Manager
      * Netmask
      * Default Gateway
      * DNS Servers
      * NTP Servers
-  * Note this VM hardware information so you can set up the new VM with similar settings. You can find this in the vSphere web 
+  * Record this VM hardware information so you can set up the new VM with similar settings. You can find this in the vSphere web 
 client, **Manage** > **Settings** > **VM Hardware**.
      * CPU
      * Memory
      * Hard Disk 1
-     * Network Adapter 1 - When you set up the new VM, ensure your network adapters are configured properly and are on the same network.
+     * Network Adapter 1 -- When you set up the new VM, ensure your network adapters are configured properly and are on the same network.
 
 
 ### <a id="check-health"></a>Check System Health Before Upgrade
@@ -95,20 +95,20 @@ Click **Apply Changes** if necessary.
     Exited with 0.
     ```
 
-## <a id="keep"></a>Upgrading Ops Manager to version 1.8 ##
+## <a id="keep"></a>Upgrading Ops Manager to v1.8 ##
 
 ### <a id="keep"></a>Step 1: Export Your Installation ###
 
 Follow the steps below to upgrade Ops Manager and installed products.
 
 1. Before you export your installation settings, you must be using the following product versions. You can download the product versions on [Pivotal Network](https://network.pivotal.io/). 
-    * Elastic Runtime 1.7.14 or higher  
-    * RabbitMQ 1.6.5 or higher (if you are using this product)
+    * Elastic Runtime v1.7.14 or higher  
+    * RabbitMQ v1.6.5 or higher (if you are using this product)
 
     <p class="note warning">
     <strong>WARNING: </strong>You will not be able to complete the upgrade if you fail to upgrade your product versions before exporting your installation.</p>
 
-1. <a name="export"></a> In your Ops Manager 1.7.x **Installation Dashboard**, click the gear icon and select **Export settings**.
+1. <a name="export"></a> In your Ops Manager v1.7.x **Installation Dashboard**, click the gear icon and select **Export settings**.
 
     <%= image_tag("./images/upgrading/upgrade_to_1.8.png") %>
 
@@ -118,8 +118,8 @@ Follow the steps below to upgrade Ops Manager and installed products.
     As a result, an exported file can be very large, as much as 5 GB or more.
     * The export time depends on the size of the exported file.
     * Some browsers do not provide feedback on the status of the export
-      process, and may appear to hang.
-    * Some operating systems may automatically unzip the exported installation.
+      process, and might appear to hang.
+    * Some operating systems automatically unzip the exported installation.
       If this occurs, create a zip file of the unzipped export.
 
     <p class="note"><strong>Note</strong>: When creating a zip file of an
@@ -129,9 +129,9 @@ Follow the steps below to upgrade Ops Manager and installed products.
 
     <%= image_tag("./images/upgrading/compress.png") %>
 
-### <a id="keep"></a>Step 2: Upgrade to Ops Manager 1.8 ###
+### <a id="keep"></a>Step 2: Upgrade to Ops Manager v1.8 ###
 
-1. Download the Ops Manager VM Template 1.8.x from the [Pivotal
+1. Download the Ops Manager VM Template v1.8.x from the [Pivotal
 Network](https://network.pivotal.io/products/ops-manager) site.
 
 1. Record the FQDN address of the existing Ops Manager VM.
@@ -158,7 +158,7 @@ Network](https://network.pivotal.io/products/ops-manager) site.
 
     <p class="note"><strong>Note</strong>: 
       Some browsers do not provide feedback on the status of the import process,
-      and may appear to hang.</p>
+      and might appear to hang.</p>
 
 1. A "Successfully imported installation" message appears upon completion.
 
@@ -167,10 +167,10 @@ Network](https://network.pivotal.io/products/ops-manager) site.
 ### <a id="keep"></a>Step 3: Upgrade Products ###
 
 1. <a name="success"></a>Now that you have successfully upgraded to Ops Manager 1.8, in order to complete your installation, you must upgrade your product versions. If you use the following products, you must upgrade them to the versions specified below. Download the compatible product file from [Pivotal Network](https://network.pivotal.io/).
-    * Elastic Runtime 1.8.x
-    * RabbitMQ 1.7.x
-    * Single Sign-On Service 1.2.x
-    * PCF Metrics 1.1.x
+    * Elastic Runtime v1.8.x
+    * RabbitMQ v1.7.x
+    * Single Sign-On Service v1.2.x
+    * PCF Metrics v1.1.x
 
     <p class="note warning">
     <strong>WARNING: </strong> It is important to upgrade the products listed in the steps above before you click <strong>Apply Changes</strong>. You will not be able to complete your installation until the upgrades are performed. 
@@ -192,15 +192,15 @@ Network](https://network.pivotal.io/products/ops-manager) site.
 
 1. Click each service tile, select the **Status** tab, and confirm that all VMs appear and are in good health.
 
-1. Remove the original Ops Manager VM from your IaaS if the new installation functions correctly.
+1. After confirming that the new installation functions correctly, remove the original (v1.7.x) Ops Manager VM.
 
-1. You have successfully upgraded to Ops Manager 1.8.
+1. You have successfully upgraded to Ops Manager v1.8.
 
 ## <a id="after"></a>After Completing Your Upgrade ##
 
 ### <a id="after-ert"></a>Configure Elastic Runtime ###
 
-* The `collector` job which was used to retrieve logs from Elastic Runtime components is removed in 1.8. Metrics are now emitted using Metron/Firehose rather than variables. After you complete the upgrade to Ops Manager version 1.8, you can scale this job to `0` by navigating to **Pivotal Elastic Runtime** >> **Resource Config**. 
+* The `collector` job which was used to retrieve logs from Elastic Runtime components is removed in v1.8. Metrics are now emitted using Metron/Firehose rather than variables. After you complete the upgrade to Ops Manager v1.8, scale this job by navigating to **Pivotal Elastic Runtime** >> **Resource Config**. Change the number of instances to `0`. 
 
 
 

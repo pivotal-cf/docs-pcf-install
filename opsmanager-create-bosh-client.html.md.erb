@@ -9,70 +9,66 @@ This topic describes the process of creating a UAA client for the BOSH Director.
 
 ## <a id="opsman-login"></a> UAAC installed on Ops Manager
 
-The UAAC client is installed on the Ops Manager virtual machine. Begin by logging into the Ops Manager VM and target the Director.
+The UAAC client is installed on the Ops Manager virtual machine. Log in to the Ops Manager VM and target the Director.
 
-### <a id="operator-tools-tasks"></a> Login to Ops Manager VM
+### <a id="operator-tools-tasks"></a> Log in to the Ops Manager VM
 
-1. Open a terminal and ssh into the Ops Manager VM.
-
+1. Open a terminal and ssh into the Ops Manager VM. When prompted, enter your password.
 	<pre class='terminal'>
     $ ssh ubuntu@OPS-MANAGER-FQDN
     Password: ***********
-    </pre>
+  </pre>
 
-1. Target the UAA on the Director VM. You can find the Director IP on the status page of the Director tile.
-
-	<pre class='terminal'>
-    $ uaac target https://director-ip:8443 --ca-cert \
+1. Navigate to the Ops Manager **Installation Dashboard** >> **Status** and copy the **Ops Manager Director** IP address. Target the UAA on the Director VM using the IP address.The root certificate is also available at <code>http<span>s</span>://ops-manager/api/v0/security/root/_ca/_certificate/api/v0/security/root/_ca/_certificate</code>.
+  <pre class='terminal'>
+    $ uaac target http<span>s</span>://director-ip:8443 --ca-cert \
     /var/tempest/workspaces/default/root_ca_certificate
 
-    Target: https://10.85.16.4:8443
-    </pre>
+    Target: http<span>s</span>://10.85.16.4:8443
+  </pre>
 
-<p class="note"><strong>Note</strong>: The root certificate is also available at https://ops-manager/api/v0/security/root_ca_certificate/api/v0/security/root_ca_certificate</p>
-
-1. Login to the UAA and get the owner token. You can cut and paste the UAA password for the login user at `https://<OpsManagerURL>/api/v0/deployed/director/credentials/uaa_login_client_credentials`.
+1. Log in to the UAA and get the owner token. Find the UAA password for the login user at <code>http<span>s</span>://<FQDN>/api/v0/deployed/director/credentials/uaa_login_client_credentials</code>.
 
 	<pre class='terminal'>
     $ uaac token owner get login -s <PasswordForUAALoginUser>
     User name:  admin
-	Password:  ********************
+  	Password:  ********************
 
-	Successfully fetched token via owner password grant.
-	Target: https://10.85.16.4:8443
-	Context: admin, from client login
-    </pre>
+  	Successfully fetched token via owner password grant.
+  	Target: http<span>s</span>://10.85.16.4:8443
+  	Context: admin, from client login
+  </pre>
 
 1. Create a new UAA Client with `bosh admin` privileges.
 
-	<pre class='terminal'>
-	uaac client add ci --authorized_grant_types client_credentials \
-	--authorities bosh.admin --secret a_secret_i_made_up
+  	<pre class='terminal'>
+  	$ uaac client add ci --authorized_grant_types client_credentials \
+  	--authorities bosh.admin --secret a_secret_i_made_up
 
- 	scope: uaa.none
-  	client_id: ci
-  	resource_ids: none
-  	authorized_grant_types: client_credentials
-  	autoapprove:
-  	action: none
-  	authorities: bosh.admin
-  	name: ci
-  	lastmodified: 1469727130702
-  	id: ci
+   	  scope: uaa.none
+    	client_id: ci
+    	resource_ids: none
+    	authorized_grant_types: client_credentials
+    	autoapprove:
+    	action: none
+    	authorities: bosh.admin
+    	name: ci
+    	lastmodified: 1469727130702
+    	id: ci
     </pre>
 
- 1. Set the client and secret as environment variables on the VM.
+1. Set the client and secret as environment variables on the VM.
 
 	<pre class='terminal'>
- 	ubuntu@ip-10-0-0-12:~$ export BOSH_CLIENT=ci
-	ubuntu@ip-10-0-0-12:~$ export BOSH_CLIENT_SECRET=cipassword
+   	$ ubuntu@ip-10-0-0-12:~$ export BOSH_CLIENT=ci
+  	$ ubuntu@ip-10-0-0-12:~$ export BOSH_CLIENT_SECRET=cipassword
 	</pre>
 
 1. Target BOSH using the client.
 	
 	<pre class='terminal'>
-	bosh --ca-cert /var/tempest/workspaces/default/root_ca_certificate \
-	target "${BOSH_DIRECTOR_IP}"
+  	$ bosh --ca-cert /var/tempest/workspaces/default/root_ca_certificate \
+  	target "${BOSH_DIRECTOR_IP}"
 	</pre>
 
 

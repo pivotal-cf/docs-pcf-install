@@ -1,0 +1,37 @@
+
+
+1. Log in to your IdP console and download the IdP metadata XML. Optionally, if your IdP supports metadata URL, you can copy the metadata URL instead of the XML.
+
+1. Copy the IdP metadata XML or URL to the Ops Manager **Use an Identity Provider** log in page.
+     <%= image_tag("meta-om.png") %>
+
+    <p class="note"><b>Note</b>: The same IdP metadata URL or XML is applied for the Bosh Director. If you are using a separate IdP for BOSH, copy the metadata XML or URL from the IdP and enter it into the BOSH IdP Metadata text box in the Ops Manager log in page.</p>
+
+1. Enter the following log in details and click **Setup Authentication**:
+    * **Decryption passphrase**
+    * Read the **End User License Agreement**, and select the checkbox to accept the terms.
+
+1. Your Ops Manager log in page appears. Enter your username and password. Click **Login**.
+
+1. In the **Installation Dashboard**, click the **Ops Manager Director** tile.
+
+1. Click the **Status** tab, and record the **Ops Manager Director** IP address. 
+
+    <%= image_tag("director_ip.png") %>
+
+1. Download your SAML Service Provider metadata (SAML Relying Party metadata) by navigating to the following urls:
+    * <strong>3a.</strong> Ops Manager SAML service provider metadata: `https://{OPS-MAN-FQDN}:443/uaa/saml/metadata` 
+    * <strong>3b.</strong> Bosh Director SAML service provider metadata: `https://{BOSH-IP}:443/uaa/saml/metadata`. Use the **Ops Manager Director** IP you retrieved from the previous step as your `BOSH-IP`. 
+
+1. Configure your IdP with your SAML Service Provider metadata. Import the Ops Manager SAML provider metadata from Step 3a above to your IdP.
+If your IdP does not support an import, provide the values below:
+    * **Single sign on** URL: `https://{OPS-MAN-FQDN}:443/uaa/saml/SSO/alias/{OPS-MAN-FQDN}`
+    * **Audience URI** (SP Entity ID): `https://{OPS-MAN-FQDN}:443/uaa/saml/SSO/alias/{OPS-MAN-FQDN}`
+    * **Name ID** is Email Address
+    * SAML authentication requests are always signed 
+
+1. Import the Bosh Director SAML provider metadata from Step 3b to your IdP. If the IdP does not support an import, provide the values below. Use the **Ops Manager Director** IP you retrieved from the previous step as your `BOSH-IP`.
+    * **Single sign on** URL: `https://{BOSH-IP}:443/uaa/saml/SSO/alias/{OP-MAN-FQDN}`
+    * **Audience URI** (SP Entity ID): `https://{OP-MAN-FQDN}:443/uaa`
+    * **Name ID** is Email Address 
+    * SAML authentication requests are always signed 

@@ -31,8 +31,9 @@ You must have the following in order to use PCF on Microsoft Azure:
     1. Record the API token located at the bottom of the page.
 
 * An Azure command line tool on your machine.
-    * For Linux/Unix/Mac OS X, follow these [instructions](https://azure.microsoft.com/en-us/documentation/articles/xplat-cli-install/) to install the Azure CLI. Then use this [shell script](https://github.com/cf-platform-eng/bosh-azure-template/blob/master/create_azure_principal.sh) to create an Azure Service Principal. Record the `TENANT-ID`, `CLIENT-ID`, `CLIENT-SECRET` produced by the script.
-    * For Windows, follow these [instructions](https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/) to install the Azure PowerShell. Then use this [PowerShell script](https://github.com/cf-platform-eng/bosh-azure-template/blob/master/create_azure_principal_powershell.txt) to create an Azure Service Principal. Record the `TENANT-ID`, `CLIENT-ID`, `CLIENT-SECRET` produced by the script.
+     * For Linux/Unix/Mac OS X, follow these [instructions](https://azure.microsoft.com/en-us/documentation/articles/xplat-cli-install/) to install the Azure CLI.
+     * For Windows, follow these [instructions](https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/) to install the Azure PowerShell.
+     * Use azure-sp-tool, follow these [instructions](https://github.com/danhigham/azure-sp-tool) to create service principal. The service principal is outputed to azure-credentials.json file.
 
 * Sufficient resources for your Azure account. PCF on Azure allocates the following resources during deployment:
   * 53 VMs: The deployment uses a total of 53 VMs during the installation.
@@ -77,15 +78,13 @@ navigate directly to the [Pivotal Cloud Foundry on Azure Marketplace](https://az
 4. Click **Deploy >**.
 
 5. Enter the following **User Inputs**:
-    * **Storage Account Name Prefix**: Installing PCF on Microsoft Azure creates a new storage account. Use a unique prefix that contains letters and numbers and is no more
+    * **Storage Account Name Prefix**: Installing PCF on Microsoft Azure creates a new storage account. Use a unique prefix that contains lower-case letters and numbers and is no more
 than 10 characters long. For more information, see [About Azure storage accounts](https://azure.microsoft.com/en-us/documentation/articles/storage-create-storage-account/).
     * **SSH public key**: You must generate 2048-bit RSA public and private key files.
     	* Linux/Unix/Mac OS X: From the command line, run `$ ssh-keygen -t rsa -b 2048`. Locate your public key in `~/.ssh/id_rsa.pub` and paste the contents into the parameter **sshKeyData**.
     	* Windows: Download, install, and use [PuTTYgen](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html).
 Locate your public key file and paste the contents into the parameter **sshKeyData**.
-	* **Tenant ID**: Enter the `TENANT-ID` output from the Azure Service Principal creation script you ran in the [Prerequisites](#prereqs) section.
-    * **Client ID**: Enter the `CLIENT-ID` output from the Azure Service Principal creation script you ran in the [Prerequisites](#prereqs) section.
-    * **Client Secret**: Enter the `CLIENT-SECRET` output from the Azure Service Principal creation script you ran in the [Prerequisites](#prereqs) section.
+    * **Service Principal**: Upload azure-credentials.json file that you created from [Prerequisites](#prereqs) section.
     * **Pivotal Network Token**: Enter the API token of your Pivotal Network Account that you recorded in the [Prerequisites](#prereqs) section.
     * **Resource Group**: Use a new resource group with a unique name for each new deployment. For more information about Azure resource groups,
 see [Manage Azure resources through portal](https://azure.microsoft.com/en-us/documentation/articles/resource-group-portal/).
@@ -165,4 +164,3 @@ $ cat manifests/elastic-runtime.yml | grep admin
   admin\_user: admin
   admin\_password: "example_password"
  </pre>
-

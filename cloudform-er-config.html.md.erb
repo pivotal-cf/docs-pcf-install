@@ -37,7 +37,7 @@ Dashboard.
 1. Select one or more Availability Zones under **Balance other jobs**. Ops Manager balances instances of jobs with more than one instance across the Availability Zones that you specify.
 
 1. From the **Network** drop-down box, choose the network on which you want to run Elastic Runtime.
-	<%= image_tag("cloudform/er-az.png") %>
+	<%= image_tag("er-az.png") %>
 
 1. Click **Save**.
   <p class="note"><strong>Note</strong>: When you save this form, a verification error displays because the PCF security group blocks ICMP. You can ignore this error.</p>
@@ -80,7 +80,7 @@ xyz.MY-DOMAIN.COM.      1767    IN  CNAME pcf-ert-frankfurt-pcf-elb-428333773.eu
       Runtime.
     * The **Apps Domain** defines where Elastic Runtime should serve your apps.
 
-    <p class="note"><b>Note</b>: Pivotal recommends that you use the same domain name but different subdomain names for your system and app domains. This prevents system and apps routes from overlapping. You will require two DNS entries: one for the system and the other for apps. For example,  <code>system.EXAMPLE.COM</code> and <code>apps.EXAMPLE.COM</code>. Point both domains to your internal router IP address, which can be found under the status tab in the Elastic Runtime tile.</p>
+    <p class="note"><b>Note</b>: Pivotal recommends that you use the same domain name but different subdomain names for your system and app domains. This prevents system and apps routes from overlapping. You will require two wildcard DNS entries: one for the system and the other for apps. For example,  <code>*.system.EXAMPLE.COM</code> and <code>*.apps.EXAMPLE.COM</code>. Point both wildcard domains at your internal router IP address, which can be found under the status tab in the Elastic Runtime tile.</p>
 
     <p class="note"><strong>Note</strong>: You configured a wildcard DNS record
     for these domains in an earlier step.</p>
@@ -191,7 +191,12 @@ You must create the databases required by Elastic Runtime on the RDS instance pr
 
 1. In the Elastic Runtime tile, select **File Storage**.
 
-1. Select the **External S3-Compatible Filestore** option and complete the
+    <p class="note"><strong>Note</strong>: Pivotal recommends using a highly resilient and redundant filestore that is S3 compatible. This minimizes downtime of system operability, which includes running <code>cf-push</code>.</p>
+
+1. To use the PCF internal filestore, select **Internal WebDAV** and click **Save**.
+
+1. To use an external S3-compatible filestore for your Elastic
+Runtime file storage, select the **External S3-Compatible Filestore** option and complete the
 following fields:
 
     <%= image_tag("cloudform/external_filestore_config.png") %>
@@ -203,6 +208,7 @@ following fields:
 		      For example, in the **us-west-2** region, use
 		      `https://s3-us-west-2.amazonaws.com/`.
     * For **S3 Signature Version** and **Region**, keep the default **V2 Signature** values unless your S3 filestore is in Germany or China. These regions require a **V4 Signature**.
+    * Select **Server-side Encryption (available for AWS S3 only)** to encrypt the contents of your S3 filestore. See the [AWS S3 documentation](http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingServerSideEncryption.html) for more information.
     * Use the values in your AWS [**Outputs**](#open-outputs) tab to complete the remaining fields as follows:
     <table border="1" class="nice" >
       <tr>
@@ -246,8 +252,11 @@ If you are forwarding logging messages to an external Reliable Event Logging Pro
 1. If you want to include security events in your log stream, select the **Enable Cloud Controller security event logging** checkbox. This logs all API requests, including the endpoint, user, source IP, and request result, in the Common Event Format (CEF).
 1. Enter the IP address of your syslog server in **External Syslog Aggregator Hostname** and its port in **External Syslog Aggregator Port**. The default port for a syslog server is 514.
 <p class="note"><strong>Note</strong>: The host must be reachable from the Elastic Runtime network, accept TCP connections, and use the RELP protocol. Ensure your syslog server listens on external interfaces.</p>
+
 1. Select an **External Syslog Network Protocol** to use when forwarding logs.
+
 1. For the **Syslog Drain Buffer Size**, enter the number of messages the Doppler server can hold from Metron agents before the server starts to drop them. See the [Loggregator Guide for Cloud Foundry Operators](../loggregator/log-ops-guide.html) topic for more details.
+
 1. Click **Save**.
 
 ## <a id='customize-apps-man'></a>Step 16: (Optional) Customize Apps Manager##
@@ -315,9 +324,7 @@ the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating a
 
 ## <a id='stemcell'></a>Step 24: Download Stemcell ##
 
-This step is only required if your Ops Manager does not already have the stemcell version required by Elastic Runtime. There are two ways to determine if you need to download a stemcell:
-  * Refer to the dependency list available on Pivnet for each Ops Manager and Elastic Runtime Tile to determine if you need to download the stemcell.
-  * If the **Stemcell** section of a tile is colored orange, you will need to download a different stemcell.
+This step is only required if your Ops Manager does not already have the Stemcell version required by Elastic Runtime.
 
 1. Select **Stemcell**.
 
@@ -327,7 +334,7 @@ This step is only required if your Ops Manager does not already have the stemcel
 
 1. In Ops Manager, import the downloaded stemcell <code>.tgz</code> file.
 
-    <%= image_tag("stemcell_17.png") %>
+    <%= image_tag("stemcell_18.png") %>
 
 ## <a id='complete'></a>Step 25: Complete the Elastic Runtime Installation ##
 

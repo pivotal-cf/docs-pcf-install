@@ -1,0 +1,98 @@
+---
+title: Using SSL with a Self-Signed Certificate in JMX Bridge
+owner: PCF Metrics
+---
+
+<strong><%= modified_date %></strong>
+
+Secure Socket Layer (SSL) is a standard protocol for establishing an encrypted
+link between a server and a client. To communicate over SSL, a client needs to trust the SSL certificate of the server.
+
+This topic explains how to use SSL with a self-signed certificate in JMX Bridge (formerly Ops Metrics). This SSL layer secures traffic between JMX Bridge and the user, and is separate from the SSL layer [configured between Elastic Runtime](../opsguide/security_config.html) and the rest of the Ops Manager environment. 
+
+There are two kinds of SSL certificates: signed and self-signed.
+
+* **Signed**: A Certificate Authority (CA) signs the certificate.
+A CA is a trusted third party that verifies your identity and certificate
+request, then sends you a digitally signed certificate for your secure server.
+Client computers automatically trust signed certificates. Signed certificates are also called _trusted certificates_.
+
+* **Self-signed**: Your own server generates and signs the certificate.
+Clients do not automatically trust self-signed certificates.
+To communicate over SSL with a server providing a self-signed certificate, a
+client must be explicitly configured to trust the certificate.
+  <%= partial '../customizing/known-issue-self-signed-certs' %>
+
+The following procedure configures a JMX user client to trust a self-signed certificate by importing the certificate to its truststore, an internal keystore. To use a trusted certificate signed by a CA, you only need to paste the Certificate and Key into the fields in the Ops Manager JMX Bridge tile, as shown in [Step 1, Option 2](#existing), below. 
+
+## <a id='apply'></a>Step 1: Supply SSL Certificate ##
+
+### <a id='generate'></a>Option 1: Generate Self-Signed Certificate ###
+
+Follow the steps below to generate a self-signed certificate on your server:
+
+1. In Pivotal Ops Manager, click the **JMX Bridge** tile.
+1. Check **Enable SSL**.
+1. Click **Generate Self-Signed RSA Certificate** and check the **Trust Self-Signed Certificates** box.
+
+    <%= image_tag("images/ssl/generate-ssl.png") %>
+
+1. Enter your system and application domains in wildcard format.
+Optionally, also add any custom domains in wildcard format.
+Click **Generate.**
+
+    <%= image_tag("images/ssl/generate.png") %>
+
+1. Select and copy the certificate.
+
+    <%= image_tag("images/ssl/copy.png") %>
+
+1. Paste the certificate into a text file and save as a `.cer` file, such as `MY-JMX-BRIDGE.cer`.
+
+### <a id='existing'></a> Option 2: Use an Existing Self-Signed Certificate ###
+
+1. In Pivotal Ops Manager, click the **JMX Bridge** tile.
+1. Check **Enable SSL**.
+1. Paste your certificate and private key into the appropriate boxes. This is your X.509 certificate and PKCS#1 private key.
+
+  <%= image_tag("images/ssl/paste-cert.png") %>
+
+## <a id='import'></a>Step 2: Import the Self-signed Certificate to a Truststore ##
+
+Follow the steps below to import the self-signed certificate to your client:
+
+1. Copy your certificate file `MY-JMX-BRIDGE.cer` from your server to your client.
+
+1. Navigate to the client directory where you copied the saved certificate.
+
+1. Use `keytool -import` to import the certificate with an alias of `ops-metrics-ssl` to the truststore `localhost.truststore`:
+
+    <pre class="terminal">
+    $ keytool -import -alias ops-metrics-ssl -file MY-JMX-BRIDGE.cer -keystore localhost.truststore
+    </pre>
+    * If `localhost.truststore` already exists, a password prompt appears.
+      Enter the keystore password that you recorded in a previous step.
+    * If `localhost.truststore` does not exist, you must create a password.
+
+1. Verify the details of the imported certificate.
+
+## <a id='start'></a>Step 3: Start a Monitoring Tool with the Truststore ##
+
+Once you import the self-signed certificate to `localhost.truststore`
+ on the client, configure your monitoring tool, such as Jconsole, to use the
+truststore. You do this from a command line, by starting your monitoring tool with the location and password of the truststore.
+
+1. Pass in the location of `localhost.truststore` to your monitoring tool with the `javax.net.ssl.trustStore` property, and its password with the `javax.net.ssl.trustStorePassword` property. For example, you would invoke jConsole with:
+<pre class="terminal">
+$ jconsole -J-Djavax.net.ssl.trustStore=/lib/home/jcert/localhost.truststore -J-Djavax.net.ssl.trustStorePassword=KEYSTORE_PASSWORD
+</pre>
+
+1. In the **Remote Process** field, enter the fully qualified hostname of the Maximus server, port number `44444`.
+
+    <%= image_tag("images/ssl/jconsole.png") %>
+
+1. To complete the **Username** and **Password** fields, refer to the
+    **Credentials** tab of the JMX Bridge tile in Pivotal Ops Manager.
+    By default, these credentials are `admin` and `admin`.
+
+Your monitoring tool should now communicate with your server through the SSL connection.

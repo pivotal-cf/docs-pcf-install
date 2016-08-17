@@ -13,8 +13,6 @@ Dependencies between the components in your PCF deployment require that you
 start and stop the VMs for those components in a specific order.
 These orders are specified below in the [start order](#start) and [stop order](#stop) tables.
 
-<p class="note"><strong>Note</strong>: When you deploy Elastic Runtime, the process automatically starts VMs. These steps are not required to install any part of your deployment.</p>
-
 ## <a id='get-names'></a>Finding the Names for Your PCF Virtual Machines ##
 
 You need the full names for the VMs to [start](#start) or [stop](#stop) them using the BOSH CLI. To find full names for the VMs running each component, run `bosh vms`:
@@ -54,7 +52,7 @@ Task 26 done
 VMs total: 17
 </pre>
 
-You can see the full name of each VM in the `VM` column of the terminal output. Each full name includes:
+You can see the full name of each VM in the `Job/index` column of the terminal output. Each full name includes:
 
 * A prefix indicating the component function of the VM. The [table](#start-order) below associates each component VM function with a prefix.
 
@@ -62,17 +60,17 @@ You can see the full name of each VM in the `VM` column of the terminal output. 
 
 * An identifier string specific to your deployment
 
-* An `INDEX` suffix. For component processes that run on a single VM instance, INDEX is always 0. For processes running on multiple VMs, INDEX is a sequentially numbered value that uniquely identifies each VM.
+* An `/INDEX` suffix. For component processes that run on a single VM instance, INDEX is always 0. For processes running on multiple VMs, INDEX is a sequentially numbered value that uniquely identifies each VM.
 
-* An `ID` in parentheses that is the UUID (Universally Unique Identifier) for that instance and can generally be used interchangeably with the index value from the CLI.
-
-For any component, you can look for its prefix in the `bosh vms` output to find the full name of the VM or VMs that run it. In the example shown here, the full name of one of the two Diego Cell VMs is `diego_cell-partition-bb35e96d6d3184a2d672/1`.
+For any component, you can look for its prefix in the `bosh vms` output to find the full name of the VM or VMs that run it. In the example shown here, the full name of one of the three Diego Cell VMs is `diego_cell-partition-458f9d7042365ff810e9/2`.
 
 ## <a id='start'></a>Starting PCF Virtual Machines ##
 
-In the order specified in the [Start Order table](#start-order) below, run `bosh start VM-NAME` for each component in your PCF deployment. Use the full name of the component VM as listed in your `bosh vms` [terminal output](#term-bosh-vms) with the `INDEX` at the end. In the example here, the first component you would start is the NATS VM, by running `bosh start nats-partition-458f9d7042365ff810e9 0`:
+In the order specified in the [Start Order table](#start-order) below, run `bosh start VM-NAME` for each component in your PCF deployment. Use the full name of the component VM as listed in your `bosh vms` [terminal output](#term-bosh-vms), without the `/INDEX` at the end. In the example here, the first component you would start is the NATS VM, by running `bosh start nats-partition-458f9d7042365ff810e9`:
 
 <pre class='terminal'>
+$ bosh start nats-partition-458f9d7042365ff810e9
+
 Processing deployment manifest
 ------------------------------
 You are about to start nats-partition-458f9d7042365ff810e9/0
@@ -93,7 +91,7 @@ nats-partition-458f9d7042365ff810e9/0 has been started
 </pre>
 
 <p class='note'><strong>Note</strong>:
-  To start a specific instance of a VM, include the <code>INDEX</code>, space delimited, at the end of its full name. In the example here, you could start only the first Diego Cell instance by running: <code>$ bosh start diego_cell-partition-458f9d7042365ff810e9 0 </code>
+  To start a specific instance of a VM, include the <code>/INDEX</code> at the end of its full name. In the example here, you could start only the first Diego Cell instance by running: <code>$ bosh start diego_cell-partition-458f9d7042365ff810e9/0 </code>
 </p>
 
 <table id='start-order' border="1" class="nice">
@@ -124,8 +122,8 @@ nats-partition-458f9d7042365ff810e9/0 has been started
   </tr>
   <tr>
     <td>5</td>
-    <td>NFS Server</td>
-    <td><code>nfs_server-</code></td>
+    <td>WebDAV Server</td>
+    <td><code>nfs_server-</code> (The WebDAV job has this prefix for historical reasons)</td>
   </tr>
   <tr>
     <td>6</td>
@@ -152,63 +150,57 @@ nats-partition-458f9d7042365ff810e9/0 has been started
     <td>UAA Database</td>
     <td><code>uaadb-</code></td>
   </tr>
-  <tr>
     <td>11</td>
-    <td>Apps Manager Database</td>
-    <td><code>consoledb-</code></td>
-  </tr>
-  <tr>
-    <td>12</td>
     <td>Cloud Controller</td>
     <td><code>cloud_controller-</code></td>
   </tr>
   <tr>
-    <td>13</td>
+    <td>12</td>
     <td>HAProxy</td>
     <td><code>ha_proxy-</code></td>
   </tr>
   <tr>
-    <td>14</td>
+    <td>13</td>
     <td>Health Manager</td>
     <td><code>health_manager-</code></td>
   </tr>
   <tr>
-    <td>15</td>
+    <td>14</td>
     <td>Clock Global</td>
     <td><code>clock_global-</code></td>
   </tr>
   <tr>
-    <td>16</td>
+    <td>15</td>
     <td>Cloud Controller Worker</td>
     <td><code>cloud_controller_worker-</code></td>
   </tr>
   <tr>
-    <td>17</td>
+    <td>16</td>
     <td>Collector</td>
     <td><code>collector-</code></td>
   </tr>
   <tr>
-    <td>18</td>
+    <td>17</td>
     <td>UAA</td>
     <td><code>uaa-</code></td>
   </tr>
   <tr>
-    <td>19</td>
+    <td>18</td>
     <td>Diego Brain</td>
     <td><code>diego_brain-</code></td>
   </tr>
   <tr>
-    <td>20</td>
+    <td>19</td>
     <td>Diego Cell</td>
     <td><code>diego_cell-</code></td>
   </tr>
   <tr>
-    <td>22</td>
+    <td>20</td>
     <td>Doppler Server</td>
     <td><code>doppler-</code></td>
   </tr>
   <tr>
-    <td>23</td>
+    <td>21</td>
     <td>Loggregator Traffic Controller</td>
     <td><code>loggregator_trafficcontroller-</code></td>
   </tr>
@@ -216,10 +208,10 @@ nats-partition-458f9d7042365ff810e9/0 has been started
 
 ## <a id='stop'></a>Stopping PCF Virtual Machines ##
 
-In the order specified in the [Stop Order table](#stop-order) below, run `bosh stop VM-NAME INDEX-OR-ID --hard` for each component in your PCF deployment. Use the full name of the component VM as listed in your `bosh vms` [terminal output](#term-bosh-vms), with the `INDEX`, space delimited, at the end. In the example here, the first component you would stop is the Loggregator Traffic Controller VM, by running `bosh stop loggregator_trafficcontroller-partition-458f9d7042365ff810e9 0 --hard`:
+In the order specified in the [Stop Order table](#stop-order) below, run `bosh stop VM-NAME` for each component in your PCF deployment. Use the full name of the component VM as listed in your `bosh vms` [terminal output](#term-bosh-vms), without the `/INDEX` at the end. In the example here, the first component you would stop is the Loggregator Traffic Controller VM, by running `bosh stop loggregator_trafficcontroller-partition-458f9d7042365ff810e9`:
 
 <pre class='terminal'>
-$ bosh stop loggregator_trafficcontroller-partition-458f9d7042365ff810e9 0 --hard
+$ bosh stop loggregator_trafficcontroller-partition-458f9d7042365ff810e9
 
 Processing deployment manifest
 ------------------------------
@@ -239,7 +231,7 @@ loggregator_trafficcontroller-partition-458f9d7042365ff810e9/0 has been stopped
 </pre>
 
 <p class='note'><strong>Note</strong>:
-  To stop a specific instance of a VM, include the <code>INDEX</code>, space delimited, at the end of its full name. In the example here, you could stop only the second Diego Cell instance by running: <code>$ bosh stop diego_cell-partition-bb35e96d6d3184a2d672 1 --hard</code>
+  To stop a specific instance of a VM, include the <code>/INDEX</code> at the end of its full name. In the example here, you could stop only the third Diego Cell instance by running: <code>$ bosh stop diego_cell-partition-458f9d7042365ff810e9/2 </code>
 </p>
 
 <table id='stop-order' border="1" class="nice">
@@ -305,56 +297,51 @@ loggregator_trafficcontroller-partition-458f9d7042365ff810e9/0 has been stopped
   </tr>
   <tr>
     <td>13</td>
-    <td>Apps Manager Database</td>
-    <td><code>consoledb-</code></td>
-  </tr>
-  <tr>
-    <td>14</td>
     <td>UAA Database</td>
     <td><code>uaadb-</code></td>
   </tr>
   <tr>
-    <td>15</td>
+    <td>14</td>
     <td>Cloud Controller Database</td>
     <td><code>ccdb-</code></td>
   </tr>
   <tr>
-    <td>16</td>
+    <td>15</td>
     <td>MySQL Server</td>
     <td><code>mysql-</code></td>
   </tr>
   <tr>
-    <td>17</td>
+    <td>16</td>
     <td>MySQL Proxy</td>
     <td><code>mysql_proxy-</code></td>
   </tr>
   <tr>
-    <td>18</td>
+    <td>17</td>
     <td>Router</td>
     <td><code>router-</code></td>
   </tr>
   <tr>
-    <td>19</td>
-    <td>NFS Server</td>
-    <td><code>nfs_server-</code></td>
+    <td>18</td>
+    <td>WebDAV Server</td>
+    <td><code>nfs_server-</code> (The WebDAV job has this prefix for historical reasons)</td>
   </tr>
  <tr>
-    <td>20</td>
+    <td>19</td>
     <td>Diego Database</td>
     <td><code>diego_database-</code></td>
   </tr>
   <tr>
-    <td>21</td>
+    <td>20</td>
     <td>etcd</td>
     <td><code>etcd_server-</code></td>
   </tr>
   <tr>
-    <td>22</td>
+    <td>21</td>
     <td>consul</td>
     <td><code>consul_server-</code></td>
   </tr>
   <tr>
-    <td>23</td>
+    <td>22</td>
     <td>NATS</td>
     <td><code>nats-</code></td>
   </tr>

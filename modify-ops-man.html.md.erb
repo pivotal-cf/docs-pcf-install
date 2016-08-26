@@ -1,0 +1,84 @@
+---
+title: Modifying Your Ops Manager Installation and Product Template Files
+owner: Ops Manager
+---
+
+<strong><%= modified_date %></strong>
+
+<style>
+    .note.warning {
+       background-color: #fdd;
+       border-color: #fbb
+  	          }
+
+    .note.warning:before {
+       color: #f99;
+		         }
+</style>
+
+This topic describes how to modify your Ops Manager installation by decrypting and editing the YAML files that Ops Manager uses to store configuration data. 
+Operators can use these procedures to view and change values that they cannot access through the Ops Manager web interface. They can also modify the product templates that Ops Manager uses to create forms and obtain user input. 
+
+Operators may want to modify the Ops Manager installation and product template files for a number of reasons, including the following:
+
+* To change the User Account and Authentication (UAA) admin password of their deployment
+* To retrieve key values
+* To migrate content across different Pivotal Cloud Foundry (PCF) releases
+
+<p class="note warning"><strong>WARNING: </strong> Be careful when making changes to your Ops Manager installation and product template files. Use spaces instead of tabs, and remember that YAML files use whitespace as a delimiter. Finally, Pivotal does not officially support these procedures, so use them at your own risk.</p>
+
+##<a id='understand-files'></a> Understand Installation and Product Template Files ##
+
+During the installation process, Ops Manager combines information from the installation and product template files to generate the manifests that define your deployment. 
+
+* **Installation file**: PCF stores user-entered data and automatically generated values for Ops Manager in an installation YAML file on the Ops Manager VM. PCF encrypts and stores this file in the directory `/var/tempest/workspaces/default`. You must decrypt this file to view the contents, edit them as necessary, then re-encrypt them.
+
+* **Product templates**: Ops Manager uses product templates to create forms and obtain user input. The `job_types` and `property_blueprint` key-value pairs in a product template determine how the `jobs` and `properties` sections display in the installation file. Ops Manager stores product templates as YAML files in the directory `/var/tempest/workspaces/default/metadata` on the Ops Manager VM. These files are not encrypted, so you can edit them without decrypting. User input does not alter these files.
+
+##<a id='installation'></a> Modify the Installation File
+
+Perform the following steps to locate, decrypt, and edit your Ops Manager installation file:
+
+1. SSH into the Ops Manager VM by following the steps in the [SSH into Ops Manager](trouble-advanced.html#ssh) section of the Advanced Troubleshooting with the BOSH CLI topic.
+1. Decrypt the installation YAML file with the decryption passphrase you created when Ops Manager started for the first time, and make a copy of the decrypted file:
+    <pre class="terminal">
+    $ sudo -u tempest-web RAILS_ENV=production /home/tempest-web/tempest/web/scripts/decrypt YOUR-PASSPHRASE /var/tempest/workspaces/default/installation.yml /tmp/installation.yml
+    </pre>
+1. Open `/tmp/installation.yml` to view or edit values.
+1. If you plan to make changes, make a backup of the original installation YAML file:
+    <pre class="terminal">
+    cp /var/tempest/workspaces/default/installation.yml ~/installation-orig.yml
+    </pre>
+1. If you have made changes to your copy of the installation YAML file, you must encrypt it and overwrite the original with it:
+    <pre class="terminal">
+    sudo -u tempest-web RAILS_ENV=production /home/tempest-web/tempest/web/scripts/encrypt YOUR-PASSPHRASE /tmp/installation.yml /var/tempest/workspaces/default/installation.yml
+    </pre>
+1. Restart the Ops Manager web interface:
+    <pre class="terminal">
+    sudo service tempest-web stop && sudo service tempest-web start
+    </pre>
+1. Navigate to Ops Manager in a browser and enter your decryption passphrase.
+1. Log in to Ops Manager and click **Apply Changes** to make your changes take effect.
+
+##<a id='templates'></a> Modify Product Template Files
+
+Perform the following steps to locate and edit your Ops Manager product template files:
+
+1. SSH into the Ops Manager VM by following the steps in the [SSH into Ops Manager](trouble-advanced.html#ssh) section of the Advanced Troubleshooting with the BOSH CLI topic.
+1. On the Ops Manager VM, change into the directory `/var/tempest/workspaces/default/metadata`:
+    <pre class="terminal">
+    $ cd /var/tempest/workspaces/default/metadata
+    </pre>
+1. This directory contains the product templates as YAML files. If you plan to make changes, make a backup of the original product template YAML file:
+    <pre class="terminal">
+    $ cp /var/tempest/workspace/default/metadata/YOUR-PRODUCT-TEMPLATE.yml ~/YOUR-PRODUCT-TEMPLATE-orig.yml
+    </pre>
+1. Open and edit the product template YAML file as necessary. For more information about product templates, see the [Product Template Reference](https://docs.pivotal.io/partners/product-template-reference.html) topic.
+1. Restart the Ops Manager web interface:
+    <pre class="terminal">
+    $ sudo service tempest-web stop && sudo service tempest-web start
+    </pre>
+1. Navigate to Ops Manager in a browser and enter your decryption passphrase.
+1. Log in to Ops Manager and click **Apply Changes** to make your changes take effect.
+
+

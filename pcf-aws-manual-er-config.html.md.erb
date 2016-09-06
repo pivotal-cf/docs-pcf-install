@@ -14,6 +14,8 @@ href="https://network.pivotal.io/productsf/pivotal-cf">Pivotal Cloud Foundry</a>
 
 Before following this procedure, complete all of the steps in the [Configuring Ops Manager Director for AWS](./pcf-aws-manual-om-config.html) topics.
 
+<p class="note"><strong>Note</strong>: If you plan to <a href = "../../addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the Elastic Runtime tile.</p>
+
 ## <a id='om-add'></a>Step 1: Add Elastic Runtime to Ops Manager ##
 
 1. Navigate to the Pivotal Cloud Foundry Operations Manager Installation
@@ -56,9 +58,9 @@ Manager.
       Runtime.
     * The **Apps Domain** defines where Elastic Runtime should serve your apps.
 
-    <p class="note"><strong>Note</strong>: Pivotal recommends that you use the same domain name but different subdomain names for your system and app domains. Doing so allows you to use a single wildcard certificate for the domain while preventing apps from creating routes that overlap with system routes. For example, name your system domain <code>system.EXAMPLE.com</code> and your apps domain <code>apps.EXAMPLE.com</code>.</p>
+    <p class="note"><b>Note</b>: Pivotal recommends that you use the same domain name but different subdomain names for your system and app domains. This prevents system and apps routes from overlapping. You will require two DNS entries: one for the system and the other for apps. For example,  <code>system.EXAMPLE.COM</code> and <code>apps.EXAMPLE.COM</code>. Point both domains to your internal router IP address, which you can find under the status tab in the Elastic Runtime tile.</p>
 
-    <p class="note"><strong>Note</strong>: You configured wildcard DNS records
+    <p class="note"><strong>Note</strong>: You configured a wildcard DNS record
     for these domains in an earlier step.</p>
 
 1. Click **Save**.
@@ -74,11 +76,11 @@ Manager.
 1. If you want to use internal databases for your deployment, select **Internal Databases - MySQL**. If you want to use the external RDS instance for your Elastic Runtime databases, select **External Databases** and complete the following procedure to create the databases that Elastic Runtime requires. If you require help, contact [Pivotal Support](http://support.pivotal.io).
     * Add your key pair to your ssh profile so that you can access the machine.
 	<pre class="terminal">$ ssh-add pcf.pem</pre>
-    * SSH into your Ops Manager VM using its IP address and the username `ubuntu`.  You can find the IP address for the Ops Manager VM on the AWS EC2 console.
-	<pre class="terminal">ssh ubuntu@OPS_MANAGER\_IP</pre>
+    * SSH into your Ops Manager using the [Ops Manager FQDN](../customizing/cloudform-om-deploy.html#create-dns) and the username `ubuntu`:
+	<pre class="terminal">ssh ubuntu@OPS_MANAGER\_FQDN</pre>
     * Log into your RDS instance through the MySQL client, using the hostname from the RDS console and the username that you created the RDS instance with. This command prompts you to enter the password for your RDS user:
     <pre class="terminal">mysql -h RDS-HOSTNAME -u RDS-USERNAME -p</pre>
-    * Create databases for each of the six Cloud Foundry components that require a database. From the MySQL client, run `CREATE database DB-NAME` for each of the following: `uaa`, `ccdb`, `console`, `notifications`, `autoscale`, `app_usage_service`.
+    * Create databases for each of the six Cloud Foundry components that require a database. From the MySQL client, run `CREATE database DB-NAME` for each of the following: `uaa`, `ccdb`, `notifications`, `autoscale`, `app_usage_service`.
     * Exit the MySQL client and close your connection to the Ops Manager VM.
     * In the **Databases** section of the Elastic Runtime tile, enter your **Hostname DNS Name**, **TCP Port** (`3306`), **Username**, and **Password**.
     * Click **Save**.
@@ -274,7 +276,14 @@ TCP Routing is available for users who want an alternative to HTTP. For more inf
 
 <%= partial 'disable_resources' %>
 
-## <a id='config-elb'></a>Step 21: Configure Router to Elastic Load Balancer ##
+## <a id='stemcell'></a>Step 21: Download Stemcell ##
+
+This step is only required if your Ops Manager does not already have the stemcell version required by Elastic Runtime. There are two ways to determine if you need to download a stemcell:
+  * Refer to the dependency list available on Pivnet for each Ops Manager and Elastic Runtime Tile to determine if you need to download the stemcell.
+  * If the **Stemcell** section of a tile is colored orange, you will need to download a different stemcell.
+
+
+## <a id='config-elb'></a>Step 22: Configure Router to Elastic Load Balancer ##
 
 1. In the **Elastic Runtime** tile, click **Resource Config**.
 
@@ -288,7 +297,7 @@ TCP Routing is available for users who want an alternative to HTTP. For more inf
     <%= image_tag("pcfaws/er-aws-resource-config.png") %>
 
 
-## <a id='complete'></a>Step 22: Complete the Elastic Runtime Installation ##
+## <a id='complete'></a>Step 23: Complete the Elastic Runtime Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.

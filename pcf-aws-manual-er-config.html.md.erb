@@ -37,8 +37,8 @@ Manager.
 1. Select an Availability Zone under **Place singleton jobs**. Ops Manager runs any job with a single instance in this Availability Zone.
 
 1. Select one or more Availability Zones under **Balance other jobs**. Ops Manager balances instances of jobs with more than one instance across the Availability Zones that you specify.
-
-<p class="note"><strong>Note</strong>: Pivotal recommends at least three Availability Zones for a highly available installation of Elastic Runtime.</p>
+    
+    <p class="note"><strong>Note</strong>: Pivotal recommends at least three Availability Zones for a highly available installation of Elastic Runtime.</p>
 
 1. Select the network that you created in the [Networks Pages](./pcf-aws-manual-om-config.html#pcfaws-om-networks) section of the _Configuring Ops Manager Director for AWS_ topic.
 <%= image_tag("er-az.png") %>
@@ -179,24 +179,21 @@ If you are forwarding logging messages to an external Reliable Event Logging Pro
 
 Elastic Runtime uses SMTP to send invitations and confirmations to Apps Manager
 users.
-You must complete the **Email Notifications** page if you want to enable end-user
-self-registration and the [Notifications with UI](#notifications)
-feature.
-
-<p class="note"><strong>Note</strong>: If you do not configure the SMTP settings using this form, the administrator must create orgs and users using the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating and Managing Users with the cf CLI</a> for more information.</p>
+You must complete the **Email Notifications** page if you want to enable
+end-user self-registration.
 
 1. Select **Email Notifications**.
+  <%= image_tag("cloudform/smtp.png") %>
 
 1. Enter your reply-to and SMTP email information
 
-1. Verify your authentication requirements with your email administrator and use
-the **SMTP Authentication Mechanism** drop-down menu to select `None`, `Plain`,
-or `CRAMMD5`.
-If you have no SMTP authentication requirements, select `None`.
+1. If you have no SMTP authentication requirements, select `None`.
 
 1. Click **Save**.
 
-    <%= image_tag("cloudform/smtp.png") %>
+<p class='note'><strong>Note</strong>: If you do not configure the SMTP
+settings using this form, the administrator must create orgs and users using
+the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating and Managing Users with the cf CLI</a> for more information.</p>
 
 ## <a id='ccdb-key'></a>Step 16: (Optional) Add CCDB Restore Key##
 
@@ -278,16 +275,24 @@ TCP Routing is available for users who want an alternative to HTTP. For more inf
 
 ## <a id='stemcell'></a>Step 21: Download Stemcell ##
 
-This step is only required if your Ops Manager does not already have the stemcell version required by Elastic Runtime. There are two ways to determine if you need to download a stemcell:
-  * Refer to the dependency list available on Pivnet for each Ops Manager and Elastic Runtime Tile to determine if you need to download the stemcell.
-  * If the **Stemcell** section of a tile is colored orange, you will need to download a different stemcell.
+This step is only required if your Ops Manager does not already have the Stemcell version required by Elastic Runtime.
+
+1. Select **Stemcell**.
+
+1. Log into the [Pivotal Network](https://network.pivotal.io/products/pivotal-cf) and click on **Stemcells**.
+
+1. Download the appropriate stemcell version targeted for your IaaS.
+
+1. In Ops Manager, import the downloaded stemcell <code>.tgz</code> file.
+
+    <%= image_tag("stemcell_18.png") %>
 
 
 ## <a id='config-elb'></a>Step 22: Configure Router to Elastic Load Balancer ##
 
 1. In the **Elastic Runtime** tile, click **Resource Config**.
 
-1. In the **ELB Name** field of the **Router** row, enter the name of your load balancer. You may configure multiple load balancers by entering the names separated by commas.
+1. In the **ELB Name** field of the **TCP Router** row, enter the name of your load balancer if you have enabled TCP routing in the [Advanced Features](#enable-tcp) pane. You may configure multiple load balancers by entering the names separated by commas.
 
 1. In the **ELB Name** field of the **Diego Brain** row, enter the name of your SSH load balancer. You may configure multiple load balancers by entering the names separated by commas.
 
@@ -295,7 +300,6 @@ This step is only required if your Ops Manager does not already have the stemcel
 1. Click **Save**.
 
     <%= image_tag("pcfaws/er-aws-resource-config.png") %>
-
 
 ## <a id='complete'></a>Step 23: Complete the Elastic Runtime Installation ##
 

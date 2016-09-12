@@ -23,9 +23,8 @@ The apps in your deployment continue to run during the upgrade. However, you can
 **Important**: Read the Known Issues sections of the [Release Notes](../pcf-release-notes/index.html) before getting started.
 
 <p class="note warning">
-<strong>WARNING: </strong> Ops Manager operates in lockstep with Elastic Runtime and other service products. You must review the compatibility of your products as described below before proceeding with this upgrade procedure. Your upgrade will fail if you do not have compatible product versions associated with your Ops Manager installation.
+<strong>WARNING: </strong> Ops Manager v1.8 operates in lockstep with Elastic Runtime v1.8, as well as with other service products. You must upgrade Ops Manager, Elastic Runtime and the other dependent products to v1.8 at the *same time*. Review the compatibility of your products as described below before proceeding with this upgrade procedure. Your upgrade will fail if you do not have compatible product versions associated with your Ops Manager installation.
 </p>
-
 
 ## <a id="beforeupgrade"></a>Before You Upgrade
 
@@ -48,16 +47,27 @@ For information about how to upgrade product tiles in PCF v1.7, see the <a href=
 
 ### <a id="remove-products"></a>Review and Remove Unsupported Products
 
-If your deployment has any of the following products, you must remove the tiles before upgrading. Products that are no longer being maintained and are not compatible with PCF v1.8 include:
+If your deployment has any of the following products, you must remove the tiles before upgrading. The following products are not currently compatible with PCF v1.8:
 
   * App Distribution for PCF
+  * CloudBees Jenkins Platform for PCF
   * Data Sync for PCF
   * Datastax Enterprise for PCF
   * MongoDB for PCF
   * Neo4J for PCF
   * Pivotal HD
 
-<p class="note"><strong>Note</strong>: Some partner services may be incompatible with PCF 1.8. For information about which partner service releases are compatible with PCF 1.8, review the appropriate partners services release documentation at <a href="http://docs.pivotal.io">http://docs.pivotal.io</a> or contact the partner organization that produces the tile.</p> 
+<p class="note"><strong>Note</strong>: Some partner service tiles may be incompatible with PCF v1.8. For information about which partner service releases are compatible with PCF v1.8, review the appropriate partners services release documentation at <a href="http://docs.pivotal.io">http://docs.pivotal.io</a> or contact the partner organization that produces the service tile.</p> 
+
+### <a id="download-targets"></a> Download Upgrade Versions
+
+To minimize disruptions to your deployment during the upgrade and satisfy simultaneous upgrade requirements, download the correct version of the product files you wish to upgrade from [Pivotal Network](https://network.pivotal.io/). If you are using any of the following products, download the following:
+
+    * Elastic Runtime v1.8.x
+    * RabbitMQ v1.7.x
+    * Single Sign-On Service v1.2.x
+    * PCF Metrics v1.1.x
+
 
 ### <a id="prepare-env"></a>Prepare Your Environment
 
@@ -67,7 +77,7 @@ you must sequentially install v1.7 and v1.8.
 
 1. Back up all critical data prior to upgrading to Ops Manager v1.8. For example, to backup a v1.7 environment, follow the instructions in the <a href="http://docs.pivotal.io/pivotalcf/1-7/customizing/backup-restore/backup-pcf.html">Backing Up Pivotal Cloud Foundry</a> topic. 
 
-    <p class="note"><strong>Note</strong>: You do not need to backup the Apps Manager <code>console</code> database because it is deprecated in v1.8. When the database is dropped during the upgrade, there is data loss in the form of sent emails for users who are invited to join or create accounts on PCF. For example, this affects users who have an existing invitation to join PCF in their email inbox. The link in the invitation will no longer work.</p>
+    <p class="note"><strong>Note</strong>: You do not need to backup the Apps Manager <code>console</code> database because it is deprecated in v1.8. </p>
 
 1. If you have disabled lifecycle errands for any installed product to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. For more information, see the <a href="./add-delete.html#add-import">Adding and Deleting Products</a> topic.
 
@@ -191,8 +201,6 @@ If you use any of the following products, you must upgrade them to the versions 
     * Single Sign-On Service v1.2.x
     * PCF Metrics v1.1.x
 
-    Download the correct version of the product file from [Pivotal Network](https://network.pivotal.io/).
-
     <p class="note warning">
     <strong>WARNING: </strong> You must upgrade the products listed in the steps above before you click <strong>Apply Changes</strong>. You cannot complete your installation until you perform these upgrades. 
     </p>
@@ -210,7 +218,6 @@ If you use any of the following products, you must upgrade them to the versions 
 1. Navigate to the Ops Manager **Installation Dashboard**.
 
 1. Click **Apply Changes**. This immediately imports and applies upgrades to all tiles in a single transaction.
-   <p class="note"><b>Note</b>: During the upgrade, existing Apps Manager deployments generate 500 errors due to the removal of the deprecated <code>console</code> database. These errors clear out at the end of the upgrade when the new Apps Manager is in place.</p>
 
 1. Click each service tile, select the **Status** tab, and confirm that all VMs appear and are in good health.
 
@@ -218,11 +225,17 @@ If you use any of the following products, you must upgrade them to the versions 
 
 ## <a id="after"></a>Configure Elastic Runtime after Completing Your Upgrade ##
 
-The `collector` job used to retrieve logs from Elastic Runtime components does not exist in v1.8. 
+### Deprecate Collector Job
+
+The `collector` job used to retrieve logs from Elastic Runtime components is not used in v1.8. 
 Metrics are now emitted using Metron/Firehose rather than variables. 
-After you complete the upgrade to Ops Manager v1.8, scale this job.
+After you complete the upgrade to Ops Manager v1.8, scale this job to `0`.
 
 1. Navigate to **Pivotal Elastic Runtime** > **Resource Config**. 
 
 2. Change the number of instances to `0`. 
+
+### Deprecate Apps Manager Database
+
+After the upgrade to PCF v1.8, the `console` database is no longer used by Apps Manager. If you are using PostgreSQL as your internal database, you can scale the Apps Manager Database (postgres) job to `0` in the **Resource Config** page of Elastic Runtime. If you are using MySQL as your internal database, you can safely drop the `console` database using the MySQL command interface.
 

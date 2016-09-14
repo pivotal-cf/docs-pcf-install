@@ -24,12 +24,65 @@ In addition to the prerequisites listed above, you must create a new network and
 
 ### <a id="create_network"></a> Create a GCP Network with Subnet
 
-
+1. Navigate to your GCP project for PCF in the GCP Console. 
+1. Select **Networking**, then **Create Network**. 
+	1. Enter a name and descrption for your network. 
+	1. Under **Subnetworks**, select **Custom** and specify a name, region, and address range.
+1. Click **Create**.
 
 ### <a id="firewall_rules"></a> Create Firewall Rules for the Network
 
-### <a id="iam_account"></a> Set up a IAM Service Account 
+1. Create a firewall rule to allow all tcp traffic within the network. In the **Networking** pane, select **Firewall rules**, then **Create Firewall Rule**.
+	* **Name**: Enter a name.
+	* **Network**: Select the network you created in the section above. 
+	* **Source Filter**: Choose **Subnetworks**. 
+	* **Allowed protocols and ports**: Enter `tcp`. 
+	* **Target tags**: 
+1. Create a firewall rule to allow  to allow `tcp:80;tcp:443` traffic from any source to VMs tagged with `pcf-lb`.
+	* **Name**: Enter `pcf-lb`. 
+	* **Network**: Select the network you created in the section above.
+	* **Source filter**: Choose `allow from any source`. 
+	* **Allowed protocols and ports**: Enter `tcp:80;tcp:443;tcp:4443`.
+	* **Target tags**: Enter `pcf-lb`. 
+
+### <a id="iam_account"></a> Set up an IAM Service Account 
+
+1. From the GCP Console, select **IAM & Admin**, then **Service accounts**. 
+1. Click **Create Service Account**: 
+	* **Service account name**: Enter a name. 
+	* **Role**: Select the following permissions:
+		* **Project** > **Editor**. 
+		* **Compute Engine** > **Compute Instance Admin**
+		* **Compute Engine** > **Compute Network Admin**
+		* **Compute Engine** > **Compute Security Admin**
+		* **Compute Engine** > **Compute Storage Admin**
+	* **Service account ID**: The field autogenerates a unique ID based on the username. 
+	* **Furnish a new private key**: Select this checkbox and JSON as the **Key type**.
+
+	<%= image_tag("gcp/iam_account.png") %>
+
+1. Click **Create**. Your browser automatically downloads a JSON file with a private key for this account. Save this file in a secure location.
+
+### <a id="keys"></a> Create Keys for Your Project
+
+1. Create a keypair on your local machine with the username `vcap`. For example, enter the following command:
+
+   <pre class="terminal">
+   ssh-keygen -t rsa -f vcap-key -C vcap@local
+   </pre>
+
+1. Open the public key file `vcap-key.pub` and add the username `vcap:` before the `ssh-rsa`. For example: `vcap:ssh-rsa AAAAB....`.
 
 
+1. If you haven't already, install and set up [gcloud compute](https://cloud.google.com/compute/docs/gcloud-compute/). <-- maybe add more commands to set project and authorize into gcloud
 
+1. Upload the key to your project by running the following command:
+	<pre class="terminal">$ gcloud compute project-info add-metadata --metadata-from-file sshKeys=~/vcap-key.pub</pre>
+
+
+1. Verify that the keydata is uploaded to your project by executing the following command:
+
+	<pre class="terminal">
+	$ gcloud compute project-info describe
+	</pre>
 

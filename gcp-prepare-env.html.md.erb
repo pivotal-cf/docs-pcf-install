@@ -25,24 +25,27 @@ In addition to the prerequisites listed above, you must create a new network and
 ### <a id="create_network"></a> Create a GCP Network with Subnet
 
 1. Navigate to your GCP project for PCF in the GCP Console. 
+
 1. Select **Networking**, then **Create Network**. 
 	1. Enter a name and descrption for your network. 
 	1. Under **Subnetworks**, select **Custom** and specify a name, region, and address range.
+
+	<%= image_tag("gcp/gcp-network-create.png") %>
 1. Click **Create**.
 
 ### <a id="firewall_rules"></a> Create Firewall Rules for the Network
 
-1. Create a firewall rule to allow all tcp traffic within the network. In the **Networking** pane, select **Firewall rules**, then **Create Firewall Rule**.
-	* **Name**: Enter a name.
+1. Create a firewall rule to allow all TCP traffic within the network. In the **Networking** pane, select **Firewall rules**, then **Create Firewall Rule**.
+	* **Name**: Enter a name, such as `all-internal`
 	* **Network**: Select the network you created in the section above. 
-	* **Source Filter**: Choose **Subnetworks**. 
-	* **Allowed protocols and ports**: Enter `tcp`. 
-	* **Target tags**: 
-1. Create a firewall rule to allow  to allow `tcp:80;tcp:443` traffic from any source to VMs tagged with `pcf-lb`.
+	* **Source Filter**: Choose **Subnetworks**, and then select the subnet you created in [Create a GCP Network with Subnet](#create_network).
+	* **Allowed protocols and ports**: Enter `tcp:0-65535;udp:0-65535;icmp`. 
+	* **Target tags**: <-- leave blank?
+1. Create a firewall rule to allow  to allow `tcp:80;tcp:443;tcp:2222;tcp:4443` traffic from any source to VMs tagged with `pcf-lb`.
 	* **Name**: Enter `pcf-lb`. 
 	* **Network**: Select the network you created in the section above.
 	* **Source filter**: Choose `allow from any source`. 
-	* **Allowed protocols and ports**: Enter `tcp:80;tcp:443;tcp:4443`.
+	* **Allowed protocols and ports**: Enter `tcp:80;tcp:443;tcp:2222;tcp:4443`.
 	* **Target tags**: Enter `pcf-lb`. 
 
 ### <a id="iam_account"></a> Set up an IAM Service Account 
@@ -51,7 +54,7 @@ In addition to the prerequisites listed above, you must create a new network and
 1. Click **Create Service Account**: 
 	* **Service account name**: Enter a name. 
 	* **Role**: Select the following permissions:
-		* **Project** > **Editor**. 
+		* **Project** > **Editor** 
 		* **Compute Engine** > **Compute Instance Admin**
 		* **Compute Engine** > **Compute Network Admin**
 		* **Compute Engine** > **Compute Security Admin**
@@ -63,26 +66,107 @@ In addition to the prerequisites listed above, you must create a new network and
 
 1. Click **Create**. Your browser automatically downloads a JSON file with a private key for this account. Save this file in a secure location.
 
-### <a id="keys"></a> Create Keys for Your Project
+### <a id="keys"></a> Create a SSH Keypair for Your Project
 
-1. Create a keypair on your local machine with the username `vcap`. For example, enter the following command:
+1. Create a SSH keypair on your local machine with the username `vcap`. For example, use the following command:
+	<pre class="terminal">
+   	ssh-keygen -t rsa -f vcap-key -C vcap@local
+   	</pre>
 
-   <pre class="terminal">
-   ssh-keygen -t rsa -f vcap-key -C vcap@local
-   </pre>
+1. Open and edit the public key file `vcap-key.pub` to add the string `vcap:` before the key. For example, before the edit:
 
-1. Open the public key file `vcap-key.pub` and add the username `vcap:` before the `ssh-rsa`. For example: `vcap:ssh-rsa AAAAB....`.
+	```
+	ssh-rsa PUBLIC-KEY-VALUE ...
+	```
 
+	After the edit:
 
-1. If you haven't already, install and set up [gcloud compute](https://cloud.google.com/compute/docs/gcloud-compute/). <-- maybe add more commands to set project and authorize into gcloud
+	```
+	vcap:ssh-rsa PUBLIC-KEY-VALUE ...
+	```
+
+1. If you have not done so already, install and set up [gcloud compute](https://cloud.google.com/compute/docs/gcloud-compute/). <-- maybe add more commands to set project and authorize into gcloud
 
 1. Upload the key to your project by running the following command:
-	<pre class="terminal">$ gcloud compute project-info add-metadata --metadata-from-file sshKeys=~/vcap-key.pub</pre>
+	<pre class="terminal">$ gcloud compute project-info add-metadata \
+	 --metadata-from-file sshKeys=vcap-key.pub</pre>
 
-
-1. Verify that the keydata is uploaded to your project by executing the following command:
+1. Verify that the key data is uploaded to your project by executing the following command:
 
 	<pre class="terminal">
 	$ gcloud compute project-info describe
 	</pre>
+	The command outputs project metadata with the new key data appearing as a value in the `sshKeys` field.
+	<pre class="terminal">
+	commonInstanceMetadata:
+  		fingerprint: #######
+  		items:
+  		\- key: sshKeys
+    	value: |
+      		vcap:ssh-rsa ...
+    </pre>
+
+## <a id="create_loadbalancers"></a> Create Load Balancers in GCP ##
+
+You may need as many as three load balancers to operate PCF on GCP:
+
+* Load balancer for Gorouter (required for all deployments)
+* Load balancer for TCP Router (if you want to enable TCP routing feature)
+* Diego brain (SSH proxy) load balancer (if you want to enable SSH access to your apps)
+
+### <a id="gorouter_lb"></a> Create the Load Balancer for Gorouter ###
+
+To create a load balancer for the Gorouter in GCP:
+
+1. From the GCP Console, select **Networking**, **Load Balancing**, and then **Create load balancer**.
+
+1. Under **TCP Load Balancing**, click **Start configuration**.
+
+	<%= image_tag("gcp/lb-configure.png") %>
+
+1. Under **Connection termination**, select **No (TCP)**. Click **Continue**. 
+
+	<%= image_tag("gcp/lb_connection_termination.png") %>
+
+1. On the **New TCP load balancer** screen, enter a unique name for the load balancer in the **Name** field.
+
+1. Select **Backend configuration**, and enter the following field values:
+   * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
+   * **Backup pool**: 
+   * **Failover ration**:
+   * **Health check**:
+   * **Session affinity**
+
+	<%= image_tag("gcp/lb_backend.png") %>
+
+1. Select **Frontend configuration**, and add the first frontend IP and port entry as follows:
+   * **Protocol**: TCP
+   * **IP**: Select **Create IP address**. Enter a **Name** for the new static IP address, an optional description and then click **Reserve**.
+   * **Port**: 80
+
+1. Click **+Add frontend IP and port** to add a second frontend IP and port. Enter the values for the fields as follows:
+   * **Protocol**: TCP
+   * **IP**: Select the IP address you created in the previous step.
+   * **Port**: 443
+
+1. Click **+Add frontend IP and port** to add a third frontend IP and port. Enter the values for the fields as follows:
+   * **Protocol**: TCP
+   * **IP**: Select the IP address you created in the previous step.
+   * **Port**: 2222
+
+
+1. Click **+Add frontend IP and port** to add a third frontend IP and port. Enter the values for the fields as follows:
+   * **Protocol**: TCP
+   * **IP**: Select the IP address you created in the previous step.
+   * **Port**: 4443
+
+	<%= image_tag("gcp/lb_frontend.png") %>
+
+1. Click **Review and finalize** to verify your configuration.
+
+1. Click **Create**.
+
+### <a id="next"></a> What to Do Next ###
+
+Proceed to the next step in the deployment, [Launching an Ops Manager Director Instance on GCP](./gcp-om-deploy.html).
 

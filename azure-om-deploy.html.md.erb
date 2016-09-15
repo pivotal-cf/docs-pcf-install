@@ -1,0 +1,76 @@
+---
+title: Launching an Ops Manager Director Instance on Azure
+owner: Ops Manager
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes how to deploy Ops Manager Director for Pivotal Cloud Foundry on Azure.
+
+Before you perform the procedures in this topic, you must have completed the procedures in the [Preparing to Deploy PCF on Azure](azure-prepare-env.html). After you complete the procedures in this topic, follow the instructions in the [Configuring Ops Manager Director on Azure](azure-om-config.html) topic.
+
+##<a id="terraform"></a> Step 1: Provision Resources with Terraform
+
+1. Clone the repo that contains the PCF Azure Terraform scripts:
+	<pre class="terminal">$ git clone REPO-URL</pre>
+1. Change into the cloned repo.
+	<pre class="terminal">$ cd azure-terraform</pre>
+1. Create a keypair on your local machine with the username `ubuntu`. For example, enter the following command:
+
+   <pre class="terminal">
+   ssh-keygen -t rsa -f opsman -C ubuntu
+   </pre>
+
+1. Create a Terraform variables file called `terraform.tfvars` that has the following contents:
+
+	```
+	subscription_id = "SUBSCRIPTION_ID"
+	tenant_id = "TENANT_ID"
+	client_id = "CLIENT_ID"
+	client_secret = "CLIENT_SECRET"
+	ops_manager_image_uri = "https://opsmanagerciimagestorage.blob.core.windows.net/system/Microsoft.Compute/Images/images/opsmanager-osDisk.f2c46609-d468-4471-9c35-c94060baaa33.vhd"  # build 34, SHA cf8e3dbc
+	location = "westus"
+	vm_admin_username  = "ubuntu"
+	vm_admin_password = "tempest"
+	vm_admin_public_key = "SSH_KEY_PUBLIC"
+	dns_suffix = "SUBDOMAIN_NAME"
+	```	
+
+1. Replace the placeholder values in `terraform.tfvars` by performing the following steps:
+    * `TENANT_ID`: Use the `TENANT_ID` you created in [Preparing to Deploy PCF on Azure](azure-prepare-env.html).
+    * `CLIENT_ID`: Use the `CLIENT_ID` you created in [Preparing to Deploy PCF on Azure](azure-prepare-env.html).
+    * `CLIENT_SECRET`: Use the `CLIENT_SECRET` you created in [Preparing to Deploy PCF on Azure](azure-prepare-env.html).
+    * `SSH_KEY-PUBLIC`: Copy and paste the contents of the public key in the `opsmgr.pub` file you created in a previous step.
+    * `SUBDOMAIN_NAME`: Enter the subdomain for your PCF deployment under a domain you have registered. For instance, `azure.example.com`.
+
+1. Choose a name for your deployment and apply it to your Terraform variables file, replacing `RESOURCE_GROUP_NAME` with your deployment name:
+	<pre class="terminal">$ terraform apply --var="env_name=RESOURCE_GROUP_NAME" --var="env_short_name=RESOURCE_GROUP_NAME" -var-file=terraform.tfvars</pre>
+
+	When Terraform finishes provisioning resources, it outputs the following text:
+
+	```
+	bosh_root_storage_account = storageaccount
+	bosh_vms_premium_storage_account = premium
+	env_dns_zone_name_servers = [
+    ns1-09.azure-dns.com.,
+    ns3-09.azure-dns.org.,
+    ns2-09.azure-dns.net.,
+    ns4-09.azure-dns.info.
+	]
+	ops_manager_dns = pcf.azure.example.com
+	ops_manager_security_group_name = ops-manager-security-group
+	ops_manager_storage_account = opsmanager
+	pcf_resource_group_name = pcf-resource-group
+	pcf_subnet_address_prefix = 10.0.0.0/24
+	pcf_subnet_id = /subscriptions/b44e11a8-44aa-882e-3c44-33a22222a2d2/resourceGroups/pcf-resource-group/providers/Microsoft.Network/virtualNetworks/virtual-network/subnets/subnet
+	pcf_subnet_name = subnet
+	pcf_virtual_network_name = virtual-network
+	```
+
+1. Access your DNS provider to create a NS record for the subdomain you specified as `SUBDOMAIN-NAME` in a previous step. Point the subdomain to the nameservers under `env_dns_zone_name_servers` in the Terraform output.
+
+##<a id="lb"></a> Step 2: Create a Load Balancer
+
+1. Navigate to the Azure console.
+1. 
+

@@ -1,0 +1,169 @@
+---
+title: Preparing to Deploy PCF on Azure
+owner: Ops Manager
+---
+
+<strong><%= modified_date %></strong>
+
+This guide describes how to prepare to deploy Pivotal Cloud Foundry (PCF) on Azure by creating a service principal to access resources in your Azure subscription. 
+
+After you complete this procedure, follow the instructions in the [Launching an Ops Manager Director Instance on Azure](azure-om-deploy.html).
+
+## <a id="prereqs"></a> Prerequisites ##
+
+You must have the following to install PCF on Azure:
+
+* An Azure subscription with sufficient resource limits
+* [Terraform](https://www.terraform.io/downloads.html)
+* A registered domain that you can create NS records for subdomains within 
+
+##<a id="install"></a> Step 1: Install and Configure the Azure CLI
+
+This topic assumes you are using the Azure CLI version 0.9.18. 
+
+1. Install the Azure CLI by follow the instructions for your OS: 
+	* **Mac OS X**: Download and run the [Mac OS X](http://aka.ms/mac-azure-cli) installer.
+	* **Windows**: Download and run the [Windows](https://www.microsoft.com/web/handlers/webpi.ashx?command=getinstallerredirect&appid=windowsazurexplatcli&mode=new) installer. Install the Azure CLI on Windows 10. Use the command line, not the PowerShell, to run the Azure CLI.
+	* **Linux**: Download the [Linux](http://aka.ms/linux-azure-cli) tar file. Install the Azure CLI on Ubuntu Server 14.04 LTS. To install the Azure CLI on Linux, you must first install Node.js and npm, and then run <code>sudo npm install -g PATH-TO-TAR-FILE</code>.
+
+	<p class="note"><strong>Note</strong>: If you hit the error <code>/usr/bin/env: node: No such file or directory</code> when running <code>azure</code> commands, you must run <code>sudo ln -s /usr/bin/nodejs /usr/bin/node</code>.</p>
+
+1. Set the mode of the Azure CLI to Azure Resource Management:
+
+	<pre class="terminal">
+	$ azure config mode arm
+	</pre>
+
+1. Log in to your Azure account, entering your credentials when prompted. Replace `YOUR-ENVIRONMENT` with the environment you want to authenticate against, such as `AzureCloud` or `AzureChinaCloud`.
+
+	<pre class="terminal">
+	$ azure login --environment YOUR-ENVIRONMENT
+	</pre>
+
+	<p class="note"><strong>Note</strong>: If you fail to log in to <code>AzureChinaCloud</code> with a <code>CERT_UNTRUSTED</code> error, use the latest version of node (4.x) to resolve the <a href="https://github.com/Azure/azure-xplat-cli/issues/2725">issue</a>.</p>
+
+##<a id="default-subscription"></a> Step 2: Set Your Default Subscription
+
+1. Run `azure account list --json` to list your Azure subscriptions:
+
+	  <pre class="terminal">
+	  $ azure account list --json
+	    [
+	    {
+	      "id": "12345678-1234-5678-1234-678912345678",
+	      "name": "Sample Subscription",
+	      "user": {
+	        "name": "Sample Account",
+	        "type": "user"
+	      },
+	      "tenantId": "11111111-1234-5678-1234-678912345678",
+	      "state": "Enabled",
+	      "isDefault": true,
+	      "registeredProviders": [],
+	      "environmentName": "AzureCloud"
+	    },
+	    {
+	      "id": "87654321-1234-5678-1234-678912345678",
+	      "name": "Sample Subscription1",
+	      "user": {
+	        "name": "Sample Account1",
+	        "type": "user"
+	      },
+	      "tenantId": "22222222-1234-5678-1234-678912345678",
+	      "state": "Enabled",
+	      "isDefault": false,
+	      "registeredProviders": [],
+	      "environmentName": "AzureCloud"
+	    }
+	  ]
+	  </pre>
+ 
+1. Locate your default subscription by finding the subscription with 'isDefault' set to 'true'. If your default subscription is not the one you want to deploy Cloud Foundry on, run `azure account set SUBSCRIPTION-ID` to set a new default.
+
+	  <pre class="terminal">
+	  $ azure account set SUBSCRIPTION-ID
+	  info:    Executing command account set
+	  info:    Setting subscription to "Sample Subscription" with id "SUBSCRIPTION-ID".
+	  info:    Changes saved
+	  info:    account set command OK</pre>
+
+1. Record the value of `tenantID` for your default subscription. This is your `TENANT_ID` for creating a service principal. If your `tenantID` value is not defined, you may be using a personal account to log in to your Azure subscription. You must use a work or school account to use <code>azure login</code>.
+
+##<a id='create-aad'></a> Step 3: Create an Azure Active Directory (AAD) Application
+
+1. Run the following command to create an AAD application, replacing `PASSWORD` with the password of your choice. This is your `CLIENT_SECRET` for creating a service principal.
+	<pre class="terminal">$ azure ad app create --name "Service Principal for BOSH" --password "PASSWORD" --home-page "http://BOSHAzureCPI" --identifier-uris "http://BOSHAzureCPI"</pre>
+
+1. Record the value of `AppId` from the output. This is your `CLIENT_ID` for creating a service principal. 
+
+	<pre class="terminal">
+	info:    Executing command ad app create
+	<span>+</span> Creating application Service Principal for BOSH
+	data:    AppId:                   246e4af7-75b5-494a-89b5-363addb9f0fa
+	data:    ObjectId:                208096bb-4899-49e2-83ea-1a270154f427
+	data:    DisplayName:             Service Principal for BOSH
+	data:    IdentifierUris:          0=<span>http</span>://BOSHAzureCPI
+	data:    ReplyUrls:
+	data:    AvailableToOtherTenants:  False
+	info:    ad app create command OK
+	</pre>
+
+##<a id="create-configure"></a> Step 4: Create and Configure a Service Principal 
+
+1. To create a service principal, run `azure ad sp create YOUR-CLIENT-ID`, replacing `YOUR-CLIENT-ID` with the `CLIENT_ID` you recorded in the [previous step](#create-aad):
+
+	<pre class="terminal">
+	$ azure ad sp create YOUR-CLIENT-ID
+	info:    Executing command ad sp create
+	<span>+</span> Creating service principal for application YOUR-CLIENT-ID
+	data:    Object Id:               fcf68d7a-262b-42c4-8ef8-6a4856611155
+	data:    Display Name:            Service Principal for BOSH
+	data:    Service Principal Names:
+	data:                             YOUR-CLIENT-ID
+	data:                             http://BOSHAzureCPI
+	info:    ad sp create command OK
+	</pre>
+
+1. You must have the Contributor role on your service principal to deploy PCF. Run the following commands to assign this role:
+	* For **SERVICE-PRINCIPAL-NAME**: use any value of **Service Principal Names** from the output above, such as `YOUR-CLIENT-ID`.
+    * For **SUBSCRIPTION-ID**: use the ID of the default subscription that you recorded in [Step 2](#default-subscription).
+
+	<pre class="terminal">
+	$ azure role assignment create --spn "SERVICE-PRINCIPAL-NAME" --roleName "Contributor" --subscription "SUBSCRIPTION-ID"
+	</pre>
+
+1. Verify the assignment by running the following command:
+
+	<pre class="terminal">
+	$ azure role assignment list --spn SERVICE-PRINCIPAL-NAME
+
+	info:    Executing command role assignment list
+	<span>+</span> Searching for role assignments
+	data:    RoleAssignmentId     : /subscriptions/87654321-1234-5678-1234-678912345678/providers/Microsoft.Authorization/roleAssignments/16645a17-3184-47c1-8e00-8eb1d0643d54
+	data:    RoleDefinitionName   : Contributor
+	data:    RoleDefinitionId     : 4d97b98b-1d4f-4787-a291-c67834d212e7
+	data:    Scope                : /subscriptions/87654321-1234-5678-1234-678912345678
+	data:    Display Name         : CloudFoundry
+	data:    SignInName           :
+	data:    ObjectId             : 039ccb8a-5b34-4020-bff9-ba38bef98f61
+	data:    ObjectType           : ServicePrincipal
+	data:
+	info:    role assignment list command OK
+	</pre>
+
+1. By default, the scope of the role is set to the subscription. You can also assign a role to a resource group by running the following command:
+
+	<pre class="terminal">
+azure role assignment create --spn SERVICE-PRINCIPAL-NAME --roleName ROLE-NAME --resource-group RESOURCE-GROUP-NAME
+	</pre>
+
+	For more information on Azure Role-Based Access Control, refer to <a href="https://azure.microsoft.com/en-us/documentation/articles/role-based-access-built-in-roles/">RBAC: Built-in roles</a>.
+
+##<a name="verify-your-service-principal"></a> Step 5: Verify Your Service Principal
+
+1. Log in to your service principal with your `CLIENT_ID`, `CLIENT_SECRET`, and `TENANT_ID`. Replace `YOUR-ENVIRONMENT` with the environment you want to authenticate against, such as `AzureCloud` or `AzureChinaCloud`.
+
+	<p class="note"><strong>Note</strong>: If you cannot login, then the service principal is invalid and you must create a new service principal.</p>
+
+2. If you have multiple subscriptions, verify that the subscription which the service principal belongs to is the same subscription that is used to create your resource group. 
+

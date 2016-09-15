@@ -14,6 +14,8 @@ href="https://network.pivotal.io/productsf/pivotal-cf">Pivotal Cloud Foundry</a>
 
 Before following this procedure, complete all of the steps in the [Configuring Ops Manager Director for AWS](./pcf-aws-manual-om-config.html) topics.
 
+<p class="note"><strong>Note</strong>: If you plan to <a href = "http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the Elastic Runtime tile.</p>
+
 ## <a id='om-add'></a>Step 1: Add Elastic Runtime to Ops Manager ##
 
 1. Navigate to the Pivotal Cloud Foundry Operations Manager Installation
@@ -35,11 +37,11 @@ Manager.
 1. Select an Availability Zone under **Place singleton jobs**. Ops Manager runs any job with a single instance in this Availability Zone.
 
 1. Select one or more Availability Zones under **Balance other jobs**. Ops Manager balances instances of jobs with more than one instance across the Availability Zones that you specify.
-
-<p class="note"><b>Note</b>Pivotal recommends at least three Availability Zones for a highly available installation of Elastic Runtime.</p>
+    
+    <p class="note"><strong>Note</strong>: Pivotal recommends at least three Availability Zones for a highly available installation of Elastic Runtime.</p>
 
 1. Select the network that you created in the [Networks Pages](./pcf-aws-manual-om-config.html#pcfaws-om-networks) section of the _Configuring Ops Manager Director for AWS_ topic.
-<%= image_tag("cloudform/er-az.png") %>
+<%= image_tag("er-az.png") %>
 
 1. Click **Save**.
   <p class="note"><strong>Note</strong>: When you save this form, a verification error displays because the PCF security group blocks ICMP. You can ignore this error.</p>
@@ -56,9 +58,9 @@ Manager.
       Runtime.
     * The **Apps Domain** defines where Elastic Runtime should serve your apps.
 
-    <p class="note"><b>Note</b>: Pivotal recommends that you use the same domain name but different subdomain names for your system and app domains. Doing so allows you to use a single wildcard certificate for the domain while preventing apps from creating routes that overlap with system routes. For example, name your system domain <code>system.EXAMPLE.com</code> and your apps domain <code>apps.EXAMPLE.com</code>.</p>
+    <p class="note"><b>Note</b>: Pivotal recommends that you use the same domain name but different subdomain names for your system and app domains. This prevents system and apps routes from overlapping. You will require two DNS entries: one for the system and the other for apps. For example,  <code>system.EXAMPLE.COM</code> and <code>apps.EXAMPLE.COM</code>. Point both domains to your internal router IP address, which you can find under the status tab in the Elastic Runtime tile.</p>
 
-    <p class="note"><strong>Note</strong>: You configured wildcard DNS records
+    <p class="note"><strong>Note</strong>: You configured a wildcard DNS record
     for these domains in an earlier step.</p>
 
 1. Click **Save**.
@@ -68,17 +70,17 @@ Manager.
 <%= partial 'networking-cloudform' %>
 
 ## <a id='db-config'></a>Step 5: Configure System Databases ##
-<p class="note"><b>Note</b>: If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data first before changing the configuration. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information.</p>
+<p class="note"><strong>Note</strong>: If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data first before changing the configuration. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information.</p>
 1. Select **Databases**.
     <%= image_tag("./cloudform/sys-db.png") %>
 1. If you want to use internal databases for your deployment, select **Internal Databases - MySQL**. If you want to use the external RDS instance for your Elastic Runtime databases, select **External Databases** and complete the following procedure to create the databases that Elastic Runtime requires. If you require help, contact [Pivotal Support](http://support.pivotal.io).
     * Add your key pair to your ssh profile so that you can access the machine.
 	<pre class="terminal">$ ssh-add pcf.pem</pre>
-    * SSH into your Ops Manager VM using its IP address and the username `ubuntu`.  You can find the IP address for the Ops Manager VM on the AWS EC2 console.
-	<pre class="terminal">ssh ubuntu@OPS_MANAGER\_IP</pre>
+    * SSH into your Ops Manager using the [Ops Manager FQDN](../customizing/cloudform-om-deploy.html#create-dns) and the username `ubuntu`:
+	<pre class="terminal">ssh ubuntu@OPS_MANAGER\_FQDN</pre>
     * Log into your RDS instance through the MySQL client, using the hostname from the RDS console and the username that you created the RDS instance with. This command prompts you to enter the password for your RDS user:
     <pre class="terminal">mysql -h RDS-HOSTNAME -u RDS-USERNAME -p</pre>
-    * Create databases for each of the six Cloud Foundry components that require a database. From the MySQL client, run `CREATE database DB-NAME` for each of the following: `uaa`, `ccdb`, `console`, `notifications`, `autoscale`, `app_usage_service`.
+    * Create databases for each of the six Cloud Foundry components that require a database. From the MySQL client, run `CREATE database DB-NAME` for each of the following: `uaa`, `ccdb`, `notifications`, `autoscale`, `app_usage_service`.
     * Exit the MySQL client and close your connection to the Ops Manager VM.
     * In the **Databases** section of the Elastic Runtime tile, enter your **Hostname DNS Name**, **TCP Port** (`3306`), **Username**, and **Password**.
     * Click **Save**.
@@ -121,7 +123,9 @@ Manager.
 
 1. Select **File Storage**.
 
-1. To use the PCF internal filestore, select **Internal** and click **Save**.
+    <p class="note"><strong>Note</strong>: Pivotal recommends using a highly resilient and redundant filestore that is S3 compatible. This minimizes downtime of system operability, which includes running <code>cf-push</code>.</p>
+
+1. To use the PCF internal filestore, select **Internal WebDav** and click **Save**.
 
 1. To use an external S3-compatible filestore for your Elastic
 Runtime file storage, select **External S3-Compatible Filestore** and complete the following procedure:
@@ -135,6 +139,8 @@ Runtime file storage, select **External S3-Compatible Filestore** and complete t
   1. Enter your **Access Key** and **Secret Key**. If you are using Amazon Web Services, retrieve your key information with the IAM credentials that you generated.
 
   1. For **S3 Signature Version** and **Region**, keep the default **V2 Signature** values unless your S3 filestore is in Germany or China. These regions require a **V4 Signature**.
+
+  1. Select **Server-side Encryption (available for AWS S3 only)** to encrypt the contents of your S3 filestore. See the [AWS S3 documentation](http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingServerSideEncryption.html) for more information.
 
   1. Enter a **Buildpacks Bucket Name**.
 
@@ -152,7 +158,9 @@ If you are forwarding logging messages to an external Reliable Event Logging Pro
 
 1. Select **System Logging**.
   <%= image_tag("cloudform/sys-logging.png") %>
+  
 1. If you want to include security events in your log stream, select the **Enable Cloud Controller security event logging** checkbox. This logs all API requests, including the endpoint, user, source IP, and request result, in the Common Event Format (CEF).
+
 1. Enter the IP address of your syslog server in **External Syslog Aggregator Hostname** and its port in **External Syslog Aggregator Port**. The default port for a syslog server is 514.
 <p class="note"><strong>Note</strong>: The host must be reachable from the Elastic Runtime network, accept TCP connections, and use the RELP protocol. Ensure your syslog server listens on external interfaces.</p>
 1. Select an **External Syslog Network Protocol** to use when forwarding logs.
@@ -171,24 +179,21 @@ If you are forwarding logging messages to an external Reliable Event Logging Pro
 
 Elastic Runtime uses SMTP to send invitations and confirmations to Apps Manager
 users.
-You must complete the **Email Notifications** page if you want to enable end-user
-self-registration and the [Notifications with UI](#notifications)
-feature.
-
-<p class="note"><strong>Note</strong>: If you do not configure the SMTP settings using this form, the administrator must create orgs and users using the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating and Managing Users with the cf CLI</a> for more information.</p>
+You must complete the **Email Notifications** page if you want to enable
+end-user self-registration.
 
 1. Select **Email Notifications**.
+  <%= image_tag("cloudform/smtp.png") %>
 
 1. Enter your reply-to and SMTP email information
 
-1. Verify your authentication requirements with your email administrator and use
-the **SMTP Authentication Mechanism** drop-down menu to select `None`, `Plain`,
-or `CRAMMD5`.
-If you have no SMTP authentication requirements, select `None`.
+1. For **SMTP Authentication Mechanism**, select `None`.
 
 1. Click **Save**.
 
-    <%= image_tag("cloudform/smtp.png") %>
+<p class='note'><strong>Note</strong>: If you do not configure the SMTP
+settings using this form, the administrator must create orgs and users using
+the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating and Managing Users with the cf CLI</a> for more information.</p>
 
 ## <a id='ccdb-key'></a>Step 16: (Optional) Add CCDB Restore Key##
 
@@ -198,9 +203,67 @@ If you have no SMTP authentication requirements, select `None`.
 
 <%= partial '_smoketests' %>
 
-## <a id='experimental'></a>Step 18: (Optional) Enable Experimental Features
+## <a id='advanced'></a>Step 18: (Optional) Enable Advanced Features
 
-<%= partial 'experimental-features' %>
+Use caution when enabling advanced features if you have other Pivotal Cloud Foundry service tiles installed in your Pivotal Cloud Foundry deployment. Not all of the services are guaranteed to work as expected with these features enabled.
+
+### <a id="disk-memory-overcommit"></a>Diego Cell Memory and Disk Overcommit
+
+If your apps do not use the full allocation of disk space and memory set in the **Resource Config** tab, you might want use this feature. These fields control the amount to overcommit disk and memory resources to each Diego Cell VM.
+
+For example, you might want to use the overcommit if your apps use a small amount of disk and memory capacity compared with the **Resource Config** settings for **Diego Cell**.
+
+<p class="note"><strong>Note</strong>: Due to the risk of app failure and the deployment-specific nature of disk and memory use, Pivotal has no recommendation about how much, if any, memory or disk space to overcommit.</p>
+
+To enable overcommit, follow these steps:
+
+1. Select **Advanced Features**.
+
+    <%= image_tag("./disk-memory-overcommit.png") %>
+
+1. Enter the total desired amount of Diego cell memory value in the **Cell Memory Capacity (MB)** field. Refer to the **Diego Cell** row in the **Resource Config** tab for the current Cell memory capacity settings that this field overrides.
+
+1. Enter the total desired amount of Diego cell disk capacity value in the **Cell Disk Capacity (MB)** field. Refer to the **Diego Cell** row in the **Resource Config** tab for the current Cell disk capacity settings that this field overrides.
+
+1. Click **Save**.
+
+<p class="note"><strong>Note</strong>: Entries made to each of these two fields set the total amount of resources allocated, not the overage.</p>
+
+### <a id="disable-priviledge"></a> Disable Privileged App Containers
+
+By default, Pivotal Cloud Foundry deploys apps in privileged containers. Apps deployed to privileged containers can gain access to their host operating system. In general, Pivotal recommends disabling privileged containers by selecting this option.
+
+<p class="note"><strong>Note</strong>: Do not select <strong>Disable privileged app containers</strong> if you are running applications that use FUSE file system support. </p>
+
+To disable privileged app containers, follow these steps:
+
+1. Select **Advanced Features**.
+
+    <%= image_tag("./disk-memory-overcommit.png") %>
+
+1. Select **Disable privileged app containers**. This setting only applies to newly pushed apps, so you must restart any pre-existing apps to apply this option.
+
+1. Click **Save**.
+
+<p class="note"><strong>Note</strong>: Containers based on Docker images are always unprivileged, regardless of this setting.</p>
+
+### <a id="enable-tcp"></a>Enable TCP Routing
+
+TCP Routing is available for users who want an alternative to HTTP. For more information, including details about setting up your networking infrastructure for TCP Routing, see [Enabling TCP Routing](../adminguide/enabling-tcp-routing.html). 
+
+1. TCP Routing is disabled by default. To enable this feature, select the **Enable TCP Routing** radio button. 
+
+    <%= image_tag("./tcp_routing.png") %>
+
+1. You do not need to enter **TCP Router IPs** if you are using an ELB. Instead, navigate to <strong>Resource Config</strong> and, in the **TCP Router** job, enter your **ELB Name**.
+
+1. In **TCP Routing Ports**, enter the range of ports you reserved for TCP routes. These ports must be available on your load balancer. You can specify a list of ports with commas between each port number and specify ranges of ports with dashes between the first and last port number. This configuration only applies the first time you specify it here. If you later want to update the ports, see the [HTTP vs TCP Routes](../devguide/deploy-apps/routes-domains.html#http-vs-tcp-routes) topic on how to use the cf CLI to update TCP Routing ports.
+
+### <a id="disable-tcp"></a>Disable TCP Routing
+
+1. If you want to disable TCP routing after enabling it, click **Select this option if you prefer to enable TCP Routing at a later time**.
+
+1. Manually remove the TCP routing domain. 
 
 ## <a id='errands'></a>Step 19: Configure Errands ##
 
@@ -210,11 +273,26 @@ If you have no SMTP authentication requirements, select `None`.
 
 <%= partial 'disable_resources' %>
 
-## <a id='config-elb'></a>Step 21: Configure Router to Elastic Load Balancer ##
+## <a id='stemcell'></a>Step 21: Download Stemcell ##
+
+This step is only required if your Ops Manager does not already have the Stemcell version required by Elastic Runtime.
+
+1. Select **Stemcell**.
+
+1. Log into the [Pivotal Network](https://network.pivotal.io/products/pivotal-cf) and click on **Stemcells**.
+
+1. Download the appropriate stemcell version targeted for your IaaS.
+
+1. In Ops Manager, import the downloaded stemcell <code>.tgz</code> file.
+
+    <%= image_tag("stemcell_18.png") %>
+
+
+## <a id='config-elb'></a>Step 22: Configure Router to Elastic Load Balancer ##
 
 1. In the **Elastic Runtime** tile, click **Resource Config**.
 
-1. In the **ELB Name** field of the **Router** row, enter the name of your load balancer. You may configure multiple load balancers by entering the names separated by commas.
+1. In the **ELB Name** field of the **TCP Router** row, enter the name of your load balancer if you have enabled TCP routing in the [Advanced Features](#enable-tcp) pane. You may configure multiple load balancers by entering the names separated by commas.
 
 1. In the **ELB Name** field of the **Diego Brain** row, enter the name of your SSH load balancer. You may configure multiple load balancers by entering the names separated by commas.
 
@@ -223,8 +301,7 @@ If you have no SMTP authentication requirements, select `None`.
 
     <%= image_tag("pcfaws/er-aws-resource-config.png") %>
 
-
-## <a id='complete'></a>Step 22: Complete the Elastic Runtime Installation ##
+## <a id='complete'></a>Step 23: Complete the Elastic Runtime Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.

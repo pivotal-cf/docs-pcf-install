@@ -95,7 +95,6 @@ This topic assumes you are using the Azure CLI version 0.9.18.
 	<pre class="terminal">$ azure ad app create --name "Service Principal for BOSH" --password "PASSWORD" --home-page "http://BOSHAzureCPI" --identifier-uris "http://BOSHAzureCPI"</pre>
 
 1. Record the value of `AppId` from the output. This is your `CLIENT_ID` for creating a service principal. 
-
 	<pre class="terminal">
 	info:    Executing command ad app create
 	<span>+</span> Creating application Service Principal for BOSH
@@ -110,10 +109,10 @@ This topic assumes you are using the Azure CLI version 0.9.18.
 
 ##<a id="create-configure"></a> Step 4: Create and Configure a Service Principal 
 
-1. To create a service principal, run `azure ad sp create YOUR-CLIENT-ID`, replacing `YOUR-CLIENT-ID` with the `CLIENT_ID` you recorded in the [previous step](#create-aad):
+1. To create a service principal, run `azure ad sp create -a YOUR-CLIENT-ID`, replacing `YOUR-CLIENT-ID` with the `CLIENT_ID` you recorded in the [previous step](#create-aad):
 
 	<pre class="terminal">
-	$ azure ad sp create YOUR-CLIENT-ID
+	$ azure ad sp create -a YOUR-CLIENT-ID
 	info:    Executing command ad sp create
 	<span>+</span> Creating service principal for application YOUR-CLIENT-ID
 	data:    Object Id:               fcf68d7a-262b-42c4-8ef8-6a4856611155
@@ -125,8 +124,8 @@ This topic assumes you are using the Azure CLI version 0.9.18.
 	</pre>
 
 1. You must have the Contributor role on your service principal to deploy PCF. Run the following commands to assign this role:
-	* For **SERVICE-PRINCIPAL-NAME**: use any value of **Service Principal Names** from the output above, such as `YOUR-CLIENT-ID`.
-    * For **SUBSCRIPTION-ID**: use the ID of the default subscription that you recorded in [Step 2](#default-subscription).
+	* For **SERVICE-PRINCIPAL-NAME**: Use any value of **Service Principal Names** from the output above, such as `YOUR-CLIENT-ID`.
+    * For **SUBSCRIPTION-ID**: Use the ID of the default subscription that you recorded in [Step 2](#default-subscription).
 
 	<pre class="terminal">
 	$ azure role assignment create --spn "SERVICE-PRINCIPAL-NAME" --roleName "Contributor" --subscription "SUBSCRIPTION-ID"
@@ -139,13 +138,13 @@ This topic assumes you are using the Azure CLI version 0.9.18.
 
 	info:    Executing command role assignment list
 	<span>+</span> Searching for role assignments
-	data:    RoleAssignmentId     : /subscriptions/87654321-1234-5678-1234-678912345678/providers/Microsoft.Authorization/roleAssignments/16645a17-3184-47c1-8e00-8eb1d0643d54
+	data:    RoleAssignmentId     : /subscriptions/995b7eed-77ef-45ff-a5c9-1a405ffb8243/providers/Microsoft.Authorization/roleAssignments/061581af-118b-45e9-95a5-4e4ccf22c75d
 	data:    RoleDefinitionName   : Contributor
-	data:    RoleDefinitionId     : 4d97b98b-1d4f-4787-a291-c67834d212e7
-	data:    Scope                : /subscriptions/87654321-1234-5678-1234-678912345678
-	data:    Display Name         : CloudFoundry
-	data:    SignInName           :
-	data:    ObjectId             : 039ccb8a-5b34-4020-bff9-ba38bef98f61
+	data:    RoleDefinitionId     : b24988ac-6180-42a0-ab88-20f7382dd24c
+	data:    Scope                : /subscriptions/995b7eed-77ef-45ff-a5c9-1a405ffb8243
+	data:    Display Name         : Service Principal for BOSH
+	data:    SignInName           : undefined
+	data:    ObjectId             : 25b890d2-24c7-4353-a260-7df9f79e002f
 	data:    ObjectType           : ServicePrincipal
 	data:
 	info:    role assignment list command OK
@@ -154,7 +153,7 @@ This topic assumes you are using the Azure CLI version 0.9.18.
 1. By default, the scope of the role is set to the subscription. You can also assign a role to a resource group by running the following command:
 
 	<pre class="terminal">
-azure role assignment create --spn SERVICE-PRINCIPAL-NAME --roleName ROLE-NAME --resource-group RESOURCE-GROUP-NAME
+	$ azure role assignment create --spn SERVICE-PRINCIPAL-NAME --roleName ROLE-NAME --resource-group RESOURCE-GROUP-NAME
 	</pre>
 
 	For more information on Azure Role-Based Access Control, refer to <a href="https://azure.microsoft.com/en-us/documentation/articles/role-based-access-built-in-roles/">RBAC: Built-in roles</a>.
@@ -164,6 +163,23 @@ azure role assignment create --spn SERVICE-PRINCIPAL-NAME --roleName ROLE-NAME -
 1. Log in to your service principal with your `CLIENT_ID`, `CLIENT_SECRET`, and `TENANT_ID`. Replace `YOUR-ENVIRONMENT` with the environment you want to authenticate against, such as `AzureCloud` or `AzureChinaCloud`.
 
 	<p class="note"><strong>Note</strong>: If you cannot login, then the service principal is invalid and you must create a new service principal.</p>
+
+	azure login --username $CLIENT_ID --password $CLIENT_SECRET --service-principal --tenant $TENANT_ID --environment $ENVIRONMENT
+Please verify it with the following steps:
+
+Use Azure CLI to login with your service principal.
+
+You can find the TENANT_ID, CLIENT_ID, and CLIENT_SECRET properties in the ~/bosh.yml file. If you cannot login, then the service principal is invalid.
+
+azure login --username $CLIENT_ID --password $CLIENT_SECRET --service-principal --tenant $TENANT_ID --environment $ENVIRONMENT
+Example:
+
+azure login --username 246e4af7-75b5-494a-89b5-363addb9f0fa --password "password" --service-principal --tenant 22222222-1234-5678-1234-678912345678 --environment AzureCloud
+Verify that the subscription which the service principal belongs to is the same subscription that is used to create your resource group. (This may happen when you have multiple subscriptions.)
+
+Recreate a service principal on your tenant if the service principal is invalid.
+
+NOTE: In some cases, if the service principal is invalid, then the deployment of BOSH will fail. Errors in ~/run.log will show get_token - http error like this reported issue.
 
 2. If you have multiple subscriptions, verify that the subscription which the service principal belongs to is the same subscription that is used to create your resource group. 
 

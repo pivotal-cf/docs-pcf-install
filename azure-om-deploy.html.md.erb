@@ -5,9 +5,12 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-This topic describes how to deploy Ops Manager Director for Pivotal Cloud Foundry on Azure.
+This topic describes how to deploy Ops Manager Director for Pivotal Cloud Foundry (PCF) on Azure.
 
-Before you perform the procedures in this topic, you must have completed the procedures in the [Preparing to Deploy PCF on Azure](azure-prepare-env.html). After you complete the procedures in this topic, follow the instructions in the [Configuring Ops Manager Director on Azure](azure-om-config.html) topic.
+Before you perform the procedures in this topic, you must have completed the procedures in the [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic. After you complete the procedures in this topic, follow the instructions in the [Configuring Ops Manager Director on Azure](azure-om-config.html) topic.
+
+To perform the procedure below, you must have [Terraform](https://www.terraform.io/downloads.html)
+) installed.
 
 ##<a id="terraform"></a> Step 1: Provision Resources with Terraform
 
@@ -29,73 +32,89 @@ Before you perform the procedures in this topic, you must have completed the pro
 	client_id = "CLIENT_ID"
 	client_secret = "CLIENT_SECRET"
 	ops_manager_image_uri = "https://opsmanagerciimagestorage.blob.core.windows.net/system/Microsoft.Compute/Images/images/opsmanager-osDisk.f2c46609-d468-4471-9c35-c94060baaa33.vhd"  # build 34, SHA cf8e3dbc
-	location = "westus"
+	location = "LOCATION"
 	vm_admin_username  = "ubuntu"
 	vm_admin_password = "tempest"
 	vm_admin_public_key = "SSH_KEY_PUBLIC"
-	dns_suffix = "SUBDOMAIN_NAME"
+	dns_suffix = "SUBDOMAIN_SUFFIX"
 	```	
 
 1. Replace the placeholder values in `terraform.tfvars` by performing the following steps:
     * `TENANT_ID`: Use the `TENANT_ID` you created in [Preparing to Deploy PCF on Azure](azure-prepare-env.html).
     * `CLIENT_ID`: Use the `CLIENT_ID` you created in [Preparing to Deploy PCF on Azure](azure-prepare-env.html).
     * `CLIENT_SECRET`: Use the `CLIENT_SECRET` you created in [Preparing to Deploy PCF on Azure](azure-prepare-env.html).
+    * `LOCATION`. Enter your location. For example, `westus`.
     * `SSH_KEY-PUBLIC`: Copy and paste the contents of the public key in the `opsmgr.pub` file you created in a previous step.
-    * `SUBDOMAIN_NAME`: Enter the subdomain for your PCF deployment under a domain you have registered. For instance, `azure.example.com`.
+    * `SUBDOMAIN_SUFFIX`: Enter the subdomain suffix for your PCF deployment under a domain you have registered. For instance, `azure.example.com`.
 
-1. Choose a name for your deployment and apply it to your Terraform variables file, replacing `RESOURCE_GROUP_NAME` with your deployment name:
+1. Choose a name for your deployment and apply it to your Terraform variables file, replacing `RESOURCE_GROUP_NAME` with your deployment name. Terraform forms the full domain name from your deployment name and the subdomain suffix you provided above. For example, `my-deployment.azure.example.com`.
 	<pre class="terminal">$ terraform apply --var="env_name=RESOURCE_GROUP_NAME" --var="env_short_name=RESOURCE_GROUP_NAME" -var-file=terraform.tfvars</pre>
 
 	When Terraform finishes provisioning resources, it outputs the following text:
 
-	```
-	bosh_root_storage_account = storageaccount
-	bosh_vms_premium_storage_account = premium
-	env_dns_zone_name_servers = [
-    ns1-09.azure-dns.com.,
-    ns3-09.azure-dns.org.,
-    ns2-09.azure-dns.net.,
-    ns4-09.azure-dns.info.
-	]
-	ops_manager_dns = pcf.azure.example.com
-	ops_manager_security_group_name = ops-manager-security-group
-	ops_manager_storage_account = opsmanager
-	pcf_resource_group_name = pcf-resource-group
-	pcf_subnet_address_prefix = 10.0.0.0/24
-	pcf_subnet_id = /subscriptions/b44e11a8-44aa-882e-3c44-33a22222a2d2/resourceGroups/pcf-resource-group/providers/Microsoft.Network/virtualNetworks/virtual-network/subnets/subnet
-	pcf_subnet_name = subnet
-	pcf_virtual_network_name = virtual-network
-	```
+    <pre class="terminal">
+    Outputs:
 
-1. Access your DNS provider to create a NS record for the subdomain you specified as `SUBDOMAIN-NAME` in a previous step. Point the subdomain to the nameservers under `env_dns_zone_name_servers` in the Terraform output.
+    bosh_root_storage_account = my-deploymentstorageaccount
+    bosh_vms_premium_storage_account = my-deploymentompremium
+    env_dns_zone_name_servers = [
+        ns3-08.azure-dns.org.,
+        ns4-08.azure-dns.info.,
+        ns2-08.azure-dns.net.,
+        ns1-08.azure-dns.com.
+    ]
+    ops_manager_dns = pcf.my-deployment.azure.example.com
+    ops_manager_security_group_name = my-deployment-ops-manager-security-group
+    ops_manager_storage_account = my-deploymentopsmanager
+    pcf_resource_group_name = my-deployment-pcf-resource-group
+    pcf_subnet_address_prefix = 10.0.0.0/24
+    pcf_subnet_id = /subscriptions/333e1bbe-88de-22aa-b3w2-1a405ffb8243/resourceGroups/my-deployment-pcf-resource-group/providers/Microsoft.Network/virtualNetworks/my-deployment-virtual-network/subnets/my-deployment-subnet
+    pcf_subnet_name = my-deployment-subnet
+    pcf_virtual_network_name = my-deployment-virtual-network
+    </pre>
+
+1. Copy and paste the Terraform output above into a text file for future reference. The text contains many important details that you need to configure Ops Manager.
+
+1. Access your DNS provider to create a NS record for the subdomain you specified as `SUBDOMAIN-SUFFIX` in a previous step. Point the subdomain to the nameservers listed under `env_dns_zone_name_servers` in the Terraform output. For example, create a NS record for `azure.example.com` with the following nameservers:
+
+    ```
+    ns3-08.azure-dns.org.
+    ns4-08.azure-dns.info.
+    ns2-08.azure-dns.net.
+    ns1-08.azure-dns.com.
+    ```
 
 ##<a id="lb"></a> Step 2: Create a Load Balancer
 
 1. Navigate to the Azure portal.
 1. Click **Load balancers** in the left navigation bar.
 1. Click **Add**.
+    <br><%= image_tag('azure/create-lb.png') %>
 1. Create a load balancer by completing the following fields:
 	* **Name**: Enter a name for your load balancer.
 	* **Type**: Select **Public**.
-	* **Public IP address**: Click **Public IP address**, and select the existing public IP address that Terraform created, which ends in `-pcf-ip`.
+	* **Public IP address**: Click **Public IP address**, and select the existing public IP address that Terraform created, which ends in `-pcf-ip`. If you cannot see the address ending with `pcf-ip`, ensure that you have selected the correct **Location**.
 	* **Subscription**: Ensure that the correct Azure subscription is selected.
-	* **Resource group**: Select **Use existing** and enter the name of your PCF resource group.
+	* **Resource group**: Select **Use existing** and enter the name of your PCF resource group. This is your deployment name, followed by `-pcf-resource-group`.
 	* **Location**: Enter the location for your load balancer.
 1. Click **Create**.
 1. Wait for Azure to create the load balancer. You may have to click **Refresh** to display the new load balancer.
-1. Click your load balancer.
+1. Click your newly created load balancer.
 1. Perform the following steps to add a probe:
     1. Click **Probes** and then click **Add**.
+    <br><%= image_tag('azure/add-probe.png') %>
     1. For **Name**, enter `tcp80`.
     1. For **Protocol**, select **TCP**.
-    1. Leave the defaults for the remaining fields.
+    1. Modify the defaults for the remaining fields as desired.
     1. Click **OK**.
 1. Perform the following steps to add a backend pool:
     1. Click **Backend pools** and then click **Add**.
+    <br><%= image_tag('azure/add-backend.png') %>
     1. For **Name**, enter `pcf`.
     1. Click **OK**.
 1. Perform the following steps to add a load balancing rule for HTTP:
     1. Click **Load balancing rules** and click **Add**.
+    <br><%= image_tag('azure/add-lb-rule.png') %>
     1. For **Name**, enter `pcf-http`.
     1. For **Protocol**, select **TCP**.
     1. For **Port**, enter `80`.
@@ -118,7 +137,7 @@ Before you perform the procedures in this topic, you must have completed the pro
     1. Click **OK**.
 1. Perform the following steps to add a load balancing rule for SSH:
     1. Click **Load balancing rules** and click **Add**.
-    1. For **Name**, enter `pcf-http`.
+    1. For **Name**, enter `pcf-diego-ssh`.
     1. For **Protocol**, select **TCP**.
     1. For **Port**, enter `2222`.
     1. For **Backend port**, enter `2222`.

@@ -12,11 +12,10 @@ This guide describes the preparation steps required to install [Pivotal Cloud Fo
 You must have the following to install PCF on GCP:
 
 * A GCP account and project with sufficient quota to deploy all the VMs needed for a PCF installation. <--need exact quota figures CPU + RAM. You can request a quota increase on the [GCP Quotas page](https://console.cloud.google.com/compute/quotas).
-* The appropriate region and zones selected within your GCP project. For help selecting the correct region for your deployment, see the [Google documentation on regions and zones](https://cloud.google.com/compute/docs/regions-zones/regions-zones). 
 * The [Google Cloud SDK](https://cloud.google.com/sdk/) installed on your machine and authenticated to your GCP account.
 * Sufficiently high instance limits (or no instance limits) on your GCP account. Installing PCF requires more than the default 20 concurrent instances. <-- is there a limit in GCP?
-* A registered wildcard domain for your PCF installation. You need this registered domain when configuring your SSL certificate and Cloud Controller. For more information see the *link to cert docs*.
-* An SSL certificate for your PCF domain. This can be a self-signed certificate, but Pivotal recommends using a self-signed certificate for testing and development. You should obtain a certificate from your Certificate Authority for use in production. 
+* Administrative rights to a domain for your PCF installation. You need to be able to add wildcard records to this domain. need this registered domain when configuring your SSL certificate and Cloud Controller. For more information see the *link to cert docs*. 
+* You need a SSL certificate for your PCF domain. This can be a self-signed certificate, but Pivotal recommends using a self-signed certificate only for testing and development. If you plan to deploy PCF into a production environment, you should obtain a certificate from your Certificate Authority. (Note: Ops Man can generate a self-signed cert for you.)
 
 ## <a id="deploy_prepare"></a> Preparing the GCP Environment for Deployment
 
@@ -29,6 +28,8 @@ In addition to the prerequisites listed above, you must create a new network and
 1. Select **Networking**, then **Create Network**. 
 	1. Enter a name and descrption for your network. 
 	1. Under **Subnetworks**, select **Custom** and specify a name, region, and address range.
+
+	Make sure you select a region with enough zones to support the availability zone needs of your deployment. For help selecting the correct region for your deployment, see the [Google documentation on regions and zones](https://cloud.google.com/compute/docs/regions-zones/regions-zones). 
 
 	<%= image_tag("gcp/gcp-network-create.png") %>
 1. Click **Create**.
@@ -66,32 +67,25 @@ In addition to the prerequisites listed above, you must create a new network and
 
 1. Click **Create**. Your browser automatically downloads a JSON file with a private key for this account. Save this file in a secure location.
 
-### <a id="keys"></a> Create a SSH Keypair for Your Project
+### <a id="keys"></a> Create a Project-Wide SSH Keypair for Your Project ###
 
 1. Create a SSH keypair on your local machine with the username `vcap`. For example, use the following command:
 	<pre class="terminal">
    	ssh-keygen -t rsa -f vcap-key -C vcap@local
    	</pre>
 
-1. Open and edit the public key file `vcap-key.pub` to add the string `vcap:` before the key. For example, before the edit:
+1. Open and copy the contents of the public key file `vcap-key.pub`.
 
-	```
-	ssh-rsa PUBLIC-KEY-VALUE ...
-	```
+1. In the GCP console, navigate to **Compute Engine**, **Metadata**, and then **SSH Keys**. Click the **Create SSH Keys**  button or the **Edit** button if you already have project-wide keys.
 
-	After the edit:
+1. Paste in the contents of the `vcap-key.pub` file. The username `vcap` autopopulates the username field. 
 
-	```
-	vcap:ssh-rsa PUBLIC-KEY-VALUE ...
-	```
+1. Click **Save**. 
 
-1. If you have not done so already, install and set up [gcloud compute](https://cloud.google.com/compute/docs/gcloud-compute/). <-- maybe add more commands to set project and authorize into gcloud
+1. Verify that the public key data is uploaded to your project:
+    1. If you have not done so already, install and set up [gcloud compute](https://cloud.google.com/compute/docs/gcloud-compute/). 
 
-1. Upload the key to your project by running the following command:
-	<pre class="terminal">$ gcloud compute project-info add-metadata \
-	 --metadata-from-file sshKeys=vcap-key.pub</pre>
-
-1. Verify that the key data is uploaded to your project by executing the following command:
+    1.  by executing the following command:
 
 	<pre class="terminal">
 	$ gcloud compute project-info describe
@@ -106,17 +100,90 @@ In addition to the prerequisites listed above, you must create a new network and
       		vcap:ssh-rsa ...
     </pre>
 
+## <a id="enable_compute_resource_api"></a> Enable the Google Cloud Resource Manager API ##
+
+Ops Manager manages GCP resources using the Google Compute Engine and Cloud Resource Manager APIs. To enable these APIs, perform the following steps:
+
+1. Log in to the Google Developers console at [https://console.developers.google.com](https://console.developers.google.com).
+
+1. Select **API Manager** and then **Library**.
+
+1. Under **Google Cloud APIs**, select **Compute Engine API**.
+
+1. On the **Google Compute Engine API** page, click the **Enable** button.
+
+1. In the Google APIs search field, enter "Google Cloud Resource Manager API". 
+
+1. On the **Google Cloud Resource Manager API** page, click the **Enable** button.
+
+1. Verify that the APIs have been enabled by performing the following steps:
+    1. Log in to GCP using the IAM service account you created in :
+
+    1. 
+
+
+
 ## <a id="create_loadbalancers"></a> Create Load Balancers in GCP ##
 
-You may need as many as three load balancers to operate PCF on GCP:
+You need at least one and as many as two load balancers to operate PCF on GCP:
 
-* Load balancer for Gorouter (required for all deployments)
-* Load balancer for TCP Router (if you want to enable TCP routing feature)
-* Diego brain (SSH proxy) load balancer (if you want to enable SSH access to your apps)
+* Load balancer for HAProxy, which supports both Gorouter and SSH proxy jobs
+* Load balancer for TCP Router, which is optional and only necessary if you want to enable TCP routing feature
 
-### <a id="gorouter_lb"></a> Create the Load Balancer for Gorouter ###
+### <a id="haproxy_lb"></a> Create the Load Balancer for HAProxy ###
 
-To create a load balancer for the Gorouter in GCP:
+To create a load balancer for HAProxy in GCP:
+
+1. From the GCP Console, select **Networking**, **Load Balancing**, and then **Create load balancer**.
+
+1. Under **TCP Load Balancing**, click **Start configuration**.
+
+	<%= image_tag("gcp/lb-configure.png") %>
+
+1. Under **Connection termination**, select **No (TCP)**. Click **Continue**. 
+
+	<%= image_tag("gcp/lb_connection_termination.png") %>
+
+1. On the **New TCP load balancer** screen, enter a unique name for the load balancer in the **Name** field.
+
+1. Select **Backend configuration**, and enter the following field values:
+   * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
+
+	<%= image_tag("gcp/lb_backend.png") %>
+
+1. Select **Frontend configuration**, and add the first frontend IP and port entry as follows:
+   * **Protocol**: TCP
+   * **IP**: Perform the following steps:
+       1. Select **Create IP address**. 
+       1. Enter a **Name** for the new static IP address, an optional description.
+       1. Click **Reserve**.
+   * **Port**: 80
+
+1. Click **+Add frontend IP and port** to add a second frontend IP and port. Enter the values for the fields as follows:
+   * **Protocol**: TCP
+   * **IP**: Select the IP address you created in the previous step.
+   * **Port**: 443
+
+1. Click **+Add frontend IP and port** to add a third frontend IP and port. Enter the values for the fields as follows:
+   * **Protocol**: TCP
+   * **IP**: Select the IP address you created in the previous step.
+   * **Port**: 2222
+
+
+1. Click **+Add frontend IP and port** to add a third frontend IP and port. Enter the values for the fields as follows:
+   * **Protocol**: TCP
+   * **IP**: Select the IP address you created in the previous step.
+   * **Port**: 4443
+
+	<%= image_tag("gcp/lb_frontend.png") %>
+
+1. Click **Review and finalize** to verify your configuration.
+
+1. Click **Create**.
+
+### <a id="tcprouter_lb"></a> Create the Load Balancer for TCP Router
+
+This is optional and only required if you enable TCP routing in your deployment. To create a load balancer for TCP Router in GCP:
 
 1. From the GCP Console, select **Networking**, **Load Balancing**, and then **Create load balancer**.
 

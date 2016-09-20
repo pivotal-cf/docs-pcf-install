@@ -11,11 +11,11 @@ This guide describes the preparation steps required to install [Pivotal Cloud Fo
 
 You must have the following to install PCF on GCP:
 
-* A GCP account and project with sufficient quota to deploy all the VMs needed for a PCF installation. <--need exact quota figures CPU + RAM. You can request a quota increase on the [GCP Quotas page](https://console.cloud.google.com/compute/quotas).
+* A GCP account and project with sufficient quota to deploy all the VMs needed for a PCF installation. You can request a quota increase on the [GCP Quotas page](https://console.cloud.google.com/compute/quotas).
 * The [Google Cloud SDK](https://cloud.google.com/sdk/) installed on your machine and authenticated to your GCP account.
-* Sufficiently high instance limits (or no instance limits) on your GCP account. Installing PCF requires more than the default 20 concurrent instances. <-- is there a limit in GCP?
-* Administrative rights to a domain for your PCF installation. You need to be able to add wildcard records to this domain. need this registered domain when configuring your SSL certificate and Cloud Controller. For more information see the *link to cert docs*. 
-* You need a SSL certificate for your PCF domain. This can be a self-signed certificate, but Pivotal recommends using a self-signed certificate only for testing and development. If you plan to deploy PCF into a production environment, you should obtain a certificate from your Certificate Authority. (Note: Ops Man can generate a self-signed cert for you.)
+* Sufficiently high instance limits (or no instance limits) on your GCP account. Installing PCF requires at least 10 concurrent instances for testing or development deployments and typically at least 30 for production deployments. The exact number of instances depends on the number of tiles and availability zones you plan to deploy.
+* Administrative rights to a domain for your PCF installation. You need to be able to add wildcard records to this domain. You specify this registered domain when configuring the SSL certificate and Cloud Controller for your deployment. For more information see the [Providing a Certificate for your SSL Termination Point](../opsguide/security_config.html) topic. 
+* You need a SSL certificate for your PCF domain. This can be a self-signed certificate, which Ops Manager can generate for you, but Pivotal recommends using a self-signed certificate for development and testing purposes only. If you plan to deploy PCF into a production environment, you must obtain a certificate from your Certificate Authority. 
 
 ## <a id="deploy_prepare"></a> Preparing the GCP Environment for Deployment
 
@@ -38,16 +38,22 @@ In addition to the prerequisites listed above, you must create a new network and
 
 1. Create a firewall rule to allow all TCP traffic within the network. In the **Networking** pane, select **Firewall rules**, then **Create Firewall Rule**.
 	* **Name**: Enter a name, such as `all-internal`
-	* **Network**: Select the network you created in the section above. 
-	* **Source Filter**: Choose **Subnetworks**, and then select the subnet you created in [Create a GCP Network with Subnet](#create_network).
+	* **Network**: Select the network you created in the section above, [Create a GCP Network with Subnet](#create_network). 
+	* **Source filter**: Choose **Instance tags**, and then enter `pcf-vms`.
 	* **Allowed protocols and ports**: Enter `tcp:0-65535;udp:0-65535;icmp`. 
-	* **Target tags**: <-- leave blank?
-1. Create a firewall rule to allow  to allow `tcp:80;tcp:443;tcp:2222;tcp:4443` traffic from any source to VMs tagged with `pcf-lb`.
+	* **Target tags**: `pcf-vms`
+1. Create a firewall rule to allow `tcp:80;tcp:443;tcp:2222;tcp:4443` traffic from any source to VMs tagged with `pcf-lb`.
 	* **Name**: Enter `pcf-lb`. 
-	* **Network**: Select the network you created in the section above.
-	* **Source filter**: Choose `allow from any source`. 
+	* **Network**: Select the network you created in the section above, [Create a GCP Network with Subnet](#create_network).
+	* **Source filter**: Choose `Allow from any source (0.0.0.0/0)`. 
 	* **Allowed protocols and ports**: Enter `tcp:80;tcp:443;tcp:2222;tcp:4443`.
 	* **Target tags**: Enter `pcf-lb`. 
+1. If you want to enable the TCP routing feature, create another firewall rule to allow incoming TCP traffic to the TCP router.
+    * **Name**: Enter a name, such as `pcf-tcp-lb`.
+    * **Network**: Select the network you created in the section above, [Create a GCP Network with Subnet](#create_network).
+	* **Source filter**: Choose `Allow from any source (0.0.0.0/0)`. 
+    * **Allowed protocols and ports**: `tcp:1024-65535`
+    * **Target tags**: `pcf-cf-tcp`
 
 ### <a id="iam_account"></a> Set up an IAM Service Account 
 
@@ -100,7 +106,7 @@ In addition to the prerequisites listed above, you must create a new network and
       		vcap:ssh-rsa ...
     </pre>
 
-## <a id="enable_compute_resource_api"></a> Enable the Google Cloud Resource Manager API ##
+## <a id="enable_compute_resource_api"></a> Enable Google Cloud APIs ##
 
 Ops Manager manages GCP resources using the Google Compute Engine and Cloud Resource Manager APIs. To enable these APIs, perform the following steps:
 
@@ -116,12 +122,19 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
 
 1. On the **Google Cloud Resource Manager API** page, click the **Enable** button.
 
-1. Verify that the APIs have been enabled by performing the following steps:
-    1. Log in to GCP using the IAM service account you created in :
+1. To verify that the APIs have been enabled, perform the following steps:
+    1. Log in to GCP using the IAM service account you created in [Set up an IAM Service Account](#iam_account):
+     <pre class="terminal">
+     $ gcloud auth activate-service-account IAM\_SERVICE\_ACCOUNT\_EMAIL \ 
+     --key-file PATH\_TO\_YOUR\_IAM\_KEY\_JSON\_FILE
+     </pre>
 
-    1. 
-
-
+  1. List your projects:
+    <pre class="terminal">
+    $ gcloud projects list
+    PROJECT\_ID       NAME                 PROJECT\_NUMBER
+    my-project-id    my-project-name      ##############
+    </pre>
 
 ## <a id="create_loadbalancers"></a> Create Load Balancers in GCP ##
 
@@ -148,6 +161,17 @@ To create a load balancer for HAProxy in GCP:
 
 1. Select **Backend configuration**, and enter the following field values:
    * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
+   * **Backup pool**: 
+   * **Failover ratio**:
+   * **Health check**: Select **Create a health check**. Then enter the following values:
+       1 **Name**: Enter a name, for example `pcf-public`.
+       1 **Request path**: `/v2/info`
+       1 **Check interval**: `30` seconds
+       1 **Timeout**: `5` seconds
+       1 **Healthy threshold**: `10` consecutive successes
+       1 **Unhealthy threshold**: `2` consecutive failures
+       1 Click **Save and continue**.
+   * **Session affinity**
 
 	<%= image_tag("gcp/lb_backend.png") %>
 
@@ -199,12 +223,16 @@ This is optional and only required if you enable TCP routing in your deployment.
 
 1. Select **Backend configuration**, and enter the following field values:
    * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
-   * **Backup pool**: 
-   * **Failover ration**:
-   * **Health check**:
-   * **Session affinity**
+   * **Health check**: Select **Create a health check**. Then enter the following values:
+        * **Name**: Enter a name, for example `pcf-cf-public`.
+        * **Request path**: `/v2/info`
+        * **Check interval**: `30` seconds
+        * **Timeout**: `5` seconds
+        * **Healthy threshold**: `10` consecutive successes
+        * **Unhealthy threshold**: `2` consecutive failures
+        * Click **Save and continue**.
 
-	<%= image_tag("gcp/lb_backend.png") %>
+	    <%= image_tag("gcp/lb_backend.png") %>
 
 1. Select **Frontend configuration**, and add the first frontend IP and port entry as follows:
    * **Protocol**: TCP
@@ -220,7 +248,6 @@ This is optional and only required if you enable TCP routing in your deployment.
    * **Protocol**: TCP
    * **IP**: Select the IP address you created in the previous step.
    * **Port**: 2222
-
 
 1. Click **+Add frontend IP and port** to add a third frontend IP and port. Enter the values for the fields as follows:
    * **Protocol**: TCP

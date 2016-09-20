@@ -8,152 +8,56 @@ owner: Ops Manager
 
 This guide describes how to install [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on vSphere.
 
-It walks you through deploying the installation virtual machine known as Ops Manager, configuring your vSphere settings, and installing PCF Elastic Runtime.
-
 If you experience a problem while following the steps below, refer to the [Known Issues](../pcf-release-notes/index.html) topics or to the [Pivotal Cloud Foundry Troubleshooting Guide](./troubleshooting.html).
-Once you have completed the steps in this guide, explore the documentation on
-[docs.pivotal.io](http://docs.pivotal.io) to learn more about [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF)
-and the Pivotal product suite.
 
 <p class="note"><b>Note</b>: If you are performing an upgrade to PCF 1.8, see <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for critical upgrade information.</p>
 
-## <a id='system'></a>Step 1: Confirm System Requirements ##
+## <a id='prereqs'></a>Prerequisites ##
 
-Before you begin your PCF deployment, ensure that your system meets the
-minimum requirements.
-The requirements include capacity for the virtual machines necessary for the
-deployment, a supported version of the cf Command Line Interface (cf CLI) tool,
-and certain user privileges.
-Refer to the [Prerequisites to Deploying Operations Manager and Elastic Runtime](./requirements.html) topic for the complete list.
+To install PCF on vSphere, your IaaS configuration must have the minimum resource requirements and user privileges for a PCF installation. For a full list of requirements, see the [Prerequisites to Deploying Operations Manager and Elastic Runtime](./requirements.html) and [Pivotal Cloud Foundry IaaS User Role Guidelines](./iaas-user-roles.html) topics.
 
-## <a id='deploy'></a>Step 2: Deploy PCF Ops Manager ##
+If you are deploying PCF behind a firewall, see the [Preparing Your Firewall for Deploying Pivotal Cloud Foundry](./config_firewall.html) topic.
 
-1. Log in to [Pivotal Network](https://network.pivotal.io) and download the Ops
-Manager virtual appliance file that matches your infrastructure.
+## <a id='install-om'></a>Step 1: Install Ops Manager ##
 
-1. Deploy Ops Manager using the <a href="./deploying-vm.html" class="subnav">Deploying Operations Manager to vSphere</a> procedure.
+Complete the following procedures to install Ops Manager on vSphere:
 
-1. Review the topic about <a href="./disk-format.html" class="subnav">Provisioning a Virtual Disk in vSphere</a>.
+1. <a href="./deploying-vm.html" class="subnav">Deploying Operations Manager to vSphere</a>
+1. <a href="./vsphere-config.html" class="subnav">Configuring Ops Manager Director for VMware vSphere</a>
 
-## <a id='paas'></a>Step 3: Configure and Install PCF ##
+## <a id='install-er'></a>Step 2: Install Elastic Runtime ##
 
-**Goal**: Configure and install Ops Manager Director (included) and Elastic
-Runtime.
-Skip the import step for Elastic Runtime if you do not
-want to import these products.
+To install Elastic Runtime on vSphere, perform the procedures in the <a href="./config-er-vmware.html" class="subnav">Configuring Elastic Runtime for vSphere</a> topic.
 
-<p class="note"><strong>Note</strong>: For security, Ops Manager 1.7 and later require that you log in using a fully qualified domain name to access Ops Manager.</a></p> 
+## <a id='ipsec'></a>(Optional) Step 3: Install the IPsec Add-on
 
-1. Navigate to the fully qualified domain of your Ops Manager in a web browser.
-
-1. The first time you start Ops Manager, you must choose one of the following:
-    * <strong>[Use an Identity Provider](#idp)</strong>: If you use an Identity Provider, an external identity server maintains your user database.
-    * <strong>[Internal Authentication](#internal)</strong>: If you use Internal Authentication, PCF maintains your user database.
-
-<%= image_tag("select-authentication.png") %>
-
-### <a id='idp'></a>Use an Identity Provider ###
-
-<%= partial 'using_idp_ops_manager' %>
-
-### <a id='internal'></a>Internal Authentication ###
-
-1. When redirected to the **Internal Authentication** page, you must complete the following steps:
-    * Enter a **Username**, **Password**, and **Password confirmation** to create an Admin user.
-    * Enter a **Decryption passphrase** and the **Decryption passphrase confirmation**. This passphrase encrypts the Ops Manager datastore, and is not recoverable.
-    * If you are using an **Http proxy** or **Https proxy**, follow the [PCF Director Proxy Settings](./pcf-director-proxy-settings.html) instructions.
-    * Read the **End User License Agreement**, and select the checkbox to accept the terms.
-    * Click **Setup Authentication**.
-
-    <%= image_tag("om-login.png") %>
-
-1. Log in to Ops Manager with the Admin username and password you created in the previous step.
-
-    <%= image_tag("cf-login.png") %>
-
-    <p class="note"><strong>Note</strong>: On your first login attempt, an error message that the connection is untrusted appears because you are attempting to connect securely to a website with a self-signed certificate. Add Ops Manager as an exception to bypass this message on subsequent logins. </p>
-
-## <a id='vcenter-config'></a>Step 4: vCenter Config Page
-
-### <a id='import-tiles'></a>Import Products ###
-
-1. Download Elastic Runtime at [Pivotal Network](https://network.pivotal.io).
-    * Elastic Runtime: Click the **Pivotal Cloud Foundry** banner to access the PCF product page. Use the drop-down menu to select an Elastic Runtime release.
-
-1. In the Ops Manager **Installation Dashboard**, click **Import a Product**.
-
-    <%= image_tag("images/import-prod.png") %>
-
-1. Select the Elastic Runtime .pivotal file that you downloaded from Pivotal
-Network and click **Open**.
-
-1. After the import completes, Elastic Runtime appears in your list of products.
-
-    <%= image_tag("images/add-products.png") %>
-
-1. Click the plus sign icon to add the Elastic Runtime tile to your dashboard.
-
-    <%= image_tag("images/ert-dashboard.png") %>
-
-### <a id='configure-vmware'></a>Configure Ops Manager Director ###
-
-Your Ops Manager download includes a tile for the version of Ops Manager
-Director that corresponds to your IaaS.
-
-1. (Optional) Use the Nexus 1000v Switch, follow the instructions in the <a href="./nexus-switch.html" class="subnav">Using the Cisco Nexus 1000v Switch with Ops Manager</a> topic.
-2. Refer to the <a href="./vsphere-config.html" class="subnav">Configuring Ops Manager Director for VMware vSphere</a> topic for help configuring your Ops Manager
-Director product tile.
-
-If you plan to configure the Ops Manager Resurrector for increased availability of Elastic Runtime on vSphere,
-review the topic <a href="./resurrector.html" class="subnav">Using Ops Manager Resurrector on VMware vSphere</a>.
-
-When configuring networks and availability zones for Ops Manager Director, you can refer to the <a href="./understand-az.html" class="subnav">Understanding Availability Zones in VMware Installations</a> topic.
-
-### <a id='install-add-ons'></a> (Optional) Install the PCF IPsec Add-on ###
-
-The PCF IPsec add-on secures network traffic within a Cloud Foundry deployment and provides internal system protection if a malicious actor breaches your firewall. See the [Securing Data in Transit with the IPsec Add-on](http://docs.pivotal.io/addon-ipsec/index.html) topic for installation instructions.
+The PCF IPsec add-on secures network traffic within a PCF deployment and provides internal system protection if a malicious actor breaches your firewall. See the [Securing Data in Transit with the IPsec Add-on](http://docs.pivotal.io/addon-ipsec/index.html) topic for installation instructions.
 
 <p class="note"><strong>Note</strong>: You must install the PCF IPsec add-on before installing any other tiles to enable the IPsec functionality. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the Elastic Runtime tile.</p>
 
-### <a id='configure-er'></a>Configure Elastic Runtime ###
-
-See <a href="./config-er-vmware.html" class="subnav">Configuring Elastic Runtime for vSphere</a>.
-
-When configuring Elastic Runtime, you can refer to the <a href="../opsguide/ssl-term.html" class="subnav">Configuring SSL Termination for vSphere Deployments</a>
-topic for details about specifying your the IP address for your load balancer.
-
-### <a id='install'></a>Install Products ###
-
-1. Click **Install**.
-
-     <%= image_tag("guide/install.png") %>
-
-1. Your updated PCF installation begins deploying.
-
-     <%= image_tag("guide/deploy-progress.png") %>
-
-1. When the deployment is finished, a success message appears.
-
-     <p class="note"><strong>Note</strong>: On the recommended hardware
-	infrastructure, deployment should take less than one hour and require no
-	user intervention.</p>
-
-You now have a fully functional installation of PCF.
-
-## <a id='new-users'></a>Step 5: Create New User Accounts ##
+## <a id='new-users'></a>Step 4: Create New User Accounts ##
 
 Once you have successfully deployed PCF, add users to your account.
-Refer to the [Creating New Elastic Runtime User Accounts](./creating-account.html) topic for more information.
+Refer to the [Creating New Elastic Runtime User Accounts](../opsguide/creating-account.html) topic for more information.
 
-## <a id='target'></a>Step 6: Target Elastic Runtime ##
+## <a id='target'></a>Step 5: Target Your Deployment ##
 
-The next step is to use the cf CLI tool to target your Elastic Runtime
-installation.
+Use the cf Command Line Interface (CLI) to target your deployment.
 Make sure that you have [installed the cf CLI tool](../cf-cli/install-go-cli.html).
 Refer to the PCF documentation for more information about [using the cf
 command line tool](../cf-cli/getting-started.html).
 
-<p class="note"><strong>Note</strong>: In Pivotal Ops Manager, refer to
-	<strong>Elastic Runtime > Credentials</strong> for the UAA admin name and
-	password. You can also use the user that you created in Apps Manager, or
-	create another user with the <code>create-user</code> command.</p>
+<p class="note"><strong>Note</strong>: In Ops Manager, refer to
+    <strong>Elastic Runtime > Credentials</strong> for the UAA admin name and
+    password. You can also use the user that you created in Apps Manager, or
+    create another user with the <code>create-user</code> command.</p>
+
+## <a id='additional'></a>Additional Configuration ##
+
+See the following topics for additional configuration information:
+
+* <a href="./disk-format.html" class="subnav">Provisioning a Virtual Disk in vSphere</a>
+* <a href="./nexus-switch.html" class="subnav">Using the Cisco Nexus 1000v Switch with Ops Manager</a>
+* <a href="./resurrector.html" class="subnav">Using Ops Manager Resurrector on VMware vSphere</a>
+* <a href="../opsguide/ssl-term.html" class="subnav">Configuring SSL Termination for vSphere Deployments</a>
+* <a href="./understand-az.html" class="subnav">Understanding Availability Zones in VMware Installations</a>

@@ -13,8 +13,7 @@ Before you perform the procedures in this topic, you must have completed the pro
 
 <p class="note"><strong>Note</strong>: For security, Ops Manager 1.7 and later require that you log in using a fully qualified domain name (FQDN).</a></p> 
 
-1. In a web browser, navigate to the FQDN of Ops Manager you recorded from the Terraform output in the [Provision Resources with Terraform](./azure-om-deploy.html#terraform) step of [Launching an Ops Manager Director Instance on Azure](./azure-om-deploy.html) topic. The value for `ops_manager_dns` in the Terraform output is the FQDN of Ops Manager.
-
+1. In a web browser, navigate to the public IP address of Ops Manager you recorded from the Azure CLI output in the [Boot Ops Manager](./azure-om-deploy.html#boot) step of the [Launching an Ops Manager Director Instance on Azure](./azure-om-deploy.html) topic. 
 1. When Ops Manager starts for the first time, you must choose one of the following:
     * [Use an Identity Provider](#idp): If you use an Identity Provider, an external identity server maintains your user database.
     * [Internal Authentication](#internal): If you use Internal Authentication, PCF maintains your user database.
@@ -56,13 +55,13 @@ Before you perform the procedures in this topic, you must have completed the pro
 	* **Client ID**: Enter your `CLIENT_ID`.
 	* **Client Secret** Enter your `CLIENT_SECRET`.
 
-1. Complete the following fields with information you recorded from the Terraform output in the [Provision Resources with Terraform](./azure-om-deploy.html#terraform) step of [Launching an Ops Manager Director Instance on Azure](./azure-om-deploy.html) topic:
-	* **Resource Group Name**: Enter the value for `pcf_resource_group_name`.
-	* **BOSH Storage Account Name**: Enter the value for `bosh_root_storage_account`.
-	* **Deployments Storage Account Name**: Enter the value for `bosh_vms_premium_storage_account`.
-	* **Default Security Group**: Enter the value for `ops_manager_security_group_name`.
+1. Complete the following fields:
+	* **Resource Group Name**: Enter the name of your resource group, which you exported as the `$RESOURCE_GROUP` environment variable.
+	* **BOSH Storage Account Name**: Enter the name of your storage account, which you exported as the `$STORAGE_ACCOUNT` environment variable.
+	* **Deployments Storage Account Name**: Enter the same value as above.
+	* **Default Security Group**: Enter `pcf-nsg`.
 
-1. For **SSH Public Key**, copy and paste the contents of your public key in the `opsman.pub` file. You created this file in the [Provision Resources with Terraform](./azure-om-deploy.html#terraform) step of [Launching an Ops Manager Director Instance on Azure](./azure-om-deploy.html) topic.
+1. For **SSH Public Key**, copy and paste the contents of your public key in the `opsman.pub` file. You created this file in the [Boot Ops Manager](./azure-om-deploy.html#boot) step of the [Launching an Ops Manager Director Instance on Azure](./azure-om-deploy.html) topic. 
 
 1. For **SSH Private Key**, copy and paste the contents of your private key in the `opsman` file. 
 
@@ -121,9 +120,9 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
 
 1. Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
 1. For **Name**, enter `default`.
-1. To create a subnet, complete the following fields with information you recorded from the Terraform output in the [Provision Resources with Terraform](./azure-om-deploy.html#terraform) step of [Launching an Ops Manager Director Instance on Azure](./azure-om-deploy.html) topic:
-	* **Azure Network Name**: Enter the values for `pcf_virtual_network_name` and `pcf_subnet_name` in the following format: `pcf_virtual_network_name/pcf_subnet_name`. For example, `my-deployment-virtual-network/my-deployment-subnet`.
-	* **CIDR**: Enter the value for `pcf_subnet_address_prefix`. For example, `10.0.0.0/24`.
+1. To create a subnet, complete the following fields:
+	* **Azure Network Name**: Enter `pcf-net/pcf`. 
+	* **CIDR**: Enter `10.0.0.0/20`.
 	* **Reserved IP Ranges**: Enter the first 9 IP addresses of the subnet. For example, `10.0.0.1-10.0.0.9`.
 	* **DNS**: Enter `168.63.129.16`.
 	* **Gateway**: Enter the first IP address of the subnet. For example, `10.0.0.1`.

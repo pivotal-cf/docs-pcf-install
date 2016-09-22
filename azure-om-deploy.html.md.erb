@@ -9,139 +9,200 @@ This topic describes how to deploy Ops Manager Director for Pivotal Cloud Foundr
 
 Before you perform the procedures in this topic, you must have completed the procedures in the [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic. After you complete the procedures in this topic, follow the instructions in the [Configuring Ops Manager Director on Azure](azure-om-config.html) topic.
 
-To perform the procedure below, you must have [Terraform](https://www.terraform.io/downloads.html)
-) installed.
+##<a id='network'></a> Step 1: Create Network Resources
 
-##<a id="terraform"></a> Step 1: Provision Resources with Terraform
+1. Navigate to the Azure portal, click **Resource groups**, and click **Add** to create a new resource group for your deployment. 
+1. Export the name of your resource group as an environment variable:
+    <pre class="terminal">
+    $ export RESOURCE_GROUP=YOUR-RESOURCE-GROUP-NAME
+    </pre>
+1. Export your location. For example, `westus`.
+    <pre class="terminal">
+    $ export LOCATION=YOUR-LOCATION
+    </pre>
+1. Create a network security group named `pcf-nsg` that only allows internal traffic and traffic from Azure load balancers:
+    <pre class="terminal">
+    $ azure network nsg create $RESOURCE_GROUP pcf-nsg $LOCATION
+    </pre> 
+1. Create a network security group named `opsmgr-nsg`:
+    <pre class="terminal">
+    $ azure network nsg create $RESOURCE_GROUP opsmgr-nsg $LOCATION
+    </pre> 
+1. Add a network security rule to the `opsmgr-nsg` group that allow HTTP traffic to the Ops Manager VM:
+    <pre class="terminal">
+    $ azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg http --protocol Tcp --destination-port-range 80 --priority 100
+    </pre>
+1. Add a network security rule to the `opsmgr-nsg` group that allow HTTPS traffic to the Ops Manager VM:
+    <pre class="terminal">
+    azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg https --protocol Tcp --destination-port-range 443 --priority 200
+    </pre>
+1. Add a network security rule to the `opsmgr-nsg` group that allow SSH traffic to the Ops Manager VM:
+    <pre class="terminal">
+    $ azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg ssh --protocol Tcp --destination-port-range 22 --priority 300
+    </pre>
+1. Create a virtual network named `pcf-net`:
+    <pre class="terminal">
+    $ azure network vnet create $RESOURCE_GROUP pcf-net $LOCATION --address-prefixes 10.0.0.0/16
+    </pre>
+1. Add a subnet to the network for PCF VMs:
+    <pre class="terminal">
+    azure network vnet subnet create $RESOURCE_GROUP pcf-net pcf --address-prefix 10.0.0.0/20 --network-security-group-name pcf-nsg
+    </pre>
 
-1. Download and unzip the PCF Azure Terraform [scripts](../../../azure_terraform.zip).
-1. Change into the unzipped directory.
-	<pre class="terminal">$ cd azure_terraform</pre>
+##<a id='storage'></a> Step 2: Create a Storage Account
+
+1. Choose the name for your storage account and export it as an environment variable:
+    <pre class="terminal">
+    $ export STORAGE_NAME=YOUR-STORAGE-ACCOUNT-NAME
+    </pre>
+1. Create a storage account, replacing `SUBSCRIPTION_ID` with your subscription ID:
+    <pre class="terminal">
+    $ azure storage account create $STORAGE\_NAME --resource-group $RESOURCE\_GROUP --sku-name LRS --kind Storage --subscription SUBSCRIPTION\_ID --location $LOCATION
+    </pre>
+    <p class="note"><strong>Note</strong>: The name of the storage account is globally unique across Azure, and the command fails if the name is already taken.</p>
+1. Configure the Azure CLI for the storage account:
+    <pre class="terminal">
+    $ azure storage account connectionstring show $STORAGE\_NAME --resource-group $RESOURCE\_GROUP
+    info:    Executing command storage account connectionstring show
+    <span>+</span> Getting storage account keys
+    data:    connectionstring: DefaultEndpointsProtocol=https;AccountName=example-storage;AccountKey=bb3eXE8eXXDAe2eS95TxH9F4KieeoijjbFzXEASFF30jC6OVehywh+rSrImIxRwLhV4bpprP8jZBdBOffF2aaZ==
+    info:    storage account connectionstring show command OK
+    </pre>
+1. Record the full value of `connectionstring` from the output above and export it as an environment variable:
+    <pre class="terminal">
+    $ export AZURE\_STORAGE\_CONNECTION\_STRING="YOUR-ACCOUNT-KEY-STRING"
+    </pre>
+1. Create three blob containers named `opsmanger`, `bosh`, and `stemcell`:
+    <pre class="terminal">
+    $ azure storage container create opsmanager
+    $ azure storage container create bosh
+    $ azure storage container create stemcell --permission blob
+    </pre>
+1. Create a table named `stemcells`:
+    <pre class="terminal">
+    $ azure storage table create stemcells
+    </pre>
+
+##<a id='lb'></a> Step 3: Create a Load Balancer
+
+1. Create a load balancer named `pcf-lb`:
+    <pre class="terminal">
+    $ azure network lb create $RESOURCE_GROUP pcf-lb $LOCATION
+    </pre>
+1. Give the load balancer a static IP named `pcf-lb-ip`:
+    <pre class="terminal">
+    $ azure network public-ip create $RESOURCE_GROUP pcf-lb-ip $LOCATION --allocation-method Static
+    info:    Executing command network public-ip create
+    warn:    Using default --idle-timeout 4
+    warn:    Using default --ip-version IPv4
+    <span>+</span> Looking up the public ip "pcf-lb-ip"
+    <span>+</span> Creating public ip address "pcf-lb-ip"
+    data:    Id                              : /subscriptions/222e8ffe-81ce-33ee-e3e2-1a405ffc4134/resourceGroups/pcf-resource-group/providers/Microsoft.Network/publicIPAddresses/pcf-lb-ip
+    data:    Name                            : pcf-lb-ip
+    data:    Type                            : Microsoft.Network/publicIPAddresses
+    data:    Location                        : westus
+    data:    Provisioning state              : Succeeded
+    data:    Allocation method               : Static
+    data:    IP version                      : IPv4
+    data:    Idle timeout in minutes         : 4
+    data:    IP Address                      : <%= vars.example_ip_2 %>
+    info:    network public-ip create command OK
+    </pre>
+
+1. Record the `IP Address` from the output above. This is the public IP address of your load balancer.
+
+1. Add a front-end IP configuration to the load balancer:
+    <pre class="terminal">
+    $ azure network lb frontend-ip create $RESOURCE_GROUP pcf-lb pcf-fe-ip --public-ip-name pcf-lb-ip
+    </pre>
+1. Add a probe to the load balancer:
+    <pre class="terminal">
+    $ azure network lb probe create $RESOURCE_GROUP pcf-lb tcp80 --protocol Tcp --port 80
+    </pre>
+1. Add a backend address pool to the load balancer:
+    <pre class="terminal">
+    $ azure network lb address-pool create $RESOURCE_GROUP pcf-lb pcf-vms
+    </pre>
+1. Add a load balancing rule for HTTP:
+    <pre class="terminal">
+    $ azure network lb rule create $RESOURCE_GROUP pcf-lb http --protocol tcp --frontend-port 80 --backend-port 80
+    </pre>
+1. Add a load balancing rule for HTTPS:
+    <pre class="terminal">
+    $ azure network lb rule create $RESOURCE_GROUP pcf-lb https --protocol tcp --frontend-port 443 --backend-port 443
+    </pre>
+1. Add a load balancing rule for SSH:
+    <pre class="terminal">
+    $ azure network lb rule create $RESOURCE_GROUP pcf-lb diego-ssh --protocol tcp --frontend-port 2222 --backend-port 2222
+    </pre>
+1.  Navigate to your DNS provider and create an entry that points `*.YOUR-SUBDOMAIN` to the public IP address of your load balancer. For example, create an entry that points `azure.example.com` to <%= vars.example_ip_1 %>.
+    <p class="note"><strong>Note</strong>: To retrieve the IP address of your load balancer, navigate to the Azure portal, click <strong>All resources</strong>, and click the <strong>Public IP address</strong> resource that ends with <code>pcf-lb-ip</code>.</p>
+ 
+##<a id='boot'></a> Step 4: Boot Ops Manager
+
+1. Copy the Ops Manager image into your storage account:
+    <pre class="terminal">
+    $ azure storage blob copy start <span>https</span>://opsmanagerciimagestorage.blob.core.windows.net/system/Microsoft.Compute/Images/images/opsmanager-osDisk.3b3b2b2f-74a4-4115-956c-d19f33df17d8.vhd opsmanager \
+    --dest-connection-string $AZURE\_STORAGE\_CONNECTION\_STRING \
+    --dest-container opsmanager \
+    --dest-blob image.vhd 
+    </pre>
+
+1. Copying the image may take several minutes. Check on the status by running the following command and examining the output under `Status`:
+    <pre class="terminal">
+    $ azure storage blob copy show opsmanager image.vhd
+    info:    Executing command storage blob copy show
+    + Getting storage blob information
+    data:    Copy ID                               Progress       Status
+    data:    ------------------------------------  -------------  -------
+    data:    069d413d-be05-4b12-82bc-c96dacee230e  0/31457280512  success
+    info:    storage blob copy show command OK
+    </pre>
+    When `Status` reads `success`, continue to the next step.
+
+1. Create a public IP named `ops-manager-ip`:
+    <pre class="terminal">
+    $ azure network public-ip create $RESOURCE_GROUP ops-manager-ip $LOCATION --allocation-method Static
+    info:    Executing command network public-ip create
+    warn:    Using default --idle-timeout 4
+    warn:    Using default --ip-version IPv4
+    <span>+</span> Looking up the public ip "ops-manager-ip"
+    <span>+</span> Creating public ip address "ops-manager-ip"
+    data:    Id                              : /subscriptions/222e8ffe-81ce-33ee-e3e2-1a405ffc4134/resourceGroups/pcf-resource-group/providers/Microsoft.Network/publicIPAddresses/ops-manager-ip
+    data:    Name                            : ops-manager-ip
+    data:    Type                            : Microsoft.Network/publicIPAddresses
+    data:    Location                        : westus
+    data:    Provisioning state              : Succeeded
+    data:    Allocation method               : Static
+    data:    IP version                      : IPv4
+    data:    Idle timeout in minutes         : 4
+    data:    IP Address                      : <%= vars.example_ip_1 %>
+    info:    network public-ip create command OK
+    </pre>
+
+1. Record the `IP Address` from the output above. This is the public IP address of Ops Manager.
+
+1. Create a network interface for Ops Manager:
+    <pre class="terminal">
+    $ azure network nic create $RESOURCE_GROUP ops-manager-nic $LOCATION \ 
+    --subnet-vnet-name pcf-net --subnet-name pcf \
+    --network-security-group-name opsmgr-nsg \
+    --private-ip-address 10.0.0.5 --public-ip-name ops-manager-ip
+    </pre>
+
 1. Create a keypair on your local machine with the username `ubuntu`. For example, enter the following command:
    <pre class="terminal">
    $ ssh-keygen -t rsa -f opsman -C ubuntu
    </pre>
-1. Create a Terraform variables file called `terraform.tfvars` that has the following contents:
 
-	```
-	subscription_id = "SUBSCRIPTION_ID"
-	tenant_id = "TENANT_ID"
-	client_id = "CLIENT_ID"
-	client_secret = "CLIENT_SECRET"
-	ops_manager_image_uri = "https://opsmanagerciimagestorage.blob.core.windows.net/system/Microsoft.Compute/Images/images/opsmanager-osDisk.f2c46609-d468-4471-9c35-c94060baaa33.vhd"  # build 34, SHA cf8e3dbc
-	location = "LOCATION"
-	vm_admin_username  = "ubuntu"
-	vm_admin_password = "tempest"
-	vm_admin_public_key = "SSH_KEY_PUBLIC"
-	dns_suffix = "SUBDOMAIN_SUFFIX"
-	```	
-
-1. Replace the placeholder values in `terraform.tfvars` by performing the following steps:
-    * `TENANT_ID`: Use the `TENANT_ID` you created in [Preparing to Deploy PCF on Azure](azure-prepare-env.html).
-    * `CLIENT_ID`: Use the `CLIENT_ID` you created in [Preparing to Deploy PCF on Azure](azure-prepare-env.html).
-    * `CLIENT_SECRET`: Use the `CLIENT_SECRET` you created in [Preparing to Deploy PCF on Azure](azure-prepare-env.html).
-    * `LOCATION`. Enter your location. For example, `westus`.
-    * `SSH_KEY-PUBLIC`: Copy and paste the contents of the public key in the `opsmgr.pub` file you created in a previous step.
-    * `SUBDOMAIN_SUFFIX`: Enter the subdomain suffix for your PCF deployment under a domain you have registered. For instance, `azure.example.com`.
-
-1. Choose a name for your deployment and apply it to your Terraform variables file, replacing `RESOURCE_GROUP_NAME` with your deployment name. Terraform forms the full domain name from your deployment name and the subdomain suffix you provided above. For example, `my-deployment.azure.example.com`.
-	<pre class="terminal">$ terraform apply --var="env\_name=RESOURCE\_GROUP\_NAME" --var="env\_short\_name=RESOURCE\_GROUP\_NAME" -var-file=terraform.tfvars</pre>
-
-	When Terraform finishes provisioning resources, it outputs the following text:
-
+1. Create a VM against the Ops Manager image, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file:
     <pre class="terminal">
-    Outputs:
-
-    bosh_root_storage_account = my-deploymentstorageaccount
-    bosh_vms_premium_storage_account = my-deploymentompremium
-    env_dns_zone_name_servers = [
-        ns3-08.azure-dns.org.,
-        ns4-08.azure-dns.info.,
-        ns2-08.azure-dns.net.,
-        ns1-08.azure-dns.com.
-    ]
-    ops_manager_dns = pcf.my-deployment.azure.example.com
-    ops_manager_security_group_name = my-deployment-ops-manager-security-group
-    ops_manager_storage_account = my-deploymentopsmanager
-    pcf_resource_group_name = my-deployment-pcf-resource-group
-    pcf_subnet_address_prefix = 10.0.0.0/24
-    pcf_subnet_id = /subscriptions/333e1bbe-88de-22aa-b3w2-1a405ffb8243/resourceGroups/my-deployment-pcf-resource-group/providers/Microsoft.Network/virtualNetworks/my-deployment-virtual-network/subnets/my-deployment-subnet
-    pcf_subnet_name = my-deployment-subnet
-    pcf_virtual_network_name = my-deployment-virtual-network
+    $ azure vm create $RESOURCE\_GROUP ops-mananger-alpha2 $LOCATION \
+    Linux --nic-name ops-manager-nic \
+    --os-disk-vhd https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/os\_disk.vhd \
+    --image-urn https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image.vhd \
+    --admin-username ubuntu --storage-account-name $STORAGE\_NAME \
+    --vm-size Standard\_DS2_v2 --ssh-publickey-file PATH-TO-PUBLIC-KEY
     </pre>
 
-1. Copy and paste the Terraform output above into a text file for future reference. The text contains many important details that you need to configure Ops Manager.
-
-1. Access your DNS provider to create a NS record for the subdomain you specified as `SUBDOMAIN-SUFFIX` in a previous step. Point the subdomain to the nameservers listed under `env_dns_zone_name_servers` in the Terraform output. For example, create a NS record for `azure.example.com` with the following nameservers:
-
-    ```
-    ns3-08.azure-dns.org.
-    ns4-08.azure-dns.info.
-    ns2-08.azure-dns.net.
-    ns1-08.azure-dns.com.
-    ```
-
-##<a id="lb"></a> Step 2: Create a Load Balancer
-
-1. Navigate to the Azure portal.
-1. Click **Load balancers** in the left navigation bar.
-1. Click **Add**.
-    <br><%= image_tag('azure/create-lb.png') %>
-1. Create a load balancer by completing the following fields:
-	* **Name**: Enter a name for your load balancer.
-	* **Type**: Select **Public**.
-	* **Public IP address**: Click **Public IP address**, and select the existing public IP address that Terraform created, which ends in `-pcf-ip`. If you cannot see the address ending with `pcf-ip`, ensure that you have selected the correct **Location**.
-	* **Subscription**: Ensure that the correct Azure subscription is selected.
-	* **Resource group**: Select **Use existing** and enter the name of your PCF resource group. This is your deployment name, followed by `-pcf-resource-group`.
-	* **Location**: Enter the location for your load balancer.
-1. Click **Create**.
-1. Wait for Azure to create the load balancer. You may have to click **Refresh** to display the new load balancer.
-1. Click your newly created load balancer.
-1. Perform the following steps to add a probe:
-    1. Click **Probes** and then click **Add**.
-    <br><%= image_tag('azure/add-probe.png') %>
-    1. For **Name**, enter `tcp80`.
-    1. For **Protocol**, select **TCP**.
-    1. Modify the defaults for the remaining fields as desired.
-    1. Click **OK**.
-1. Perform the following steps to add a backend pool:
-    1. Click **Backend pools** and then click **Add**.
-    <br><%= image_tag('azure/add-backend.png') %>
-    1. For **Name**, enter `pcf`.
-    1. Click **OK**.
-1. Perform the following steps to add a load balancing rule for HTTP:
-    1. Click **Load balancing rules** and click **Add**.
-    <br><%= image_tag('azure/add-lb-rule.png') %>
-    1. For **Name**, enter `pcf-http`.
-    1. For **Protocol**, select **TCP**.
-    1. For **Port**, enter `80`.
-    1. For **Backend port**, enter `80`.
-    1. For **Backend pool**, select **pcf**.
-    1. For **Probe**, select **tcp80**.
-    1. Set your preferred **Session persistence** and **Idle timeout (minutes)**.
-    1. For **Floating IP**, select **Disabled**.
-    1. Click **OK**.
-1. Perform the following steps to add a load balancing rule for HTTPS:
-    1. Click **Load balancing rules** and click **Add**.
-    1. For **Name**, enter `pcf-https`.
-    1. For **Protocol**, select **TCP**.
-    1. For **Port**, enter `443`.
-    1. For **Backend port**, enter `443`.
-    1. For **Backend pool**, select **pcf**.
-    1. For **Probe**, select **tcp80**.
-    1. Set your preferred **Session persistence** and **Idle timeout (minutes)**.
-    1. For **Floating IP**, select **Disabled**.
-    1. Click **OK**.
-1. Perform the following steps to add a load balancing rule for SSH:
-    1. Click **Load balancing rules** and click **Add**.
-    1. For **Name**, enter `pcf-diego-ssh`.
-    1. For **Protocol**, select **TCP**.
-    1. For **Port**, enter `2222`.
-    1. For **Backend port**, enter `2222`.
-    1. For **Backend pool**, select **pcf**.
-    1. For **Probe**, select **tcp80**.
-    1. Set your preferred **Session persistence** and **Idle timeout (minutes)**.
-    1. For **Floating IP**, select **Disabled**.
-    1. Click **OK**.
-
-
+    The VM takes approximately ten minutes to boot. When the VM is running, continue to the [Configuring Ops Manager Director on Azure](azure-om-config.html) topic.

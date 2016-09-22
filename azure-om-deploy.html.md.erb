@@ -20,23 +20,28 @@ Before you perform the procedures in this topic, you must have completed the pro
     <pre class="terminal">
     $ export LOCATION=YOUR-LOCATION
     </pre>
-1. Create a network security group named `pcf-nsg` that only allows internal traffic and traffic from Azure load balancers:
+1. Create a network security group named `pcf-nsg`:
     <pre class="terminal">
     $ azure network nsg create $RESOURCE_GROUP pcf-nsg $LOCATION
     </pre> 
+1. Add a network security group rule to the `pcf-nsg` group to allow traffic from the public Internet:
+    <pre class="terminal">
+    $ azure network nsg rule create $RESOURCE_GROUP pcf-nsg internet-to-lb --protocol Tcp --priority 100 --destination-port-range '*'
+    </pre>
+    <p class="note"><strong>Note</strong>: Because the VMs do not have public IP addresses, this network security group rule only affects the load balancer.</p>
 1. Create a network security group named `opsmgr-nsg`:
     <pre class="terminal">
     $ azure network nsg create $RESOURCE_GROUP opsmgr-nsg $LOCATION
     </pre> 
-1. Add a network security rule to the `opsmgr-nsg` group that allow HTTP traffic to the Ops Manager VM:
+1. Add a network security group rule to the `opsmgr-nsg` group that allow HTTP traffic to the Ops Manager VM:
     <pre class="terminal">
     $ azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg http --protocol Tcp --destination-port-range 80 --priority 100
     </pre>
-1. Add a network security rule to the `opsmgr-nsg` group that allow HTTPS traffic to the Ops Manager VM:
+1. Add a network security group rule to the `opsmgr-nsg` group that allow HTTPS traffic to the Ops Manager VM:
     <pre class="terminal">
     azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg https --protocol Tcp --destination-port-range 443 --priority 200
     </pre>
-1. Add a network security rule to the `opsmgr-nsg` group that allow SSH traffic to the Ops Manager VM:
+1. Add a network security group rule to the `opsmgr-nsg` group that allow SSH traffic to the Ops Manager VM:
     <pre class="terminal">
     $ azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg ssh --protocol Tcp --destination-port-range 22 --priority 300
     </pre>
@@ -46,7 +51,7 @@ Before you perform the procedures in this topic, you must have completed the pro
     </pre>
 1. Add a subnet to the network for PCF VMs:
     <pre class="terminal">
-    azure network vnet subnet create $RESOURCE_GROUP pcf-net pcf --address-prefix 10.0.0.0/20 --network-security-group-name pcf-nsg
+    azure network vnet subnet create $RESOURCE_GROUP pcf-net pcf --address-prefix 10.0.0.0/20
     </pre>
 
 ##<a id='storage'></a> Step 2: Create a Storage Account
@@ -89,7 +94,7 @@ Before you perform the procedures in this topic, you must have completed the pro
     <pre class="terminal">
     $ azure network lb create $RESOURCE_GROUP pcf-lb $LOCATION
     </pre>
-1. Give the load balancer a static IP named `pcf-lb-ip`:
+1. Create a static IP for the load balancer named `pcf-lb-ip`:
     <pre class="terminal">
     $ azure network public-ip create $RESOURCE_GROUP pcf-lb-ip $LOCATION --allocation-method Static
     info:    Executing command network public-ip create
@@ -142,7 +147,7 @@ Before you perform the procedures in this topic, you must have completed the pro
 
 1. Copy the Ops Manager image into your storage account:
     <pre class="terminal">
-    $ azure storage blob copy start <span>https</span>://opsmanagerciimagestorage.blob.core.windows.net/system/Microsoft.Compute/Images/images/opsmanager-osDisk.3b3b2b2f-74a4-4115-956c-d19f33df17d8.vhd opsmanager \
+    $ azure storage blob copy start <span>https</span>://opsmanagerciimagestorage.blob.core.windows.net/system/Microsoft.Compute/Images/images/opsmanager-osDisk.0c6fd9d9-40c1-420c-8841-7e4ef0ca4961.vhd opsmanager \
     --dest-connection-string $AZURE\_STORAGE\_CONNECTION\_STRING \
     --dest-container opsmanager \
     --dest-blob image.vhd 

@@ -38,12 +38,18 @@ In addition to the prerequisites listed above, you must create a new network and
 
 ### <a id="firewall_rules"></a> Create Firewall Rules for the Network
 
-1. Create a firewall rule to allow all TCP traffic within the network. In the **Networking** pane, select **Firewall rules**, then **Create Firewall Rule**.
+1. In the **Networking** pane, select **Firewall rules**, then **Create Firewall Rule**.
+2. Create a firewall rule to allow all traffic within the subnetwork. 
 	* **Name**: Enter a name, such as `all-internal`
 	* **Network**: Select the network you created in the section above, [Create a GCP Network with Subnet](#create_network). 
-	* **Source filter**: Choose **Instance tags**, and then enter `pcf-vms`.
+	* **Source filter**: Choose **Subnetworks**, and then select the subnetwork you defined in the section above.
 	* **Allowed protocols and ports**: Enter `tcp:0-65535;udp:0-65535;icmp`. 
-	* **Target tags**: `pcf-vms`
+1. Create a firewall rule to allow `tcp:22;tcp:80;tcp:443;` traffic from any source to VMs tagged with `pcf-lb`.
+	* **Name**: Enter `pcf-opsmanager`. 
+	* **Network**: Select the network you created in the section above, [Create a GCP Network with Subnet](#create_network).
+	* **Source filter**: Choose `Allow from any source (0.0.0.0/0)`. 
+	* **Allowed protocols and ports**: Enter `tcp:22;tcp:80;tcp:443`.
+	* **Target tags**: Enter `pcf-opsmanager`. 
 1. Create a firewall rule to allow `tcp:80;tcp:443;tcp:2222;tcp:4443` traffic from any source to VMs tagged with `pcf-lb`.
 	* **Name**: Enter `pcf-lb`. 
 	* **Network**: Select the network you created in the section above, [Create a GCP Network with Subnet](#create_network).
@@ -166,17 +172,14 @@ To create a load balancer for HAProxy in GCP:
    * **Backup pool**: 
    * **Failover ratio**:
    * **Health check**: Select **Create a health check**. Then enter the following values:
-       1 **Name**: Enter a name, for example `pcf-public`.
-       1 **Request path**: `/v2/info`
-       1 **Check interval**: `30` seconds
-       1 **Timeout**: `5` seconds
-       1 **Healthy threshold**: `10` consecutive successes
-       1 **Unhealthy threshold**: `2` consecutive failures
-       1 Click **Save and continue**.
-   * **Session affinity**
-
-	<%= image_tag("gcp/lb_backend.png") %>
-
+        **Name**: Enter a name, for example `pcf-public`.
+       * **Request path**: `/v2/info`
+       * **Check interval**: `30` seconds
+       * **Timeout**: `5` seconds
+       * **Healthy threshold**: `10` consecutive successes
+       * **Unhealthy threshold**: `2` consecutive failures
+       * Click **Save and continue**.
+<%= image_tag("gcp/lb_backend.png") %>
 1. Select **Frontend configuration**, and add the first frontend IP and port entry as follows:
    * **Protocol**: TCP
    * **IP**: Perform the following steps:
@@ -233,8 +236,7 @@ This is optional and only required if you enable TCP routing in your deployment.
         * **Healthy threshold**: `10` consecutive successes
         * **Unhealthy threshold**: `2` consecutive failures
         * Click **Save and continue**.
-
-	    <%= image_tag("gcp/lb_backend.png") %>
+ <%= image_tag("gcp/lb_backend.png") %>
 
 1. Select **Frontend configuration**, and add the first frontend IP and port entry as follows:
    * **Protocol**: TCP

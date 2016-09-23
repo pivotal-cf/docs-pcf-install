@@ -12,6 +12,7 @@ Before you perform the procedures in this topic, you must have completed the pro
 ##<a id='network'></a> Step 1: Create Network Resources
 
 1. Navigate to the Azure portal, click **Resource groups**, and click **Add** to create a new resource group for your deployment. 
+1. Enter a **Resource group name**, select your **Subscription**, and select a **Resource group location**. Click **Create**.
 1. Export the name of your resource group as an environment variable:
     <pre class="terminal">
     $ export RESOURCE_GROUP=YOUR-RESOURCE-GROUP-NAME
@@ -20,6 +21,7 @@ Before you perform the procedures in this topic, you must have completed the pro
     <pre class="terminal">
     $ export LOCATION=YOUR-LOCATION
     </pre>
+    <p class="note"><strong>Note</strong>: For a list of available locations, run <code>azure location list</code>.</p>
 1. Create a network security group named `pcf-nsg`:
     <pre class="terminal">
     $ azure network nsg create $RESOURCE_GROUP pcf-nsg $LOCATION
@@ -56,7 +58,7 @@ Before you perform the procedures in this topic, you must have completed the pro
 
 ##<a id='storage'></a> Step 2: Create a Storage Account
 
-1. Choose the name for your storage account and export it as an environment variable:
+1. Choose the name for your storage account and export it as an environment variable. The name of the storage account is globally unique across Azure. It must be between 3 and 24 characters, and consist only of lowercase letters and numbers. 
     <pre class="terminal">
     $ export STORAGE_NAME=YOUR-STORAGE-ACCOUNT-NAME
     </pre>
@@ -64,7 +66,8 @@ Before you perform the procedures in this topic, you must have completed the pro
     <pre class="terminal">
     $ azure storage account create $STORAGE\_NAME --resource-group $RESOURCE\_GROUP --sku-name LRS --kind Storage --subscription SUBSCRIPTION\_ID --location $LOCATION
     </pre>
-    <p class="note"><strong>Note</strong>: The name of the storage account is globally unique across Azure, and the command fails if the name is already taken.</p>
+    <br>
+    If the command fails, ensure you have followed the rules for naming your storage account and re-export a new storage account name if necessary.
 1. Configure the Azure CLI for the storage account:
     <pre class="terminal">
     $ azure storage account connectionstring show $STORAGE\_NAME --resource-group $RESOURCE\_GROUP
@@ -73,7 +76,7 @@ Before you perform the procedures in this topic, you must have completed the pro
     data:    connectionstring: DefaultEndpointsProtocol=https;AccountName=example-storage;AccountKey=bb3eXE8eXXDAe2eS95TxH9F4KieeoijjbFzXEASFF30jC6OVehywh+rSrImIxRwLhV4bpprP8jZBdBOffF2aaZ==
     info:    storage account connectionstring show command OK
     </pre>
-1. Record the full value of `connectionstring` from the output above and export it as an environment variable:
+1. Record the full value of `connectionstring` from the output above, starting with and including `DefaultEndpointsProtocol`, and export it as an environment variable. 
     <pre class="terminal">
     $ export AZURE\_STORAGE\_CONNECTION\_STRING="YOUR-ACCOUNT-KEY-STRING"
     </pre>
@@ -128,6 +131,7 @@ Before you perform the procedures in this topic, you must have completed the pro
     <pre class="terminal">
     $ azure network lb address-pool create $RESOURCE_GROUP pcf-lb pcf-vms
     </pre>
+    <p class="note"><strong>Note</strong>: This backend pool is empty when you create it.</p>
 1. Add a load balancing rule for HTTP:
     <pre class="terminal">
     $ azure network lb rule create $RESOURCE_GROUP pcf-lb http --protocol tcp --frontend-port 80 --backend-port 80
@@ -140,14 +144,21 @@ Before you perform the procedures in this topic, you must have completed the pro
     <pre class="terminal">
     $ azure network lb rule create $RESOURCE_GROUP pcf-lb diego-ssh --protocol tcp --frontend-port 2222 --backend-port 2222
     </pre>
-1.  Navigate to your DNS provider and create an entry that points `*.YOUR-SUBDOMAIN` to the public IP address of your load balancer. For example, create an entry that points `azure.example.com` to <%= vars.example_ip_1 %>.
-    <p class="note"><strong>Note</strong>: To retrieve the IP address of your load balancer, navigate to the Azure portal, click <strong>All resources</strong>, and click the <strong>Public IP address</strong> resource that ends with <code>pcf-lb-ip</code>.</p>
+1.  Navigate to your DNS provider and create an entry that points `*.YOUR-SUBDOMAIN` to the public IP address of your load balancer that you recorded in a previous step. For example, create an entry that points `azure.example.com` to `<%= vars.example_ip_1 %>`.
+    <p class="note"><strong>Note</strong>: If you did not record the IP address of your load balancer earlier, you can retrieve it by navigating to the Azure portal, clicking <strong>All resources</strong>, and clicking the <strong>Public IP address</strong> resource that ends with <code>pcf-lb-ip</code>.</p>
  
 ##<a id='boot'></a> Step 4: Boot Ops Manager
 
+1. Navigate to [Pivotal Network](https://network.pivotal.io/products/ops-manager) and download the latest release of **Pivotal Cloud Foundry Ops Manager for Azure**.
+
+1. View the downloaded PDF and locate the Ops Manager image URL appropriate for your region.
+
+1. Export the Ops Manager image URL as an environment variable:
+    <pre class="terminal">$ export OPS\_MAN\_IMAGE URL="YOUR-OPS-MAN-IMAGE-URL"</pre>
+
 1. Copy the Ops Manager image into your storage account:
     <pre class="terminal">
-    $ azure storage blob copy start <span>https</span>://opsmanagerciimagestorage.blob.core.windows.net/system/Microsoft.Compute/Images/images/opsmanager-osDisk.0c6fd9d9-40c1-420c-8841-7e4ef0ca4961.vhd opsmanager \
+    $ azure storage blob copy start $OPS\_MAN\_IMAGE\_URL opsmanager \
     --dest-connection-string $AZURE\_STORAGE\_CONNECTION\_STRING \
     --dest-container opsmanager \
     --dest-blob image.vhd 
@@ -210,4 +221,15 @@ Before you perform the procedures in this topic, you must have completed the pro
     --vm-size Standard\_DS2_v2 --ssh-publickey-file PATH-TO-PUBLIC-KEY
     </pre>
 
-    The VM takes approximately ten minutes to boot. When the VM is running, continue to the [Configuring Ops Manager Director on Azure](azure-om-config.html) topic.
+1. The VM may take several minutes to boot. Check on the status of the VM by running the following command and examining the output under `PowerState`:
+    <pre class="terminal">
+    $ azure vm list
+    info:    Executing command vm list
+    <span>+</span> Getting virtual machines
+    data:    ResourceGroupName  Name                 ProvisioningState  PowerState  Location  Size
+    data:    -----------------  -------------------  -----------------  ----------  --------  ---------------
+    data:    PCF                ops-mananger-alpha2  Succeeded          VM running  westus    Standard\_DS2\_v2
+    info:    vm list command OK
+    </pre>
+
+    When `PowerState` reads `VM running`, continue to the [Configuring Ops Manager Director on Azure](azure-om-config.html) topic.

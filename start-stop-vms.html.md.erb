@@ -5,15 +5,33 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-This topic describes starting and stopping the component virtual machines (VMs) that make
-up a [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF)
- deployment. This procedure uses the BOSH Command Line Interface (CLI). See [Prepare to Use the BOSH CLI](./trouble-advanced.html#prepare) for help setting up this tool.
+This topic describes starting and stopping the component virtual machines (VMs) that make up a [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) deployment. You may in some cases want to stop or start all of your PCF VMs, for instance to power down your deployment or to recover from a power outage. You can do this with a single command, or you can perform the process manually. If you want to shut down a single VM in your deployment, you can use the manual process described on this page. 
+
+This procedure uses the BOSH Command Line Interface (CLI). See [Prepare to Use the BOSH CLI](./trouble-advanced.html#prepare) for help setting up this tool.
+
+## <a id='stop'></a>Stop Your PCF VMs
+
+To gracefully shut down all of the VMs in your deployment, run the following command: 
+
+<pre class="terminal">
+$ bosh -d PATH-TO-CF-DEPLOYMENT stop --hard
+</pre>
+
+## <a id='start'></a>Start Your PCF VMs
+
+To recreate all of the VMs in your deployment, run the following command: 
+
+<pre class="terminal">
+$ bosh -d PATH-TO-CF-DEPLOYMENT start
+</pre>
+
+## <a id='manual'></a>Start and Stop Your PCF VMs Manually
 
 Dependencies between the components in your PCF deployment require that you
 start and stop the VMs for those components in a specific order.
 These orders are specified below in the [start order](#start) and [stop order](#stop) tables.
 
-## <a id='get-names'></a>Finding the Names for Your PCF Virtual Machines ##
+### <a id='get-names'></a>Finding the Names for Your PCF Virtual Machines ##
 
 You need the full names for the VMs to [start](#start) or [stop](#stop) them using the BOSH CLI. To find full names for the VMs running each component, run `bosh vms`:
 
@@ -64,7 +82,7 @@ You can see the full name of each VM in the `Job/index` column of the terminal o
 
 For any component, you can look for its prefix in the `bosh vms` output to find the full name of the VM or VMs that run it. In the example shown here, the full name of one of the three Diego Cell VMs is `diego_cell-partition-458f9d7042365ff810e9/2`.
 
-## <a id='start'></a>Starting PCF Virtual Machines ##
+### <a id='start'></a>Starting PCF Virtual Machines ##
 
 In the order specified in the [Start Order table](#start-order) below, run `bosh start VM-NAME` for each component in your PCF deployment. Use the full name of the component VM as listed in your `bosh vms` [terminal output](#term-bosh-vms), without the `/INDEX` at the end. In the example here, the first component you would start is the NATS VM, by running `bosh start nats-partition-458f9d7042365ff810e9`:
 
@@ -206,7 +224,7 @@ nats-partition-458f9d7042365ff810e9/0 has been started
   </tr>
 </table>
 
-## <a id='stop'></a>Stopping PCF Virtual Machines ##
+### <a id='stop'></a>Stopping PCF Virtual Machines ##
 
 In the order specified in the [Stop Order table](#stop-order) below, run `bosh stop VM-NAME` for each component in your PCF deployment. Use the full name of the component VM as listed in your `bosh vms` [terminal output](#term-bosh-vms), without the `/INDEX` at the end. In the example here, the first component you would stop is the Loggregator Traffic Controller VM, by running `bosh stop loggregator_trafficcontroller-partition-458f9d7042365ff810e9`:
 

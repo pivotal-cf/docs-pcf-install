@@ -7,7 +7,7 @@ owner: Ops Manager
 
 This topic describes how to troubleshoot known issues when deploying Pivotal Cloud Foundry (PCF) on Azure.
 
-<a id="troubleshoot"></a> Troubleshoot Installation Issues
+<a id="troubleshoot"></a> ## Troubleshoot Installation Issues
 
 #### Symptom
 
@@ -27,3 +27,28 @@ Upgrade your Azure CLI to the current version by reinstalling the new version. R
 
 <hr>
 
+#### Symptom
+
+After clicking **Apply Changes** to install Ops Manager and Elastic Runtime, the deployment fails at `bosh-init` with an error message similar to the following:
+
+```
+Command 'deploy' failed:
+  Deploying:
+    Creating instance 'bosh/0':
+      Waiting until instance is ready:
+        Starting SSH tunnel:
+          Parsing private key file '/tmp/bosh_ec2_private_key.pem':
+            asn1: structure error: tags don't match (16 vs {class:3 tag:28 length:127 isCompound:false}) {optional:false explicit:false application:false defaultValue:<nil> tag:<nil> stringType:0 timeType:0 set:false omitEmpty:false} pkcs1PrivateKey @2
+===== 2016-09-29 16:28:22 UTC Finished "bosh-init deploy /var/tempest/workspaces/default/deployments/bosh.yml"; Duration: 328s; Exit Status: 1
+Exited with 1. 
+```
+
+#### Explanation
+
+You provided a passphrase when creating your key pair in the [Step 4: Boot Ops Manager
+](azure-om-deploying.html#boot) section of the [Launching an Ops Manager Director Instance on Azure](azure-om-deploy.html) topic.
+
+#### Solution
+
+Create a new key pair with no passphrase and redo the installation, beginning with the step for creating a VM against the Ops Manager image in the [Step 4: Boot Ops Manager
+](azure-om-deploying.html#boot) section of the [Launching an Ops Manager Director Instance on Azure](azure-om-deploy.html) topic.

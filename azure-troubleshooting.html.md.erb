@@ -11,6 +11,42 @@ This topic describes how to troubleshoot known issues when deploying Pivotal Clo
 
 #### Symptom
 
+Developers suffer from slow performance or timeouts when pushing or managing apps, and end users suffer from slow performance or timeouts when accessing apps
+
+#### Explanation
+
+The Azure Load Balancer (ALB) disconnects active TCP connections lying idle for over four minutes.
+
+#### Solution
+
+Because HAProxy sits between the ALB and the router, you can resolve the problem by setting the HAProxy timeout value to be greater than the timeout value of the ALB. Perform the following steps:
+
+1. Target your BOSH Director by following the steps in the [Log into BOSH](trouble-advanced.html#log-in) section of the Advanced Troubleshooting with the BOSH CLI topic.
+1. If necessary, download your PCF manifest: 
+	<pre class="terminal">
+	$ bosh download manifest DEPLOYMENT-NAME
+	</pre>
+	If you do not know your deployment name, run `bosh deployments` to display a list of available deployments.
+1. Set your current deployment to your PCF manifest:
+	<pre class="terminal">
+	$ bosh deployment PATH-TO-PCF-MANIFEST
+	</pre>
+1. Edit your deployment:
+	<pre class="terminal">
+	$ bosh edit deployment
+	</pre>
+1. Locate the `haproxy` section and add the following property:
+	`request_timeout_in_seconds: 180`
+1. Save and exit the edited manifest.
+1. Redeploy:
+	<pre class="terminal">
+	$ bosh deploy
+	</pre>
+
+<hr>
+
+#### Symptom
+
 Cannot copy the Ops Manager image into your storage account when completing [Step 4: Boot Ops Manager](azure-om-deploy.html#boot) of the [Launching an Ops Manager Director Instance on Azure](azure-om-deploy.html) topic
 
 #### Explanation

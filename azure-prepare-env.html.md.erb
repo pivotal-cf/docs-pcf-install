@@ -11,7 +11,7 @@ After you complete this procedure, follow the instructions in the [Launching an 
 
 ##<a id="install"></a> Step 1: Install and Configure the Azure CLI
 
-<p class="note"><strong>Note</strong>: This topic assumes you are using the Azure CLI version 0.9.18 or greater. If you have an earlier version of the Azure CLI installed, run <code>npm update -g azure-cli</code> or follow the procedure below to install the new version of the CLI.</p>
+<p class="note"><strong>Note</strong>: This topic assumes you are using the Azure CLI version 0.10.5 or greater. If you have an earlier version of the Azure CLI installed, run <code>npm update -g azure-cli</code> or follow the procedure below to install the new version of the CLI.</p>
 
 1. Follow the instructions for your Operating System to install the Azure CLI: 
     * **Mac OS X**: Download and run the [Mac OS X](http://aka.ms/mac-azure-cli) installer.
@@ -26,11 +26,13 @@ After you complete this procedure, follow the instructions in the [Launching an 
     $ azure config mode arm
     </pre>
 
-1. Log in to your Azure account, entering your credentials when prompted. Replace `YOUR-ENVIRONMENT` with the environment you want to authenticate against, such as `AzureCloud` or `AzureChinaCloud`.
+1. Log in to your Azure account:
 
     <pre class="terminal">
     $ azure login --environment YOUR-ENVIRONMENT
     </pre>
+
+    <p class="note"><strong>Note</strong>: If you want to target the Azure China environment, replace <code>YOUR-ENVIRONMENT</code> with <code>AzureChinaCloud</code>.</p>
 
     <p class="note"><strong>Note</strong>: If you fail to log in to <code>AzureChinaCloud</code> with a <code>CERT_UNTRUSTED</code> error, use the latest version of node (4.x) to resolve the <a href="https://github.com/Azure/azure-xplat-cli/issues/2725">issue</a>.</p>
 
@@ -90,7 +92,7 @@ After you complete this procedure, follow the instructions in the [Launching an 
     <p class="note"><strong>Note</strong>: You can provide any string for the <code>home-page</code> and <code>identifier-urls</code> flags. Pivotal recommends using <code><span>http:</span>//BOSHAzureCPI</code>, as above.
     </p>
 
-1. Record the value of **AppId** from the output. This is your `CLIENT_ID` for creating a service principal. 
+1. Record the value of **AppId** from the output. This is your `APPLICATION_ID` for creating a service principal. 
     <pre class="terminal">
     info:    Executing command ad app create
     <span>+</span> Creating application Service Principal for BOSH
@@ -105,10 +107,10 @@ After you complete this procedure, follow the instructions in the [Launching an 
 
 ##<a id="create-configure"></a> Step 4: Create and Configure a Service Principal 
 
-1. To create a service principal, run `azure ad sp create YOUR-CLIENT-ID`, replacing `YOUR-CLIENT-ID` with the `CLIENT_ID` you recorded in the [previous step](#create-aad):
+1. To create a service principal, run `azure ad sp create --applicationId YOUR-APPLICATION-ID`, replacing `YOUR-APPLICATION-ID` with the `APPLICATION_ID` you recorded in the [previous step](#create-aad):
 
     <pre class="terminal">
-    $ azure ad sp create YOUR-CLIENT-ID
+    $ azure ad sp create --applicationId YOUR-APPLICATION-ID
     info:    Executing command ad sp create
     <span>+</span> Creating service principal for application YOUR-CLIENT-ID
     data:    Object Id:               fcf68d7a-262b-42c4-8ef8-6a4856611155
@@ -120,7 +122,7 @@ After you complete this procedure, follow the instructions in the [Launching an 
     </pre>
 
 1. You must have the Contributor role on your service principal to deploy PCF. Run the following commands to assign this role:
-    * For **SERVICE-PRINCIPAL-NAME**: Use any value of **Service Principal Names** from the output above, such as `YOUR-CLIENT-ID`.
+    * For **SERVICE-PRINCIPAL-NAME**: Use any value of **Service Principal Names** from the output above, such as `YOUR-APPLICATION-ID`.
     * For **SUBSCRIPTION-ID**: Use the ID of the default subscription that you recorded in [Step 2](#default-subscription).
 
     <pre class="terminal">
@@ -148,11 +150,11 @@ $ azure role assignment list --spn SERVICE-PRINCIPAL-NAME
     info:    role assignment list command OK
     </pre>
 
-##<a name="verify-your-service-principal"></a> Step 5: Verify Your Service Principal
+##<a id="verify-your-service-principal"></a> Step 5: Verify Your Service Principal
 
-To verify your service principal, log in to your service principal with your `CLIENT_ID`, `CLIENT_SECRET`, and `TENANT_ID`. Replace `YOUR-ENVIRONMENT` with the environment you want to authenticate against, such as `AzureCloud` or `AzureChinaCloud`.
+To verify your service principal, log in to your service principal with your `APPLICATION_ID`, `CLIENT_SECRET`, and `TENANT_ID`. Replace `YOUR-ENVIRONMENT` with `AzureCloud` or `AzureChinaCloud`.
 <pre class="terminal">
-$ azure login --username CLIENT\_ID --password CLIENT\_SECRET --service-principal --tenant TENANT\_ID --environment YOUR-ENVIRONMENT
+$ azure login --username APPLICATION\_ID --password CLIENT\_SECRET --service-principal --tenant TENANT\_ID --environment YOUR-ENVIRONMENT
 info:    Executing command login
 -info:    Added subscription Example
 <span>+</span>

@@ -154,15 +154,44 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
     my-project-id    my-project-name      ##############
     </pre>
 
+
+
+
 ## <a id="create_loadbalancers"></a> Create Load Balancers in GCP ##
 
-You need at least one and as many as two load balancers to operate PCF on GCP:
+You need at least two and as many as three load balancers to operate PCF on GCP, as follows:
 
-* Load balancer for HAProxy, which supports both Gorouter and SSH proxy jobs
-* Load balancer for TCP Router, which is optional and only necessary if you want to enable TCP routing feature
+  * One load balancer for SSH proxy jobs using TCP `PORT 2222`
+  * One load balancer for HTTP(S) load balancing using `PORT 80` and `PORT 8080`
+  * An optional load balancer for TCP routing
+
+### <a id="ssh_lb"></a> Create the SSH Proxy Load Balancer ###
+The load balancer for SSH proxy jobs in GCP operates on port TCP `2222`, but does not have a health check. To create the SSH load balancer:
+
+1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
+
+1. Under **TCP Load Balancing**, click **Start configuration**.
+
+  <%= image_tag("gcp/lb-configure.png") %>
+
+1. Under **Internet facing or internal only**, select **From Internet to my VMs**.
+
+1. Under **Connection termination**, select **No (TCP)**. 
+
+  <%= image_tag("gcp/tcp_lb_configure.png") %>
+
+1. Click **Continue**. 
+
+<hr>
+working line
+<hr>
+### <a id="http_https_lb"></a> Create the HTTP/HTTPS Load Balancer ###
+
+<hr>
+bottom working line
+<hr>
 
 ### <a id="haproxy_lb"></a> Create the Load Balancer for HAProxy ###
-
 To create a load balancer for HAProxy in GCP:
 
 1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
@@ -220,7 +249,7 @@ To create a load balancer for HAProxy in GCP:
 
 1. Click **Create**.
 
-### <a id="tcprouter_lb"></a> Create the Load Balancer for TCP Router
+### <a id="tcprouter_lb"></a>(Optional) Create the Load Balancer for TCP Router
 
 This is optional and only required if you enable TCP routing in your deployment. To create a load balancer for TCP Router in GCP:
 

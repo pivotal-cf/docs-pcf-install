@@ -158,15 +158,20 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
 
 You need at least two and as many as three load balancers to operate PCF on GCP, as follows:
 
-  * One load balancer for SSH proxy jobs using TCP `PORT 2222`
-  * One load balancer for HTTP(S) load balancing using `PORT 80` and `PORT 8080`
-  * An optional load balancer for TCP routing
+  * [SSH Load Balancer](#ssh_lb): For SSH proxy jobs using TCP `PORT 2222`
+  * [HTTP(S) Load Balancer](#http_https_lb): For HTTP(S) load balancing using `PORT 80` and `PORT 8080`
+  * [TCP Router](#tcprouter_lb): Optionally, for TCP routing
+
+The steps required to set up each load balancer are described below.
 
 ### <a id="ssh_lb"></a> Create the SSH Proxy Load Balancer and Instance Group ###
-The load balancer for SSH proxy jobs in GCP operates on port TCP `2222`, but does not have a health check. To create the SSH load balancer you need an **Instance Group** for load balancer configuration. Create the instance group, if you do not already have one, and then create the load balancer.
+The load balancer for SSH proxy jobs for PCF on GCP operates on port TCP `2222`, but does not have a health check. To configure a SSH load balancing for PCF on GCP you need to follow two steps:
+
+  * Create an [**Instance Group**](#instance_group) for load balancer configuration to the GCP **Backend service**. 
+  * Create an [SSH Proxy Load Balancer](#create_ssh_lb) for SSH proxy jobs.
 
 #### <a id="instance_group"></a> Create **Instance Group**
-You need an **Instance Group** to associate with any load balancer you create.
+You need an **Instance Group** to associate with the load balancer you create.
 <p class="note"><strong>Note</strong>: You need one Google <strong>Instance Group</strong> for each Availability Zone you plan to support. All <strong>Instance Groups</strong> must connect to the Google <strong>Backend Service</strong> to configure your load balancer, described below.</p>
 
 1. From the GCP Console, select **Compute Engine** and click **Create Instance Group**.
@@ -177,9 +182,13 @@ You need an **Instance Group** to associate with any load balancer you create.
 
 1. Choose **Single-zone** in the **Location** section.
 
+1. Select the matching zone from the **Zone** drop-down menu for the [network](#create_network) you created above.
+
 1. Under **Creation method**, choose **Select existing instance** and select `opsmgr` from the **Network** drop down. You previously created the `opsmgr` network in the [Create a GCP Network with Subnet](#create_network) step above.
 
 1. Click **Create**.
+
+Your Google **Instance Group** for PCF on GCP is set up properly.
 
 #### <a class="create_ssh_lb"></a> Create **SSH Proxy Load Balancer**
 
@@ -217,28 +226,30 @@ You need an **Instance Group** to associate with any load balancer you create.
 
 1. Click **Create**.
 
+Your SSH Proxy load balancer is set up properly for PCF on GCP.
+
 ### <a id="http_https_lb"></a> Create the HTTP(S) Load Balancer ###
 
 To create a load balancer for HTTP(S) in GCP:
 
 1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
 
-1. Under **TCP Load Balancing**, click **Start configuration**.
+1. Under **HTTP(S) Load Balancing**, click **Start configuration**.
   <%= image_tag("gcp/http_lb_configure.png") %>
 
 1. In the **New HTTP(S) load balancer** window, enter `pcf-router` in the **Name** field.
   <%= image_tag "gcp/http_lb_name.png" %>
 
-1. Click **Backend configuration** to configure the **Backend service**.
+1. Click **Backend configuration** to configure the **Backend service**. In the **Create or select a backend service** drop-down menu, choose **Create a backend service** to open the **Backend service** window.
 
-1. In the **Create or select a backend service** drop-down menu, choose **Create a backend service** to open the **Backend service** window.
+1. Fill in the name for your **Backend service** in the **Name** field. For HTTP termination, leave **Protocol** set to **HTTP**. If you have the SSL certificates required for HTTPS termination, click the **pencil icon** and configure HTTPS termination.
+<p class="note"><strong>Note</strong>: You will need to return to this setting when you have your SSL certificate to enable HTTPS load balancer termination. You can use Ops Manager to create self-signed certificates and return to this setting to enable HTTPS.</p>
+  <%= image_tag "gcp/backend_service_name.png" %>
 
-1. Fill in the name for your **Backend service** in the **Name** field.
-
-1. In the **Backends** section, from the **Instance Group** drop-down menu, choose the [Instance Group](#instance_group) you created above. 
+1. In the **Backends** section, from the **Instance Group** drop-down menu, choose the [Instance Group](#instance_group) you created above, or create one and select it. 
   <%= image_tag "gcp/backend_service_config.png" %>
 
-1. Click the pencil icon in the top right corner of the **Instances Group** window to apply changes. The window will collapse.
+1. Click the **pencil icon** in the top right corner of the **Instances Group** window to apply changes. The window will collapse.
   <%= image_tag "gcp/backend_window_collapse.png" %>
 
 1. From the **Health check** drop-down menu, click to **Create a Health Check** and enter the following field values:
@@ -251,60 +262,22 @@ To create a load balancer for HTTP(S) in GCP:
    * **Timeout**: `5` seconds
    * **Healthy threshold**: `10` consecutive successes
    * **Unhealthy threshold**: `2` consecutive failures
-   * Click **Save and continue**.
   <%= image_tag "gcp/create_health_check.png" %>
+   * Click **Save and continue**. 
+   The **Backend configuration** section shows a green check mark.
 
-<hr>
-TK BELOW WORKING LINE
-<hr>
-1. On the **New TCP load balancer** screen, enter a unique name for the load balancer in the **Name** field.
-
-1. Select **Backend configuration**, and enter the following field values:
-   * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
-   * **Backup pool**: 
-   * **Failover ratio**:
-   * **Health check**: Select **Create a health check**. Then enter the following values:
-       * **Name**: Enter a name, for example `pcf-public`.
-       * **Request path**: `/v2/info`
-       * **Check interval**: `30` seconds
-       * **Timeout**: `5` seconds
-       * **Healthy threshold**: `10` consecutive successes
-       * **Unhealthy threshold**: `2` consecutive failures
-       * Click **Save and continue**.
-<%= image_tag("gcp/lb_backend.png") %>
-1. Select **Frontend configuration**, and add the first frontend IP and port entry as follows:
-   * **Protocol**: TCP
-   * **IP**: Perform the following steps:
-       1. Select **Create IP address**. 
-       1. Enter a **Name** for the new static IP address and an optional description.
-       1. Click **Reserve**.
-   * **Port**: 80
-
-1. Click **+Add frontend IP and port** to add a second frontend IP and port. Enter the values for the fields as follows:
-   * **Protocol**: TCP
-   * **IP**: Select the IP address you created in the previous step.
-   * **Port**: 443
-
-1. Click **+Add frontend IP and port** to add a third frontend IP and port. Enter the values for the fields as follows:
-   * **Protocol**: TCP
-   * **IP**: Select the IP address you created in the previous step.
-   * **Port**: 2222
-
-
-1. Click **+Add frontend IP and port** to add a third frontend IP and port. Enter the values for the fields as follows:
-   * **Protocol**: TCP
-   * **IP**: Select the IP address you created in the previous step.
-   * **Port**: 4443
-
-	<%= image_tag("gcp/lb_frontend.png") %>
+1. Click **Host and path rules** to populate the default fields and a green check mark.
 
 1. Click **Review and finalize** to verify your configuration.
+  <%= image_tag "gcp/http_lb_finalize.png" %>
 
 1. Click **Create**.
 
+Your HTTP load balancer is set up properly for PCF on GCP. You may need to return to these settings to enable HTTPS.
+
 ### <a id="tcprouter_lb"></a>(Optional) Create the Load Balancer for TCP Router
 
-This is optional and only required if you enable TCP routing in your deployment. To create a load balancer for TCP Router in GCP:
+This step is optional and only required if you enable TCP routing in your deployment. To create a load balancer for TCP Router in GCP:
 
 1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
 

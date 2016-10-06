@@ -42,15 +42,23 @@ Dashboard.
   <p class="note"><strong>Note</strong>: When you save this form, a verification error displays because the PCF security group blocks ICMP. You can ignore this error.</p>
     <%= image_tag("pcfaws/er-network-error.png") %>
 
-## <a id='cname'></a> Step 3: Add DNS Records for Your Custom Domain ##
+## <a id='cname'></a> Step 3: Add DNS Records for Your Load Balancer ##
 
-In this step you redirect all wildcard queries for your domain to the IP address of your HAProxy load balancer.
+In this step you redirect queries for your domain to the IP addresses of your load balancers.
 
-1. Find the IP address of your load balancer. See the [Create Load Balancers in GCP](./gcp-prepare-env.html#create_loadbalancers) section of the _Preparing to Deploy PCF on GCP_ topic for the step where you assign the IP address to your HAProxy load balancer.
+1. Locate the IP addresses of the load balancers you created in [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html):
+    * The HTTPS load balancer named `pcf-router`.
+    * The TCP load balancer named `pcf-ssh`.
+    * The TCP websockets load balancer named `pcf-websockets`.
+
+<p class="note">You can locate the IP address of each load balancer by clicking its name under <strong>Networks > Load Balancing</strong> in the GCP Console.</p>
 
 1. Log in to the DNS registrar that hosts your domain. Examples of DNS registrars include Network Solutions, GoDaddy, and Register.com.
 
-1. Create an A record with your DNS registrar that points `*.EXAMPLE.com` to the IP address of your HAProxy load balancer. Replace EXAMPLE.com with a domain for which you have administrative rights. Alternately, if you are using different subdomains for your apps and system, set up A records for `*.APPSDOMAIN.EXAMPLE.com` and `*.SYSTEMDOMAIN.EXAMPLE.com`. Use the same system and apps domain names that you configure in the next configuration step, [Configure Domains](#er-domain-config).
+1. Create records with your DNS registrar that maps your domain names to the IP addresses of the load balancer located above:
+    * `*.YOURDOMAIN` maps to the IP address of `pcf-router`
+    * `ssh.YOURDOMAIN` maps to the IP address of `pcf-ssh`.
+    * `doppler.YOURDOMAIN` maps to the IP address of `pcf-websockets`
 
 1. Save changes within the web interface of your DNS registrar.
 

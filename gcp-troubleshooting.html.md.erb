@@ -37,3 +37,31 @@ In compressed format, the ERT tile is 5GB. However, when uncompressed during ins
 Ensure that the boot disk is allocated at least 50GB of memory. See [Step 3: Create the Ops Manager VM Instance](./gcp-om-deploy.html#start-vm) for more information.
 
 <hr>
+
+#### Symptom
+
+Deploying Diego for Windows as described in [this procedure](../opsguide/deploying-diego.html) fails with a `PSSecurity Unauthorized Access` error.
+
+For example:
+<pre class="terminal">
+.\setup.ps1 : File C:\Users\username\Downloads\DiegoWindows-1.8.0\DiegoWindows\setup.ps1 cannot be loaded. The file C:\Users\username\Downloads\DiegoWindows-1.8.0\DiegoWindows\setup.ps1 is not digitally signed. You cannot run this script on the current system. For more information about running scripts and setting execution policy, see about_Execution_Policies at http://go.microsoft.com/fwlink/?LinkID=135170.
+At line:1 char:1
++ .\setup.ps1
++ ~~~~~~~~~~~
+    + CategoryInfo          : SecurityError: (:) [], PSSecurityException
+    + FullyQualifiedErrorId : UnauthorizedAccess
+</pre>
+
+#### Explanation
+
+On GCP, deploying Diego for Windows requires elevated PowerShell privileges.    
+
+#### Solution
+
+As a workaround, execute the following cmdlet before running the `setup.ps1` script:
+
+```
+Set-ExecutionPolicy Unrestricted
+``` 
+
+For more information on this cmdlet, see [Using the Set-ExecutionPolicy Cmdlet](https://technet.microsoft.com/en-us/library/ee176961.aspx).

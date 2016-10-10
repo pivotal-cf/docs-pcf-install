@@ -1,0 +1,71 @@
+---
+title: Troubleshooting PCF on GCP
+owner: Ops Manager
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes how to troubleshoot known issues when deploying Pivotal Cloud Foundry (PCF) on GCP.
+
+<a id="troubleshoot"></a> 
+## Troubleshoot Installation Issues
+
+#### Symptom
+
+Problems when attempting to connect with Single Sign-On (SSO).
+
+#### Explanation
+
+SSO does not support multi-subnets.
+
+#### Solution
+
+Ensure that you have configured only one multi-subnet. See [Preparing the GCP Environment for Deployment](./gcp-prepare-env.html#deploy_prepare) for more information.
+
+<hr>
+
+#### Symptom
+
+Uploading the ERT tile causes the Ops Manager Rails application to crash.
+
+#### Explanation
+
+In compressed format, the ERT tile is 5GB. However, when uncompressed during installation, the ERT tile requires additional memory that can exhaust the memory allocated to the boot disk.
+
+#### Solution
+
+Ensure that the boot disk is allocated at least 50GB of memory. See [Step 3: Create the Ops Manager VM Instance](./gcp-om-deploy.html#start-vm) for more information.
+
+<hr>
+
+#### Symptom
+
+Deploying Diego for Windows as described in [this procedure](../opsguide/deploying-diego.html) fails with a `PSSecurity Unauthorized Access` error.
+
+For example:
+<pre class="terminal">
+.\setup.ps1 : File C:\Users\username\Downloads\DiegoWindows\setup.ps1 
+cannot be loaded. The file C:\Users\username\Downloads\DiegoWindows\setup.ps1 
+is not digitally signed. You cannot run this script on the current system. 
+For more information about running scripts and setting execution policy, see 
+about\_Execution\_Policies at http<span>:</span>//go.microsoft.com/fwlink/?LinkID=135170.
+At line:1 char:1
++ .\setup.ps1
++ ~~~~~~~~~~~
+    + CategoryInfo          : SecurityError: (:) [], PSSecurityException
+    + FullyQualifiedErrorId : UnauthorizedAccess
+</pre>
+
+#### Explanation
+
+On GCP, deploying Diego for Windows requires elevated PowerShell privileges.    
+
+#### Solution
+
+As a workaround, execute the following cmdlet before running the `setup.ps1` script:
+
+<pre class="terminal">
+Set-ExecutionPolicy Unrestricted
+</pre>
+
+For more information on this cmdlet, see [Using the Set-ExecutionPolicy Cmdlet](https://technet.microsoft.com/en-us/library/ee176961.aspx).

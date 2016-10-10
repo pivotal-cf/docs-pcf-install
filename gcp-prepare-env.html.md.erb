@@ -1,0 +1,359 @@
+---
+title: Preparing to Deploy PCF on GCP
+owner: Ops Manager
+---
+
+<strong><%= modified_date %></strong>
+
+This guide describes the preparation steps required to install [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Google Cloud Platform (GCP).
+
+## <a id="prereqs"></a> Prerequisites ##
+
+You must have the following to install PCF on GCP:
+
+* A GCP account and project with sufficient quota to deploy all the VMs needed for a PCF installation. You can request a quota increase on the [GCP Quotas page](https://console.cloud.google.com/compute/quotas).
+* The [Google Cloud SDK](https://cloud.google.com/sdk/) installed on your machine and authenticated to your GCP account.
+* Sufficiently high instance limits (or no instance limits) on your GCP account. Installing PCF requires at least 10 concurrent instances for testing or development deployments and typically at least 30 for production deployments. The exact number of instances depends on the number of tiles and availability zones you plan to deploy. A minimal single-AZ GCP deployment requires the following 20 `custom` VMs:
+<table border='1' class='nice'>
+<tr><th>VM Count</th><th>Machine type</th><th>Memory (in GB)</th> </tr>
+<tr><td>11</td><td>1vCPU</td><td>1.00</td></tr>
+<tr><td>1</td><td>1vCPU</td><td>6.00</td></tr>
+<tr><td>2</td><td>1vCPU</td><td>2.00</td></tr>
+<tr><td>2</td><td>2vCPU</td><td>4.00</td></tr>
+<tr><td>1</td><td>2vCPU</td><td>8.00</td></tr>
+<tr><td>3</td><td>4vCPU</td><td>16.00</td></tr>
+</table>
+
+* Administrative rights to a domain for your PCF installation. You need to be able to add wildcard records to this domain. You specify this registered domain when configuring the SSL certificate and Cloud Controller for your deployment. For more information see the [Providing a Certificate for your SSL Termination Point](../opsguide/security_config.html) topic. </td>
+* You need an SSL certificate for your PCF domain. This can be a self-signed certificate, which Ops Manager can generate for you, but Pivotal recommends using a self-signed certificate for development and testing purposes only. If you plan to deploy PCF into a production environment, you must obtain a certificate from your Certificate Authority. 
+
+## <a id="deploy_prepare"></a> Preparing the GCP Environment for Deployment
+
+In addition to the prerequisites listed above, you must create a new network and service account in GCP before deploying PCF. Follow these procedures to prepare your GCP environment. 
+
+### <a id="create_network"></a> Create a GCP Network with Subnet
+
+1. Log in to the GCP Console at [https://console.cloud.google.com](https://console.cloud.google.com/).
+ 
+1. In the console, navigate to the GCP project where you want to install PCF. 
+
+1. Select **Networking**, then **Create Network**. 
+	1. Enter a name and descrption for your network. 
+	1. Under **Subnetworks**, select **Custom** and specify a name, region, and address range.
+
+	Make sure you select a region with enough zones to support the availability zone needs of your deployment. For help selecting the correct region for your deployment, see the [Google documentation on regions and zones](https://cloud.google.com/compute/docs/regions-zones/regions-zones). 
+
+	<%= image_tag("gcp/gcp-network-create.png") %>
+  <p class="note"><strong>Note</strong>: To use the <a href="http://docs.pivotal.io/p-identity/index.html">Single Sign-On for PCF</a> service, you must configure a network with only one subnet.</p>
+1. Click **Create**.
+
+### <a id="firewall_rules"></a> Create Firewall Rules for the Network
+
+1. In the **Networking** pane, select **Firewall rules**, then **Create Firewall Rule**.
+2. Create a firewall rule to allow all traffic within the subnetwork. 
+	* **Name**: Enter a name, such as `all-internal`.
+	* **Network**: Select the network you created in the section above, [Create a GCP Network with Subnet](#create_network). 
+	* **Source filter**: Choose **Subnetworks**, then select the subnetwork you defined in the section above.
+	* **Allowed protocols and ports**: Enter `tcp:0-65535;udp:0-65535;icmp`. 
+1. Create a firewall rule to allow `tcp:22;tcp:80;tcp:443;` traffic from any source to VMs tagged with `pcf-opsmanager`.
+	* **Name**: Enter `pcf-opsmanager`. 
+	* **Network**: Select the network you created in the section above, [Create a GCP Network with Subnet](#create_network).
+	* **Source filter**: Choose `Allow from any source (0.0.0.0/0)`. 
+	* **Allowed protocols and ports**: Enter `tcp:22;tcp:80;tcp:443`.
+	* **Target tags**: Enter `pcf-opsmanager`. 
+1. Create a firewall rule to allow `tcp:80;tcp:443;tcp:2222;tcp:8080` traffic from any source to VMs tagged with `pcf-lb`.
+	* **Name**: Enter `pcf-lb`. 
+	* **Network**: Select the network you created in the section above, [Create a GCP Network with Subnet](#create_network).
+	* **Source filter**: Choose `Allow from any source (0.0.0.0/0)`. 
+	* **Allowed protocols and ports**: Enter `tcp:80;tcp:443;tcp:2222;tcp:8080`.
+	* **Target tags**: Enter `pcf-lb`. 
+1. If you plan to enable the TCP routing feature, create another firewall rule to allow incoming TCP traffic to the TCP router.
+    * **Name**: Enter a name, such as `pcf-tcp-lb`.
+    * **Network**: Select the network you created in the section above, [Create a GCP Network with Subnet](#create_network).
+	* **Source filter**: Choose `Allow from any source (0.0.0.0/0)`. 
+    * **Allowed protocols and ports**: Enter `tcp:1024-65535`.
+    * **Target tags**: Enter `pcf-cf-tcp`.
+
+### <a id="iam_account"></a> Set up an IAM Service Account 
+
+1. From the GCP Console, select **IAM & Admin**, then **Service accounts**. 
+1. Click **Create Service Account**: 
+	* **Service account name**: Enter a name. 
+	* **Role**: Select the following permissions:
+		* **Project** > **Editor** 
+		* **Compute Engine** > **Compute Instance Admin**
+		* **Compute Engine** > **Compute Network Admin**
+		* **Compute Engine** > **Compute Security Admin**
+		* **Compute Engine** > **Compute Storage Admin**
+	* **Service account ID**: The field autogenerates a unique ID based on the username. 
+	* **Furnish a new private key**: Select this checkbox and JSON as the **Key type**.
+
+	<%= image_tag("gcp/iam_account.png") %>
+
+1. Click **Create**. Your browser automatically downloads a JSON file with a private key for this account. Save this file in a secure location.
+
+### <a id="keys"></a> Create a Project-Wide SSH Keypair for Your Project ###
+
+1. Create an SSH keypair on your local machine with the username `vcap`. For example, use the following command:
+    <pre class="terminal">
+    $ ssh-keygen -t rsa -f vcap-key -C vcap@local
+    </pre>
+
+1. Open and copy the contents of the public key file `vcap-key.pub`.
+
+1. In the GCP console, navigate to **Compute Engine > Metadata > SSH Keys**. Click **Create SSH Keys**, or **Edit** if you already have project-wide keys.
+
+1. Paste in the contents of the `vcap-key.pub` file. The username `vcap` autopopulates the username field. 
+
+1. Click **Save**. 
+
+1. Verify that the public key data is uploaded to your project:
+    1. If you have not done so already, install and set up [gcloud compute](https://cloud.google.com/compute/docs/gcloud-compute/). 
+
+    1.  Execute the following command:
+        <pre class="terminal">
+        $ gcloud compute project-info describe
+        </pre>
+        The command outputs project metadata with the new key data appearing as a value in the `sshKeys` field.
+        <pre class="terminal">
+        commonInstanceMetadata:
+        fingerprint: #######
+        items:
+        \- key: sshKeys
+        value: |
+            vcap:ssh-rsa ...
+        </pre>
+
+## <a id="enable_compute_resource_api"></a> Enable Google Cloud APIs ##
+
+Ops Manager manages GCP resources using the Google Compute Engine and Cloud Resource Manager APIs. To enable these APIs, perform the following steps:
+
+1. Log in to the Google Developers console at [https://console.developers.google.com](https://console.developers.google.com).
+
+1. Select **API Manager > Library**.
+
+1. Under **Google Cloud APIs**, select **Compute Engine API**.
+
+1. On the **Google Compute Engine API** page, click **Enable**.
+
+1. In the Google APIs search field, enter `Google Cloud Resource Manager API`. 
+
+1. On the **Google Cloud Resource Manager API** page, click **Enable**.
+
+1. To verify that the APIs have been enabled, perform the following steps:
+    1. Log in to GCP using the IAM service account you created in [Set up an IAM Service Account](#iam_account):
+     <pre class="terminal">
+     $ gcloud auth activate-service-account IAM\_SERVICE\_ACCOUNT\_EMAIL \ 
+     --key-file PATH\_TO\_YOUR\_IAM\_KEY\_JSON\_FILE
+     </pre>
+
+  1. List your projects:
+    <pre class="terminal">
+    $ gcloud projects list
+    PROJECT\_ID       NAME                 PROJECT\_NUMBER
+    my-project-id    my-project-name      ##############
+    </pre>
+
+## <a id="create_loadbalancers"></a> Create Load Balancers in GCP ##
+
+You need at least three and as many as four load balancers to operate PCF on GCP, as follows:
+
+  * [SSH Load Balancer](#ssh_lb): For SSH proxy jobs, using TCP `PORT 2222`
+  * [HTTP(S) Load Balancer](#http_https_lb): For HTTP(S) load balancing, using `PORT 80` and `PORT 8080`
+  * [TCP Websockets Load Balancer](#tcp_websockets_lb): For websockets log tailing, using `PORT 443`
+  * [TCP Router](#tcprouter_lb): Optionally, for TCP routing
+
+The steps required to set up each load balancer are described below.
+
+### <a id="ssh_lb"></a> Create the SSH Proxy Load Balancer and Instance Group ###
+The load balancer for SSH proxy jobs for PCF on GCP operates on port TCP `2222`, but does not have a health check. To configure a SSH load balancing for PCF on GCP you need to follow two steps:
+
+  * Create an [**Instance Group**](#instance_group) for load balancer configuration to the GCP **Backend service**. 
+  * Create an [SSH Proxy Load Balancer](#create_ssh_lb) for SSH proxy jobs.
+
+#### <a id="instance_group"></a> Create **Instance Group**
+You need an **Instance Group** to associate with the load balancer you create.
+<p class="note"><strong>Note</strong>: You need one Google <strong>Instance Group</strong> for each Availability Zone you plan to support. All <strong>Instance Groups</strong> must connect to the Google <strong>Backend Service</strong> to configure your load balancer, described below.</p>
+
+1. From the GCP Console, select **Compute Engine** and click **Create Instance Group**.
+  <%= image_tag("gcp/create_instance_group.png") %>
+
+1. In the the **Create a new instance group** window, name the instance group in the **Name** field.
+  <%= image_tag("gcp/configure_new_instance_group.png") %>
+
+1. Choose **Single-zone** in the **Location** section.
+
+1. Select the matching zone from the **Zone** drop-down menu for the [network](#create_network) you created above.
+
+1. Under **Creation method**, choose **Select existing instance** and select `opsmgr` from the **Network** drop down. You previously created the `opsmgr` network in the [Create a GCP Network with Subnet](#create_network) step above.
+
+1. Click **Create**.
+
+Your Google **Instance Group** for PCF on GCP is set up properly.
+
+#### <a class="create_ssh_lb"></a> Create **SSH Proxy Load Balancer**
+
+1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
+
+1. Under **TCP Load Balancing**, click **Start configuration**.
+  <%= image_tag("gcp/lb-configure.png") %>
+
+1. Under **Internet facing or internal only**, select **From Internet to my VMs**.
+
+1. Under **Connection termination**, select **No (TCP)**. 
+  <%= image_tag("gcp/lb_connection_termination.png") %>
+
+1. Click **Continue**. 
+
+1. In the **New TCP load balancer** window, enter `pcf-ssh` in the **Name** field.
+  <%= image_tag "gcp/ssl_backend_lb_configuration.png" %>
+
+1. Select **Backend configuration**, and enter the following field values:
+   * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
+   * **Backup pool**: None
+   * **Failover ratio**: 10%
+   * **Health check**: No health check
+<%= image_tag("gcp/tcp_lb_backend.png") %>
+
+1. Select **Frontend configuration**, and add the following:
+   * **Protocol**: TCP
+   * **IP**: Perform the following steps:
+       1. Select **Create IP address**. 
+       1. Enter a **Name** for the new static IP address and an optional description.
+       1. Click **Reserve**.
+   * **Port**: 2222
+
+1. Optionally, review and finalize your load balancer. 
+
+1. Click **Create**.
+
+Your SSH Proxy load balancer is set up properly for PCF on GCP.
+
+### <a id="http_https_lb"></a> Create the HTTP(S) Load Balancer ###
+
+To create a load balancer for HTTP(S) in GCP:
+
+1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
+
+1. Under **HTTP(S) Load Balancing**, click **Start configuration**.
+  <%= image_tag("gcp/http_lb_configure.png") %>
+
+1. In the **New HTTP(S) load balancer** window, enter `pcf-router` in the **Name** field.
+  <%= image_tag "gcp/http_lb_name.png" %>
+
+1. Click **Backend configuration** to configure the **Backend service**. In the **Create or select a backend service** drop-down menu, choose **Create a backend service** to open the **Backend service** window.
+
+1. Fill in the name for your **Backend service** in the **Name** field. For HTTP termination, leave **Protocol** set to **HTTP**. If you have the SSL certificates required for HTTPS termination, click the **pencil icon** and configure HTTPS termination.
+<p class="note"><strong>Note</strong>: You will need to return to this setting when you have your SSL certificate to enable HTTPS load balancer termination. You can use Ops Manager to create self-signed certificates and return to this setting to enable HTTPS.</p>
+  <%= image_tag "gcp/backend_service_name.png" %>
+
+1. In the **Backends** section, from the **Instance Group** drop-down menu, choose the [Instance Group](#instance_group) you created above, or create one and select it. 
+  <%= image_tag "gcp/backend_service_config.png" %>
+
+1. From the **Health check** drop-down menu, click to **Create a Health Check** with the following field values:
+   * **Name**: Enter a name, for example `health-check`, or `pcf-public`.
+   * **Description**: 
+   * **Protocol**: HTTP
+   * **Port**: `8080`
+   * **Request path**: `/healthz`
+   * Use the default <strong>Health criteria</strong> field values:
+     * **Check interval**: `5` seconds
+     * **Timeout**: `5` seconds
+     * **Healthy threshold**: `2` consecutive successes
+     * **Unhealthy threshold**: `2` consecutive failures
+  <%= image_tag "gcp/health_check_defaults.png" %>
+   * Click **Save and continue**. 
+   The **Backend configuration** section shows a green check mark.
+
+1. Click **Host and path rules** to populate the default fields and a green check mark.
+
+1. Click **Review and finalize** to verify your configuration.
+  <%= image_tag "gcp/http_lb_finalize.png" %>
+
+1. Click **Create**.
+
+Your HTTP load balancer is set up properly for PCF on GCP. You may need to return to these settings to enable HTTPS.
+
+### <a id="tcp_websockets_lb"></a> Create the TCP Websockets Load Balancer
+The load balancer for tailing logs with websockets for PCF on GCP operates on port TCP `443`. 
+
+1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
+
+1. Under **TCP Load Balancing**, click **Start configuration**.
+  <%= image_tag("gcp/create_new_lb.png") %>
+
+1. Under **Connection termination**, select **No (TCP)**. Click **Continue**. 
+  <%= image_tag("gcp/lb_connection_termination.png") %>
+
+1. In the **New TCP load balancer** window, enter `pcf-websockets` in the **Name** field.
+  * Click **Backend configuration** to configure the **Backend service**: 
+  * From the **Health check** drop-down menu, select the [**Health check**](#http_https_lb) that you created above.
+  * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
+  <%= image_tag "gcp/tcp_websockets_lb_config.png" %>
+  The **Backend configuration** section shows a green check mark.
+
+1. Click **Frontend configuration** to open its configuration window and complete the fields:
+ * **Protocol**: 
+ * **IP**: Select the Static IP that you reserved from the step for creating the [SSL Load Balancer](#create_ssh_lb).
+   * **Port**: 443
+  The **Frontend configuration** section shows a green check mark.
+
+1. Click **Review and finalize** to verify your configuration.
+  <%= image_tag "gcp/websockets_lb_finalize.png" %>
+
+1. Click **Create**.
+
+Your TCP websockets load balancer is set up properly for PCF on GCP.
+
+### <a id="tcprouter_lb"></a>(Optional) Create the Load Balancer for TCP Router
+
+This step is optional and only required if you enable TCP routing in your deployment. To create a load balancer for TCP Router in GCP:
+
+1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
+
+1. Under **TCP Load Balancing**, click **Start configuration**.
+
+	<%= image_tag("gcp/lb-configure.png") %>
+
+1. Under **Connection termination**, select **No (TCP)**. Click **Continue**. 
+
+	<%= image_tag("gcp/lb_connection_termination.png") %>
+
+1. On the **New TCP load balancer** screen, enter a unique name for the load balancer in the **Name** field.
+
+1. Select **Backend configuration**, and enter the following field values:
+   * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
+   * **Health check**: Select the health check you created with the [TCP websockets load balancer](#tcp_websockets_lb)
+        * Click **Save and continue**.
+ <%= image_tag("gcp/lb_backend.png") %>
+
+1. Select **Frontend configuration**, and add the first frontend IP and port entry as follows:
+   * **Protocol**: TCP
+   * **IP**: Select **Create IP address**. Enter a **Name** for the new static IP address and an optional description, then click **Reserve**.
+   * **Port**: 80
+
+1. Click **+Add frontend IP and port** to add a second frontend IP and port. Enter the values for the fields as follows:
+   * **Protocol**: TCP
+   * **IP**: Select the IP address you created in the previous step.
+   * **Port**: 443
+
+1. Click **+Add frontend IP and port** to add a third frontend IP and port. Enter the values for the fields as follows:
+   * **Protocol**: TCP
+   * **IP**: Select the IP address you created in the previous step.
+   * **Port**: 2222
+
+1. Click **+Add frontend IP and port** to add a third frontend IP and port. Enter the values for the fields as follows:
+   * **Protocol**: TCP
+   * **IP**: Select the IP address you created in the previous step.
+   * **Port**: 4443
+
+	<%= image_tag("gcp/lb_frontend.png") %>
+
+1. Click **Review and finalize** to verify your configuration.
+
+1. Click **Create**.
+
+### <a id="next"></a> What to Do Next ###
+
+Proceed to the next step in the deployment, [Launching an Ops Manager Director Instance on GCP](./gcp-om-deploy.html).
+

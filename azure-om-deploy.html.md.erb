@@ -4,6 +4,7 @@ owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
+<html class="list-style-none"></html>
 
 This topic describes how to deploy Ops Manager Director for Pivotal Cloud Foundry (PCF) on Azure.
 
@@ -29,7 +30,8 @@ Before you perform the procedures in this topic, you must have completed the pro
     </pre> 
 1. Add a network security group rule to the `pcf-nsg` group to allow traffic from the public Internet.
     <pre class="terminal">
-    $ azure network nsg rule create $RESOURCE_GROUP pcf-nsg internet-to-lb --protocol Tcp --priority 100 --destination-port-range '*'
+    $ azure network nsg rule create $RESOURCE_GROUP pcf-nsg internet-to-lb \
+    --protocol Tcp --priority 100 --destination-port-range '*'
     </pre>
     <p class="note"><strong>Note</strong>: Because the VMs do not have public IP addresses, this network security group rule only affects the load balancer.</p>
 1. Create a network security group named `opsmgr-nsg`.
@@ -38,48 +40,54 @@ Before you perform the procedures in this topic, you must have completed the pro
     </pre> 
 1. Add a network security group rule to the `opsmgr-nsg` group that allow HTTP traffic to the Ops Manager VM.
     <pre class="terminal">
-    $ azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg http --protocol Tcp --destination-port-range 80 --priority 100
+    $ azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg http \
+    --protocol Tcp --destination-port-range 80 --priority 100
     </pre>
 1. Add a network security group rule to the `opsmgr-nsg` group that allow HTTPS traffic to the Ops Manager VM.
     <pre class="terminal">
-    $ azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg https --protocol Tcp --destination-port-range 443 --priority 200
+    $ azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg https \
+    --protocol Tcp --destination-port-range 443 --priority 200
     </pre>
 1. Add a network security group rule to the `opsmgr-nsg` group that allow SSH traffic to the Ops Manager VM.
     <pre class="terminal">
-    $ azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg ssh --protocol Tcp --destination-port-range 22 --priority 300
+    $ azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg ssh \
+    --protocol Tcp --destination-port-range 22 --priority 300
     </pre>
 1. Create a virtual network named `pcf-net`.
     <pre class="terminal">
-    $ azure network vnet create $RESOURCE_GROUP pcf-net $LOCATION --address-prefixes 10.0.0.0/16
+    $ azure network vnet create $RESOURCE_GROUP pcf-net $LOCATION \
+    --address-prefixes 10.0.0.0/16
     </pre>
 1. Add a subnet to the network for PCF VMs.
     <pre class="terminal">
-    $ azure network vnet subnet create $RESOURCE_GROUP pcf-net pcf --address-prefix 10.0.0.0/20
+    $ azure network vnet subnet create $RESOURCE_GROUP pcf-net pcf \
+    --address-prefix 10.0.0.0/20
     </pre>
-
-<p class="note"><strong>Note</strong>: To use the <a href="http://docs.pivotal.io/p-identity/index.html">Single Sign-On for PCF</a> service, you must configure a network that contains only one subnet.</p>
+    <p class="note"><strong>Note</strong>: To use the <a href="http://docs.pivotal.io/p-identity/index.html">Single Sign-On for PCF</a> service, you must configure a network that contains only one subnet.</p>
 
 ##<a id='storage'></a> Step 2: Create BOSH and Deployment Storage Accounts
 
 Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and Ops Manager VMs use one main BOSH account, and the other components share three or more deployment storage accounts.
 
-1. Choose a name for your BOSH storage account and export it as the environment variable `$STORAGE_NAME`. Storage account names must be globally unique across Azure, between 3 and 24 characters in length, and contain only lowercase letters and numbers. 
+1. Choose a name for your BOSH storage account, and export it as the environment variable `$STORAGE_NAME`. Storage account names must be globally unique across Azure, between 3 and 24 characters in length, and contain only lowercase letters and numbers. 
     <pre class="terminal">
-    $ export STORAGE_NAME="YOUR-BOSH-STORAGE-ACCOUNT-NAME"
+    $ export STORAGE_NAME="your-bosh-storage-account-name"
     </pre>
 1. Create a storage account with the following command, replacing `SUBSCRIPTION_ID` with your subscription ID.
     <pre class="terminal">
-    $ azure storage account create $STORAGE\_NAME --resource-group $RESOURCE\_GROUP --sku-name LRS --kind Storage --subscription SUBSCRIPTION\_ID --location $LOCATION
+    $ azure storage account create $STORAGE\_NAME --resource-group $RESOURCE\_GROUP \
+    --sku-name LRS --kind Storage --subscription SUBSCRIPTION\_ID \
+    --location $LOCATION
     </pre>
-    <br>
-    If the command fails, ensure you have followed the rules for naming your storage account and re-export a new storage account name if necessary.
+    If the command fails, ensure you have followed the rules for naming your storage account. Re-export a new storage account name if necessary.
 1. Configure the Azure CLI to use the the BOSH storage account as its default.
     1. Retrieve the connection string for the account.
     <pre class="terminal">
-    $ azure storage account connectionstring show $STORAGE\_NAME --resource-group $RESOURCE\_GROUP
+    $ azure storage account connectionstring show $STORAGE\_NAME \
+    --resource-group $RESOURCE\_GROUP
     info:    Executing command storage account connectionstring show
     <span>+</span> Getting storage account keys
-    data:    connectionstring: DefaultEndpointsProtocol=https;AccountName=example-storage;AccountKey=bb3eXE8eXXDAe2eS95TxH9F4KieeoijjbFzXEASFF30jC6OVehywh+rSrImIxRwLhV4bpprP8jZBdBOffF2aaZ==
+    data:    connectionstring: DefaultEndpointsProtocol=https;AccountName=example-storage;AccountKey=accountkeystring
     info:    storage account connectionstring show command OK
     </pre>
     1. Record the full value of **connectionstring** from the output above, starting with and including `DefaultEndpointsProtocol=`.
@@ -102,14 +110,23 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
 1. For each of these deployment storage accounts, do the following:
     1. Create the storage account with the following command, replacing `MY_DEPLOYMENT_STORAGE_X` with one of your deployment storage account names and `SUBSCRIPTION_ID` with your subscription ID.
     <pre class="terminal">
-    $ azure storage account create MY\_DEPLOYMENT\_STORAGE\_X --resource-group $RESOURCE\_GROUP --sku-name LRS --kind Storage --subscription SUBSCRIPTION\_ID --location $LOCATION
+    $ azure storage account create MY\_DEPLOYMENT\_STORAGE\_X \
+    --resource-group $RESOURCE\_GROUP --sku-name LRS --kind Storage \
+    --subscription SUBSCRIPTION\_ID --location $LOCATION
     </pre>
     If the command fails, try a different set of account names.
     1. Create three blob containers named `opsmanager`, `bosh`, and `stemcell` in the account. 
     <pre class="terminal">
-    $ azure storage container create opsmanager --account-name MY\_DEPLOYMENT\_STORAGE\_X
-    $ azure storage container create bosh --account-name MY\_DEPLOYMENT\_STORAGE_X
-    $ azure storage container create stemcell --permission blob --account-name MY\_DEPLOYMENT\_STORAGE\_X
+    $ azure storage container create opsmanager \
+    --account-name MY\_DEPLOYMENT\_STORAGE\_X
+    </pre>
+    <pre class="terminal">
+    $ azure storage container create bosh \
+    --account-name MY\_DEPLOYMENT\_STORAGE_X
+    </pre>
+    <pre class="terminal">
+    $ azure storage container create stemcell \
+    --permission blob --account-name MY\_DEPLOYMENT\_STORAGE\_X
     </pre>
 
 ##<a id='lb'></a> Step 3: Create a Load Balancer

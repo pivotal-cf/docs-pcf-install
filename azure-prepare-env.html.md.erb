@@ -4,6 +4,7 @@ owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
+<html class="list-style-none"></html>
 
 This topic describes how to prepare to deploy Pivotal Cloud Foundry (PCF) on Azure by creating a service principal to access resources in your Azure subscription. 
 
@@ -11,14 +12,18 @@ After you complete this procedure, follow the instructions in the [Launching an 
 
 ##<a id="install"></a> Step 1: Install and Configure the Azure CLI
 
-<p class="note"><strong>Note</strong>: This topic assumes you are using the Azure CLI version 0.10.5 or greater. If you have an earlier version of the Azure CLI installed, run <code>npm update -g azure-cli</code> or follow the procedure below to install the new version of the CLI.</p>
+1. Check whether you have installed <b>Azure CLI v0.10.5 or higher</b> by typing the following command:
+    <pre class="terminal">$ azure --version</pre> 
+   If you do not have the Azure CLI or the correct version installed, proceed to the next step.
 
-1. Follow the instructions for your Operating System to install the Azure CLI: 
-    * **Mac OS X**: Download and run the [Mac OS X](http://aka.ms/mac-azure-cli) installer.
-    * **Windows**: Download and run the [Windows](https://www.microsoft.com/web/handlers/webpi.ashx?command=getinstallerredirect&appid=windowsazurexplatcli&mode=new) installer. Install the Azure CLI on Windows 10. Use the command line, not the PowerShell, to run the Azure CLI.
-    * **Linux**: Download the [Linux](http://aka.ms/linux-azure-cli) tar file. Install the Azure CLI on Ubuntu Server 14.04 LTS. To install the Azure CLI on Linux, you must first install Node.js and npm, and then run <code>sudo npm install -g PATH-TO-TAR-FILE</code>.
-
-    <p class="note"><strong>Note</strong>: If you encounter the error <code>/usr/bin/env: node: No such file or directory</code> when running <code>azure</code> commands, you must run <code>sudo ln -s /usr/bin/nodejs /usr/bin/node</code>.</p>
+1. To install a new or updated Azure CLI, follow the instructions for your operating system: 
+    * **Mac OS X**: Download and run the [Mac OS X Azure CLI](http://aka.ms/mac-azure-cli) installer.
+    * **Windows**: Download and run the [Windows Azure CLI](https://www.microsoft.com/web/handlers/webpi.ashx?command=getinstallerredirect&appid=windowsazurexplatcli&mode=new) installer. Use the command line, not the PowerShell, to run the Azure CLI.
+    * **Linux**: 
+      1. If not already installed, install Node.js and npm. 
+      1. Download the [Linux Azure CLI](http://aka.ms/linux-azure-cli) tar file. 
+      1. Run <code>sudo npm install -g PATH-TO-TAR-FILE</code>.
+      1. If you encounter the error <code>/usr/bin/env: node: No such file or directory</code> when running <code>azure</code> commands, run <code>sudo ln -s /usr/bin/nodejs /usr/bin/node</code>.
 
 1. Set the mode of the Azure CLI to Azure Resource Management:
 
@@ -29,10 +34,10 @@ After you complete this procedure, follow the instructions in the [Launching an 
 1. Log in to your Azure account:
 
     <pre class="terminal">
-    $ azure login --environment YOUR-ENVIRONMENT
+    $ azure login --environment AzureCloud
     </pre>
 
-    <p class="note"><strong>Note</strong>: To target the Azure China environment, replace <code>YOUR-ENVIRONMENT</code> with <code>AzureChinaCloud</code>. If logging in to <code>AzureChinaCloud</code> fails with a <code>CERT_UNTRUSTED</code> <a href="https://github.com/Azure/azure-xplat-cli/issues/2725">error</a>, use the latest version of node, 4.x or later.</p>
+    <p class="note"><strong>Note</strong>: To target the Azure China environment, replace <code>AzureCloud</code> with <code>AzureChinaCloud</code>. If logging in to <code>AzureChinaCloud</code> fails with a <code>CERT_UNTRUSTED</code> <a href="https://github.com/Azure/azure-xplat-cli/issues/2725">error</a>, use the latest version of node, 4.x or later.</p>
 
 ##<a id="default-subscription"></a> Step 2: Set Your Default Subscription
 
@@ -70,7 +75,7 @@ After you complete this procedure, follow the instructions in the [Launching an 
     ]
     </pre>
  
-1. Locate your default subscription by finding the subscription with **isDefault** set to `true`. If your default subscription is not the one you want to deploy Cloud Foundry on, run `azure account set SUBSCRIPTION-ID` to set a new default.
+1. Locate your default subscription by finding the subscription with **isDefault** set to `true`. If your default subscription is not where you want to deploy PCF, run `azure account set SUBSCRIPTION-ID` to set a new default.
 
     <pre class="terminal">
     $ azure account set SUBSCRIPTION-ID
@@ -85,7 +90,9 @@ After you complete this procedure, follow the instructions in the [Launching an 
 ##<a id='create-aad'></a> Step 3: Create an Azure Active Directory (AAD) Application
 
 1. Run the following command to create an AAD application, replacing `PASSWORD` with the password of your choice. This is your `CLIENT_SECRET` for creating a service principal. 
-    <pre class="terminal">$ azure ad app create --name "Service Principal for BOSH" --password "PASSWORD" --home-page "<span>http:</span>//BOSHAzureCPI" --identifier-uris "<span>http</span>://BOSHAzureCPI"
+    <pre class="terminal">$ azure ad app create --name "Service Principal for BOSH" \
+    --password "PASSWORD" --home-page "<span>http:</span>//BOSHAzureCPI" \
+    --identifier-uris "<span>http</span>://BOSHAzureCPI"
     </pre>
     <p class="note"><strong>Note</strong>: You can provide any string for the <code>home-page</code> and <code>identifier-urls</code> flags. Pivotal recommends using <code><span>http:</span>//BOSHAzureCPI</code>, as above.
     </p>
@@ -119,20 +126,21 @@ After you complete this procedure, follow the instructions in the [Launching an 
     info:    ad sp create command OK
     </pre>
 
-1. You must have the Contributor role on your service principal to deploy PCF. Run the following commands to assign this role:
+1. You must have the Contributor role on your service principal to deploy PCF. Run the following command to assign this role:
+    <pre class="terminal">
+    $ azure role assignment create --spn "SERVICE-PRINCIPAL-NAME" \
+    --roleName "Contributor" --subscription SUBSCRIPTION-ID
+    </pre>
     * For **SERVICE-PRINCIPAL-NAME**: Use any value of **Service Principal Names** from the output above, such as `YOUR-APPLICATION-ID`.
     * For **SUBSCRIPTION-ID**: Use the ID of the default subscription that you recorded in [Step 2](#default-subscription).
 
-    <pre class="terminal">
-    $ azure role assignment create --spn "SERVICE-PRINCIPAL-NAME" --roleName "Contributor" --subscription SUBSCRIPTION-ID
-    </pre>
 
     For more information on Azure Role-Based Access Control, refer to <a href="https://azure.microsoft.com/en-us/documentation/articles/role-based-access-built-in-roles/">RBAC: Built-in roles</a>.
 
 1. Verify the assignment by running the following command:
 
     <pre class="terminal">
-$ azure role assignment list --spn SERVICE-PRINCIPAL-NAME
+$ azure role assignment list --spn "SERVICE-PRINCIPAL-NAME"
 
     info:    Executing command role assignment list
     <span>+</span> Searching for role assignments
@@ -152,13 +160,14 @@ $ azure role assignment list --spn SERVICE-PRINCIPAL-NAME
 
 To verify your service principal, log in to your service principal with your `APPLICATION_ID`, `CLIENT_SECRET`, and `TENANT_ID`. Replace `YOUR-ENVIRONMENT` with `AzureCloud` or `AzureChinaCloud`.
 <pre class="terminal">
-$ azure login --username APPLICATION\_ID --password CLIENT\_SECRET --service-principal --tenant TENANT\_ID --environment YOUR-ENVIRONMENT
+$ azure login --username APPLICATION\_ID --password CLIENT\_SECRET \
+--service-principal --tenant TENANT\_ID --environment YOUR-ENVIRONMENT
 info:    Executing command login
 -info:    Added subscription Example
 <span>+</span>
 info:    login command OK
 </pre>
 
-If you cannot log in, the service principal is invalid and you must create a new service principal.
+If you cannot log in, the service principal is invalid, and you must create a new service principal.
 
 Once you complete this topic, follow the instructions in the [Launching an Ops Manager Director Instance on Azure](azure-om-deploy.html) topic.

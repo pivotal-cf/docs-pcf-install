@@ -1,11 +1,16 @@
-<p class="note"><strong>Note</strong>: You only need to configure this section if you selected <strong>Internal Databases - MySQL</strong> in the <strong>Databases</strong> section.</p>
+<p class="note"><strong>Note</strong>: You need to configure this section only if you selected <strong>Internal Databases - MySQL</strong> in the <strong>Databases</strong> section.</p>
+
 
 1. Select **Internal MySQL**. 
-	<%= image_tag("mysql-config.png") %>
 
-1. For **MySQL Proxy IPs**, enter one or more IP addresses for your MySQL proxy instances. If a MySQL node fails, these proxies re-route connections to a healthy node. See the [MySQL for PCF: Proxy](http://docs.pivotal.io/p-mysql/index.html#proxy) topic for more information.</p>
+1. Enter one or more IP addresses from your network, comma delimited, to the **MySQL Proxy IPs** that are not otherwise in the reserved range. If a MySQL node fails, these proxies re-route connections to a healthy node. See the [MySQL for PCF: Proxy](http://docs.pivotal.io/p-mysql/index.html#proxy) topic for more information.</p>
+	<%= image_tag("mysql-proxy-ips.png") %>
 
 1. For **MySQL Service Hostname**, enter an IP address or hostname for your load balancer. If a MySQL proxy fails, the load balancer re-routes connections to a healthy proxy. If you leave this field blank, components are configured with the IP address of the first proxy instance entered above.
+
+1. Create a DNS <code>A Record</code> to round robin against your IP addresses.
+<p class="note"><strong>Note</strong>: Round robin DNS does not handle component availability as well as a load balancer and can result in components that rely on the database being unavailable if some of the database proxies are down. Pivotal recommends this solution for MySQL access over the use of the Google load balancer because the GCP BETA only exposes load balancers over public IPs.</p>
+	<%= image_tag("mysql-a-record.png") %>
 
 1. Under **Automated Backups Configuration**, select **Disable mysql_backups** or **Enable mysql_backups** to enable or disable automated MySQL backups.
 <p class="note"><strong>Note</strong>: If you choose to enable automated MySQL backups, set the number of instances for the **Backup Prepare Node** under the **Resource Config** section of the Elastic Runtime tile to `0`.</p>
@@ -15,5 +20,5 @@
 	* For **Bucket Path**, specify a folder within the bucket to hold your MySQL backups. Do not include a trailing `/`.
 	* For **AWS Access Key ID** and **AWS Secret Access Key**, enter your AWS or Ceph credentials.
 	* For **Cron Schedule**, enter a valid cron expression to schedule your automated backups. Cron uses your machine's local time zone.
-
+	<%= image_tag("mysql-config.png") %>
 1. Click **Save**.

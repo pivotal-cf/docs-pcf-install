@@ -1,0 +1,81 @@
+---
+title: Launching an Ops Manager Director Instance on GCP
+owner: Ops Manager
+---
+
+<strong><%= modified_date %></strong>
+
+<html class="list-style-none"></html>
+
+This topic describes how to deploy Ops Manager Director for [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Google Cloud Platform (GCP).
+
+After you complete this procedure, follow the instructions in the [Configuring Ops Manager Director on GCP](./gcp-om-config.html) and
+[Configuring Elastic Runtime on GCP](./gcp-er-config.html) topics.
+
+## <a id='select-tgz'></a>Step 1: Locate the Pivotal Ops Manager Installation File ##
+
+1. Log in to the [Pivotal Network](https://network.pivotal.io/products/pivotal-cf) and click on **Pivotal Cloud Foundry Operations Manager**.
+
+1. From the **Releases** dropdown, select the release to install.
+
+1. Select **Pivotal Cloud Foundry Ops Manager for Google Cloud Platform** to download the <code>PCF\_<i>version</i>\_onGoogleCloudPlatform.pdf</code>file. 
+
+This document provides the GCP location of the Ops Manager `.tar.gz` installation file.
+
+## <a id="create-image"></a>Step 2: Create a Private VM Image
+
+1. Log in to the [GCP Console](https://console.cloud.google.com/).
+
+1. In the left navigation panel, click **Compute Engine**, and select **Images**.
+
+1. Click **Create Image**.
+
+1. Complete the following fields:
+  * **Name**: Enter a name. For example, `om-pcf`.
+  * **Source**: Choose **Cloud Storage file**.
+  * **Cloud Storage file**: Paste in the Google Cloud Storage filepath you copied from the <code>PCF\_<i>version</i>\_onGoogleCloudPlatform.pdf</code> document. 
+      <%= image_tag("gcp/create_image.png") %>
+1. Click **Create**. The file may take a few minutes to import. 
+
+## <a id="start-vm"></a>Step 3: Create the Ops Manager VM Instance
+
+1. Select the checkbox for the image that you created above.
+
+    <%= image_tag("gcp/create_instance.png") %>
+
+1. Click **Create Instance**. 
+
+1. In the **Create an instance form**, complete the following fields:
+  * **Name**: Enter a name, such as `om-pcf-1a`.
+  * **Zone**: Choose a zone from the region in which you created your network. 
+  * **Boot disk**: Click **Change**, then perform the following steps.
+     * Click **Your images** if it is not already populated. 
+     * Select the Ops Manager image you created in the previous step. For example, `om-pcf` if it is not already selected. 
+     * In the **Boot disk type** drop-down, use Standard persistent disk and increase the **Size (GB)** to 50.<br/>
+   <p class="note"><strong>Note</strong>: If you do not change the persistent disk size to 50 GB, your deployment will fail.</p>
+        <%= image_tag("gcp/boot_image.png") %>
+     * Click **Select** to save.
+  * Under **Identity and API access**, choose the **Service account** you created when preparing your environment during the step [Set up an IAM Service Account](./gcp-prepare-env.html#iam_account). 
+  * **Allow HTTP traffic**: Select this checkbox. 
+  * **Allow HTTPS traffic**: Select this checkbox. 
+      <%= image_tag("gcp/om_instance_1.png") %>
+  * **Management**: Select the **Management** tab, and perform the following step. In the **Tags** field, enter `pcf-opsmanager`. This tag applies the firewall rule you created in [Create Firewall Rules for the Network](./gcp-prepare-env.html#firewall_rules) to the Ops Manager VM.
+      <%= image_tag("gcp/om_tag.png") %>
+  * **Networking**: Select the **Networking** tab, and perform the following steps:
+     * For **Network** and **Subnetwork**, select the network and subnetwork you created when preparing your environment in the [Create a GCP Network with Subnet](./gcp-prepare-env.html#create_network) section of the _Preparing to Deploy PCF on GCP_ topic. 
+     * For **Internal IP**, select `Custom`. Enter an **Internal IP address** in the lower end of your 10.0.0.0/20 internal range. 
+     * For **External IP**, select **New static IP address...**. In the next form, enter a name for the static IP. For example, `om-public-ip`. Click **Reserve**. In the **External IP** dropdown, select the static IP address you just reserved.
+           <%= image_tag("gcp/instance_networking.png") %>
+  * **SSH Keys**: Select the **SSH Keys** tab, and perform the following steps.
+      * Generate an SSH key for the ubuntu user. Creating the `ubuntu` user allows you to directly access the Ops Manager VM using SSH. For example, on your local machine, open a terminal and type:      
+         <pre class="terminal">$ ssh-keygen -t rsa -f ubuntu-key -C ubuntu@local</pre>
+         This command outputs a private key and a public key, in this example `ubuntu-key.pub`.
+      * Open the public key file. Then copy and paste the public key data including the username at the end `ubuntu@local` into the **key data** field. The form then adds an `ubuntu` SSH entry with the username `ubuntu` automatically populated for you.
+      * Store the private key in a secure location.
+      <%= image_tag("gcp/om-ssh-keys.png") %>
+1. Click **Create** to deploy the new Ops Manager VM.
+
+
+### <a id="next"></a> What to Do Next ###
+
+After you complete this procedure, follow the instructions in the [Configuring Ops Manager Director on GCP](./gcp-om-config.html) topic.

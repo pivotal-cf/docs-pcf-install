@@ -1,42 +1,39 @@
 ---
-title: Configuring Proxy Settings for BOSH CPI
+title: Configuring Proxy Settings for the BOSH CPI
 owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
 
+This topic describes how to configure proxy settings for the BOSH Cloud Provider Interface (CPI), which is the API that the BOSH Director uses to interact with your IaaS endpoint.
+If you use a proxy to mediate traffic between your BOSH installation and your IaaS endpoint, you must enter your proxy information when Ops Manager starts for the first time.   
 
-This topic describes the setup and scope of the BOSH CPI Proxy settings found 
-in the setup page.
+The following diagram illustrates how a proxy mediates HTTP and HTTPS requests between the CPI of the BOSH Director and the IaaS endpoint.
 
-## <a id='scope'></a>BOSH Director Proxy Setting Scope ##
+<%= image_tag('cpi-proxy.png') %>
 
-Proxy settings were added to BOSH and Ops Manager to provide a way to proxy 
-HTTP requests from the BOSH CPI to the IaaS endpoints for each IaaS. 
-As of the latest modification of this topic, the proxy settings are limited to 
-the BOSH CPI and IaaS endpoints. 
-The Pivotal Platform team is considering proxying blobstore (S3) and database 
-traffic (RDS) from the BOSH Director, as well as proxying traffic from Pivotal 
-tiles such as Elastic Runtime.
+For more information about BOSH components, see the [BOSH documentation](https://bosh.io/docs/bosh-components.html).
 
-## <a id='setup-page'></a>Set Up Ops Manager ##
+<p class='note'><strong>Note</strong>: Pivotal Cloud Foundry (PCF) only supports proxying requests between the BOSH CPI and the IaaS API. It does not support proxying blobstore and database traffic.</p>
 
-1. When Ops Manager starts for the first time, you must choose one of the 
-following:
-   * [Use an Identity Provider](#idp): If you use an Identity Provider, an 
-     external identity server maintains your user database.
-   * [Internal Authentication](#internal): If you use Internal Authentication, 
-     PCF maintains your user database.
+## Configure Proxy ##
 
-     <%= image_tag("select-authentication.png") %>
+Perform the following steps to configure your proxy for the BOSH CPI when Pivotal Cloud Foundry Operations Manager starts for the first time: 
 
-1. For either option, you must enter HTTP or HTTPS proxy URLs.
+1. Ensure that you have installed your proxy and that it is functioning properly. You can install one proxy for HTTPS requests and another proxy for HTTP requests, or choose to use the same proxy for both kinds of traffic. 
 
-1. Enter IP addresses that will not be proxied in the No Proxy field, including 
-the following:
-   * The BOSH Director IP address. The BOSH Director IP address must be added to 
-     the **No Proxy** field. The BOSH Director IP address is the first IP address 
-     following your the range of IP addresses that you specify as Reserved. For 
-     example, if you enter `10.0.16.0-10.0.16.10` in the **Reserved IP Ranges** 
-     field of the networks page, the BOSH Director IP address is `10.0.16.11`.
-   * 127.0.0.1
+1. Follow the PCF installation instructions for your IaaS. See the [Installing Pivotal Cloud Foundry](../installing/index.html) topic for more information.
+
+1. When Ops Manager starts for the first time, you must select **Use an Identity Provider** or **Internal Authentication**. See the following IaaS-specific topics for more information:
+    * [Configuring Ops Manager Director on AWS](cloudform-om-config.html#access-om)
+    * [Configuring Ops Manager Director for VMware vSphere](vsphere-config.html#set-up)
+    * [Configuring Ops Manager Director for OpenStack](openstack-om-config.html#log-in)
+
+1. Both the **Use an Identity Provider** and the **Internal Authentication** login pages include fields for **Http proxy**, **Https proxy**, and **No proxy**. Complete the fields with the following information:
+    * **Https proxy**: Enter the URL for the proxy that handles HTTPS requests between the BOSH CPI and the IaaS API.
+    * **Http proxy**: Enter the URL for the proxy that handles HTTP requests between the BOSH CPI and the IaaS API. If you are using the same proxy to handle both HTTPS and HTTP traffic, enter the same URL as **Https proxy**.
+    * **No proxy**: Enter the following IP addresses:
+      * `127.0.0.1`
+      * The IP address of your BOSH Director. This is the first IP address not in your reserved range. For example, if you enter `10.0.16.0-10.0.16.10` in the **Reserved IP Ranges** field of the **Create Networks** page when configuring the Ops Manager Director, the BOSH Director IP is `10.0.16.11`.
+
+      <p class="note"><strong>Note</strong>: When the BOSH Director talks to other components on its VM, such as the database and the User Account and Authentication (UAA) module, it communicates with them as if they were external. You must enter the BOSH Director IP address in the no-proxy list to prevent traffic from the BOSH Director to other components on the same VM from passing through the proxy.</p> 

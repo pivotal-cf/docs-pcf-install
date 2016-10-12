@@ -105,9 +105,9 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     <pre class="terminal">
     $ azure storage table create stemcells
     </pre>
-1. Choose a set of unique names for three or more deployment storage accounts. As with the BOSH storage account above, the names must be unique, alphanumeric, lowercase, and 3-24 characters long. The account names must also be sequential or otherwise identical except for the last character, for example: `xyzdeploystorage1`, `xyzdeploystorage2`, `xyzdeploystorage3`.
+1. Choose a set of unique names for three or more deployment storage accounts. As with the BOSH storage account above, the names must be unique, alphanumeric, lowercase, and 3-24 characters long. The account names must also be sequential or otherwise identical except for the last character. For example: `xyzdeploystorage1`, `xyzdeploystorage2`, `xyzdeploystorage3`.
 <p class="note"><strong>Note</strong>: You can create up to 20 Azure storage accounts if your installation is large, or you can start with three and increase the number later.</p>
-1. For each of these deployment storage accounts, do the following:
+1. For **each deployment storage account**, do the following:
     1. Create the storage account with the following command, replacing `MY_DEPLOYMENT_STORAGE_X` with one of your deployment storage account names and `SUBSCRIPTION_ID` with your subscription ID.
     <pre class="terminal">
     $ azure storage account create MY\_DEPLOYMENT\_STORAGE\_X \
@@ -159,11 +159,13 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
 
 1. Add a front-end IP configuration to the load balancer.
     <pre class="terminal">
-    $ azure network lb frontend-ip create $RESOURCE_GROUP pcf-lb pcf-fe-ip --public-ip-name pcf-lb-ip
+    $ azure network lb frontend-ip create $RESOURCE_GROUP pcf-lb pcf-fe-ip \
+    --public-ip-name pcf-lb-ip
     </pre>
 1. Add a probe to the load balancer.
     <pre class="terminal">
-    $ azure network lb probe create $RESOURCE_GROUP pcf-lb tcp80 --protocol Tcp --port 80
+    $ azure network lb probe create $RESOURCE_GROUP pcf-lb tcp80 \
+    --protocol Tcp --port 80
     </pre>
 1. Add a backend address pool to the load balancer.
     <pre class="terminal">
@@ -172,17 +174,20 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     <p class="note"><strong>Note</strong>: This backend pool is empty when you create it.</p>
 1. Add a load balancing rule for HTTP.
     <pre class="terminal">
-    $ azure network lb rule create $RESOURCE_GROUP pcf-lb http --protocol tcp --frontend-port 80 --backend-port 80
+    $ azure network lb rule create $RESOURCE_GROUP pcf-lb http --protocol tcp \
+    --frontend-port 80 --backend-port 80
     </pre>
 1. Add a load balancing rule for HTTPS.
     <pre class="terminal">
-    $ azure network lb rule create $RESOURCE_GROUP pcf-lb https --protocol tcp --frontend-port 443 --backend-port 443
+    $ azure network lb rule create $RESOURCE_GROUP pcf-lb https --protocol tcp \
+    --frontend-port 443 --backend-port 443
     </pre>
 1. Add a load balancing rule for SSH.
     <pre class="terminal">
-    $ azure network lb rule create $RESOURCE_GROUP pcf-lb diego-ssh --protocol tcp --frontend-port 2222 --backend-port 2222
+    $ azure network lb rule create $RESOURCE_GROUP pcf-lb diego-ssh --protocol tcp \
+    --frontend-port 2222 --backend-port 2222
     </pre>
-1.  Navigate to your DNS provider and create an entry that points `*.YOUR-SUBDOMAIN` to the public IP address of your load balancer that you recorded in a previous step. For example, create an entry that points `azure.example.com` to `<%= vars.example_ip_1 %>`.
+1.  Navigate to your DNS provider, and create an entry that points `*.YOUR-SUBDOMAIN` to the public IP address of your load balancer that you recorded in a previous step. For example, create an entry that points `azure.example.com` to `198.51.100.1`.
     <p class="note"><strong>Note</strong>: If you did not record the IP address of your load balancer earlier, you can retrieve it by navigating to the Azure portal, clicking <strong>All resources</strong>, and clicking the <strong>Public IP address</strong> resource that ends with <code>pcf-lb-ip</code>.</p>
  
 ##<a id='boot'></a> Step 4: Boot Ops Manager
@@ -263,7 +268,7 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     --vm-size Standard\_DS2_v2 --ssh-publickey-file PATH-TO-PUBLIC-KEY
     </pre>
 
-1. The VM may take several minutes to boot. Run the following command and examine the output under **PowerState** to check the status of the VM.
+1. The VM may take several minutes to boot. Run the following command, and examine the output under **PowerState** to check the status of the VM.
     <pre class="terminal">
     $ azure vm list
     info:    Executing command vm list
@@ -274,4 +279,9 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     info:    vm list command OK
     </pre>
 
-    When **PowerState** reads `VM running`, continue to the [Configuring Ops Manager Director on Azure](azure-om-config.html) topic.
+    The **PowerState** displays `VM running` when the Ops Manager deployment successfully completes. 
+
+1. Navigate to your DNS provider, and create an entry that points a fully qualified domain name (FQDN) to the public IP address of Ops Manager that you recorded in a previous step. As a best practice, always use the FQDN to access Ops Manager.
+
+1. Continue to the [Configuring Ops Manager Director on Azure](azure-om-config.html) topic.
+

@@ -14,9 +14,34 @@ If you experience a problem while following the steps below, refer to the [Known
 
 ## <a id='prereqs'></a>Prerequisites ##
 
-To install PCF on vSphere, your IaaS configuration must have the minimum resource requirements and user privileges for a PCF installation. For a full list of requirements, see the [Prerequisites to Deploying Operations Manager and Elastic Runtime](./requirements.html) and [Pivotal Cloud Foundry IaaS User Role Guidelines](./iaas-user-roles.html) topics.
+### <a id='general'></a>General Requirements ###
 
-If you are deploying PCF behind a firewall, see the [Preparing Your Firewall for Deploying Pivotal Cloud Foundry](./config_firewall.html) topic.
+<%= partial "requirements" %>
+
+### <a id='vsphere-reqs'></a>vSphere Requirements ###
+
+<p class='note'><strong>Note</strong>: If you are using the Cisco Nexus 1000v Switch, refer to the <a href="nexus-switch.html">Using the Cisco Nexus 1000v Switch with Ops Manager</a> topic for more information.</p>
+
+<p class='note'><strong>Note</strong>: When installing Ops Manager on a vSphere environment with multiple ESXi hosts, you must use network-attached or shared storage devices. Local storage devices do not support sharing across multiple ESXi hosts.</p>
+
+The following are the minimum resource requirements for maintaining a [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) deployment with Ops Manager and Elastic Runtime on vSphere:
+
+* vSphere 6.0, 5.5, or 5.1.
+* Disk space: 2TB recommended.
+* Memory: 120GB
+* Two public IP addresses: One for Elastic Runtime and one for Ops Manager
+* vCPU cores: 80
+* Overall CPU: 28 GHz
+* vSphere editions: standard and above.
+* Ops Manager Director must have HTTPS access to vCenter and ESX hosts on TCP ports 443, 902, and 903.
+* A configured vSphere cluster:
+  * If you enable vSphere DRS (Distributed Resource Scheduler) for the cluster, you must set the Automation level to **Partially automated** or **Fully automated**. If you set the Automation level to **Manual**, the BOSH automated installation will fail with a `power_on_vm` error when BOSH attempts to create virtual machines (VMs).
+  * Turn hardware virtualization off if your vSphere hosts do not support VT-X/EPT. If you are unsure whether the VM hosts support VT-x/EPT, then you can turn this setting off. If you leave this setting on and the VM hosts do not support VT-x/EPT, then each VM requires manual intervention in vCenter to continue powering on without the Intel virtualized VT-x/EPT. Refer to the vCenter help topic at [Configuring Virtual Machines > Setting Virtual Processors and Memory > Set Advanced Processor Options](http://pubs.vmware.com/fusion-5/index.jsp?topic=%2Fcom.vmware.fusion.help.doc%2FGUID-38178690-1234-4843-B135-4063F9AA73E4.html) for more information.
+* Ops Manager requires read/write permissions to the datacenter level of the [vSphere Inventory Hierarchy](http://pubs.vmware.com/vsphere-4-esx-vcenter/index.jsp?topic=/com.vmware.vsphere.dcadmin.doc_41/vsp_dc_admin_guide/managing_users_groups_roles_and_permissions/c_hierarchical_inheritance_of_permissions.html) to successfully install. Pivotal recommends using the default [VMware Administrator System Role](http://pubs.vmware.com/vsphere-51/index.jsp#com.vmware.wssdk.pg.doc/PG_Authenticate_Authorize.8.6.html#1110514) to achieve the appropriate permission level, or a custom role that has all privileges for all objects in the datacenter, including propagating privileges to children. For a complete list of required vSphere privileges, see the [BOSH documentation](https://github.com/cloudfoundry-incubator/bosh-vsphere-cpi-release/blob/master/docs/required_vcenter_privileges.md).
+
+<p class="note"><strong>Note</strong>: For information on how IaaS user roles are configured, refer to the <a href="iaas-user-roles.html">Pivotal Cloud Foundry IaaS User Role Guidelines</a> topic.</p>
+
+<p class="note"><strong>Note</strong>: If you are deploying PCF behind a firewall, see the <a href="config_firewall.html">Preparing Your Firewall for Deploying Pivotal Cloud Foundry</a> topic.</p>
 
 ## <a id='install-om'></a>Step 1: Install Ops Manager ##
 

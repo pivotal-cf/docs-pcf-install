@@ -182,15 +182,29 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     $ azure network lb rule create $RESOURCE_GROUP pcf-lb https --protocol tcp \
     --frontend-port 443 --backend-port 443
     </pre>
-1. Add a load balancing rule for SSH.
-    <pre class="terminal">
-    $ azure network lb rule create $RESOURCE_GROUP pcf-lb diego-ssh --protocol tcp \
-    --frontend-port 2222 --backend-port 2222
-    </pre>
 1.  Navigate to your DNS provider, and create an entry that points `*.YOUR-SUBDOMAIN` to the public IP address of your load balancer that you recorded in a previous step. For example, create an entry that points `azure.example.com` to `198.51.100.1`.
     <p class="note"><strong>Note</strong>: If you did not record the IP address of your load balancer earlier, you can retrieve it by navigating to the Azure portal, clicking <strong>All resources</strong>, and clicking the <strong>Public IP address</strong> resource that ends with <code>pcf-lb-ip</code>.</p>
  
-##<a id='boot'></a> Step 4: Boot Ops Manager
+##<a id='ssh-lb'></a> Step 4: (Optional) Create an SSH Load Balancer
+
+If you want to allow SSH connections to app containers, you need to create a second load balancer as follows.
+
+1. Create a load balancer named `pcf-ssh-lb`.
+    <pre class="terminal">
+    $ azure network lb create $RESOURCE_GROUP pcf-ssh-lb $LOCATION
+    </pre>
+
+1. Follow the same [procedure](#lb) you used previously when creating the main load balancer, with the following changes:
+    * Use the names `pcf-ssh-lb` for the load balancer, `pcf-ssh-lb-ip` for the IP Address, `pcf-ssh-fe-ip` for the front-end, and `pcf-ssh-vms` for the backend address pool.
+    * Do not add a probe.
+    * Do not add load balancing rules for HTTP and HTTPS.
+    * Add a load balancing rule for SSH.
+    <pre class="terminal">
+    $ azure network lb rule create $RESOURCE_GROUP pcf-ssh-lb diego-ssh --protocol tcp \
+    --frontend-port 2222 --backend-port 2222
+    </pre>
+
+##<a id='boot'></a> Step 5: Boot Ops Manager
 
 1. Navigate to [Pivotal Network](https://network.pivotal.io/products/ops-manager) and download the latest release of **Pivotal Cloud Foundry Ops Manager for Azure**.
 

@@ -7,35 +7,9 @@ owner: Ops Manager
 
 This guide describes the preparation steps required to install [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Google Cloud Platform (GCP).
 
-## <a id="prereqs"></a> Prerequisites ##
-
-### <a id="general"></a>General Requirements ##
-
-<%= partial 'requirements' %>
-
-### <a id="gcp"></a>GCP Requirements ##
-
-You must have the following to install PCF on GCP:
-
-* A GCP account and project with sufficient quota to deploy all the VMs needed for a PCF installation. You can request a quota increase on the [GCP Quotas page](https://console.cloud.google.com/compute/quotas).
-* The [Google Cloud SDK](https://cloud.google.com/sdk/) installed on your machine and authenticated to your GCP account.
-* Sufficiently high instance limits, or no instance limits, on your GCP account. Installing PCF requires at least 10 concurrent instances for testing or development deployments and typically at least 30 for production deployments. The exact number of instances depends on the number of tiles and availability zones you plan to deploy. A minimal single-AZ GCP deployment requires the following 20 `custom` VMs:
-<table border='1' class='nice'>
-<tr><th>VM Count</th><th>Machine type</th><th>Memory (in GB)</th> </tr>
-<tr><td>11</td><td>1vCPU</td><td>1.00</td></tr>
-<tr><td>1</td><td>1vCPU</td><td>6.00</td></tr>
-<tr><td>2</td><td>1vCPU</td><td>2.00</td></tr>
-<tr><td>2</td><td>2vCPU</td><td>4.00</td></tr>
-<tr><td>1</td><td>2vCPU</td><td>8.00</td></tr>
-<tr><td>3</td><td>4vCPU</td><td>16.00</td></tr>
-</table>
-
-* Administrative rights to a domain for your PCF installation. You need to be able to add wildcard records to this domain. You specify this registered domain when configuring the SSL certificate and Cloud Controller for your deployment. For more information see the [Providing a Certificate for your SSL Termination Point](../opsguide/security_config.html) topic. </td>
-* An SSL certificate for your PCF domain. This can be a self-signed certificate, which Ops Manager can generate for you, but Pivotal recommends using a self-signed certificate for development and testing purposes only. If you plan to deploy PCF into a production environment, you must obtain a certificate from your Certificate Authority. 
-
 ## <a id="deploy_prepare"></a> Preparing the GCP Environment for Deployment
 
-In addition to the prerequisites listed above, you must create a new network and service account in GCP before deploying PCF. Follow these procedures to prepare your GCP environment. 
+In addition to fulfilling the [prerequisites](./gcp.html), you must create resources in GCP such as a new network, firewall rules, load balancers and a service account before deploying PCF. Follow these procedures to prepare your GCP environment. 
 
 ### <a id="create_network"></a> Create a GCP Network with Subnet
 
@@ -149,8 +123,8 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
 1. To verify that the APIs have been enabled, perform the following steps:
     1. Log in to GCP using the IAM service account you created in [Set up an IAM Service Account](#iam_account):
      <pre class="terminal">
-     $ gcloud auth activate-service-account IAM\_SERVICE\_ACCOUNT\_EMAIL \ 
-     --key-file PATH\_TO\_YOUR\_IAM\_KEY\_JSON\_FILE
+     $ gcloud auth activate-service-account 
+     --key-file JSON\_KEY\_FILENAME
      </pre>
 
   1. List your projects:

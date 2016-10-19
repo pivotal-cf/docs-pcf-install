@@ -20,7 +20,7 @@ In addition to fulfilling the [prerequisites](./gcp.html), you must create resou
 
 1. Select **Networking**, then **Create Network**. 
 	1. Enter a name and descrption for your network. 
-	1. Under **Subnetworks**, select **Custom** and specify a name, region, and address range.
+	1. Under **Subnetworks**, select **Custom** and specify a name, region, and address range in CIDR notation.
 
 	Make sure you select a region with enough zones to support the availability zone needs of your deployment. For help selecting the correct region for your deployment, see the [Google documentation on regions and zones](https://cloud.google.com/compute/docs/regions-zones/regions-zones). 
 
@@ -79,6 +79,8 @@ In addition to fulfilling the [prerequisites](./gcp.html), you must create resou
     <pre class="terminal">
     $ ssh-keygen -t rsa -f vcap-key -C vcap@local
     </pre>
+    <br><br>
+    When prompted, press enter twice to use no passphrase.
 
 1. Open and copy the contents of the public key file `vcap-key.pub`.
 
@@ -117,7 +119,7 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
 
 1. On the **Google Compute Engine API** page, click **Enable**.
 
-1. In the Google APIs search field, enter `Google Cloud Resource Manager API`. 
+1. In the search field, enter `Google Cloud Resource Manager API`. 
 
 1. On the **Google Cloud Resource Manager API** page, click **Enable**.
 
@@ -145,33 +147,7 @@ You need at least three and as many as four load balancers to operate PCF on GCP
 
 The steps required to set up each load balancer are described below.
 
-### <a id="ssh_lb"></a> Create the SSH Proxy Load Balancer and Instance Group ###
-The load balancer for SSH proxy jobs for PCF on GCP operates on TCP port `2222`, but does not have a health check. To configure a SSH load balancing for PCF on GCP you need to follow two steps:
-
-  * Create an [**Instance Group**](#instance_group) for load balancer configuration to the GCP **Backend service**. 
-  * Create an [SSH Proxy Load Balancer](#create_ssh_lb) for SSH proxy jobs.
-
-#### <a id="instance_group"></a> Create **Instance Group**
-You need an **Instance Group** to associate with the load balancer you create.
-<p class="note"><strong>Note</strong>: You need one Google <strong>Instance Group</strong> for each Availability Zone you plan to support. All <strong>Instance Groups</strong> must connect to the Google <strong>Backend Service</strong> to configure your load balancer, described below.</p>
-
-1. From the GCP Console, select **Compute Engine** and click **Create Instance Group**.
-  <%= image_tag("gcp/create_instance_group.png") %>
-
-1. In the the **Create a new instance group** window, name the instance group in the **Name** field.
-  <%= image_tag("gcp/configure_new_instance_group.png") %>
-
-1. Choose **Single-zone** in the **Location** section.
-
-1. Select the matching zone from the **Zone** drop-down menu for the [network](#create_network) you created above.
-
-1. Under **Creation method**, choose **Select existing instance** and select `opsmgr` from the **Network** drop down. You previously created the `opsmgr` network in the [Create a GCP Network with Subnet](#create_network) step above.
-
-1. Click **Create**.
-
-Your Google **Instance Group** for PCF on GCP is set up properly.
-
-#### <a id="create_ssh_lb"></a> Create **SSH Proxy Load Balancer**
+### <a id="ssh_lb"></a> Create the SSH Proxy Load Balancer
 
 1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
 
@@ -209,6 +185,37 @@ Your Google **Instance Group** for PCF on GCP is set up properly.
 
 Your SSH Proxy load balancer is set up properly for PCF on GCP.
 
+### <a id='create-http-and-instance-group'></a>Create the Instance Group and HTTP(S) Load Balancer ###
+
+To configure HTTP(S) load balancing for PCF on GCP you need to follow two steps:
+
+  1. Create an [**Instance Group**](#instance_group) for load balancer configuration to the GCP **Backend service**. 
+  1. Create an [HTTP(S) Load Balancer](#http_https_lb).
+
+#### <a id="instance_group"></a> Create **Instance Group**
+You need an **Instance Group** to associate with the load balancer you create.
+<p class="note"><strong>Note</strong>: You need one Google <strong>Instance Group</strong> for each Availability Zone you plan to support. All <strong>Instance Groups</strong> must connect to the Google <strong>Backend Service</strong> to configure your load balancer, described below.</p>
+
+1. From the GCP Console, select **Compute Engine** and click **Instance groups**.
+  <%= image_tag("gcp/create_instance_group.png") %>
+
+1. Click **Create instance group**.
+
+1. In the the **Create a new instance group** window, name the instance group in the **Name** field.
+  <%= image_tag("gcp/configure_new_instance_group.png") %>
+
+1. Choose **Single-zone** in the **Location** section.
+
+1. Select the matching zone from the **Zone** drop-down menu for the [network](#create_network) you created above.
+
+1. Under **Creation method**, choose **Select existing instance** and select `opsmgr` from the **Network** drop-down. You previously created the `opsmgr` network in the [Create a GCP Network with Subnet](#create_network) step above.
+
+  <p class="note"><strong>Note</strong> If <code>opsmgr</code> is your only network, the drop-down does not appear, because the sole network is automatically selected.</p>
+
+1. Click **Create**.
+
+Your Google **Instance Group** for PCF on GCP is set up properly.
+
 ### <a id="http_https_lb"></a> Create the HTTP(S) Load Balancer ###
 
 To create a load balancer for HTTP(S) in GCP:
@@ -236,7 +243,7 @@ To create a load balancer for HTTP(S) in GCP:
    * **Description**: 
    * **Protocol**: `HTTP`
    * **Port**: `8080`
-   * **Request path**: `/healthz`
+   * **Request path**: `/health`
    * Use the default <strong>Health criteria</strong> field values:
      * **Check interval**: `5` seconds
      * **Timeout**: `5` seconds
@@ -247,6 +254,8 @@ To create a load balancer for HTTP(S) in GCP:
    The **Backend configuration** section shows a green check mark.
 
 1. Click **Host and path rules** to populate the default fields and a green check mark.
+
+1. Click **Frontend configuration** to populate the default fields and a green check mark.
 
 1. Click **Review and finalize** to verify your configuration.
   <%= image_tag "gcp/http_lb_finalize.png" %>
@@ -263,7 +272,9 @@ The load balancer for tailing logs with websockets for PCF on GCP operates on TC
 1. Under **TCP Load Balancing**, click **Start configuration**.
   <%= image_tag("gcp/create_new_lb.png") %>
 
-1. Under **Connection termination**, select **No (TCP)**. Click **Continue**. 
+1. Under **Internet facing or internal only**, select **From Internet to my VMs**. Under **Connection termination**, select **No (TCP)**. 
+
+1. Click **Continue**. 
   <%= image_tag("gcp/lb_connection_termination.png") %>
 
 1. In the **New TCP load balancer** window, enter `pcf-websockets` in the **Name** field.
@@ -275,7 +286,7 @@ The load balancer for tailing logs with websockets for PCF on GCP operates on TC
 
 1. Click **Frontend configuration** to open its configuration window and complete the fields:
  * **Protocol**: `TCP`
- * **IP**: Select the Static IP that you reserved from the step for creating the [SSL Load Balancer](#create_ssh_lb).
+ * **IP**: Select the Static IP that you reserved from the step for creating the [SSH Load Balancer](#ssh_lb).
    * **Port**: `443`
   The **Frontend configuration** section shows a green check mark.
 
@@ -288,7 +299,9 @@ Your TCP websockets load balancer is set up properly for PCF on GCP.
 
 ### <a id="tcprouter_lb"></a>(Optional) Create the Load Balancer for TCP Router
 
-This step is optional and only required if you enable TCP routing in your deployment. To create a load balancer for TCP Router in GCP:
+<p class="note"><strong>Note</strong>: This step is optional and only required if you enable TCP routing in your deployment.</p>
+
+To create a load balancer for TCP routing in GCP, perform the following steps:
 
 1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
 

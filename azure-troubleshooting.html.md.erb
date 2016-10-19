@@ -1,0 +1,99 @@
+---
+title: Troubleshooting PCF on Azure
+owner: Ops Manager
+---
+
+<strong><%= modified_date %></strong>
+<html class="list-style-none"></html>
+
+This topic describes how to troubleshoot known issues when deploying Pivotal Cloud Foundry (PCF) on Azure.
+
+## <a id="install-issues"></a> Troubleshoot Installation Issues
+
+### <a id="timeouts"></a> Slow Performance or Timeouts
+
+#### Symptom
+
+Developers suffer from slow performance or timeouts when pushing or managing apps, and end users suffer from slow performance or timeouts when accessing apps
+
+#### Explanation
+
+The Azure Load Balancer (ALB) disconnects active TCP connections lying idle for over four minutes.
+
+#### Solution
+
+Because HAProxy sits between the ALB and the router, you can resolve the problem by setting the HAProxy timeout value to be greater than the timeout value of the ALB. Perform the following steps:
+
+1. Target your BOSH Director by following the steps in the [Log into BOSH](./trouble-advanced.html#log-in) section of the _Advanced Troubleshooting with the BOSH CLI_ topic.
+1. If necessary, download your PCF manifest: 
+	<pre class="terminal">
+	$ bosh download manifest DEPLOYMENT-NAME
+	</pre>
+	If you do not know your deployment name, run `bosh deployments` to display a list of available deployments.
+1. Set your current deployment to your PCF manifest:
+	<pre class="terminal">
+	$ bosh deployment PATH-TO-PCF-MANIFEST
+	</pre>
+1. Edit your deployment:
+	<pre class="terminal">
+	$ bosh edit deployment
+	</pre>
+1. Locate the `haproxy` section and add the following property:
+	`request_timeout_in_seconds: 180`
+1. Save and exit the edited manifest.
+1. Redeploy:
+	<pre class="terminal">
+	$ bosh deploy
+	</pre>
+
+<hr>
+
+### <a id="cannot-copy-om"></a> Cannot Copy the Ops Manager Image
+
+#### Symptom
+
+Cannot copy the Ops Manager image into your storage account when completing [Step 4: Boot Ops Manager](./azure-om-deploy.html#boot) of the _Launching an Ops Manager Director Instance on Azure_ topic
+
+#### Explanation
+
+You have an outdated version of the Azure CLI. You need the Azure CLI version 0.9.18 or greater. Run `azure --version` from the command line to display your current Azure CLI version.
+
+#### Solution
+
+Upgrade your Azure CLI to the current version by reinstalling the new version. Run <code>npm update -g azure-cli</code> from the command line, or follow the procedures below for your operating system:
+
+* **Mac OS X**: Download and run the [Mac OS X](http://aka.ms/mac-azure-cli) installer.
+* **Windows**: Download and run the [Windows](https://www.microsoft.com/web/handlers/webpi.ashx?command=getinstallerredirect&appid=windowsazurexplatcli&mode=new) installer. Install the Azure CLI on Windows 10. Use the command line, not the PowerShell, to run the Azure CLI.
+* **Linux**: Download the [Linux](http://aka.ms/linux-azure-cli) tar file. Install the Azure CLI on Ubuntu Server 14.04 LTS. To install the Azure CLI on Linux, you must first install Node.js and npm, and then run <code>sudo npm install -g PATH-TO-TAR-FILE</code>.
+
+<hr>
+
+### <a id="bosh-init-fails"></a> Deployment Fails at "bosh-init"
+
+#### Symptom
+
+After clicking **Apply Changes** to install Ops Manager and Elastic Runtime, the deployment fails at `bosh-init` with an error message similar to the following:
+
+```
+Command 'deploy' failed:
+  Deploying:
+    Creating instance 'bosh/0':
+      Waiting until instance is ready:
+        Starting SSH tunnel:
+          Parsing private key file '/tmp/bosh_ec2_private_key.pem':
+            asn1: structure error: tags don't match (16 vs {class:3 tag:28 length:127
+            isCompound:false}) {optional:false explicit:false application:false 
+            defaultValue:<nil> tag:<nil> stringType:0 timeType:0 set:false omitEmpty:false} pkcs1PrivateKey @2
+			===== 2016-09-29 16:28:22 UTC Finished "bosh-init deploy 
+			/var/tempest/workspaces/default/deployments/bosh.yml"; 
+			Duration: 328s; Exit Status: 1
+Exited with 1. 
+```
+
+#### Explanation
+
+You provided a passphrase when creating your key pair in the [Step 4: Boot Ops Manager](./azure-om-deploy.html#boot) section of the _Launching an Ops Manager Director Instance on Azure_ topic.
+
+#### Solution
+
+Create a new key pair with no passphrase and redo the installation, beginning with the step for creating a VM against the Ops Manager image in the [Step 4: Boot Ops Manager](./azure-om-deploy.html#boot) section of the _Launching an Ops Manager Director Instance on Azure_ topic.

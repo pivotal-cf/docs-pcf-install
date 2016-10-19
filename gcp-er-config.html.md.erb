@@ -47,18 +47,23 @@ Dashboard.
 
 In this step you redirect queries for your domain to the IP addresses of your load balancers.
 
-1. Locate the IP addresses of the load balancers you created in [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html):
-    * The HTTPS load balancer named `pcf-router`.
-    * The TCP load balancer named `pcf-ssh`.
-    * The TCP websockets load balancer named `pcf-websockets`.
-    <p class="note">You can locate the IP address of each load balancer by clicking its name under <strong>Networks > Load balancing</strong> in the GCP Console.</p>
+1. Locate the static IP addresses of the load balancers you created in [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html):
+    * An HTTP(S) load balancer named `pcf-router`.
+    * A TCP load balancer named `pcf-ssh`.
+    * A TCP load balancer for websockets named `pcf-websockets`.
+    * A TCP load balancer for the TCP router if you plan on enabling the TCP routing feature.
+    <p class="note">You can locate the static IP address of each load balancer by clicking its name under <strong>Networks > Load balancing</strong> in the GCP Console.</p>
 
 1. Log in to the DNS registrar that hosts your domain. Examples of DNS registrars include Network Solutions, GoDaddy, and Register.com.
 
-1. Create records with your DNS registrar that maps your domain names to the IP addresses of the load balancer located above:
-    * `*.YOURDOMAIN` maps to the IP address of `pcf-router`
-    * `ssh.YOURDOMAIN` maps to the IP address of `pcf-ssh`.
-    * `doppler.YOURDOMAIN` maps to the IP address of `pcf-websockets`
+1. Create A records with your DNS registrar that map domain names to the IP addresses of the load balancers located above:
+    * `*.YOURSYSTEMDOMAIN` maps to the IP address of `pcf-router`. For example, `*.system.example.com`.
+    * `*.YOURAPPSDOMAIN` maps to the IP address of `pcf-router`. For example, `*.apps.example.com`.
+    <p class="note"> If your system domain and apps domain share the same parent domain, you can use a single wildcard entry record. For example, you can create a single entry for `*.example.com`, which allows `foo.system.example.com` and `bar.apps.example.com` to resolve to the same IP address. </p>
+    * `ssh.YOURSYSTEMDOMAIN` maps to the IP address of `pcf-ssh`. For example, `ssh.system.example.com`.
+    * `doppler.YOURSYSTEMDOMAIN` maps to the IP address of `pcf-websockets`. For example, `doppler.system.example.com`.
+    * `loggregator.YOURSYSTEMDOMAIN` maps to the IP address of `pcf-websockets`. For example, `loggregator.system.example.com`.
+    * `tcp.YOURDOMAIN` maps to the IP address of the optional TCP load balancer. For example, `tcp.example.com`.
 
 1. Save changes within the web interface of your DNS registrar.
 
@@ -283,7 +288,7 @@ TCP Routing is available for users who want an alternative to HTTP. For more inf
 
     <%= image_tag("images/tcp_routing.png") %>
 
-1. You do not need to enter **TCP Router IPs** if you are using a GCP target pool. Instead, navigate to <strong>Resource Config</strong> and, in the **TCP Router** job, enter your GCP target pool in the **Target Pools** column. See [Step 22: Configure Router to Elastic Load Balancer](#config-lb) for more information.
+1. You do not need to enter **TCP Router IPs** if you are using a GCP load balancer for the TCP router. Instead, navigate to <strong>Resource Config</strong> and, in the **TCP Router** job, enter the TCP load balancer name prepended with `tcp:` in the **LOAD BALANCERS** column. For example, `tcp:pcf-tcp-router`. See [Step 22: Configure Router to Elastic Load Balancer](#config-lb) for more information.
 
 1. In **TCP Routing Ports**, enter the range of ports you reserved for TCP routes. These ports must be available on your load balancer. You can specify a list of ports with commas between each port number and specify ranges of ports with dashes between the first and last port number. This configuration only applies the first time you specify it here. If you later want to update the ports, see the [HTTP vs. TCP Routes](../devguide/deploy-apps/routes-domains.html#http-vs-tcp-routes) section of the _Routes and Domains_ topic that describes using the cf CLI to update TCP Routing ports.
 
@@ -318,11 +323,10 @@ TCP Routing is available for users who want an alternative to HTTP. For more inf
 
 1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-delimited list consisting of the name of your TCP Websockets load balancer and the name of your HTTP(S) load balancer backend with the protocol prepended. For example, `tcp:pcf-websockets,http:pcf-backend`.
 
-    <p class="note"><strong>Note</strong>: If you have enabled TCP routing in the <a href="#enable-tcp">Advanced Features</a> pane and set up the <a href="/gcp-prepare-env.html#tcp_websockets_lb">TCP Load Balancer in GCP</a>, add the name of your TCP load balancer, prepended with `tcp:`, to the <strong>LOAD BALANCERS</strong> column of the <storng>Router</strong> row. For example, <code>tcp:pcf-tcp-router</code>.</p>
+    <p class="note"><strong>Note</strong>: If you have enabled TCP routing in the <a href="#enable-tcp">Advanced Features</a> pane and set up the <a href="/gcp-prepare-env.html#tcp_websockets_lb">TCP Load Balancer in GCP</a>, add the name of your TCP load balancer, prepended with <code>tcp:</code>, to the <strong>LOAD BALANCERS</strong> column of the <storng>Router</strong> row. For example, <code>tcp:pcf-tcp-router</code>.</p>
 
 1. Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the name of your SSH load balancer prepended with `tcp:`. For example, `tcp:pcf-ssh`.
-
-<p class="note"><strong>Note</strong>: Do not add a space between key/value pairs in the <code>LOAD BALANCER</code> field or it will fail.</p>
+    <p class="note"><strong>Note</strong>: Do not add a space between key/value pairs in the <code>LOAD BALANCER</code> field or it will fail.</p>
 
 1. Verify that the **Internet Connected** checkbox for every job is checked to allow the jobs to reach the Internet. 
 

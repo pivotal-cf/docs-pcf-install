@@ -19,7 +19,9 @@ Dashboard.
 
 1. If you have not downloaded Elastic Runtime, click the Pivotal Network link on the left to download the Elastic Runtime .pivotal file. Click **Import a Product** to add the tile to Ops Manager. For more information, refer to the [Adding and Deleting Products](./add-delete.html) topic.
 
-1. Click the **Elastic Runtime** tile in the Installation Dashboard.
+1. On the left, click the plus icon next to the imported Elastic Runtime product to add it to the Installation Dashboard.
+
+1. Click the newly added **Elastic Runtime** tile in the Installation Dashboard.
 
     <%= image_tag('images/er-tile.png') %>
 
@@ -45,18 +47,23 @@ Dashboard.
 
 In this step you redirect queries for your domain to the IP addresses of your load balancers.
 
-1. Locate the IP addresses of the load balancers you created in [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html):
-    * The HTTPS load balancer named `pcf-router`.
-    * The TCP load balancer named `pcf-ssh`.
-    * The TCP websockets load balancer named `pcf-websockets`.
-    <p class="note">You can locate the IP address of each load balancer by clicking its name under <strong>Networks > Load Balancing</strong> in the GCP Console.</p>
+1. Locate the static IP addresses of the load balancers you created in [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html):
+    * An HTTP(S) load balancer named `pcf-router`.
+    * A TCP load balancer named `pcf-ssh`.
+    * A TCP load balancer for websockets named `pcf-websockets`.
+    * A TCP load balancer for the TCP router if you plan on enabling the TCP routing feature.
+    <p class="note">You can locate the static IP address of each load balancer by clicking its name under <strong>Networks > Load balancing</strong> in the GCP Console.</p>
 
 1. Log in to the DNS registrar that hosts your domain. Examples of DNS registrars include Network Solutions, GoDaddy, and Register.com.
 
-1. Create records with your DNS registrar that maps your domain names to the IP addresses of the load balancer located above:
-    * `*.YOURDOMAIN` maps to the IP address of `pcf-router`
-    * `ssh.YOURDOMAIN` maps to the IP address of `pcf-ssh`.
-    * `doppler.YOURDOMAIN` maps to the IP address of `pcf-websockets`
+1. Create A records with your DNS registrar that map domain names to the IP addresses of the load balancers located above:
+    * `*.YOURSYSTEMDOMAIN` maps to the IP address of `pcf-router`. For example, `*.system.example.com`.
+    * `*.YOURAPPSDOMAIN` maps to the IP address of `pcf-router`. For example, `*.apps.example.com`.
+    <p class="note"> If your system domain and apps domain share the same parent domain, you can use a single wildcard entry record. For example, you can create a single entry for `*.example.com`, which allows `foo.system.example.com` and `bar.apps.example.com` to resolve to the same IP address. </p>
+    * `ssh.YOURSYSTEMDOMAIN` maps to the IP address of `pcf-ssh`. For example, `ssh.system.example.com`.
+    * `doppler.YOURSYSTEMDOMAIN` maps to the IP address of `pcf-websockets`. For example, `doppler.system.example.com`.
+    * `loggregator.YOURSYSTEMDOMAIN` maps to the IP address of `pcf-websockets`. For example, `loggregator.system.example.com`.
+    * `tcp.YOURDOMAIN` maps to the IP address of the optional TCP load balancer. For example, `tcp.example.com`.
 
 1. Save changes within the web interface of your DNS registrar.
 
@@ -82,10 +89,7 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
       Runtime.
     * The **Apps Domain** defines where Elastic Runtime serves your apps.
 
-    <p class="note"><strong>Note</strong>: Pivotal recommends that you use the same domain name but different subdomain names for your system and app domains. This prevents system and apps routes from overlapping. You will require two wildcard DNS entries, one for the system and one for apps. For example,  <code>*.system.EXAMPLE.COM</code> and <code>*.apps.EXAMPLE.COM</code>. Point both wildcard domains at the public IP address of the `pcf-router` load balancer.</p>
-
-    <p class="note"><strong>Note</strong>: You configured a wildcard DNS record
-    for these domains in an earlier step.</p>
+    <p class="note"><strong>Note</strong>: Pivotal recommends that you use the same domain name but different subdomain names for your system and app domains. For example, use <code>system.example.com</code> for your system domain, and <code>apps.example.com</code> for your apps domain.</p>
 
 1. Click **Save**.
 
@@ -141,23 +145,24 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 
 1. In the Elastic Runtime tile, select **File Storage**.
 
-    <p class="note"><strong>Note</strong>: Pivotal recommends using a highly resilient and redundant filestore. This approach minimizes downtime of system operability and includes running <code>cf-push</code>.</p>
+    <p class="note"><strong>Note</strong>: Pivotal recommends using a highly resilient and redundant filestore. This approach minimizes system downtime, including for developers using <code>cf push</code>.</p>
 
 1. To use the PCF internal filestore, select **Internal WebDAV**, and click **Save**.
 
 1. To use the external Google filestore for your Elastic Runtime file storage, select the **External Google Cloud Storage** option, and complete the following required fields:
     <%= image_tag("gcp/gcp-file-storage-google-cloud-storage.png") %>
     * Enter values for **Access Key** and **Secret Key**. To obtain the values for these fields:
-      1. In the Google Cloud Platform console, navigate to the **Storage** tab, then click **Settings**.
+      1. In the GCP Console, navigate to the **Storage** tab, then click **Settings**.
       1. Click **Interoperability**.
       1. If necessary, click **Enable interoperability access**.
       1. Click **Create a new key**.
       <%= image_tag("gcp/gcp-key-secret-create.png") %>
       1. Copy and paste the generated values into the corresponding Elastic Runtime fields. PCF uses these values for authentication when connecting to Google Cloud Storage.
-    * For the **Buildpacks Bucket Name**, enter a name that describes the bucket for storing your app buildpacks.
-    * For **Droplets Bucket Name**, enter a name for your app droplet storage. Pivotal recommends that you use a unique bucket name, but you can use the same name as the previous step.
-    * For **Resources Bucket Name**, enter a name for resources. Pivotal recommends that you use a unique bucket name, but you can use the same name as the previous step.
-    * For **Packages Bucket Name**, enter a name for packages. Pivotal recommends that you use a unique bucket name, but you can use the same name as the previous step.
+    <p class="note"><strong>Note</strong>: To create buckets in GCP, navigate to <strong>Storage</strong> and click <strong>CREATE BUCKET</strong>.</p>
+    * For the **Buildpacks Bucket Name**, enter the name of the bucket for storing your app buildpacks.
+    * For **Droplets Bucket Name**, enter the name of the bucket for your app droplet storage. Pivotal recommends that you use a unique bucket, but you can use the same bucket as the previous step.
+    * For **Resources Bucket Name**, enter the name of the bucket for resources. Pivotal recommends that you use a unique bucket, but you can use the same bucket as the previous step.
+    * For **Packages Bucket Name**, enter the name of the bucket for packages. Pivotal recommends that you use a unique bucket, but you can use the same bucket as the previous step.
     * Click **Save**.
 
 1. To use an external S3-compatible filestore for your Elastic Runtime file storage, select the **External S3-Compatible Filestore** option. Complete the following fields.
@@ -283,7 +288,7 @@ TCP Routing is available for users who want an alternative to HTTP. For more inf
 
     <%= image_tag("images/tcp_routing.png") %>
 
-1. You do not need to enter **TCP Router IPs** if you are using a GCP target pool. Instead, navigate to <strong>Resource Config</strong> and, in the **TCP Router** job, enter your GCP target pool in the **Target Pools** column. See [Step 22: Configure Router to Elastic Load Balancer](#config-lb) for more information.
+1. You do not need to enter **TCP Router IPs** if you are using a GCP load balancer for the TCP router. Instead, navigate to <strong>Resource Config</strong> and, in the **TCP Router** job, enter the TCP load balancer name prepended with `tcp:` in the **LOAD BALANCERS** column. For example, `tcp:pcf-tcp-router`. See [Step 22: Configure Router to Elastic Load Balancer](#config-lb) for more information.
 
 1. In **TCP Routing Ports**, enter the range of ports you reserved for TCP routes. These ports must be available on your load balancer. You can specify a list of ports with commas between each port number and specify ranges of ports with dashes between the first and last port number. This configuration only applies the first time you specify it here. If you later want to update the ports, see the [HTTP vs. TCP Routes](../devguide/deploy-apps/routes-domains.html#http-vs-tcp-routes) section of the _Routes and Domains_ topic that describes using the cf CLI to update TCP Routing ports.
 
@@ -299,26 +304,31 @@ TCP Routing is available for users who want an alternative to HTTP. For more inf
 
 ## <a id='config-lb'></a>Step 20: Configure Load Balancers ##
 
-1. If you do not know it, find the name of your target pool by clicking **Networking > Load Balancers** in the GCP Console, for example, `docs-lb`, `pcf-lb`, or `pcf-tcp-lb`. When you create a load balancer, GCP automatically creates a target pool for you using the load balancer name. 
+1. Navigate to the GCP Console and click **Load balancing**.
 
-    <%= image_tag("gcp/lb_names.png") %>
+    <%= image_tag('gcp/config-lb.png') %>
 
-    For more information, see [Target pools](https://cloud.google.com/compute/docs/load-balancing/network/target-pools) in the GCP documentation.
+    You should see the SSH load balancer, the HTTP(S) load balancer, the TCP Websockets load balancer, and optionally, the TCP router that you created in the [Create Load Balancers in GCP](gcp-prepare-env.html#create_loadbalancers) section of the Preparing to Deploy PCF on GCP topic. 
+
+1. Record the name of your SSH load balancer and your TCP Websockets load balancer. For example, `pcf-ssh` and `pcf-websockets`.
+
+1. Click your HTTP(S) load balancer. For example, `pcf-router`. 
+    <%= image_tag('gcp/pcf-router.png') %>
+
+1. Under **Backend services**, record the name of the backend service of the HTTP(S) load balancer. For example, `pcf-backend`.
 
 1. In the **Elastic Runtime** tile, click **Resource Config**.
 
-1. Enter the name of your GCP TCP load balancers in the **LOAD BALANCERS** fields of the **Router** and **Diego Brain** **JOBS** rows. Refer to the [Create Load Balancers in GCP](gcp-prepare-env.html#create_loadbalancers) section. Prepend the appropriate name with its protocol. See the example, below.
-1. Enter the name of the **Backend Service** tied to the HTTP **Load Balancer** that you created in the [Create Load Balancers in GCP](gcp-prepare-env.html#create_loadbalancers) section. Prepend the appropriate name with protocol as follows:
-  * Router: `tcp:pcf-websockets,http:your-pcf-gcp-backend`
-  * Diego Brain: `tcp:pcf-ssh`
-<p class="note"><strong>Note</strong>: Enter the name of the <strong>Backend service</strong> associated with its <strong>Load Balancer</strong> for <code>HTTP</code> Protocol.</p>
-<p class="note"><strong>Note</strong>: Do not add a space between key/value pairs in the <code>LOAD BALANCER</code> field or it will failover.</p>
+    <%= image_tag("gcp/resource_config.png") %>
 
-1. If you have enabled TCP routing in the [Advanced Features](#enable-tcp) pane and set up the [TCP Load Balancer in GCP](./gcp-prepare-env.html#tcp_websockets_lb), enter the name of your TCP load balancer, prepended with `tcp:`: 
-  * TCP Router: `tcp:pcf-tcp-router`
+1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-delimited list consisting of the name of your TCP Websockets load balancer and the name of your HTTP(S) load balancer backend with the protocol prepended. For example, `tcp:pcf-websockets,http:pcf-backend`.
+
+    <p class="note"><strong>Note</strong>: If you have enabled TCP routing in the <a href="#enable-tcp">Advanced Features</a> pane and set up the <a href="./gcp-prepare-env.html#tcp_websockets_lb">TCP Load Balancer in GCP</a>, add the name of your TCP load balancer, prepended with <code>tcp:</code>, to the <strong>LOAD BALANCERS</strong> column of the <storng>Router</strong> row. For example, <code>tcp:pcf-tcp-router</code>.</p>
+
+1. Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the name of your SSH load balancer prepended with `tcp:`. For example, `tcp:pcf-ssh`.
+    <p class="note"><strong>Note</strong>: Do not add a space between key/value pairs in the <code>LOAD BALANCER</code> field or it will fail.</p>
 
 1. Verify that the **Internet Connected** checkbox for every job is checked to allow the jobs to reach the Internet. 
-    <%= image_tag("gcp/resource_config.png") %>
 
 1. Click **Save**.
 
@@ -330,8 +340,6 @@ TCP Routing is available for users who want an alternative to HTTP. For more inf
 
 Verify whether Ops Manager is providing the stemcell version required by Elastic Runtime. If the correct version is already present, you do not need to download a new stemcell.
 
-<a name="stemcellnote"></a>On the Pivotal Network download page for Elastic Runtime, check the stemcell version required by the Elastic Runtime version you are installing.
-
 1. In the Elastic Runtime tile, select **Stemcell**.
 
 1. Verify that the version indicated in the filename matches the version of stemcell required by Elastic Runtime. 
@@ -339,15 +347,14 @@ Verify whether Ops Manager is providing the stemcell version required by Elastic
   <%= image_tag("stemcell_18.png") %>
   * If Elastic Runtime cannot detect a stemcell `.tgz` file, the following message displays:
   <%= image_tag("stemcell_not_found.png") %>
-  If the version of the stemcell file that is loaded does not match the required version listed in Pivotal Network or cannot be found by Ops Manager, download a new stemcell file.
 
-To download a new Stemcell: 
+1. If the version of the stemcell file that is loaded does not match the required version listed in the <a href="http://network.pivotal.io">Pivotal Network</a> download page for Elastic Runtime, or cannot be found by Ops Manager, perform the following steps to download and import a new stemcell file:
 
-1. Log in to the [Pivotal Network](https://network.pivotal.io/products/pivotal-cf) and click on **Stemcells**.
+  1. Log in to the [Pivotal Network](https://network.pivotal.io/products/pivotal-cf) and click **Stemcells**.
 
-1. Download the appropriate stemcell version targeted for your IaaS.
+  1. Download the appropriate stemcell version targeted for your IaaS.
 
-1. In Ops Manager, import the downloaded stemcell <code>.tgz</code> file.
+  1. In the **Stemcell** section of the Elastic Runtime tile, click **Import Stemcell** to import the downloaded stemcell <code>.tgz</code> file.
 
 
 ## <a id='complete'></a>Step 23: Complete the Elastic Runtime Installation ##

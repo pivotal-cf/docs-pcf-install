@@ -164,18 +164,16 @@ You need an **Instance Group** to associate with the load balancer you create.
 1. Click **Create instance group**.
 
 1. In the the **Create a new instance group** window, name the instance group in the **Name** field.
-  <%= image_tag("gcp/configure_new_instance_group.png") %>
 
 1. Choose **Single-zone** in the **Location** section.
 
-1. Select the matching zone from the **Zone** drop-down menu for the [network](#create_network) you created above.
+1. From the **Zone** drop-down menu, select a zone that matches the **Region** of the [network](#create_network) you created above. For example, if you created the network in the `us-central1` region, you can pick either `us-central1-a`, `us-central1-b`, `us-central1-c`, and so on.
 
 1. Under **Creation method**, choose **Select existing instance** and select `opsmgr` from the **Network** drop-down. You previously created the `opsmgr` network in the [Create a GCP Network with Subnet](#create_network) step above.
-    <p class="note"><strong>Note</strong>: If <code>opsmgr</code> is your only network, the **Network** drop-down does not appear because the sole network is automatically selected.</p>
+  <%= image_tag("gcp/configure_new_instance_group.png") %>
+  <p class="note"><strong>Note</strong>: If <code>opsmgr</code> is your only network, the <b>Network</b> drop-down does not appear because the sole network is automatically selected.</p>
 
 1. Click **Create**.
-
-Your Google **Instance Group** for PCF on GCP is set up properly.
 
 #### <a id="http_https_lb"></a> Create the HTTP(S) Load Balancer ####
 
@@ -189,7 +187,9 @@ To create a load balancer for HTTP(S) in GCP:
 1. In the **New HTTP(S) load balancer** window, enter `pcf-router` in the **Name** field.
   <%= image_tag "gcp/http_lb_name.png" %>
 
-1. Click **Backend configuration** to configure the **Backend service**. In the **Create or select a backend service** drop-down menu, choose **Create a backend service** to open the **Backend service** window.
+1. Click **Backend configuration** to configure the **Backend service**. 
+
+1. In the **Create or select a backend service** drop-down menu, choose **Create a backend service** to open the **Backend service** window.
 
 1. Fill in the name for your **Backend service** in the **Name** field. For HTTP termination, leave **Protocol** set to **HTTP**. If you have the SSL certificates required for HTTPS termination, click the **pencil icon** and configure HTTPS termination.
 <p class="note"><strong>Note</strong>: You will need to return to this setting when you have your SSL certificate to enable HTTPS load balancer termination. You can use Ops Manager to create self-signed certificates, and return to this setting to enable HTTPS.</p>
@@ -220,17 +220,22 @@ To create a load balancer for HTTP(S) in GCP:
    * **Protocol**: `HTTP`
    * **IP**: Perform the following steps:
        1. Select **Create IP address**. 
-       1. Enter a **Name** for the new static IP address and an optional description.
+       1. Enter a **Name** for the new static IP address and an optional description. 
+       1. Under **IP**, make sure this new static IP address is selected.
        1. Click **Reserve**.
    * **Port**: `80`
+1. Click **Add frontend IP and port**, and add the following:
+   * **Protocol**: `HTTPS`
+   * **IP**: Select the static IP address you just created for the previous rule.
+   * **Port**: Leave `443` selected.
+   * **Certificate**: 
+
+   <p class="note">RETURN HERE FOR CERTIFICATE NOTES</p>
 
 1. Click **Review and finalize** to verify your configuration.
   <%= image_tag "gcp/http_lb_finalize.png" %>
 
 1. Click **Create**.
-
-Your HTTP load balancer is set up properly for PCF on GCP. You may need to return to these settings to enable HTTPS.
-
 
 ### <a id="ssh_lb"></a> Create the SSH Proxy Load Balancer
 
@@ -268,8 +273,6 @@ Your HTTP load balancer is set up properly for PCF on GCP. You may need to retur
 
 1. Click **Create**.
 
-Your SSH Proxy load balancer is set up properly for PCF on GCP.
-
 ### <a id="tcp_websockets_lb"></a> Create the TCP Websockets Load Balancer
 
 The load balancer for tailing logs with websockets for PCF on GCP operates on TCP port `443`. 
@@ -285,7 +288,8 @@ The load balancer for tailing logs with websockets for PCF on GCP operates on TC
   <%= image_tag("gcp/lb_connection_termination.png") %>
 
 1. In the **New TCP load balancer** window, enter `pcf-websockets` in the **Name** field.
-  * Click **Backend configuration** to configure the **Backend service**: 
+
+1. Click **Backend configuration** to configure the **Backend service**: 
   * From the **Health check** drop-down menu, select the [**Health check**](#http_https_lb) that you created above.
   * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
   <%= image_tag "gcp/tcp_websockets_lb_config.png" %>
@@ -300,8 +304,6 @@ The load balancer for tailing logs with websockets for PCF on GCP operates on TC
 1. Click **Review and finalize** to verify your configuration.
   <%= image_tag "gcp/websockets_lb_finalize.png" %>
 1. Click **Create**.
-
-Your TCP websockets load balancer is set up properly for PCF on GCP.
 
 ### <a id="tcprouter_lb"></a>(Optional) Create the Load Balancer for TCP Router
 

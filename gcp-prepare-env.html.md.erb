@@ -234,14 +234,48 @@ To create a load balancer for HTTP(S) in GCP:
    * **Port**: Leave `443` selected.
    * **Certificate**: Select **Create a new certificate**. In the next dialog, perform the following steps:
      * In the **Name** field, enter a name for the certificate.
-     <%= image_tag "gcp/lb_frontend_https.png" %>
+     <%= image_tag "gcp/lb_frontend_cert.png" %>
      * In the **Public key certificate** field, copy in the contents of your public certificate, or upload your certificate as a .pem file.
      * In the **Certificate chain** field, enter or upload your certificate chain in the .pem format. If you are using a self-signed certificate, you do not need to populate this field.
      * In the **Private key** field, copy in the contents or upload the .pem file of the private key for the certificate.
+1. Review the completed frontend configuration. 
+    <%= image_tag "gcp/lb_frontend_config.png" %>
 
 1. Click **Review and finalize** to verify your configuration.
   <%= image_tag "gcp/http_lb_finalize.png" %>
 
+1. Click **Create**.
+
+### <a id="tcp_websockets_lb"></a> Create the TCP Websockets Load Balancer
+
+The load balancer for tailing logs with websockets for PCF on GCP operates on TCP port `443`. 
+
+1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
+
+1. Under **TCP Load Balancing**, click **Start configuration**.
+  <%= image_tag("gcp/create_new_lb.png") %>
+
+1. Under **Internet facing or internal only**, select **From Internet to my VMs**. Under **Connection termination**, select **No (TCP)**. 
+
+1. Click **Continue**. 
+  <%= image_tag("gcp/lb_connection_termination.png") %>
+
+1. In the **New TCP load balancer** window, enter `pcf-websockets` in the **Name** field.
+
+1. Click **Backend configuration** to configure the **Backend service**: 
+  * From the **Health check** drop-down menu, select the [**Health check**](#http_https_lb) that you created above.
+  * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
+  <%= image_tag "gcp/tcp_websockets_lb_config.png" %>
+  The **Backend configuration** section shows a green check mark.
+
+1. Click **Frontend configuration** to open its configuration window and complete the fields:
+ * **Protocol**: `TCP`
+ * **IP**: Select the Static IP that you reserved from the step for creating the [SSH Load Balancer](#ssh_lb).
+   * **Port**: `443`
+  The **Frontend configuration** section shows a green check mark.
+
+1. Click **Review and finalize** to verify your configuration.
+  <%= image_tag "gcp/websockets_lb_finalize.png" %>
 1. Click **Create**.
 
 ### <a id="ssh_lb"></a> Create the SSH Proxy Load Balancer
@@ -278,38 +312,6 @@ To create a load balancer for HTTP(S) in GCP:
 
 1. Optionally, review and finalize your load balancer. 
 
-1. Click **Create**.
-
-### <a id="tcp_websockets_lb"></a> Create the TCP Websockets Load Balancer
-
-The load balancer for tailing logs with websockets for PCF on GCP operates on TCP port `443`. 
-
-1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
-
-1. Under **TCP Load Balancing**, click **Start configuration**.
-  <%= image_tag("gcp/create_new_lb.png") %>
-
-1. Under **Internet facing or internal only**, select **From Internet to my VMs**. Under **Connection termination**, select **No (TCP)**. 
-
-1. Click **Continue**. 
-  <%= image_tag("gcp/lb_connection_termination.png") %>
-
-1. In the **New TCP load balancer** window, enter `pcf-websockets` in the **Name** field.
-
-1. Click **Backend configuration** to configure the **Backend service**: 
-  * From the **Health check** drop-down menu, select the [**Health check**](#http_https_lb) that you created above.
-  * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
-  <%= image_tag "gcp/tcp_websockets_lb_config.png" %>
-  The **Backend configuration** section shows a green check mark.
-
-1. Click **Frontend configuration** to open its configuration window and complete the fields:
- * **Protocol**: `TCP`
- * **IP**: Select the Static IP that you reserved from the step for creating the [SSH Load Balancer](#ssh_lb).
-   * **Port**: `443`
-  The **Frontend configuration** section shows a green check mark.
-
-1. Click **Review and finalize** to verify your configuration.
-  <%= image_tag "gcp/websockets_lb_finalize.png" %>
 1. Click **Create**.
 
 ### <a id="tcprouter_lb"></a>(Optional) Create the Load Balancer for TCP Router

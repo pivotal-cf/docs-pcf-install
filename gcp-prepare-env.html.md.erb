@@ -66,6 +66,7 @@ In the [Google Cloud Platform Config](./gcp-om-config.html#gcp-config) step of t
      * **Compute Engine** > **Compute Network Admin**
      * **Compute Engine** > **Compute Storage Admin**
      * **Storage** > **Storage Admin**
+     <p class="note">Scroll down the full list of roles in the pop-up to select all required roles.</p>
 	* **Service account ID**: The field autogenerates a unique ID based on the username. 
 	* **Furnish a new private key**: Select this checkbox and JSON as the **Key type**.
     <%= image_tag("gcp/iam_account.png") %>
@@ -192,7 +193,7 @@ To create a load balancer for HTTP(S) in GCP:
 1. In the **Create or select a backend service** drop-down menu, choose **Create a backend service** to open the **Backend service** window.
 
 1. Fill in the name for your **Backend service** in the **Name** field. For HTTP termination, leave **Protocol** set to **HTTP**. If you have the SSL certificates required for HTTPS termination, click the **pencil icon** and configure HTTPS termination.
-<p class="note"><strong>Note</strong>: You will need to return to this setting when you have your SSL certificate to enable HTTPS load balancer termination. You can use Ops Manager to create self-signed certificates, and return to this setting to enable HTTPS.</p>
+<p class="note"><strong>Note</strong>: You must return to this configuration when you have your SSL certificate to enable HTTPS load balancer termination. You can use Ops Manager to create self-signed certificates, and return to this setting to enable HTTPS.</p>
   <%= image_tag "gcp/backend_service_name.png" %>
 
 1. In the **Backends** section, from the **Instance Group** drop-down menu, choose the [Instance Group](#instance_group) you created above, or create one and select it.
@@ -224,13 +225,19 @@ To create a load balancer for HTTP(S) in GCP:
        1. Under **IP**, make sure this new static IP address is selected.
        1. Click **Reserve**.
    * **Port**: `80`
+1. If you are using a trusted SSL certificate or already have a self-signed certificate, proceed to the next step. <br/><br/>
+   If you want to generate a self-signed certificate generated during [Elastic Runtime network configuration](gcp-er-config.html#networking), skip over the next step of adding the HTTPS frontend configuration until after you generate the certificate in Elastic Runtime. After you generate the certificate, you can copy and paste the generated contents of the **Router SSL Termination Certificate and Private Key** fields into the public cerficate and private key fields. Since you are using a self-signed certificate, the certificate chain is not needed. 
+
 1. Click **Add frontend IP and port**, and add the following:
    * **Protocol**: `HTTPS`
    * **IP**: Select the static IP address you just created for the previous rule.
    * **Port**: Leave `443` selected.
-   * **Certificate**: 
-
-   <p class="note">RETURN HERE FOR CERTIFICATE NOTES</p>
+   * **Certificate**: Select **Create a new certificate**. In the next dialog, perform the following steps:
+     * In the **Name** field, enter a name for the certificate.
+     <%= image_tag "gcp/lb_frontend_https.png" %>
+     * In the **Public key certificate** field, copy in the contents of your public certificate, or upload your certificate as a .pem file.
+     * In the **Certificate chain** field, enter or upload your certificate chain in the .pem format. If you are using a self-signed certificate, you do not need to populate this field.
+     * In the **Private key** field, copy in the contents or upload the .pem file of the private key for the certificate.
 
 1. Click **Review and finalize** to verify your configuration.
   <%= image_tag "gcp/http_lb_finalize.png" %>
@@ -335,7 +342,7 @@ To create a load balancer for TCP routing in GCP, perform the following steps:
        1. Select **Create IP address**. 
        1. Enter a **Name** for the new static IP address and an optional description.
        1. Click **Reserve**.
-   * **Port**: `1024-65000`
+   * **Port**: `1024-65535`
 
 	<%= image_tag("gcp/tcp_lb_frontend.png") %>
 

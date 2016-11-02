@@ -58,21 +58,55 @@ In this step you redirect queries for your domain to the IP addresses of your lo
 
 1. Locate the static IP addresses of the load balancers you created in [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html):
     * An HTTP(S) load balancer named `pcf-router`.
-    * A TCP load balancer named `pcf-ssh`.
     * A TCP load balancer for websockets named `pcf-websockets`.
+    * A TCP load balancer named `pcf-ssh`
     * A TCP load balancer for the TCP router if you plan on enabling the TCP routing feature.
     <p class="note">You can locate the static IP address of each load balancer by clicking its name under <strong>Networks > Load balancing</strong> in the GCP Console.</p>
 
 1. Log in to the DNS registrar that hosts your domain. Examples of DNS registrars include Network Solutions, GoDaddy, and Register.com.
 
-1. Create A records with your DNS registrar that map domain names to the IP addresses of the load balancers located above:
-    * `*.YOURSYSTEMDOMAIN` maps to the IP address of `pcf-router`. For example, `*.system.example.com`.
-    * `*.YOURAPPSDOMAIN` maps to the IP address of `pcf-router`. For example, `*.apps.example.com`.
-    <p class="note"> If your system domain and apps domain share the same parent domain, you can use a single wildcard entry record. For example, you can create a single entry for `*.example.com`, which allows `foo.system.example.com` and `bar.apps.example.com` to resolve to the same IP address. </p>
-    * `ssh.YOURSYSTEMDOMAIN` maps to the IP address of `pcf-ssh`. For example, `ssh.system.example.com`.
-    * `doppler.YOURSYSTEMDOMAIN` maps to the IP address of `pcf-websockets`. For example, `doppler.system.example.com`.
-    * `loggregator.YOURSYSTEMDOMAIN` maps to the IP address of `pcf-websockets`. For example, `loggregator.system.example.com`.
-    * `tcp.YOURDOMAIN` maps to the IP address of the optional TCP load balancer. For example, `tcp.example.com`.
+1. Create **A records** with your DNS registrar that map domain names to the public static IP addresses of the load balancers located above:
+  <table border="1" valign="top">
+      <tr>
+        <th>If your DNS entry is:</th><th>Set to the public IP of this load balancer:</th><th>Required</th><th>Example</th>
+      </tr>
+      <tr>
+        <td>\*.YOURSYSTEMDOMAIN</td>
+        <td><code>pcf-router</code></td>
+        <td>Yes</td>
+        <td>\*.system.example.com</td>
+      </tr>
+      <tr>
+        <td>\*.YOURAPPSDOMAIN</td>
+        <td><code>pcf-router</code></td>
+        <td>Yes</td>
+        <td>\*.apps.example.com</td>
+      </tr>
+      <tr>
+        <td>doppler.YOURSYSTEMDOMAIN</td>
+        <td><code>pcf-websockets</code></td>
+        <td>Yes</td>
+        <td>doppler.system.example.com</td>
+      </tr>
+            <tr>
+        <td>loggregator.YOURSYSTEMDOMAIN</td>
+        <td><code>pcf-websockets</code></td>
+        <td>Yes</td>
+        <td>loggregator.system.example.com</td>
+      </tr>
+      <tr>
+        <td>ssh.YOURSYSTEMDOMAIN</td>
+        <td><code>pcf-ssh</code></td>
+        <td>Yes, to allow SSH access to apps</td>
+        <td>ssh.system.example.com</td>
+      </tr>
+      <tr>
+        <td>tcp.YOURDOMAIN</td>
+        <td>IP address of the TCP load balancer for TCP routing</td>
+        <td>No, only set up if you have enabled the TCP routing feature</td>
+        <td>tcp.example.com</td>
+      </tr>
+    </table>
 
 1. Save changes within the web interface of your DNS registrar.
 

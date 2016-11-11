@@ -100,15 +100,22 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
 
 ## <a id='az'></a>Step 4: Create Availability Zones Page ##
 
-<p class="note"><b>Note</b>: Pivotal recommends at least three Availability Zones for a highly available installation of Elastic Runtime.</p>
+<p class="note"><b>Note</b>: Pivotal recommends at least three availability zones for a highly available installation of Elastic Runtime. For an example of a three availability zone deployment, see [Reference Architecture for Pivotal Cloud Foundry on GCP](refarch/gcp/gcp_ref_arch.html).</p>
 
 1. Select **Create Availability Zones**.
-1. Use the following steps to create one or more Availability Zones for your applications to use:
-    * Click **Add**.
-    * For **Google Availability Zone**, enter a zone that matches the region. For example, if you are using the `us-central1` region, you can enter `us-central1-a` or `us-central1-b`. For help selecting the zones for your deployment, see the [Google documentation on regions and zones](https://cloud.google.com/compute/docs/regions-zones/regions-zones).
+1. Click **Add**.
+1. For a single availability zone deployment, in **Google Availability Zone**:
+  * Enter the zone you associated to the backend service instance group of the HTTP(S() Load Balancer. For example, if you are using the `us-central1` region and selected `us-central1-a` as the zone for your HTTP(S) Load Balancer instance group, enter `us-central1-a`. 
+  <%= image_tag("gcp/availability_zones.png") %>
+  * Click **Save**.
+1. For a  multiple availability zone deployment, in **Google Availability Zone**: 
+    * Enter one of the zones that you associated to the backend service instance groups of the HTTP(S Load Balancer. For example, if you are using the `us-central1` region and selected `us-central1-a` as one of the zones for your HTTP(S) Load Balancer instance groups, enter `us-central1-a`. 
+    * Click **Add**
+    * Repeat the above step for all the availability zones that you associated to instance groups in [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html#create-http-and-instance-group). 
+    <%= image_tag("gcp/availability_zones_multiple.png") %>
+    * Click **Save**.
 
-    <%= image_tag("gcp/availability_zones.png") %>
-1. Repeat the above step for as many zones as you need. When you are done, click **Save**.
+1. Repeat the above step for all the availability zones you are using in your deployment. When you are done, click **Save**.
 
 ## <a id='network'></a>Step 5: Create Networks Page ##
 1. Select **Create Networks**.
@@ -125,10 +132,8 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
         * **DNS**: Enter `8.8.8.8`.
         <p class="note"><strong>Note</strong>: If you prefer to use an internal IP over Google's public server `8.8.8.8` for DNS, you can use the default GCP router in your subnet, which always corresponds to first IP address of the subnet CIDR block. In the CIDR block provided above, the GCP router is `10.0.0.1`.</p>
         * **Gateway**: Enter `10.0.0.1`.
-        * **Availability Zones**: Select your availability zone.
+        * **Availability Zones**: Select the availability zone for the subnet. If you created multiple availability zones, select all listed availability zones.
     * If you want to add more subnets, click **Add Subnet**.
-
-    <p class="note"><strong>Note</strong>: If you are using multiple Availability Zones, you must add at least one subnet for each Availability Zone.</p>
     <%= image_tag("gcp/create-networks.png") %>
 1. Click **Save**.
 
@@ -167,7 +172,7 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.
 
-1. Click **Apply Changes**. If the following ICMP error message appears, return to the [**Network Config** screen](#network), deselect the **Enable ICMP Checks** box, and click **Apply Changes** again. 
+1. Click **Apply Changes**. If the following ICMP error message appears, return to the [**Network Config** screen](#network), and make sure you have deselected the **Enable ICMP Checks** box. Then click **Apply Changes** again. 
 
     <%= image_tag("cloudform/install-error.png") %>
 

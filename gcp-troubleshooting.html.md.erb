@@ -22,9 +22,9 @@ Ensure that you have configured only one subnet. See the [Preparing the GCP Envi
 
 <hr>
 
-## <a id='ert-install'></a>Uploading ERT Tile Causes Ops Manager Rails Application Crash
+## <a id='ert-install'></a>Uploading Elastic Runtime Tile Causes Ops Manager Rails Application Crash
 
-Uploading the ERT tile causes the Ops Manager Rails application to crash.
+Uploading the Elastic Runtimetile causes the Ops Manager Rails application to crash.
 
 ### Explanation
 
@@ -67,3 +67,31 @@ Set-ExecutionPolicy Unrestricted
 </pre>
 
 For more information on this cmdlet, see [Using the Set-ExecutionPolicy Cmdlet](https://technet.microsoft.com/en-us/library/ee176961.aspx).
+
+<hr>
+
+## <a id="mysql_rep_canary"></a>ERT Deployment Fails - MySQL Monitor replication-canary Job ##
+
+During installation of the Elastic Runtime tile, the replication-canary job fails to start. The error reported in the installation log resembles the following:
+
+<pre>
+Started updating job mysql_monitor > mysql_monitor/0
+(48e7ec82-3cdf-41af-9d0f-90d1f12683c8) (canary). Failed: 'mysql_monitor/0
+(48e7ec82-3cdf-41af-9d0f-90d1f12683c8)' is not running after update. 
+Review logs for failed jobs: replication-canary (00:05:13)
+
+Error 400007: 'mysql_monitor/0 (48e7ec82-3cdf-41af-9d0f-90d1f12683c8)' 
+is not running after update. 
+Review logs for failed jobs: replication-canary
+</pre>
+
+### Explanation
+
+This error can appear as a result of incorrect configuration of network traffic and missed communication between the GoRouter and a load balancer. 
+
+### Solution
+
+1. Make sure you have selected the **Forward SSL to Elastic Runtime Router** option in your [Elastic Runtime Network Configuration](gcp-er-config.html#networking).
+1. Verify that you have configured the proper SSL certificates on your [HTTP(S) load balancer in GCP](./gcp-prepare-env.html#create-http-and-instance-group). 
+1. If necessary, reupload a new certificate and update any required SSL Certificate and SSH Key fields in your [Elastic Runtime network configuration](./gcp-er-config.html#). 
+

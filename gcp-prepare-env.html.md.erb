@@ -149,34 +149,42 @@ You need at least three and as many as four load balancers to operate PCF on GCP
 
 The steps required to set up each load balancer are described below.
 
-### <a id='create-http-and-instance-group'></a>Create the Instance Group and HTTP(S) Load Balancer ###
+### <a id='create-http-and-instance-group'></a>Create Instance Groups and the HTTP(S) Load Balancer ###
 
 To configure HTTP(S) load balancing for PCF on GCP you need to follow two steps:
 
-  1. Create an [**Instance Group**](#instance_group) for load balancer configuration to the GCP **Backend service**. 
+  1. Create one or more [**Instance Group\(s\)**](#instance_group) for load balancer configuration to the GCP **Backend service**. 
   1. Create an [HTTP(S) Load Balancer](#http_https_lb).
 
-#### <a id="instance_group"></a> Create **Instance Group** ####
+#### <a id="instance_group"></a> Create **Instance Group(s)** ####
 
-You need an **Instance Group** to associate with the load balancer you create.
-<p class="note"><strong>Note</strong>: You need one Google <strong>Instance Group</strong> for each Availability Zone you plan to support. All <strong>Instance Groups</strong> must connect to the Google <strong>Backend Service</strong> to configure your load balancer, described below.</p>
+You need to create and associate one or more **Instance Group(s)** with the HTTP(S) load balancer you create.
+<p class="note"><strong>Note</strong>: You need one Google <strong>Instance Group</strong> for each Availability Zone you plan to support. All <strong>Instance Groups</strong> must connect to the Google <strong>Backend Service</strong> to configure your load balancer, described below. For a high availability production installation of PCF, Pivotal recommends using three availability zones.</p>
 
 1. From the GCP Console, select **Compute Engine** and click **Instance groups**.
   <%= image_tag("gcp/create_instance_group.png") %>
 
 1. Click **Create instance group**.
 
-1. In the the **Create a new instance group** window, name the instance group in the **Name** field.
+1. In the the **Create a new instance group** window, name the instance group in the **Name** field. If you are creating multiple instance groups, make sure each instance group name has a unique name. For example, you might create the following instance groups:
+  * `pcf-instance-group-lb-1a`
+  * `pcf-instance-group-lb-1b`
+  * `pcf-instance-group-lb-1c`
 
-1. Choose **Single-zone** in the **Location** section.
+1. For each individual instance group, choose **Single-zone** in the **Location** section.
 
-1. From the **Zone** drop-down menu, select a zone that matches the **Region** of the [network](#create_network) you created above. For example, if you created the network in the `us-central1` region, you can pick either `us-central1-a`, `us-central1-b`, `us-central1-c`, and so on.
+1. From the **Zone** drop-down menu, select a zone that matches the **Region** of the [network](#create_network) you created above. Pick a unique zone for each instance group that you create.  For example, if you created the network in the `us-central1` region, you could pick the following zones for your instance groups:
+   * `pcf-instance-group-lb-1a`:`us-central1-a` 
+   * `pcf-instance-group-lb-1b`:`us-central1-b` 
+   * `pcf-instance-group-lb-1c`:`us-central1-c`
 
 1. Under **Creation method**, choose **Select existing instance** and select `opsmgr` from the **Network** drop-down. You previously created the `opsmgr` network in the [Create a GCP Network with Subnet](#create_network) step above.
   <%= image_tag("gcp/configure_new_instance_group.png") %>
   <p class="note"><strong>Note</strong>: If <code>opsmgr</code> is your only network, the <b>Network</b> drop-down does not appear because the sole network is automatically selected.</p>
 
 1. Click **Create**.
+
+1. If you are creating multiple instance groups, repeat **substeps 2-7** of this procedure.
 
 #### <a id="http_https_lb"></a> Create the HTTP(S) Load Balancer ####
 
@@ -196,9 +204,16 @@ To create a load balancer for HTTP(S) in GCP:
 
 1. Fill in the name for your **Backend service** in the **Name** field. Leave **Protocol** set to **HTTP**.
   <%= image_tag "gcp/backend_service_name.png" %>
-1. In the **Backends** section, from the **Instance Group** drop-down menu, choose the [Instance Group](#instance_group) you created above, or create one and select it.
-1. Add port `80` to the **Port** field for PCF to make API calls.
+1. In the **Backends** section, from the **Instance Group** drop-down menu, choose one of the [Instance Group(s)](#instance_group) you created above, and select it.
+
+1. Add port `80` to the **Port numbers** field for PCF to make API calls.
   <%= image_tag "gcp/backend_service_config.png" %>
+
+1. If you have created multiple instance groups to support a multiple availability zone PCF deployment, perform the following steps:
+   1. Click the **Add backend** button.
+   1. Select another instance group from the **Instance Group** drop-down menu. 
+   1. Specify port `80` again if necessary. 
+   1. Repeat until you have selected all the instance groups (three for three availability zones) that you created.
 
 1. From the **Health check** drop-down menu, click to **Create a Health Check** with the following field values:
    * **Name**: Enter a name, for example `health-check`, or `pcf-public`.
@@ -225,8 +240,11 @@ To create a load balancer for HTTP(S) in GCP:
        1. Under **IP**, make sure this new static IP address is selected.
        1. Click **Reserve**.
    * **Port**: `80`
-1. If you are using a trusted SSL certificate or already have a self-signed certificate, proceed to the next step. <br/><br/>
-   If you want to generate a self-signed certificate generated during [Elastic Runtime network configuration](gcp-er-config.html#networking), skip over the next step of adding the HTTPS frontend configuration until after you generate the certificate in Elastic Runtime. After you generate the certificate, you can copy and paste the generated contents of the **Router SSL Termination Certificate and Private Key** fields into the public cerficate and private key fields. Since you are using a self-signed certificate, the certificate chain is not needed. 
+1. If you are using a trusted SSL certificate or already have a self-signed certificate, proceed to step 15. 
+
+1. If you want to use a self-signed certificate generated during [Elastic Runtime network configuration](gcp-er-config.html#networking), skip over the next step of adding the HTTPS frontend configuration until after you generate the certificate in Elastic Runtime. After you generate the certificate, return to step 15 using the following guidelines: 
+   * Copy and paste the generated contents of the **Router SSL Termination Certificate and Private Key** fields from Elastic Runtime into the public cerficate and private key fields. 
+   * Since you are using a self-signed certificate, do not enter a value in the **Certificate Chain** field. 
 
 1. Click **Add frontend IP and port**, and add the following:
    * **Protocol**: `HTTPS`

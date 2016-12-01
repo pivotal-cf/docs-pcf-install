@@ -22,21 +22,17 @@ To enable overcommit, follow these steps:
 
 <p class="note"><strong>Note</strong>: Entries made to each of these two fields set the total amount of resources allocated, not the overage.</p>
 
-### <a id="enable-tcp"></a>Enable TCP Routing
+### <a id="rfc_whitelist"></a>Whitelist for Non-RFC-1918 Private Networks
 
-TCP Routing enables applications to be run on PCF that require inbound requests on non-HTTP protocols. Before enabling TCP Routing, review the [Pre-Deployment Steps](../adminguide/enabling-tcp-routing.html) that describe required networking infrastructure changes. 
+The **Whitelist for non-RFC-1918 Private Networks** field is provided for deployments that use a non-RFC 1918 private network. These deployments require extra configuration so that internal filestorge (WebDAV) can communicate with other PCF processes. 
 
-1. TCP Routing is disabled by default. To enable this feature, select the **Enable TCP Routing** radio button. 
+<%= image_tag("./non-rfc-whitelist.png") %>
 
-	<%= image_tag("./tcp_routing.png") %>
+If you are using a non-RFC 1918 private network (in other words, a private network other than `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), then you must append an `allow YOUR-NETWORK;` rule to the existing contents of the field. The rule must include the word `allow` and a semi-colon (`;`) at the end. For example:
 
-1. In **TCP Router IPs**, enter the IP address(es) you would like assigned to the TCP Routers. The addresses must be within your subnet CIDR block. These will be the same IP addresses you configured your load balancer with in [Pre-Deployment Steps](../adminguide/enabling-tcp-routing.html), unless you configured DNS to resolve the TCP domain name directly to an IP you've chosen for the TCP router. You can enter multiple values as a comma-delimited list or as a range. For example, `10.254.0.1, 10.254.0.2` or `10.254.0.1-10.254.0.2`. 
-
-1. In **TCP Routing Ports**, enter a range of ports to be allocated for TCP Routes. For each TCP route you want to support, you must reserve a port. This will be the same range of ports you configured your load balancer with in [Pre-Deployment Steps](../adminguide/enabling-tcp-routing.html), unless you configured DNS to resolve the TCP domain name to the TCP router directly. This field takes a comma-delimited list of individual ports and ranges, for example `1024-1099,30000,60000-60099`. Configuration of this field is only applied on the first deploy; you may later update the port range using the CLI. For details modifying the port range, see [Router Groups](../adminguide/enabling-tcp-routing.html#router-groups).
-
-### <a id="disable-tcp"></a>Disable TCP Routing
-
-1. If you want to disable TCP routing after enabling it, click **Select this option if you prefer to enable TCP Routing at a later time**.
-
-1. Manually remove the TCP routing domain. 
+ ```
+ allow 172.99.0.0/24;
+ ```
+ 
+Since this type of network deployment is uncommon, most PCF deployments do not require modifications to this field.
 

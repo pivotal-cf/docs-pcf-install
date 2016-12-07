@@ -16,41 +16,35 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-This topic describes upgrading Pivotal Cloud Foundry (PCF) to v1.8. The upgrade procedure below describes upgrading Pivotal Cloud Foundry Operations Manager (Ops Manager), Pivotal Elastic Runtime, and product tiles.
+This topic describes upgrading Pivotal Cloud Foundry (PCF) to v1.9. The upgrade procedure below describes upgrading Pivotal Cloud Foundry Operations Manager (Ops Manager), Pivotal Elastic Runtime, and product tiles.
 
 The apps in your deployment continue to run during the upgrade. However, you cannot write to your deployment or make changes to apps during the upgrade.
 
-**Important**: Read the Known Issues sections of the [Release Notes](../pcf-release-notes/index.html) before getting started.
-
-<p class="note warning">
-<strong>WARNING: </strong> Ops Manager v1.8 operates in lockstep with Elastic Runtime v1.8, as well as with other service products. 
-You must upgrade Ops Manager, Elastic Runtime, and the other dependent products to v1.8 at the <em>same time</em>. 
-Review the compatibility of your products as described below before proceeding with this upgrade procedure. 
-Your upgrade will fail if you do not have compatible product versions associated with your Ops Manager installation.
-</p>
+**Important**: Read the [Release Notes](../pcf-release-notes/index.html) for this release including Known Issues sections before getting started.
 
 ## <a id="beforeupgrade"></a>Before You Upgrade
 
 <p class="note warning">
-<strong>WARNING: </strong> This section contains important guidelines that you must follow before beginning an upgrade to Ops Manager v1.8. Failure to follow these instructions may jeopardize your existing deployment data and cause your upgrade to fail.</p>
+<strong>WARNING:</strong> This section contains important guidelines that you must follow before beginning an upgrade to Ops Manager v1.8. Failure to follow these instructions may jeopardize your existing deployment data and cause your upgrade to fail.</p>
 
-### <a id="review-lockstep"></a>Review Product Compatibility Prerequisites
+### <a id="review-lockstep"></a>Step 1: Review Product Compatibility Prerequisites
 
-Before upgrading to Ops Manager v1.8, you must be on the following product versions:
+<p class="note warning"><strong>WARNING:</strong> If you are upgrading from a PCF deployment that at one point included Elastic Runtime v1.7.15 or earlier, <i>make sure</i> that you have performed the remedial steps outlined in <a href="https://discuss.pivotal.io/hc/en-us/articles/228639827-App-Usage-Data-and-Events-Data-Becomes-Corrupted-After-Upgrade-or-Install">App Usage Data and Events Data Become Corrupted After Upgrade or Install</a> in your v1.7 deployment before proceeding with the upgrade. If you have failed to perform the remedial steps, you may corrupt your existing usage data.</p>
 
-  * Elastic Runtime v1.7.20
-  * RabbitMQ&reg; for PCF v1.6.5 or v1.6.6, if you are using this product. To update RabbitMQ for PCF, see [Updating RabbitMQ for PCF](http://docs.pivotal.io/rabbitmq-cf/1-6-6/updating.html).
+Before upgrading to Ops Manager v1.9, you must be on the following product versions:
+
+  * Elastic Runtime v1.8.19 or later
+  * RabbitMQ&reg; for PCF v1.7.5 or v1.7.6, if you are using this product. To update RabbitMQ for PCF, see [Updating RabbitMQ for PCF](http://docs.pivotal.io/rabbitmq-cf/1-6-6/updating.html).
   * Redis v1.5.17 or later, if you are using this product
   * Service Broker for AWS v0.13, if you are using this product
-  * Riak CS v1.5.15 or later, if you are using this product
   * Push Notification v1.6.2, if you are using this product
-    
+  
   If you are not currently on the correct version of any of the above products, download the correct version file from [Pivotal Network](https://network.pivotal.io/) and perform the update.
-For information about how to upgrade product tiles in PCF v1.7, see the <a href="./upgrading-products.html">Upgrading Elastic Runtime and Other Pivotal Cloud Foundry Products</a> topic.
+For information about how to upgrade product tiles in PCF v1.9, see the <a href="./upgrading-products.html">Upgrading Elastic Runtime and Other Pivotal Cloud Foundry Products</a> topic.
 
-### <a id="remove-products"></a> Review and Remove Unsupported Products
+### <a id="remove-products"></a>Step 2: Review and Remove Unsupported Products
 
-If your deployment contains any of the following unsupported products, you must remove the associated product tile before upgrading. The following products are no longer maintained and are not currently compatible with PCF v1.8:
+If your deployment contains any of the following unsupported products, you must remove the associated product tile before upgrading. The following products are no longer maintained and are not currently compatible with PCF v1.9:
 
   * App Distribution for PCF
   * Data Sync for PCF
@@ -61,28 +55,26 @@ If your deployment contains any of the following unsupported products, you must 
   * Session State Caching Powered by GemFire for PCF 
   * Riak CS for PCF
 
-### <a id="review-partners"></a> Review Partner Service Tiles
+### <a id="review-partners"></a>Step 3: Review Partner Service Tiles
 
-Some partner service tiles may currently be incompatible with PCF v1.8. Pivotal is working with partners to ensure their tiles are being updated to work with the latest versions of PCF. For information about which partner service releases are currently compatible with PCF v1.8, review the appropriate partners services release documentation at [http://docs.pivotal.io](http://docs.pivotal.io), or contact the partner organization that produces the service tile.
+Some partner service tiles may currently be incompatible with PCF v1.9. Pivotal is working with partners to ensure their tiles are being updated to work with the latest versions of PCF. For information about which partner service releases are currently compatible with PCF v1.9, review the appropriate partners services release documentation at [http://docs.pivotal.io](http://docs.pivotal.io), or contact the partner organization that produces the service tile.
 
-### <a id="download-targets"></a> Download Upgrade Versions
+### <a id="download-targets"></a>Step 4: Download Upgrade Versions
 
 To minimize disruptions to your deployment during the upgrade and satisfy simultaneous upgrade requirements, download the correct version of the product files you wish to upgrade from [Pivotal Network](https://network.pivotal.io/). If you are using any of the following products, download the following versions:
 
-* Elastic Runtime v1.8.x
+* Elastic Runtime v1.9.x
 * RabbitMQ for PCF v1.7.x
 * Single Sign-On Service v1.2.x
-* PCF Metrics v1.1.x
+* PCF Metrics v1.2.x
 
-### <a id="prepare-env"></a>Prepare Your Environment
+### <a id="prepare-env"></a>Step 5: Prepare Your Environment
 
-1. Install the releases from your currently deployed 
-version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.6 and you are upgrading to v1.8, 
-you must sequentially install v1.7 and v1.8.
+1. Install the releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.6 and you are upgrading to v1.9, you must sequentially install v1.7 and v1.8 before proceeding with the upgrade to v1.9.
 
-1. Back up all critical data prior to upgrading to Ops Manager v1.8. For example, to backup a v1.7 environment, follow the instructions in the v1.7 <a href="./backup-restore/backup-pcf.html">Backing Up Pivotal Cloud Foundry</a> topic. 
+1. Back up all critical data prior to upgrading to Ops Manager v1.9. For example, to backup a v1.8 environment, follow the instructions in the v1.8 <a href="http://docs.pivotal.io/pivotalcf/1-8/customizing/backup-restore/backup-pcf.html">Backing Up Pivotal Cloud Foundry</a> topic. 
 
-    <p class="note"><strong>Note</strong>: You do not need to backup the Apps Manager <code>console</code> database because it is deprecated in v1.8. </p>
+    <p class="note"><strong>Note</strong>: You do not need to backup the Apps Manager <code>console</code> database because it is deprecated in v1.8.</p>
 
 1. If you have disabled lifecycle errands for any installed product to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. For more information, see the <a href="./add-delete.html#add-import">Adding and Deleting Products</a> topic.
 
@@ -129,17 +121,16 @@ Click **Apply Changes** if necessary. After applying changes, click **Recent Ins
     Exited with 0.
     </pre>
 
-## <a id="upgrade_ops"></a>Upgrade Ops Manager and Installed Products to v1.8 ##
+## <a id="upgrade_ops"></a>Upgrade Ops Manager and Installed Products to v1.9 ##
 
 ### <a id="export"></a>Step 1: Export Your Installation ###
 
 1. Before you export your installation settings, you must be using the following product versions:
-    * Elastic Runtime v1.7.20
-    * RabbitMQ for PCF v1.6.5 or v1.6.6, if you are using this product. To update RabbitMQ for PCF, see [Updating RabbitMQ for PCF](http://docs.pivotal.io/rabbitmq-cf/updating.html).
-    * Redis v1.5.17, if you are using this product
-    * Service Broker for AWS v0.13, if you are using this product
-    * Riak CS v1.5.15 or later, if you are using this product
-    * Push Notification v1.6.2, if you are using this product
+   * Elastic Runtime v1.8.19 or later
+   * RabbitMQ&reg; for PCF v1.7.5 or v1.7.6, if you are using this product. To update RabbitMQ for PCF, see [Updating RabbitMQ for PCF](http://docs.pivotal.io/rabbitmq-cf/1-6-6/updating.html).
+   * Redis v1.5.17 or later, if you are using this product
+   * Service Broker for AWS v0.13, if you are using this product
+   * Push Notification v1.6.2, if you are using this product
 
     You can download the correct product versions from [Pivotal Network](https://network.pivotal.io/). 
 
@@ -148,7 +139,7 @@ Click **Apply Changes** if necessary. After applying changes, click **Recent Ins
 
 1. Make sure you have removed any tiles that are no longer supported. For the list of tiles, see [Review and Remove Unsupported Products](#remove-products).
 
-1. In your Ops Manager v1.7.x **Installation Dashboard**, click the gear icon and select **Export settings**.
+1. In your Ops Manager v1.8.x **Installation Dashboard**, click the gear icon and select **Settings**.
 
     <%= image_tag("./images/upgrading/upgrade_to_1.8.png") %>
 
@@ -164,9 +155,9 @@ Click **Apply Changes** if necessary. After applying changes, click **Recent Ins
 
     <%= image_tag("./images/upgrading/compress.png") %>
 
-### <a id="upgrade"></a>Step 2: Upgrade to Ops Manager v1.8 ###
+### <a id="upgrade"></a>Step 2: Upgrade to Ops Manager v1.9 ###
 
-1. Download the Ops Manager VM Template v1.8.x from the [Pivotal
+1. Download the Ops Manager VM Template v1.9.x from the [Pivotal
 Network](https://network.pivotal.io/products/ops-manager) site.
 
 1. Record the FQDN address of the existing Ops Manager VM.
@@ -174,9 +165,11 @@ Network](https://network.pivotal.io/products/ops-manager) site.
 1. To avoid conflicts, power off the existing Ops Manager VM.
 
 1. Deploy the new Ops Manager VM by following the steps in one of these topics:
-    * [Launching an Ops Manager Director Instance on AWS](./cloudform-om-deploy.html)
-    * [Provisioning the OpenStack Infrastructure](./openstack-setup.html)
-    * [Deploying Operations Manager to vSphere](./deploying-vm.html)
+    * **AWS**: [Launching an Ops Manager Director Instance on AWS](./cloudform-om-deploy.html)
+    * **Azure**: [Launching an Ops Manager Director Instance with an ARM Template](./azure-arm-template.html)
+    * **GCP**: [Launching an Ops Manager Director Instance on GCP](./gcp-om-deploy.html)
+    * **OpenStack**: [Provisioning the OpenStack Infrastructure](./openstack-setup.html)
+    * **vSphere**: [Deploying Operations Manager to vSphere](./deploying-vm.html)
 
 1. When redirected to the **Welcome to Ops Manager** page, select **Import Existing Installation**.
 
@@ -230,20 +223,12 @@ If you use any of the following products, you must upgrade them to the versions 
 1. Click **Apply Changes**. This immediately imports and applies upgrades to all tiles in a single transaction.
 
     <p class="note warning"><strong>WARNING: </strong> If the installation fails or returns errors, please contact <%= vars.support_link %>. 
-    Do not attempt to roll back the upgrade by restarting the previous (v1.7.x) Ops Manager VM.</p>
+    Do not attempt to roll back the upgrade by restarting the previous (v1.8.x) Ops Manager VM.</p>
 
 1. Click each service tile, select the **Status** tab, and confirm that all VMs appear and are in good health.
 
-1. After confirming that the new installation functions correctly, remove the previous (v1.7.x) Ops Manager VM. 
+1. After confirming that the new installation functions correctly, remove the previous (v1.8.x) Ops Manager VM. 
 
-This completes the upgrade to Ops Manager v1.8.
+This completes the upgrade to Ops Manager v1.9.
 
-## <a id="after"></a>After the Upgrade: Deprecate Apps Manager Database ##
-
-After the upgrade, the `console` database is no longer used by Apps Manager and can be removed:
- 
-* If you are using PostgreSQL as your internal database:
-    1. Navigate to **Pivotal Elastic Runtime** > **Resource Config**.
-    2. Scale **Apps Manager Database (postgres)** to `0`.
-* If you are using MySQL as your internal database, drop the `console` database using the MySQL command interface.
 

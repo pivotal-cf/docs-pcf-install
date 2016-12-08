@@ -26,13 +26,13 @@ The apps in your deployment continue to run during the upgrade. However, you can
 
 This section contains important guidelines that you must follow before beginning an upgrade to Ops Manager v1.9. Failure to follow these instructions may jeopardize your existing deployment data and cause your upgrade to fail.
 
-### <a id="review-lockstep"></a>Preparation Step 1: Verify App Usage Service Remedial Steps
+### <a id="review-lockstep"></a>Prep 1: Verify App Usage Service Remedial Steps
 
 If you are upgrading from a PCF deployment that at one point included Elastic Runtime v1.7.16 or earlier, <i>make sure</i> that you have performed the remedial steps outlined in <a href="https://discuss.pivotal.io/hc/en-us/articles/228639827-App-Usage-Data-and-Events-Data-Becomes-Corrupted-After-Upgrade-or-Install">App Usage Data and Events Data Become Corrupted After Upgrade or Install</a> before proceeding with this upgrade.
 
 <p class="note warning"><strong>WARNING:</strong> If you fail to perform the remedial steps for this issue, this upgrade process may corrupt your existing usage data.</p>
 
-### <a id="remove-products"></a>Preparation Step 2: Review and Remove Unsupported Products
+### <a id="remove-products"></a>Prep 2: Review and Remove Unsupported Products
 
 If your deployment contains any of the following unsupported products, you must remove the associated product tile before upgrading. The following products are no longer maintained and are not currently compatible with PCF v1.9:
 
@@ -47,11 +47,11 @@ If your deployment contains any of the following unsupported products, you must 
 
 Failure to remove these products prior to upgrade may cause your issues with your deployment.
 
-### <a id="review-partners"></a>Preparation Step 3: Review Partner Service Tiles
+### <a id="review-partners"></a>Prep 3: Review Partner Service Tiles
 
 Some partner service tiles may currently be incompatible with PCF v1.9. Pivotal is working with partners to ensure their tiles are being updated to work with the latest versions of PCF. For information about which partner service releases are currently compatible with PCF v1.9, review the appropriate partners services release documentation at [http://docs.pivotal.io](http://docs.pivotal.io), or contact the partner organization that produces the service tile.
 
-### <a id="download-targets"></a>Preparation Step 4: Download Upgrade Versions
+### <a id="download-targets"></a>Prep 4: Download Upgrade Versions
 
 To minimize disruptions to your deployment during the upgrade and satisfy simultaneous upgrade requirements, download the correct version of the product files you wish to upgrade from [Pivotal Network](https://network.pivotal.io/). If you are using any of the following products, download the following versions:
 
@@ -60,7 +60,15 @@ To minimize disruptions to your deployment during the upgrade and satisfy simult
 * Single Sign-On Service v1.2.x
 * PCF Metrics v1.2.x
 
-### <a id="prepare-env"></a>Preparation Step 5: Prepare Your Environment
+### <a id="read-impact"></a>Prep 5: Prepare for the Impacts of Upgrade on Single Components
+
+The migration to PCF v1.9 removes all experimental Cloud Controller API v3 data. If you have experimented with the v3 API prior to this release, Pivotal recommends that you remove all existing v3 service bindings. 
+
+In addition, although existing v2 applications still run normally during the upgrade, some developer interactions with PCF such as pushing apps to PCF may fail. You may want to warn users about potential availability issues during the upgrade window. 
+
+For more details on the impact of upgrade on individual PCF upgrades, see <a href="../opsguide/single-component.html" class="subnav">Understanding the Effects of Single Components on a Pivotal Cloud Foundry Upgrade</a>.
+
+### <a id="prepare-env"></a>Prep 6: Prepare Your Environment
 
 1. Install the releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.6 and you are upgrading to v1.9, you must sequentially install v1.7 and v1.8 before proceeding with the upgrade to v1.9.
 
@@ -68,7 +76,8 @@ To minimize disruptions to your deployment during the upgrade and satisfy simult
 
 1. If you have disabled lifecycle errands for any installed product to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. For more information, see the <a href="./add-delete.html#add-import">Adding and Deleting Products</a> topic.
 
-1. If you have experimented with the Cloud Controller v3 API prior to this release, Pivotal recommends that you remove all existing v3 service bindings. The migration to PCF v1.9 removes all experimental v3 data. In addition, although existing v2 applications still run normally during the upgrade, some developer interacions with PCF such as pushing apps to PCF may fail. You may want to warn users about potential availability issues during the upgrade window.  
+1. If you have experimented with the Cloud Controller v3 API prior to this release, Pivotal recommends that you remove all existing v3 service bindings. The migration to PCF v1.9 removes all experimental v3 data. <br/><br/>
+
 
 1. <%= partial 'check_disk_before_upgrade' %>
 
@@ -94,7 +103,7 @@ You can find this information in the vSphere web client under **Manage** > **Set
        * Hard Disk 1
        * Network Adapter 1 — When you set up the new VM, ensure your network adapters are configured properly and are on the same network.
 
-### <a id="check-health"></a>Preparation Step 6: Check System Health Before Upgrade
+### <a id="check-health"></a>Prep 6: Check System Health Before Upgrade
 
 1. Run `bosh cloudcheck` to confirm that the VMs are healthy. For more information, see the [BOSH Cloudcheck](./trouble-advanced.html#cck) topic.
 

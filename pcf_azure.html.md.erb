@@ -3,17 +3,20 @@ title: Installing PCF on Microsoft Azure
 owner: Partners
 ---
 
- <p class="note"><strong>Note</strong>: This document describes how to install a proof-of-concept Pivotal Cloud Foundry (PCF) 1.7 deployment on Azure using the PCF offering in the Azure Marketplace. To install a more robust PCF 1.8 deployment on Azure for development or production, see the <a href="azure.html">Installing Pivotal Cloud Foundry on Azure</a> topic.</p>
+ <p class="note"><strong>Note</strong>: This document describes how to install a basic, opinionated Pivotal Cloud Foundry (PCF) on Azure using the Azure Marketplace. To install a more robust PCF 1.8 deployment on Azure for development or production, see the <a href="azure.html">Installing Pivotal Cloud Foundry on Azure</a> topic.</p>
 
-This topic describes how to deploy Pivotal Cloud Foundry (PCF) 1.7 on Microsoft Azure. This deployment is suitable for proof-of-concept or trial workloads, not for production.
+This topic describes how to deploy Pivotal Cloud Foundry (PCF) on Microsoft Azure.
 
-PCF on Microsoft Azure is available as an offering in [Azure Marketplace](https://azure.microsoft.com/en-us/marketplace/partners/pivotal/pivotal-cloud-foundryazure-pcf/). The Azure Marketplace offering installs a pre-configured deployment of PCF and key PCF services. No upgrade path is available for this offering to a production deployment.
+PCF on Microsoft Azure is available as an offering in [Azure Marketplace](https://azure.microsoft.com/en-us/marketplace/partners/pivotal/pivotal-cloud-foundryazure-pcf/). The Azure Marketplace offering installs a pre-configured deployment of PCF.
 
 ##<a id='components'></a>Components ##
 
 PCF on Microsoft Azure includes the following components:
 
 * [Elastic Runtime](../installing/pcf-docs.html)
+* [Microsoft Azure Service Broker](http://network.pivotal.io)
+
+Optional (Coming Soon):
 * [RabbitMQ for PCF](http://docs.pivotal.io/rabbitmq-cf/index.html)
 * [MySQL for PCF](http://docs.pivotal.io/p-mysql/1-7/index.html)
 * [Redis for PCF](http://docs.pivotal.io/redis/index.html)
@@ -35,15 +38,10 @@ You must have the following in order to use PCF on Microsoft Azure:
      * For Windows, follow these [instructions](https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/) to install the Azure PowerShell.
      * Use azure-sp-tool, follow these [instructions](https://github.com/danhigham/azure-sp-tool) to create service principal. The service principal is outputed to azure-credentials.json file.
 
-* Sufficient resources for your Azure account. PCF on Azure allocates the following resources during deployment:
-  * 53 VMs: The deployment uses a total of 53 VMs during the installation.
-15 VMs are created to run jobs and errands and are subsequently destroyed. 38 VMs continue to run after installation.
-  * 1 storage account
-  * 3 public IPs
-  * 1 jumpbox VM that runs the deployment using [BOSH](http://bosh.io/)
+* Sufficient resources for your Azure account. See the installation requirements at [Installing Pivotal Cloud Foundry on Azure](https://docs.pivotal.io/pivotalcf/1-8/customizing/azure.html#azure).
 
     For more information, see [Azure subscription and service limits, quotas, and constraints](https://azure.microsoft.com/en-us/documentation/articles/azure-subscription-service-limits/). To raise your quota, follow the instructions in <a href="#raising-quota">Raise Your Quota</a> below.
-  <p class="note"><strong>Note</strong>: The cost per day for Azure resources varies, but it is likely in the $75-100 (US) range.</p>
+  <p class="note"><strong>Note</strong>: The cost per day for Azure resources varies, but it is likely in the $50-75 (US) range.</p>
 
 ###<a id="raising-quota"></a>Raise Your Quota###
 
@@ -54,18 +52,19 @@ replacing REGION with your region of choice:
 
 <blockquote>"We are preparing to roll out Pivotal Cloud Foundry from the Azure Marketplace.<br>
 We would like to raise our ARM (Azure Resource Manager) core limits.<br>
-Requested quantity of ARM Cores: 202<br>
+Requested quantity of ARM Cores: 200<br>
 Requested region: REGION<br>
 Please fulfill this request as soon as possible.<br>
 The request is not temporary.<br>
 This will not be a bursting request.<br>
-Please allocate 5 TBs of premium storage.<br>
-No standard storage will be used.<br>
-VM Types to be used: D series, DS series, Dv2 series.<br>
-VM count (Number of VMs with Cores ):<br>
-2 x D 1 = 2 cores<br>
-200 x DS = 150 cores<br>
-50 x Dv2 = 50 cores"<br>
+Please allocate 1 TB of standard storage.<br>
+VM Types to be used: F1s, F2s, F4s, DS11v2, DS12v2
+VM count (minimum):<br>
+27 F1s<br>
+4 F2s<br>
+4 F4s<br>
+1 DS11v2<br>
+1 DS12v2<br>
 </blockquote>
 
 ##<a id='getting-started'></a>Install PCF on Microsoft Azure##
@@ -95,7 +94,7 @@ see [Manage Azure resources through portal](https://azure.microsoft.com/en-us/do
 <p class="note"><strong>Note</strong>: The tile deployment progress shows completed when the initial jumpbox VM is provisioned.
 This does not indicate the deployment is complete.</p>
 
-    The full deployment takes approximately two hours.
+    The full deployment takes approximately 3-4 hours.
 
 9. Check the **Outputs** section of the deployment template. Azure confirms your quota before deploying PCF.
 If you see this message in the **Outputs** section of the deployment template `CRITICAL Insufficient Quota, PCF will NOT deploy`, you need to raise your quota.
@@ -103,40 +102,30 @@ See <a href="#raising-quota">Raise Your Quota</a>.
 
     <%= image_tag("azure/quota.png") %>
 
-10. (Optional) In the **Outputs** section of the deployment template, navigate to the URL shown in **PROGRESSMONITORURL** textbox.
-In the tmux session on this page, follow the progress of the deployment.
-The deployment is complete when the Apps Manager URL is written to the page.
+10. When the deployment is complete, the **Outputs** section of the deployment template will display the Ops Manager FQDN URL along with the Ops Manager login credentials and the Jumpbox FQDN URL.
 
 ##<a id='verify'></a>Verify the PCF on Microsoft Azure Installation ##
 
 1. From your Azure Portal, navigate to **Resource Groups** and ensure the new **Resource Group** has been created.
 	<%= image_tag("azure/resource_group.png") %>
 
-2. SSH into the jumpbox VM by performing the following steps:
-	1. Navigate to **Resource groups** > **cf** > **Deployment history** and select your deployment.
-	1. Under the **Outputs** section, record the **JUMPBOX-FQDN**. This is the fully qualified domain name (FQDN) for the jumpbox VM.
-	1. Use a SSH client to open an SSH connection to the jumpbox VM, with the username `pivotal`. <br>
-          * Linux/Unix/Mac OS X: For example, run the command `$ ssh pivotal@myjumpboxujnk2hiwzqq3y.westus.cloudapp.azure.com`.
-          * Windows: For example, use PuTTY to SSH into the jumpbox VM. Locate your public key file and paste the contents into the appropriate text field in PuTTY.
-
-    <%= image_tag("azure/jumpbox.png") %>
-
-3. View the PCF deployment log on the jumpbox VM at <code>/home/pivotal/pcf\_install.log</code>.
-
-4. Find the Apps Manager URL and the admin password:
+2. Find the Ops Manager URL and the admin password:
 
   1. In the Azure Portal, return to the **Outputs** section of your deployment.
-  2. Navigate to the URL shown in **PROGRESSMONITORURL** textbox. This is the URL to a tmux session in which you find the Apps Manager URL and admin password that
-you use to log in to the Apps Manager console.
- If the URL not longer shows the tmux session, see [Cannot find the admin password or Apps Manager URL](#cantfindpsswd) below.
+  2. Navigate to the Ops Manager URL.
+  3. Log in with the provided credentials.
 
-6. From your Azure Portal, navigate to **Resources** and find the **Public IP address** resource named <code>YOUR-JUMPBOX-NAME–cf</code> and select it.
-	<%= image_tag("azure/app_manager_one.png") %>
-7. Record the **IP address**. This is the IP address of Apps Manager.
-	<%= image_tag("azure/app_manager_two.png") %>
-8. Navigate to the URL `https://apps.system.APPS-MANAGER-IP-ADDRESS.cf.pcfazure.com`, and log in to Apps Manager with the username `admin` and the password obtained above.
+3. Log in to Apps Manager:
+  1. Find the Apps Manager password by following [Logging in to Apps Manager](https://docs.pivotal.io/pivotalcf/1-8/customizing/console-login.html)
+  2. Find the System Domain needed for the Apps Manager URL:
+    1. Navigate to the Ops Manager Installation Dashboard
+    2. Select **Elastic Runtime**
+    3. Select **Domains**
+    4. Copy the System Domain URL, referred to as SYSTEMDOMAINURL below
+  3. Navigate to the URL `https://apps.SYSTEMDOMAINURL`
+  4. Log in to Apps Manager with the username `admin` and the password obtained above.
 
-9. From Apps Manager, verify that your services are running.
+5. From Apps Manager, verify that your services are running.
 <%= image_tag("azure/console.png") %>
 
 ##<a id='delete'></a>Delete a Deployment of PCF on Microsoft Azure
@@ -146,21 +135,30 @@ To remove the deployment, navigate to your Azure Portal and delete the **Resourc
 ##<a id='troubleshooting'></a>Troubleshooting ##
 
 * [Deployment fails](#deployfails)
-* [Cannot find the admin password or Apps Manager URL](#cantfindpsswd)
 
 ###<a id='deployfails'></a>Deployment fails
 
-**Symptom:** PCF on Azure fails to deploy.
+**Symptom:** Deployment fails before the jumpbox VM is created. The **Resource Group** Events shows an event with a **Provisioning State: Failed**. The Status Message may show something like:
 
-**Solution**: If the deployment fails after the jumpbox VM has been created, capture the PCF deployment log as described in the [verification procedure above](#verify) and send it to azure-inquiry@pivotal.io with any additional information about the installation that you can provide.
+{
+  "status": "Failed",
+  "error": {
+    "code": "ResourceDeploymentFailure",
+    "message": "The resource operation completed with terminal provisioning state 'Failed'.",
+    "details": [
+      {
+        "code": "VMExtensionProvisioningError",
+        "message": "VM has reported a failure when processing extension 'initbootstrap'. Error message: \"Script returned an error.\n---stdout---\nDownload complete.\nCurrent working dir : /var/lib/waagent/Microsoft.OSTCExtensions.CustomScriptForLinux-1.4.1.0\nSys.Path: ['/usr/share/python-wheels/distlib-0.1.8-py2.py3-none-any.whl', '/usr/share/python-wheels/pip-1.5.4-py2.py3-none-any.whl', '/usr/share/python-wheels/urllib3-1.7.1-py2.py3-none-any.whl', '/usr/share/python-wheels/requests-2.2.1-py2.py3-none-any.whl', '/usr/share/python-wheels/setuptools-3.3-py2.py3-none-any.whl', '/usr/share/python-wheels/chardet-2.2.1-py2.py3-none-any.whl', '/usr/share/python-wheels/html5lib-0.999-py2.py3-none-any.whl', '/usr/share/python-wheels/six-1.5.2-py2.py3-none-any.whl', '/usr/share/python-wheels/colorama-0.2.5-py2.py3-none-any.whl', '/var/lib/waagent/Microsoft.OSTCExtensions.CustomScriptForLinux-1.4.1.0/download/0', '/usr/lib/python2.7', '/usr/lib/python2.7/plat-x86_64-linux-gnu', '/usr/lib/python2.7/lib-tk', '/usr/lib/python2.7/lib-old', '/usr/lib/python2.7/lib-dynload', '/usr/local/lib/python2.7/dist-packages', '/usr/lib/python2.7/dist-packages', '']\n\n---errout---\n\rExtracting templates from packages: 61%\rExtracting templates from packages: 100%\nTraceback (most recent call last):\n  File \"bootstrap.py\", line 165, in <module>\n    check_quota(subscription_id, tenant, client_id, client_secret, location, numofcores)\n  File \"bootstrap.py\", line 62, in check_quota\n    token = get_token_from_client_credentials(endpoint,client_id,secret)\n  File \"bootstrap.py\", line 55, in get_token_from_client_credentials\n    result = urlopen(request)\n  File \"/usr/lib/python2.7/urllib2.py\", line 127, in urlopen\n    return _opener.open(url, data, timeout)\n  File \"/usr/lib/python2.7/urllib2.py\", line 410, in open\n    response = meth(req, response)\n  File \"/usr/lib/python2.7/urllib2.py\", line 523, in http_response\n    'http', request, response, code, msg, hdrs)\n  File \"/usr/lib/python2.7/urllib2.py\", line 448, in error\n    return self._call_chain(*args)\n  File \"/usr/lib/python2.7/urllib2.py\", line 382, in _call_chain\n    result = func(*args)\n  File \"/usr/lib/python2.7/urllib2.py\", line 531, in http_error_default\n    raise HTTPError(req.get_full_url(), code, msg, hdrs, fp)\nurllib2.HTTPError: HTTP Error 400: Bad Request\n\n\"."
+      }
+    ]
+  }
+}
 
-###<a id='cantfindpsswd'></a>Cannot Find the Admin Password or Apps Manager URL
+**Solution:** If a HTTP 400 error is shown, the Client-ID or Tentant-ID is incorrect. If a HTTP 401 error is shown, the Client Secret is incorrect. Finally, if quota is insufficient, you will see such a message. There is no error code associated with this.
 
-**Symptom**: The URL in the **PROGRESSMONITORURL** textbox no longer takes you to the tmux session to locate the Apps Manager URL and admin password.
+**Symptom:** Deployment fails after the jumpbox VM has been created
 
-**Solution**: Even though the tmux session has been lost, you can retrieve the Apps Manager URL and admin password by searching for `admin` in the `manifests/elastic-runtime.yml` file on the jumpbox VM:
- <pre class="terminal">
-$ cat manifests/elastic-runtime.yml | grep admin
-  admin\_user: admin
-  admin\_password: "example_password"
+**Solution**: Capture the PCF deployment log as described in the [verification procedure above](#verify) and send it to azure-inquiry@pivotal.io with any additional information about the installation that you can provide.
+
+
  </pre>

@@ -26,7 +26,7 @@ For more details about the impact of upgrading on individual PCF components, see
 
 ## <a id="beforeupgrade"></a>Before You Upgrade
 
-This section contains important guidelines that you must follow before beginning an upgrade to Ops Manager v1.9. Failure to follow these instructions may jeopardize your existing deployment data and cause your upgrade to fail.
+This section contains important preparation steps, **Preps**, that you must follow before beginning an upgrade to Ops Manager v1.9. Failure to follow these instructions may jeopardize your existing deployment data and cause your upgrade to fail.
 
 ### <a id="app_usage"></a>Prep 1: Verify App Usage Service Remedial Steps
 
@@ -36,7 +36,7 @@ If you are upgrading from a PCF deployment that at one point included Elastic Ru
 
 ### <a id="review-min-versions"></a>Prep 2: Review Product Compatibility Prerequisites
 
-Before upgrading to Ops Manager v1.9, you must be on the following product versions:
+Before upgrading to Ops Manager v1.9, you must be using the following product version:
 
   * Elastic Runtime v1.8.9 or later
   
@@ -48,17 +48,17 @@ For information about how to upgrade product tiles in PCF v1.8, see the <a href=
 
 If you have RabbitMQ for PCF currently deployed in your PCF v1.8 environment, perform the following steps before upgrading to PCF v1.9.
 
-1. Review the version of RabbitMQ for Pivotal Cloud Foundry currently running in your PCF v1.8 deployment. Pivotal recommends that you upgrade to the latest patched version of RabbitMQ for PCF (v1.7.x) before proceeding with the platform upgrade. 
+1. Review the version of RabbitMQ for Pivotal Cloud Foundry currently running in your PCF v1.8 deployment. Pivotal recommends that you upgrade to the latest patched version of RabbitMQ for PCF, v1.7.x, before proceeding with the platform upgrade. 
 
-1. Check the RabbitMQ for PCF [management dashboard](https://docs.pivotal.io/rabbitmq-cf/1-7/managing.html) to ensure that the service status is green and that all nodes are healthy. For more information, see the [RabbitMQ for Pivotal Cloud Foundry](https://docs.pivotal.io/rabbitmq-cf/1-7/index.html) documentation.
+1. Examine the RabbitMQ for PCF [management dashboard](https://docs.pivotal.io/rabbitmq-cf/1-7/managing.html) to ensure that the service status is **green** and that all nodes are healthy. For more information, see the [RabbitMQ for Pivotal Cloud Foundry](https://docs.pivotal.io/rabbitmq-cf/1-7/index.html) documentation.
 
 ### <a id="remove-products"></a>Prep 4: Review and Remove Unsupported Products
 
-If your deployment contains any of the following unsupported products, you must remove the associated product tile before upgrading. The following products are no longer maintained and are not currently compatible with PCF v1.9:
+If your deployment contains any of the following unsupported products, you must remove the associated product tile before upgrading. The following products are no longer maintained and are not compatible with PCF v1.9:
 
   * App Distribution for PCF
   * Data Sync for PCF
-  * Datastax Enterprise for PCF
+  * DataStax Enterprise for PCF
   * MongoDB for PCF
   * Neo4J for PCF
   * Pivotal HD
@@ -73,9 +73,9 @@ Some partner service tiles may be incompatible with PCF v1.9. Pivotal is working
 
 ### <a id="download-targets"></a>Prep 6: Download Upgrade Versions
 
-To minimize disruptions to your deployment during the upgrade and satisfy simultaneous upgrade requirements, download the version of the product files you wish to upgrade from [Pivotal Network](https://network.pivotal.io/). 
+To minimize disruptions to your deployment during the upgrade, and to satisfy any simultaneous upgrade requirements, download the version of the product files you wish to upgrade from [Pivotal Network](https://network.pivotal.io/). 
 
-At the minimum, download Elastic Runtime v1.9.x.
+At the minimum, you must download Elastic Runtime v1.9.x.
 
 ### <a id="ccv3-impact"></a>Prep 7: Prepare for CC API v3 Upgrade
 
@@ -90,13 +90,15 @@ To determine if your deployment is using any v3 service bindings, perform the fo
    $ cf curl /v3/service_bindings
    </pre> 
    This command returns a JSON listing of all v3 service bindings and their GUIDs. 
+
 1. If necessary, notify application owners of the pending deletions.
 
 1. To delete a service binding, run the following command:
    <pre class="terminal">
    $ cf curl /v3/service\_bindings/GUID -X DELETE
    </pre>
-   In the above command, replace `GUID` with the service binding you want to delete. 
+   In the above command, replace `GUID` with the service binding you want to delete.
+ 
 1. Repeat the deletion command for each v3 service binding until the `cf curl /v3/service_bindings` command returns zero results.
 
 In addition, although existing v2 applications still run normally during the upgrade, some developer interactions with PCF such as pushing apps to PCF may fail. You may want to warn users about potential availability issues during the upgrade window. 
@@ -126,8 +128,7 @@ This is the same information you entered at the end of deploying [Ops Manager on
      * Default Gateway
      * DNS Servers
      * NTP Servers
-  * Record the following VM hardware information so you configure the new VM with similar settings. 
-You can find this information in the vSphere web client under **Manage** > **Settings** > **VM Hardware**.
+  * Record the following VM hardware information so you can configure the new VM with similar settings. You can find this information in the vSphere web client under **Manage** > **Settings** > **VM Hardware**.
        * CPU
        * Memory
        * Hard Disk 1
@@ -137,14 +138,14 @@ You can find this information in the vSphere web client under **Manage** > **Set
 
 1. Run `bosh cloudcheck` to confirm that the VMs are healthy. For more information, see the [BOSH Cloudcheck](./trouble-advanced.html#cck) topic.
 
-1. Check the system health of installed products. In the **Installation Dashboard**, select the **Status** tab for each service tile. 
-Confirm that all jobs are healthy.
+1. Check the system health of installed products. In the **Installation Dashboard**, select the **Status** tab for each service tile. Confirm that all jobs are healthy.
 
 1. (Optional) Check the logs for errors before proceeding with the upgrade.
 For more information, see the [Viewing Logs in the Command Line Interface](../devguide/deploy-apps/streaming-logs.html#view) topic.  
 
-1. Confirm there are no outstanding changes in Ops Manager or any other tile. All tiles should be green.
-Click **Apply Changes** if necessary. After applying changes, click **Recent Install Logs** to confirm that the changes completed cleanly:
+1. Confirm there are no outstanding changes in Ops Manager or any other tile. All tiles should be **green**. Click **Apply Changes** if necessary. 
+
+1. After applying changes, click **Recent Install Logs** to confirm that the changes completed cleanly:
     <pre>
     Cleanup complete
     {"type": "step\_finished", "id": "clean\_up\_bosh.cleaning\_up"}
@@ -155,7 +156,7 @@ Click **Apply Changes** if necessary. After applying changes, click **Recent Ins
 
 ### <a id="export"></a>Step 1: Export Your Installation ###
 
-1. Make sure you have removed any tiles that are no longer supported. For the list of tiles, see [Review and Remove Unsupported Products](#remove-products).
+1. Make sure you have removed any tiles that are no longer supported. For the list of unsupported tiles, see the [Review and Remove Unsupported Products](#remove-products) section of this topic.
 
 1. In your Ops Manager v1.8.x **Installation Dashboard**, click the account dropdown and select **Settings**.
 
@@ -197,7 +198,9 @@ Network](https://network.pivotal.io/products/ops-manager) site.
 
     <%= image_tag("./images/upgrading/welcome.png") %>
 
-1. When prompted, enter a Decryption Passphrase. Click **Choose File** and browse to the installation ZIP file exported in [Step 1](#export) above.
+1. When prompted, enter a Decryption Passphrase. 
+
+1. Click **Choose File** and browse to the installation ZIP file exported in [Step 1](#export) above.
 
     <%= image_tag("./images/upgrading/decryption_passphrase.png") %>
 
@@ -230,8 +233,7 @@ Network](https://network.pivotal.io/products/ops-manager) site.
 
 1. Click **Apply Changes**. This immediately imports and applies upgrades to all tiles in a single transaction.
 
-    <p class="note warning"><strong>WARNING: </strong> If the installation fails or returns errors, please contact <%= vars.support_link %>. 
-    Do not attempt to roll back the upgrade by restarting the previous (v1.8.x) Ops Manager VM.</p>
+    <p class="note warning"><strong>WARNING: </strong> If the installation fails or returns errors, contact <%= vars.support_link %>. Do not attempt to roll back the upgrade by restarting the previous (v1.8.x) Ops Manager VM.</p>
 
 1. Click each service tile, select the **Status** tab, and confirm that all VMs appear and are in good health.
 
@@ -254,10 +256,4 @@ To remedy this issue:
   $ monit restart nats\_to\_syslog
   </pre>
 
-1. Recheck Kibana for updated log data. 
-
-
-
-
-
-
+1. Recheck Kibana for updated log data.

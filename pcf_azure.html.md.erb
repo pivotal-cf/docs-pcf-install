@@ -3,7 +3,7 @@ title: Installing PCF on Microsoft Azure
 owner: Partners
 ---
 
- <p class="note"><strong>Note</strong>: This document describes how to install a basic, opinionated Pivotal Cloud Foundry (PCF) on Azure using the Azure Marketplace. To install a more robust PCF 1.8 deployment on Azure for development or production, see the <a href="azure.html">Installing Pivotal Cloud Foundry on Azure</a> topic.</p>
+ <p class="note"><strong>Note</strong>: This document describes how to install a basic, opinionated Pivotal Cloud Foundry (PCF) on Azure using the Azure Marketplace. To install a more robust PCF v1.9 deployment on Azure for development or production, see the <a href="azure.html">Installing Pivotal Cloud Foundry on Azure</a> topic.</p>
 
 This topic describes how to deploy Pivotal Cloud Foundry (PCF) on Microsoft Azure.
 
@@ -16,7 +16,8 @@ PCF on Microsoft Azure includes the following components:
 * [Elastic Runtime](../installing/pcf-docs.html)
 * [Microsoft Azure Service Broker](http://network.pivotal.io)
 
-Optional (Coming Soon):
+Optional (coming soon):
+
 * [RabbitMQ for PCF](http://docs.pivotal.io/rabbitmq-cf/index.html)
 * [MySQL for PCF](http://docs.pivotal.io/p-mysql/1-7/index.html)
 * [Redis for PCF](http://docs.pivotal.io/redis/index.html)
@@ -36,9 +37,9 @@ You must have the following in order to use PCF on Microsoft Azure:
 * An Azure command line tool on your machine.
      * For Linux/Unix/Mac OS X, follow these [instructions](https://azure.microsoft.com/en-us/documentation/articles/xplat-cli-install/) to install the Azure CLI.
      * For Windows, follow these [instructions](https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/) to install the Azure PowerShell.
-     * Use azure-sp-tool, follow these [instructions](https://github.com/danhigham/azure-sp-tool) to create service principal. The service principal is outputed to azure-credentials.json file.
+     * Use azure-sp-tool, follow these [instructions](https://github.com/danhigham/azure-sp-tool) to create service principal. The service principal is output to `azure-credentials.json` file.
 
-* Sufficient resources for your Azure account. See the installation requirements at [Installing Pivotal Cloud Foundry on Azure](https://docs.pivotal.io/pivotalcf/1-8/customizing/azure.html#azure).
+* Sufficient resources for your Azure account. See the installation requirements at [Installing Pivotal Cloud Foundry on Azure](https://docs.pivotal.io/pivotalcf/1-9/customizing/azure.html#azure).
 
     For more information, see [Azure subscription and service limits, quotas, and constraints](https://azure.microsoft.com/en-us/documentation/articles/azure-subscription-service-limits/). To raise your quota, follow the instructions in <a href="#raising-quota">Raise Your Quota</a> below.
   <p class="note"><strong>Note</strong>: The cost per day for Azure resources varies, but it is likely in the $50-75 (US) range.</p>
@@ -64,7 +65,7 @@ VM count (minimum):<br>
 4 F2s<br>
 4 F4s<br>
 1 DS11v2<br>
-1 DS12v2<br>
+1 DS12v2"<br>
 </blockquote>
 
 ##<a id='getting-started'></a>Install PCF on Microsoft Azure##
@@ -102,7 +103,7 @@ See <a href="#raising-quota">Raise Your Quota</a>.
 
     <%= image_tag("azure/quota.png") %>
 
-10. When the deployment is complete, the **Outputs** section of the deployment will display the Ops Manager FQDN URL along with the Ops Manager login credentials and the Jumpbox FQDN URL.
+10. When the deployment is complete, the **Outputs** section of the deployment displays the Ops Manager FQDN URL along with the Ops Manager login credentials and the Jumpbox FQDN URL.
 
 ##<a id='verify'></a>Verify the PCF on Microsoft Azure Installation ##
 
@@ -116,7 +117,7 @@ See <a href="#raising-quota">Raise Your Quota</a>.
   3. Log in with the provided credentials.
 
 3. Log in to Apps Manager:
-  1. Find the Apps Manager password by following [Logging in to Apps Manager](https://docs.pivotal.io/pivotalcf/1-8/customizing/console-login.html)
+  1. Find the Apps Manager password by following [Logging in to Apps Manager](https://docs.pivotal.io/pivotalcf/1-9/customizing/console-login.html)
   2. Find the System Domain needed for the Apps Manager URL:
     1. Navigate to the Ops Manager Installation Dashboard
     2. Select **Elastic Runtime**
@@ -136,10 +137,11 @@ To remove the deployment, navigate to your Azure Portal and delete the **Resourc
 
 * [Deployment fails](#deployfails)
 
-###<a id='deployfails'></a>Deployment fails
+###<a id='deployfails'></a>Deployment Fails
 
 **Symptom:** Deployment fails before the jumpbox VM is created. The **Resource Group** Events shows an event with a **Provisioning State: Failed**. The Status Message may show something like:
 
+```
 {
   "status": "Failed",
   "error": {
@@ -148,15 +150,44 @@ To remove the deployment, navigate to your Azure Portal and delete the **Resourc
     "details": [
       {
         "code": "VMExtensionProvisioningError",
-        "message": "VM has reported a failure when processing extension 'initbootstrap'. Error message: \"Script returned an error.\n---stdout---\nDownload complete.\nCurrent working dir : /var/lib/waagent/Microsoft.OSTCExtensions.CustomScriptForLinux-1.4.1.0\nSys.Path: ['/usr/share/python-wheels/distlib-0.1.8-py2.py3-none-any.whl', '/usr/share/python-wheels/pip-1.5.4-py2.py3-none-any.whl', '/usr/share/python-wheels/urllib3-1.7.1-py2.py3-none-any.whl', '/usr/share/python-wheels/requests-2.2.1-py2.py3-none-any.whl', '/usr/share/python-wheels/setuptools-3.3-py2.py3-none-any.whl', '/usr/share/python-wheels/chardet-2.2.1-py2.py3-none-any.whl', '/usr/share/python-wheels/html5lib-0.999-py2.py3-none-any.whl', '/usr/share/python-wheels/six-1.5.2-py2.py3-none-any.whl', '/usr/share/python-wheels/colorama-0.2.5-py2.py3-none-any.whl', '/var/lib/waagent/Microsoft.OSTCExtensions.CustomScriptForLinux-1.4.1.0/download/0', '/usr/lib/python2.7', '/usr/lib/python2.7/plat-x86_64-linux-gnu', '/usr/lib/python2.7/lib-tk', '/usr/lib/python2.7/lib-old', '/usr/lib/python2.7/lib-dynload', '/usr/local/lib/python2.7/dist-packages', '/usr/lib/python2.7/dist-packages', '']\n\n---errout---\n\rExtracting templates from packages: 61%\rExtracting templates from packages: 100%\nTraceback (most recent call last):\n  File \"bootstrap.py\", line 165, in <module>\n    check_quota(subscription_id, tenant, client_id, client_secret, location, numofcores)\n  File \"bootstrap.py\", line 62, in check_quota\n    token = get_token_from_client_credentials(endpoint,client_id,secret)\n  File \"bootstrap.py\", line 55, in get_token_from_client_credentials\n    result = urlopen(request)\n  File \"/usr/lib/python2.7/urllib2.py\", line 127, in urlopen\n    return _opener.open(url, data, timeout)\n  File \"/usr/lib/python2.7/urllib2.py\", line 410, in open\n    response = meth(req, response)\n  File \"/usr/lib/python2.7/urllib2.py\", line 523, in http_response\n    'http', request, response, code, msg, hdrs)\n  File \"/usr/lib/python2.7/urllib2.py\", line 448, in error\n    return self._call_chain(*args)\n  File \"/usr/lib/python2.7/urllib2.py\", line 382, in _call_chain\n    result = func(*args)\n  File \"/usr/lib/python2.7/urllib2.py\", line 531, in http_error_default\n    raise HTTPError(req.get_full_url(), code, msg, hdrs, fp)\nurllib2.HTTPError: HTTP Error 400: Bad Request\n\n\"."
+        "message": "VM has reported a failure when processing extension 'initbootstrap'. 
+                    Error message: \"Script returned an error.\n---stdout---\nDownload complete.\n
+                    Current working dir : /var/lib/waagent/Microsoft.OSTCExtensions.CustomScriptForLinux-1.4.1.0\n
+                    Sys.Path: ['/usr/share/python-wheels/distlib-0.1.8-py2.py3-none-any.whl', 
+                    '/usr/share/python-wheels/pip-1.5.4-py2.py3-none-any.whl', 
+                    '/usr/share/python-wheels/urllib3-1.7.1-py2.py3-none-any.whl', 
+                    '/usr/share/python-wheels/requests-2.2.1-py2.py3-none-any.whl', 
+                    '/usr/share/python-wheels/setuptools-3.3-py2.py3-none-any.whl', 
+                    '/usr/share/python-wheels/chardet-2.2.1-py2.py3-none-any.whl', 
+                    '/usr/share/python-wheels/html5lib-0.999-py2.py3-none-any.whl', 
+                    '/usr/share/python-wheels/six-1.5.2-py2.py3-none-any.whl', 
+                    '/usr/share/python-wheels/colorama-0.2.5-py2.py3-none-any.whl', 
+                    '/var/lib/waagent/Microsoft.OSTCExtensions.CustomScriptForLinux-1.4.1.0/download/0', 
+                    '/usr/lib/python2.7', '/usr/lib/python2.7/plat-x86_64-linux-gnu', 
+                    '/usr/lib/python2.7/lib-tk', '/usr/lib/python2.7/lib-old', '/usr/lib/python2.7/lib-dynload', 
+                    '/usr/local/lib/python2.7/dist-packages', '/usr/lib/python2.7/dist-packages', '']\n
+                    \n---errout---\n\rExtracting templates from packages: 61%\r
+                    Extracting templates from packages: 100%\nTraceback (most recent call last):\n  
+                    File \"bootstrap.py\", line 165, in <module>\n    check_quota(subscription_id, tenant, 
+                    client_id, client_secret, location, numofcores)\n  File \"bootstrap.py\", line 62, in check_quota\n    
+                    token = get_token_from_client_credentials(endpoint,client_id,secret)\n  
+                    File \"bootstrap.py\", line 55, in get_token_from_client_credentials\n    
+                    result = urlopen(request)\n  File \"/usr/lib/python2.7/urllib2.py\", line 127, in urlopen\n    
+                    return _opener.open(url, data, timeout)\n  File \"/usr/lib/python2.7/urllib2.py\", line 410, in open\n    
+                    response = meth(req, response)\n  File \"/usr/lib/python2.7/urllib2.py\", line 523, in http_response\n    
+                    'http', request, response, code, msg, hdrs)\n  File \"/usr/lib/python2.7/urllib2.py\", line 448, in error\n    
+                    return self._call_chain(*args)\n  File \"/usr/lib/python2.7/urllib2.py\", line 382, in _call_chain\n    
+                    result = func(*args)\n  File \"/usr/lib/python2.7/urllib2.py\", line 531, in http_error_default\n    
+                    raise HTTPError(req.get_full_url(), code, msg, hdrs, fp)\nurllib2.HTTPError: HTTP Error 400: Bad Request\n\n\"."
       }
     ]
   }
 }
+```
 
-**Solution:** If a HTTP 400 error is shown, the Client-ID or Tentant-ID is incorrect. If a HTTP 401 error is shown, the Client Secret is incorrect. Finally, if quota is insufficient, you will see such a message. There is no error code associated with this.
+**Solution:** If a HTTP 400 error is shown, the Client-ID or Tentant-ID is incorrect. If a HTTP 401 error is shown, the Client Secret is incorrect. Finally, if quota is insufficient, you see such a message. There is no error code associated with this.
 
-**Symptom:** Deployment fails after the jumpbox VM has been created
+**Symptom:** Deployment fails after the jumpbox VM has been created.
 
 **Solution**: Capture the PCF deployment log as described in the [verification procedure above](#verify) and send it to azure-inquiry@pivotal.io with any additional information about the installation that you can provide.
 

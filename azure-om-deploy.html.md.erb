@@ -1,14 +1,12 @@
 ---
-title: Launching an Ops Manager Director Instance on Azure
+title: Launching an Ops Manager Director Instance on Azure without an ARM Template
 owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
 <html class="list-style-none"></html>
 
-This topic describes how to deploy Ops Manager Director for Pivotal Cloud Foundry (PCF) on Azure.
-
-You can also deploy Ops Manager Director using an Azure Resource Manager (ARM) template. See the [Launching an Ops Manager Director Instance with an ARM Template](azure-arm-template.html) topic for more information.
+This topic describes how to deploy Ops Manager Director for Pivotal Cloud Foundry (PCF) on Azure by using individual commands to create resources in Azure instead of using an Azure Resource Manager (ARM) template. For information on using the ARM template, see the [Launching an Ops Manager Director Instance with an ARM Template](azure-arm-template.html) topic.
 
 Before you perform the procedures in this topic, you must have completed the procedures in the [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic. After you complete the procedures in this topic, follow the instructions in the [Configuring Ops Manager Director on Azure](azure-om-config.html) topic.
 
@@ -89,12 +87,15 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     <pre class="terminal">
     $ azure storage account connectionstring show $STORAGE\_NAME \
     --resource-group $RESOURCE\_GROUP
+    </pre>
+    The command returns output similar to the following:
+    <pre class="terminal">
     info:    Executing command storage account connectionstring show
     <span>+</span> Getting storage account keys
     data:    connectionstring: DefaultEndpointsProtocol=https;AccountName=example-storage;AccountKey=accountkeystring
     info:    storage account connectionstring show command OK
     </pre>
-    1. Record the full value of **connectionstring** from the output above, starting with and including `DefaultEndpointsProtocol=`.
+    1. From the `data:` field in the output above, record the full value of **connectionstring** from the output above, starting with and including `DefaultEndpointsProtocol=`.
     1. Export the value of **connectionstring** as the environment variable `$AZURE_STORAGE_CONNECTION_STRING`.
     <pre class="terminal">
     $ export AZURE\_STORAGE\_CONNECTION\_STRING="YOUR-ACCOUNT-KEY-STRING"
@@ -124,12 +125,15 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     <pre class="terminal">
     $ azure storage account connectionstring show MY\_DEPLOYMENT\_STORAGE\_X \
     --resource-group $RESOURCE\_GROUP
+    </pre>
+    The command returns output similar to the following:
+    <pre class="terminal">
     info:    Executing command storage account connectionstring show
     <span>+</span> Getting storage account keys
     data:    connectionstring: DefaultEndpointsProtocol=https;AccountName=example-storage;AccountKey=accountkeystring
     info:    storage account connectionstring show command OK
     </pre>
-    1. Record the full value of **connectionstring** from the output above, starting with and including `DefaultEndpointsProtocol=`.
+    1. From the `data:` field in the output above, record the full value of **connectionstring** from the output above, starting with and including `DefaultEndpointsProtocol=`.
     1. Create three blob containers named `opsmanager`, `bosh`, and `stemcell` in the account. 
     <pre class="terminal">
     $ azure storage container create opsmanager \
@@ -291,11 +295,13 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     <span>+</span> Getting virtual machines
     data:    ResourceGroupName  Name                 ProvisioningState  PowerState  Location  Size
     data:    -----------------  -------------------  -----------------  ----------  --------  ---------------
-    data:    PCF                ops-manager-alpha2  Succeeded          VM running  westus    Standard\_DS2\_v2
+    data:    PCF                ops-manager-alpha2   Succeeded          VM running  westus    Standard\_DS2\_v2
     info:    vm list command OK
     </pre>
 
     The **PowerState** displays `VM running` when the Ops Manager deployment successfully completes. 
+
+##<a id='post-deploy'></a> Step 5: Complete Ops Manager Director Configuration
 
 1. Navigate to your DNS provider, and create an entry that points a fully qualified domain name (FQDN) to the public IP address of Ops Manager that you recorded in a previous step. As a best practice, always use the FQDN to access Ops Manager.
 

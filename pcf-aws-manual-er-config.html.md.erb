@@ -71,22 +71,18 @@ Manager.
 
 ## <a id='db-config'></a>Step 5: Configure System Databases ##
 <p class="note"><strong>Note</strong>: If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data first before changing the configuration. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information.</p>
-1. Select **Databases**.
-    <%= image_tag("./cloudform/sys-db.png") %>
-1. If you want to use internal databases for your deployment, select **Internal Databases - MySQL**. If you want to use the external RDS instance for your Elastic Runtime databases, select **External Databases** and complete the following procedure to create the databases that Elastic Runtime requires. If you require help, contact [Pivotal Support](http://support.pivotal.io).
-    * Add your key pair to your ssh profile so that you can access the machine.
-	<pre class="terminal">$ ssh-add pcf.pem</pre>
-    * SSH into your Ops Manager using the [Ops Manager FQDN](../customizing/cloudform-om-deploy.html#create-dns) and the username `ubuntu`:
-	<pre class="terminal">ssh ubuntu@OPS_MANAGER\_FQDN</pre>
-    * Log into your RDS instance through the MySQL client, using the hostname from the RDS console and the username that you created the RDS instance with. This command prompts you to enter the password for your RDS user:
-    <pre class="terminal">mysql -h RDS-HOSTNAME -u RDS-USERNAME -p</pre>
-    * Create databases for each of the six Cloud Foundry components that require a database. From the MySQL client, run `CREATE database DB-NAME` for each of the following: `uaa`, `ccdb`, `notifications`, `autoscale`, `app_usage_service`, and `console`.
-    <p class="note">The `console` database is deprecated but must be created to complete the installation procedure. After successfully deploying PCF v1.8, you can manually drop this database from the MySQL server. If you keep the database, you no longer need to backup and restore it. For more information, see <a href="http://docs.pivotal.io/pivotalcf/1-8/pcf-release-notes/runtime-rn.html#consoledeprecation">Pivotal Elastic Runtime v1.8 Release Notes</a>.</p>
-    * Exit the MySQL client and close your connection to the Ops Manager VM.
-    * In the **Databases** section of the Elastic Runtime tile, enter your **Hostname DNS Name**, **TCP Port** (`3306`), **Username**, and **Password**.
-    * Click **Save**.
 
-## <a id='internal-mysql'></a> Step 6 (Optional) Configure Internal MySQL ##
+###<a id='internal-db'></a> Internal Database Configuration
+
+<%= partial 'ert_database_internal' %>
+
+Then proceed to [Step 6: (Optional) Configure Internal MySQL](#internal-mysql) to configure high availability and automatic backups for your internal MySQL databases.
+
+###<a id='create-dbs'></a> External Database Configuration
+
+<%= partial 'ert_database_external' %>
+
+## <a id='internal-mysql'></a> Step 6: (Optional) Configure Internal MySQL ##
 
 <%= partial 'mysql_proxy_config' %>
 

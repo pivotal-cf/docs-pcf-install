@@ -126,7 +126,21 @@ xyz.MY-DOMAIN.COM.      1767    IN  CNAME pcf-ert-frankfurt-pcf-elb-428333773.eu
 
 ## <a id='create-dbs'></a>Step 11: Create System Databases ##
 
-You must create the databases required by Elastic Runtime on the RDS instance provisioned by the CloudFormation script.
+You can configure Elastic Runtime to use the internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by Elastic Runtime.
+
+<p class="note"><strong>Note</strong>: If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data first before changing the configuration. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information.</p>
+
+###<a id='internal-db'></a> Internal Database Configuration
+
+<%= partial 'ert_database_internal' %>
+
+Then proceed to [Step 12: (Optional) Configure Internal MySQL](#internal-mysql) to configure high availability and automatic backups for your internal MySQL databases.
+
+### <a id='create-dbs'></a> Create External System Databases ###
+
+If you want to use an external database provider for your Elastic Runtime databases, you must first create the databases on the RDS instance provided by the CloudFormation script.
+
+To create the required databases on an AWS RDS instance, perform the following steps.
 
 1. Add the AWS-provided key pair to your SSH profile so that you can access the Ops Manager VM:
 
@@ -140,7 +154,7 @@ You must create the databases required by Elastic Runtime on the RDS instance pr
 
      <pre class='terminal'>mysql --host=PcfRdsAddress --user=PcfRdsUsername --password=PcfRdsPassword</pre>
 
-1. Run the following MySQL commands to create databases for each of the five Elastic Runtime components that require a database:
+1. Run the following MySQL commands to create databases for the seven Elastic Runtime components that require a relational database:
   <pre class="terminal">CREATE database uaa;
   CREATE database ccdb;
   CREATE database notifications;

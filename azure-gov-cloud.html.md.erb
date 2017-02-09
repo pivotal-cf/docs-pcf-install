@@ -1,0 +1,53 @@
+---
+title: Deploying PCF on Azure Government Cloud
+owner: Ops Manager
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes how to install Pivotal Cloud Foundry (PCF) on Azure Government Cloud.
+
+<p class="note"><strong>Note</strong>: Azure Government Cloud is only supported in PCF 1.10 and later.</p>
+
+##<a id='prepare'></a> Step 1: Prepare to Deploy
+
+Perform the procedures in the [Preparing to Deploy PCF on Azure](./azure-prepare-env.html), but when using `azure login`, always specify the `AzureUSGovernment` environment:
+
+<pre class="terminal">$ azure login --environment AzureUSGovernment</pre>
+
+##<a id='launch-om'></a> Step 2: Launch an Ops Manager Director Instance
+
+Perform the procedures in the [Launching an Ops Manager Director Instance on Azure without an ARM Template](./azure-om-deploy.html) topic.
+
+##<a id='config-om'></a> Step 3: Configure Ops Manager Director
+
+Perform the procedures in the [Step 1: Access Ops Manager](./azure-om-config.html#access-om) section of the <em>Configuring Ops Manager Director on Azure</em> topic. Set up your Ops Manager authentication system, but do not continue to the [Step 2: Azure Config Page](./azure-om-config.html#azure-config) section.  
+
+Continue to the [Internal Authentication](#internal-auth) or [External Identity Provider](#external-idp) section below depending on which authentication system you configured. 
+
+###<a id='internal-auth'></a> Internal Authentication
+
+If you configured your Ops Manager for Internal Authentication, perform the following steps:
+
+1. SSH into the Ops Manager VM:
+	<pre class="terminal">$ ssh -i opsman OPS\_MAN\_FQDN</pre> 
+
+	If the private key that you generated in the [Launching an Ops Manager Director Instance on Azure without an ARM Template](./azure-om-deploy.html#configure) topic is not named `opsman`, provide the correct filename instead. 
+
+1. From the Ops Manager VM, use the User Account and Authentication Command Line Interface (UAAC) to target your Ops Manager UAA server:
+	<pre class="terminal">$ uaac target http<span>s:</span>//OPS\_MAN\_FQDN/uaa</pre>
+
+	<p class="note"><strong>Note</strong>: UAA is the Cloud Foundry identity and management service. See the <a href="../concepts/architecture/uaa.html">User Account and Authentication (UAA) Server</a> topic for more information.</p>
+
+1. Retrieve your token to authenticate:
+	<pre class="terminal">$ uaac token owner get
+	Client ID: opsman
+	Client secret: [Leave Blank]
+	User name: OPS_MAN_USERNAME
+	</pre>
+
+###<a id='external-idp'></a> External Identity Provider
+
+If you configured your Ops Manager for an external Identity Provider, perform the following steps:
+
+

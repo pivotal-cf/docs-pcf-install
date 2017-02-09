@@ -5,11 +5,25 @@ owner: RelEng
 
 <strong><%= modified_date %></strong>
 
+<style>
+    .note.warning {
+       background-color: #fdd;
+       border-color: #fbb
+  	          }
+    .note.warning:before {
+       color: #f99;
+		         }
+</style>
+
+<strong><%= modified_date %></strong>
+
 This topic describes the procedure for manually restoring your Pivotal Cloud Foundry (PCF) deployment from a backup. To create a backup, see the [Backing Up Pivotal Cloud Foundry](./backup-pcf.html) topic.
 
 <p class="note"><strong>Note</strong>: You can also use the CF Ops automation utility to perform a restore of your PCF backups. See the <a href="http://www.cfops.io/#the-basics">CF Ops User Guide</a> for more information.</p>
 
-To restore a deployment, you must import installation settings, temporarily stop the Cloud Controller, restore the state of each critical backend component from its backup file, and restart the Cloud Controller. Using the BOSH manifest to locate your critical backend components is necessary to perform these steps. Manifests are automatically downloaded to the Ops Manager virtual machine. However, if you are using a separate jumpbox, you must manually download the BOSH deployment manifest.
+To restore a deployment, you must import installation settings, temporarily stop the Cloud Controller, restore the state of each critical backend component from its backup file, and restart the Cloud Controller. 
+
+To perform these steps, you need the BOSH manifest to locate your critical backend components. BOSH manifests are automatically downloaded to the Ops Manager virtual machine. However, if you are using a separate jumpbox, you must manually download the BOSH deployment manifest.
 
 <p class='note'><strong>Note</strong>:
 The procedure described in this topic restores a running PCF deployment to the state captured by backup files. This procedure does not deploy PCF. See the <a href='../../installing/index.html'>Installing PCF Guide</a> for information.</p>
@@ -19,10 +33,12 @@ The procedure described in this topic restores a running PCF deployment to the s
 <p class='note'><strong>Note</strong>: Pivotal recommends that you export your installation settings before importing from a backup. See the <a href='./backup-pcf.html#export'>Export Installation Settings</a> section of the <i>Backing Up Pivotal Cloud Foundry</i> topic for more information.</p>
 
 **Import installation settings** imports the settings and assets of an existing
-PCF installation. Importing an installation overwrites any existing installation. You must provision a new Ops Manager in order to import settings.
+PCF installation. Importing an installation overwrites any existing installation. You must provision a new Ops Manager to import settings.
 
-1. Deploy the new Ops Manager VM:
+1. Select and follow the instruction below for your IaaS to deploy the new Ops Manager VM.
   * [Launching an Ops Manager Director Instance on AWS](../cloudform-om-deploy.html)
+  * [Launching an Ops Manager Director Instance on Azure](../azure-arm-template.html)
+  * [Launching an Ops Manager Director Instance on GCP](../gcp-om-deploy.html)
   * [Provisioning the OpenStack Infrastructure](../openstack-setup.html)
   * [Deploying Operations Manager to vSphere](../deploying-vm.html)
 
@@ -30,9 +46,9 @@ PCF installation. Importing an installation overwrites any existing installation
 
     <%= image_tag("../images/upgrading/welcome.png") %>
 
-1. When prompted, enter the following:
+1. When prompted, enter the following information:
   * **Decryption Passphrase**, which is the same as your password.
-  * Click **Choose File** and browse to the installation zip file that you exported in the [Export Installation Settings](./backup-pcf.html#export) section.
+  * Click **Choose File** and browse to the installation zip file that you exported in the [Export Installation Settings](./backup-pcf.html#export) section of this topic.
 
     <%= image_tag("../images/upgrading/decryption_passphrase.png") %>
 
@@ -42,7 +58,7 @@ PCF installation. Importing an installation overwrites any existing installation
       Some browsers do not provide feedback on the status of the import process,
       and may appear to hang.</p>
 
-1. Before you see the PCF <%= vars.current_major_version %> **Installation Dashboard**, a Security Features alert appears. Take note of your new **username**. Ensure you change your decryption passphrase before sharing it with other users. Click **Continue**.
+1. Before you see the PCF <%= vars.current_major_version %> **Installation Dashboard**, a Security Features alert appears. Record your new **username**. Ensure you change your decryption passphrase before sharing it with other users. Click **Continue**.
 
     <%= image_tag("../images/upgrading/security_features.png") %>
 
@@ -54,28 +70,29 @@ PCF installation. Importing an installation overwrites any existing installation
 
 ## <a id='restore_bosh'></a>Restore BOSH Using Ops Manager ##
 
+Follow the steps below to restore BOSH using Ops Manager.
+
 1. From the **Product Installation Dashboard**, click the **Ops Manager Director** tile.
 
-1. Make a change to your configuration in order to trigger a new deployment. For example, you can adjust the number of NTP servers in your deployment. Choose a change in configuration which suits your specific deployment.
+1. Make a change to your configuration to trigger a new deployment. For example, you can adjust the number of NTP servers in your deployment. Choose a change in configuration that suits your specific deployment.
 
-1. Follow the instructions in [SSH into Ops Manager](../../customizing/trouble-advanced.html#ssh). This example assumes an Amazon Web Services deployment:
+1. Follow the instructions in the [SSH into Ops Manager](../../customizing/trouble-advanced.html#ssh) topic. The following example assumes an Amazon Web Services deployment:
   <pre class='terminal'>
   $ ssh -i ops_mgr.pem ubuntu@OPS-MGR-IP
   </pre>
 
-1. Delete the `bosh-deployments.yml` file. Deleting `bosh-deployments.yml` causes Ops Manager to treat the deploy as a new deployment, recreating missing Virtual Machines(VMs) including BOSH. The new deployment ignores existing VMs such as your Pivotal Cloud Foundry deployment.
+1. Delete the `bosh-deployments.yml` file. Deleting the `bosh-deployments.yml` file causes Ops Manager to treat the deploy as a new deployment, recreating missing Virtual Machines (VMs), including BOSH. The new deployment ignores existing VMs such as your Pivotal Cloud Foundry deployment.
   <pre class='terminal'>
   $ sudo rm /var/tempest/workspaces/default/deployments/bosh-deployments.yml
   </pre>
 
-1. Rename, move, or delete the `bosh-state.json` file. Removing `bosh-state.json` causes Ops Manager to treat the deploy as a new deployment, recreating missing Virtual Machines(VMs) including BOSH. The new deployment ignores existing VMs such as your Pivotal Cloud Foundry deployment.
-
-	<pre class='terminal'>
+1. Rename, move, or delete the `bosh-state.json` file. Removing this file causes Ops Manager to treat the deploy as a new deployment, recreating missing VMs, including BOSH. The new deployment ignores existing VMs such as your Pivotal Cloud Foundry deployment.
+  <pre class='terminal'>
   $ cd /var/tempest/workspaces/default/deployments/
-	$ sudo mv bosh-state.json bosh-state.json.old
-	</pre>
+  $ sudo mv bosh-state.json bosh-state.json.old
+  </pre>
 
-1. Return to the **Product Installation Dashboard**, and click **Apply Changes**.
+1. Return to the **Product Installation Dashboard** and click **Apply Changes**.
 
 ## <a id="bosh-target-director"></a> Target the BOSH Director
 <%= partial 'bosh_target_director' %>
@@ -108,7 +125,7 @@ Use the Cloud Controller Database (CCDB) password and IP address to restore the 
 
 1. Use `scp` to send the Cloud Controller Database backup file to the Cloud Controller Database VM.
 <pre class='terminal'>
-    $ scp ccdb.sql vcap@YOUR-CCDB-VM-IP-ADDRESS:~/.
+$ scp ccdb.sql vcap@YOUR-CCDB-VM-IP-ADDRESS:~/.
 </pre>
 
 1. SSH into the Cloud Controller Database VM.
@@ -191,7 +208,7 @@ Use the File Storage password and IP address to restore the WebDAV server by fol
 
 1. Run `ssh YOUR-WEBDAV-VM-IP-ADDRESS` to enter the WebDAV VM.
 <pre class='terminal'>
-	$ ssh vcap@192.0.2.10
+$ ssh vcap@192.0.2.10
 </pre>
 
 1. Log in as root user. When prompted for a password, enter the vcap password you used to `ssh` into the VM:
@@ -199,73 +216,75 @@ Use the File Storage password and IP address to restore the WebDAV server by fol
 
 1. Temporarily change the permissions on `var/vcap/store` to add write permissions for all.
 <pre class='terminal'>
-	$ chmod a+w /var/vcap/store
+$ chmod a+w /var/vcap/store
 </pre>
 
 1. Use `scp` to send the WebDAV backup tarball to the WebDAV VM from your local machine.
 <pre class='terminal'>
-    $ scp webdav.tar.gz vcap@YOUR-WEBDAV-VM-IP-ADDRESS:/var/vcap/store
+$ scp webdav.tar.gz vcap@YOUR-WEBDAV-VM-IP-ADDRESS:/var/vcap/store
 </pre>
 
-1. `cd` into the `store` folder on the WebDAV VM.
+1. Navigate into the `store` folder on the WebDAV VM.
 <pre class='terminal'>
-	$ cd /var/vcap/store
+$ cd /var/vcap/store
 </pre>
 
 1. Decompress and extract the contents of the backup archive.
 <pre class='terminal'>
-	$ tar zxf webdav.tar.gz</pre>
+$ tar zxf webdav.tar.gz</pre>
 </pre>
 
 1. Change the permissions on `var/vcap/store` to their prior setting.
 <pre class='terminal'>
-    $ chmod a-w /var/vcap/store
+$ chmod a-w /var/vcap/store
 </pre>
 
 1. Exit the WebDAV VM.
 <pre class='terminal'>
-    $ exit
+$ exit
 </pre>
 
 ### <a id='restore-mysql-dev'></a>Restore MySQL Database ###
 
 Restoring from a backup is the same whether one or multiple databases were backed up. Executing the SQL dump will drop, recreate, and refill the specified databases and tables.
 
-  <p class="note"><strong>Warning:</strong> Restoring a database will delete all data that existed in the database prior to the restore. Restoring a database using a full backup artifact, produced by `mysqldump --all-databases` for example, will replace all data and user permissions.</p>
+<p class="note warning"><strong>Warning</strong>: Restoring a database deletes all data that existed in the database prior to the restore. Restoring a database using a full backup artifact, produced by `mysqldump --all-databases` for example, replaces all data and user permissions.</p>
 
 1. From the same VM you used to perform the manual backup, or a similar VM, restore from the data dump:
-  <pre class="terminal">$ mysql -u root -p -h $MYSQL\_NODE\_IP < user_databases.sql</pre>
+<pre class="terminal">
+$ mysql -u root -p -h $MYSQL\_NODE\_IP < user_databases.sql
+</pre>
 
 1. Use `scp` to send the MySQL Database backup file to the MySQL Database VM. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
-  <pre class='terminal'>
-  $ scp user_databases.sql vcap@YOUR-MYSQL-VM-IP-ADDRESS:~/.
-  </pre>
+<pre class='terminal'>
+$ scp user_databases.sql vcap@YOUR-MYSQL-VM-IP-ADDRESS:~/.
+</pre>
 
 1. SSH into the MySQL Database VM.
-  <pre class='terminal'>
-  $ ssh vcap@YOUR-MYSQL-VM-IP
-  </pre>
+<pre class='terminal'>
+$ ssh vcap@YOUR-MYSQL-VM-IP
+</pre>
 
 1. Use the MySQL password and IP address to enable the creation of tables using any storage engine.
-  <pre class='terminal'>
-  $ mysql -h YOUR-MYSQL-SERVER-IP -u root -p -e "SET GLOBAL enforce\_storage\_engine=NULL;"
-  </pre>
+<pre class='terminal'>
+$ mysql -h YOUR-MYSQL-SERVER-IP -u root -p -e "SET GLOBAL enforce\_storage\_engine=NULL;"
+</pre>
 
 1. Use the MySQL password and IP address to restore the MySQL database by running the following command.
-  <pre class='terminal'>
-  $ mysql -h YOUR-MYSQL-SERVER-IP -u root -p < ~/.user_databases.sql
-  </pre>
+<pre class='terminal'>
+$ mysql -h YOUR-MYSQL-SERVER-IP -u root -p < ~/.user_databases.sql
+</pre>
 
 1. Use the MySQL password and IP address to restore original storage engine restriction.
-  <pre class='terminal'>
-  $ mysql -h YOUR-MYSQL-SERVER-IP -u root -p -e "SET GLOBAL enforce\_storage\_engine='InnoDB';"
-  </pre>
+<pre class='terminal'>
+$ mysql -h YOUR-MYSQL-SERVER-IP -u root -p -e "SET GLOBAL enforce\_storage\_engine='InnoDB';"
+</pre>
 
 1. Log in to the MySQL client and flush privileges.
-  <pre class='terminal'>
-  $ mysql -u root -p -h
-  mysql > flush privileges;
-  </pre>
+<pre class='terminal'>
+$ mysql -u root -p -h
+mysql > flush privileges;
+</pre>
 
 ### <a id='cc-start-2'></a>Start Cloud Controller ###
 <%= partial 'starting_cc' %>

@@ -19,7 +19,7 @@ Perform the procedures in the [Preparing to Deploy PCF on Azure](./azure-prepare
 
 Perform the procedures in the [Launching an Ops Manager Director Instance on Azure without an ARM Template](./azure-om-deploy.html) topic.
 
-##<a id='config-om'></a> Step 3: Configure Ops Manager Director
+##<a id='config-auth'></a> Step 3: Configure Authentication
 
 Perform the procedures in the [Step 1: Access Ops Manager](./azure-om-config.html#access-om) section of the <em>Configuring Ops Manager Director on Azure</em> topic. Set up your Ops Manager authentication system, but do not continue to the [Step 2: Azure Config Page](./azure-om-config.html#azure-config) section.  
 
@@ -43,11 +43,114 @@ If you configured your Ops Manager for Internal Authentication, perform the foll
 	<pre class="terminal">$ uaac token owner get
 	Client ID: opsman
 	Client secret: [Leave Blank]
-	User name: OPS_MAN_USERNAME
+	User name: OPS\_MAN\_USERNAME
+	Password: OPS\_MAN\_PASSWORD
 	</pre>
+
+1. Continue to [Step 4: Configure Ops Manager](#config-om).
 
 ###<a id='external-idp'></a> External Identity Provider
 
-If you configured your Ops Manager for an external Identity Provider, perform the following steps:
+If you configured your Ops Manager for an external Identity Provider with SAML, perform the following steps:
 
+1. From your local machine, target your Ops Manager UAA server:
+	<pre class="terminal">$ uaac target http<span>s:</span>//OPS\_MAN\_FQDN/uaa</pre>
 
+1. Retrieve your token to authenticate. When prompted for a passcode, retrieve it from `https://OPS_MAN_FQDN/uaa/passcode`.
+	<pre class="terminal">$ uaac token sso get
+	Client ID: opsman
+	Client secret: [Leave Blank]
+	Passcode: YOUR\_PASSCODE
+	</pre>
+	If authentication is successful, the UAAC displays the following message: `Successfully fetched token via owner password grant.`
+1. Continue to [Step 4: Configure Ops Manager](#config-om).
+ 
+##<a id='config-om'></a> Step 4: Configure Ops Manager
+
+Perform the following steps to configure Ops Manager for Azure Government Cloud:
+
+1. Use `curl` to pass in the `environment:AzureUSGovernment` key to Ops Manager using the API:
+	<pre class="terminal">
+	$ curl "http<span>s:</span>//OPS\_MAN\_FQDN/api/v0/staged/director/properties" \ 
+	    -X PUT \ 
+	    -H "Authorization: Bearer UAA\_ACCESS\_TOKEN" \ 
+	    -H "Content-Type: application/json" \ 
+	    -d '{
+	            "iaas\_configuration": {
+	              "subscription\_id": "SUBSCRIPTION\_ID",
+	              "tenant\_id": "TENANT\_ID",
+	              "client\_id": "my-client",
+	              "resource\_group\_name": "$RESOURCE\_GROUP",
+	              "bosh\_storage\_account\_name": "$STORAGE\_NAME",
+	              "deployments\_storage\_account\_name": "MY\_DEPLOYMENT\_STORAGE\_X",
+	              "default\_security\_group": "my-security-group",
+	              "ssh\_public\_key": "ssh-rsa OPS\_MAN\_PUBLIC\_KEY",
+	              "ssh\_private\_key": "-----BEGIN RSA PRIVATE KEY-----\OPS\_MAN\_PRIVATE\_KEY",
+	              "environment": "AzureUSGovernment"
+	            },
+	            "director\_configuration": {
+	              "ntp\_servers\_string": "us.pool.ntp.org",
+	              "metrics\_ip": "1.2.3.4",
+	              "resurrector\_enabled": true,
+	              "max\_threads": 1,
+	              "database\_type": "internal",
+	              "blobstore\_type": "local"
+	            },
+	            "security\_configuration": {
+	              "trusted\_certificates": "—– BEGIN SSL CERTIFICATE —– ... ",
+	              "generate\_vm\_passwords": true
+	            }
+		    }'
+	</pre>
+	For the values of the placeholders above, refer to the [Preparing to Deploy PCF on Azure](./azure-prepare-env.html) and [Launching an Ops Manager Director Instance on Azure without an ARM Template](./azure-om-deploy.html) topics.
+	<p class="note"><strong>Note</strong>: For more information about the Ops Manager API, see the documentation at <code>http<span>s:</span>//OPS\_MAN\_FQDN/docs</code>.</p>
+1. If the `curl` command returns a `200 OK` response, navigate to the Ops Manager FQDN in a browser and log in.
+1. Configure the Ops Manager Director tile by performing the procedures in the [Step 2: Azure Config Page](./azure-om-config.html#azure-config) section through the [Step 6: Security Page](./azure-om-config.html#security) section of the [Configuring Ops Manager Director on Azure](./azure-om-config.html) topic. Stop when you reach the **Resource Config** page in Ops Manager.
+1. Only certain VM types are compatible with Azure Government Cloud. Create a file called `vmtypes` with the following contents:
+	```
+	{"vm_types": [    {      "name": "Standard_D1_v2",      "ram": 3584,      "cpu": 1,      "ephemeral_disk": 51200    },    {      "name": "Standard_D2_v2",      "ram": 7168,      "cpu": 2,      "ephemeral_disk": 102400    },    {      "name": "Standard_D3_v2",      "ram": 14336,      "cpu": 4,      "ephemeral_disk": 204800    },    {      "name": "Standard_D4_v2",      "ram": 28672,      "cpu": 8,      "ephemeral_disk": 409600    },    {      "name": "Standard_D5_v2",      "ram": 57344,      "cpu": 8,      "ephemeral_disk": 819200    },    {      "name": "Standard_D11_v2",      "ram": 14336,      "cpu": 2,      "ephemeral_disk": 102400    },    {      "name": "Standard_D12_v2",      "ram": 28672,      "cpu": 4,      "ephemeral_disk": 204800    },    {      "name": "Standard_D13_v2",      "ram": 57344,      "cpu": 8,      "ephemeral_disk": 409600    },    {      "name": "Standard_D14_v2",      "ram": 114688,      "cpu": 16,      "ephemeral_disk": 819200    },    {      "name": "Standard_F1",      "ram": 2048,      "cpu": 1,      "ephemeral_disk": 16384    },    {      "name": "Standard_F2",      "ram": 4096,      "cpu": 2,      "ephemeral_disk": 32768    },    {      "name": "Standard_F4",      "ram": 8192,      "cpu": 4,      "ephemeral_disk": 65536    },    {      "name": "Standard_F8",      "ram": 16384,      "cpu": 8,      "ephemeral_disk": 131072 ]}
+	```
+1. Use `curl` to pass the file with the correct VM types to Ops Manager using the API:
+	<pre class="terminal">
+	$ curl "http<span>s:</span>//OPS\_MAN\_FQDN/api/v0/vm_types" \ 
+	    -X PUT \ 
+	    -H "Authorization: Bearer UAA\_ACCESS\_TOKEN" \ 
+	    -H "Content-Type: application/json" \ 
+	    -d @vmtypes
+	</pre>
+1. If the `curl` command returns a `200 OK` response, retrieve the current list of VM types to ensure they are the ones you specified in the `vmtypes` file:
+	<pre class="terminal">
+	$ curl "http<span>s:</span>//OPS\_MAN\_FQDN/api/v0/vm\_types" \
+	    -H "Authorization: Bearer UAA\_ACCESS\_TOKEN" 
+	    <br>
+		200 OK
+		RESPONSE:
+		"vm\_types": [ { "name": "Standard\_D1\_v2", "ram":
+		3584, "cpu": 1, "ephemeral\_disk": 51200 }, { 
+		"name": "Standard\_D2\_v2", "ram": 7168, "cpu": 2, 
+		"ephemeral\_disk": 102400 }, { "name": 
+		"Standard\_D3\_v2", "ram": 14336, "cpu": 4, 
+		"ephemeral\_disk": 204800 },{ "name": 
+		"Standard\_D4\_v2", "ram": 28672, "cpu": 8, 
+		"ephemeral\_disk": 409600 },{ "name": 
+		"Standard\_D5\_v2", "ram": 57344, "cpu": 8, 
+		"ephemeral\_disk": 819200 },{ "name": 
+		"Standard\_D11\_v2", "ram": 14336, "cpu": 2, 
+		"ephemeral\_disk": 102400 },{ "name": 
+		"Standard\_D12\_v2", "ram": 28672, "cpu": 4, 
+		"ephemeral\_disk": 204800 },{ "name": 
+		"Standard\_D13\_v2", "ram": 57344, "cpu": 8, 
+		"ephemeral\_disk": 409600 },{ "name": 
+		"Standard\_D14\_v2", "ram": 114688, "cpu": 16,
+		"ephemeral\_disk": 819200 },{ "name": "Standard\_F1",
+		"ram": 2048, "cpu": 1, "ephemeral\_disk": 16384 },
+		{ "name": "Standard\_F2", "ram": 4096, "cpu": 2,
+		"ephemeral\_disk": 32768 }, {"name": "Standard\_F4",
+		"ram": 8192, "cpu": 4, "ephemeral\_disk": 65536 },
+		{ "name": "Standard\_F8", "ram": 16384, "cpu": 8, 
+		"ephemeral\_disk": 131072 ]
+	</pre>
+
+1. Return to the Ops Manager Installation Dashboard by navigating to the Ops Manager FQDN in a browser.
+1. Click **Apply Changes** to redeploy Ops Manager.
+1. When Ops Manager finishes deploying, continue to the [Deploying Elastic Runtime on Azure](./azure-er-config.html) topic to deploy Elastic Runtime and complete your PCF installation.

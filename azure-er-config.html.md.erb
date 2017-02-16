@@ -115,38 +115,32 @@ Then proceed to [Step 10: (Optional) Configure Internal MySQL](#internal-mysql) 
 
 ## <a id='filestore-config'></a>Step 11: Configure File Storage ##
 
-1. Select **File Storage**.
+When configuring file storage for the Cloud Controller in Elastic Runtime, you can select:
 
-    <p class="note"><strong>Note</strong>: Pivotal recommends using a highly resilient and redundant filestore that is S3 compatible. This minimizes downtime of system operability, which includes running <code>cf-push</code>.</p>
+* Internal WebDAV filestore (appropriate for small, non-production deployments)
+* External S3 or Ceph-compatible filestore
+* External Google Cloud Storage  
+* External Azure Cloud Storage
 
-1. To use the PCF internal filestore, select the **Internal WebDAV** option and click **Save**.
+Pivotal recommends using external highly resilient and redundant filestores for your Elastic Runtime file storage. This approach minimizes system downtime. 
 
-1. To use an external S3-compatible filestore for your Elastic
-Runtime file storage, select the **External S3-Compatible Filestore** option and complete the following procedure:
-    <%= image_tag("cloudform/external_filestore_config.png") %>
+For PCF deployments on Azure, the recommended selection is Azure Storage.
 
-  1. Enter the **URL Endpoint** for your filestore.
-  
-  1. Enter your **Access Key** and **Secret Key**.
+For more factors to consider when selecting file storage, see <a href="../opsguide/storage_considerations.html">Considerations for Selecting File Storage in Pivotal Cloud Foundry</a>. 
 
-  1. For **S3 Signature Version** and **Region**, use **V4 Signature** values.
+### <a id='internal_filestore'></a> Internal Filestore
 
-  1. Select **Server-side Encryption** to encrypt the contents of your S3 filestore. 
+<%= partial 'filestore_internal' %>
 
-  1. Enter a **Buildpacks Bucket Name**.
-  
-  1. Enter a **Droplets Bucket Name**.
-  
-  1. Enter a **Packages Bucket Name**.
+### <a id='external_s3'></a> External S3 or Ceph Filestore
 
-  1. Enter a **Resources Bucket Name**.
-  1. Click **Save**.
-
-  <p class="note"><strong>Note</strong>: For more information about AWS S3 Signatures, see the <a href="http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html">Authenticating Requests</a> documentation for additional information.</p>
-
-### <a id='external_gcp'></a> External Google Cloud Storage
+<%= partial 'filestore_s3_config' %>
 
 ### <a id='external_azure'></a> External Azure Storage
+
+### <a id='other'></a> Other IaaS Storage Options
+
+[Google Cloud Storage](./gcp-er-config.html#external_gcp) is also available as a file storage option but is not recommended for a typical PCF on Azure installation. 
 
 ## <a id='external-endpoints'></a>Step 12: (Optional) Configure System Logging ##
 If you are forwarding logging messages to an external Reliable Event Logging Protocol (RELP) server, complete the following steps:
@@ -223,10 +217,23 @@ If you have no SMTP authentication requirements, select `None`.
 
 ## <a id='stemcell'></a>Step 21: Configure Stemcell ##
 
-1. Select **Stemcell**.
-    <%= image_tag("stemcell.png") %>
-1. Download the Ubuntu Trusty stemcell version 3262.16 or greater for Azure from [Pivotal Network](https://network.pivotal.io/products/stemcells).
-1. Click **Import Stemcell** to import the downloaded stemcell.
+Verify whether Ops Manager is providing the stemcell version required by Elastic Runtime. If the correct version is already present, you do not need to download a new stemcell.
+
+1. In the Elastic Runtime tile, select **Stemcell**.
+
+1. Verify that the version indicated in the filename matches the version of stemcell required by Elastic Runtime. 
+  * If Elastic Runtime detects that a stemcell `.tgz` file is present in the Ops Manager Director VM at `/var/tempest/stemcells/`, the Stemcell screen displays filename information.
+  <%= image_tag("stemcell_18.png") %>
+  * If Elastic Runtime cannot detect a stemcell `.tgz` file, the following message displays:
+  <%= image_tag("stemcell_not_found.png") %>
+
+1. If the version of the stemcell file that is loaded does not match the required version listed in the <a href="http://network.pivotal.io">Pivotal Network</a> download page for Elastic Runtime, or cannot be found by Ops Manager, perform the following steps to download and import a new stemcell file:
+
+  1. Log in to the [Pivotal Network](https://network.pivotal.io/products/pivotal-cf) and click **Stemcells**.
+
+  1. Download the appropriate stemcell version targeted for your IaaS.
+
+  1. In the **Stemcell** section of the Elastic Runtime tile, click **Import Stemcell** to import the downloaded stemcell <code>.tgz</code> file.
 
 ## <a id='complete'></a>Step 22: Complete the Elastic Runtime Installation ##
 

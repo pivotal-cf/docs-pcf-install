@@ -189,50 +189,36 @@ Then proceed to [Step 12: (Optional) Configure Internal MySQL](#internal-mysql) 
 
 ## <a id='filestore'></a>Step 13: Configure File Storage ##
 
+When configuring file storage for the Cloud Controller in Elastic Runtime, you can select:
+
+* Internal WebDAV filestore (appropriate for small, non-production deployments)
+* External S3 or Ceph-compatible filestore
+* External Google Cloud Storage  
+* External Azure Cloud Storage
+
+Pivotal recommends using external highly resilient and redundant filestores for your Elastic Runtime file storage. This approach minimizes system downtime. 
+
+For PCF deployments on GCP, the recommended selection is Google Cloud Storage.
+
+For more factors to consider when selecting file storage, see <a href="../opsguide/storage_considerations.html">Considerations for Selecting File Storage in Pivotal Cloud Foundry</a>. 
+
 1. In the Elastic Runtime tile, select **File Storage**.
 
-    <p class="note"><strong>Note</strong>: Pivotal recommends using a highly resilient and redundant filestore. This approach minimizes system downtime, including for developers using <code>cf push</code>.</p>
+### <a id='internal_filestore'></a> Internal Filestore
 
-1. To use the PCF internal filestore, select **Internal WebDAV**, and click **Save**.
+To use the PCF internal filestore, select **Internal WebDAV**, and click **Save**.
 
-1. To use the external Google filestore for your Elastic Runtime file storage, select the **External Google Cloud Storage** option, and complete the following required fields:
-    <%= image_tag("gcp/gcp-file-storage-google-cloud-storage.png") %>
-    * Enter values for **Access Key** and **Secret Key**. To obtain the values for these fields:
-      1. In the GCP Console, navigate to the **Storage** tab, then click **Settings**.
-      1. Click **Interoperability**.
-      1. If necessary, click **Enable interoperability access**. If interoperability access is already enabled, confirm that the default project matches the project where you are installing PCF.
-      1. Click **Create a new key**.
-      <%= image_tag("gcp/gcp-key-secret-create.png") %>
-      1. Copy and paste the generated values into the corresponding Elastic Runtime fields. PCF uses these values for authentication when connecting to Google Cloud Storage.
-    <p class="note"><strong>Note</strong>: To create buckets in GCP, navigate to <strong>Storage</strong> and click <strong>CREATE BUCKET</strong>.</p>
-    * For the **Buildpacks Bucket Name**, enter the name of the bucket for storing your app buildpacks.
-    * For **Droplets Bucket Name**, enter the name of the bucket for your app droplet storage. Pivotal recommends that you use a unique bucket, but you can use the same bucket as the previous step.
-    * For **Resources Bucket Name**, enter the name of the bucket for resources. Pivotal recommends that you use a unique bucket, but you can use the same bucket as the previous step.
-    * For **Packages Bucket Name**, enter the name of the bucket for packages. Pivotal recommends that you use a unique bucket, but you can use the same bucket as the previous step.
-    * Click **Save**.
+### <a id='external_s3'></a> External S3 or Ceph Filestore
 
-1. To use an external S3-compatible filestore for your Elastic Runtime file storage, select the **External S3-Compatible Filestore** option. Complete the following fields.
-  <p class="note">For best performance of PCF on GCP, Pivotal recommends that you do not select the External S3-Compatible Filestore option.</p>
+<%= partial 'filestore_s3_config' %>
 
-  1. Enter the **URL Endpoint** for your filestore.
-  
-  1. Enter your **Access Key** and **Secret Key**.
+### <a id='external_gcp'></a> External Google Cloud Storage
 
-  1. For **S3 Signature Version** and **Region**, use **V4 Signature** values.
+<%= partial 'filestore_gcp_config' %>
 
-  1. Select **Server-side Encryption** to encrypt the contents of your S3 filestore. 
+### <a id='other'></a> Other IaaS Storage Options
 
-  1. Enter a **Buildpacks Bucket Name**.
-  
-  1. Enter a **Droplets Bucket Name**.
-  
-  1. Enter a **Packages Bucket Name**.
-
-  1. Enter a **Resources Bucket Name**.
-
-  1. Click **Save**.
-
-  <p class="note"><strong>Note</strong>: For more information about AWS S3 Signatures, see the <a href="http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html">Authenticating Requests</a> documentation for additional information.</p>
+[Azure Storage](./gcp-er-config.html#external_azure) is also available as a file storage option but is not recommended for a typical GCP installation. 
 
 ## <a id='sys-logging'></a>Step 14: (Optional) Configure System Logging ##
 

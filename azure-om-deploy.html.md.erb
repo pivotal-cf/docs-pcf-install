@@ -281,7 +281,7 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
 
 1. Create a VM against the Ops Manager image, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file.
     <pre class="terminal">
-    $ azure vm create $RESOURCE\_GROUP ops-manager-alpha2 $LOCATION \
+    $ azure vm create $RESOURCE\_GROUP ops-manager $LOCATION \
     Linux --nic-name ops-manager-nic \
     --os-disk-vhd https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/os\_disk.vhd \
     --image-urn https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image.vhd \
@@ -296,15 +296,39 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     <span>+</span> Getting virtual machines
     data:    ResourceGroupName  Name                 ProvisioningState  PowerState  Location  Size
     data:    -----------------  -------------------  -----------------  ----------  --------  ---------------
-    data:    PCF                ops-manager-alpha2   Succeeded          VM running  westus    Standard\_DS2\_v2
+    data:    PCF                ops-manager          Succeeded          VM running  westus    Standard\_DS2\_v2
     info:    vm list command OK
     </pre>
 
     The **PowerState** displays `VM running` when the Ops Manager deployment successfully completes. 
 
-##<a id='post-deploy'></a> Step 5: Complete Ops Manager Director Configuration
+##<a id='resize'></a> Step 5: Resize Ops Manager VM
 
-1. Navigate to your DNS provider, and create an entry that points a fully qualified domain name (FQDN) to the public IP address of Ops Manager that you recorded in a previous step. As a best practice, always use the FQDN to access Ops Manager.
+1. Stop and deallocate the Ops Manager VM before resizing:
+    <pre class="terminal">$ azure vm deallocate --resource-group $RESOURCE\_GROUP --name ops-manager</pre>
+
+1. Increase the size of the OS disk of the Ops Manager VM to 128 GB:
+    <pre class="terminal">$ azure vm set --resource-group $RESOURCE\_GROUP --name ops-manager --new-os-disk-size 128</pre>
+
+1. Start the Ops Manager VM:
+    <pre class="terminal">$ azure vm start --resource-group $RESOURCE\_GROUP --name ops-manager</pre>
+
+1. SSH into the Ops Manager VM, replacing `YOUR_OPS_MAN_IP` with the public IP address of Ops Manager that you recorded in a previous step:
+    <pre class="terminal">$ ssh -i opsman YOUR\_OPS\_MAN\_IP</pre>
+    If the private key you generated is not `opsman`, provide the correct filename instead.
+
+1. From the Ops Manager VM, use `df` to confirm that the OS disk has been resized:
+    <pre class="terminal">
+    $ df -h
+     Filesystem      Size  Used Avail Use% Mounted on
+     udev            1.7G     0  1.7G   0% /dev
+     tmpfs           344M  5.0M  340M   2% /run
+     /dev/sda1        127G  1.3G   48G   3% /
+    </pre>
+
+##<a id='post-deploy'></a> Step 6: Complete Ops Manager Director Configuration
+
+1. Navigate to your DNS provider, and create an entry that points a fully qualified domain name (FQDN) to the public IP address of Ops Manager. As a best practice, always use the FQDN to access Ops Manager.
 
 1. Continue to the [Configuring Ops Manager Director on Azure](azure-om-config.html) topic.
 

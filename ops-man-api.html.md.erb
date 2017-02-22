@@ -3,14 +3,11 @@ title: Using the Ops Manager API
 owner: Ops Manager
 ---
 
-This topic explains how to get started using the Ops Manager API. For the complete Ops
-Manager API documentation, browse to `https://YOUR-OPS-MANAGER-FQDN/docs`.
+This topic explains how to get started using the Ops Manager API. For the complete Ops Manager API documentation, browse to `https://YOUR-OPS-MANAGER-FQDN/docs`.
 
 ##<a id='reqs'></a> Requirements
 
-You must have the User Account and Authentication Command Line Interface (UAAC) installed to perform the procedures in this topic.
-
-To install the UAAC, run the following command:
+You must install the User Account and Authentication Command Line Interface (UAAC) to perform the procedures in this topic. To install the UAAC, run the following command from a terminal window:
 <pre class="terminal">$ gem install cf-uaac</pre>
 
 ##<a id='auth'></a> Step 1: Authenticate
@@ -24,41 +21,41 @@ Perform the procedures in the [Internal Authentication](#internal-auth) or [Exte
 If you configured your Ops Manager for Internal Authentication, perform the following steps:
 
 1. SSH into the Ops Manager VM:
-	<pre class="terminal">$ ssh -i opsman ubuntu@OPS\_MAN\_FQDN</pre> 
+	<pre class="terminal">$ ssh -i opsman ubuntu@OPS-MAN-FQDN</pre> 
 
 	If the private key that you generated when deploying your Ops Manager Director instance is not named `opsman`, provide the correct filename instead.
 
 1. From the Ops Manager VM, use the UAAC to target your Ops Manager UAA server:
-	<pre class="terminal">$ uaac target http<span>s:</span>//OPS\_MAN\_FQDN/uaa</pre>
+	<pre class="terminal">$ uaac target http<span>s:</span>//OPS-MAN-FQDN/uaa</pre>
 
 1. Retrieve your token to authenticate:
 	<pre class="terminal">$ uaac token owner get
 	Client ID: opsman
 	Client secret: [Leave Blank]
-	User name: OPS\_MAN\_USERNAME
-	Password: OPS\_MAN\_PASSWORD
+	User name: OPS-MAN-USERNAME
+	Password: OPS-MAN-PASSWORD
 	</pre>
 
-	Replace `OPS_MAN_USERNAME` and `OPS_MAN_PASSWORD` with the credentials that you use to log in to the Ops Manager web interface.
+	Replace `OPS-MAN-USERNAME` and `OPS-MAN-PASSWORD` with the credentials that you use to log in to the Ops Manager web interface.
 
 ###<a id='external-idp'></a> External Identity Provider
 
 If you configured your Ops Manager for an external Identity Provider with SAML, perform the following steps:
 
 1. From your local machine, target your Ops Manager UAA server:
-	<pre class="terminal">$ uaac target http<span>s:</span>//OPS\_MAN\_FQDN/uaa</pre>
+	<pre class="terminal">$ uaac target http<span>s:</span>//OPS-MAN-FQDN/uaa</pre>
 
-1. Retrieve your token to authenticate. When prompted for a passcode, retrieve it from `https://OPS_MAN_FQDN/uaa/passcode`.
+1. Retrieve your token to authenticate. When prompted for a passcode, retrieve it from `https://OPS-MAN-FQDN/uaa/passcode`.
 	<pre class="terminal">$ uaac token sso get
 	Client ID: opsman
 	Client secret: [Leave Blank]
-	Passcode: YOUR\_PASSCODE
+	Passcode: YOUR-PASSCODE
 	</pre>
 	If authentication is successful, the UAAC displays the following message: `Successfully fetched token via owner password grant.`
  
 ##<a id='access-api'></a> Step 2: Access the API
 
-Ops Manager uses authorization tokens to allow access to the API. You must pass an access token to the API endpoint in a header that follows the format `Authorization: Bearer YOUR_ACCESS_TOKEN`.
+Ops Manager uses authorization tokens to allow access to the API. You must pass an access token to the API endpoint in a header that follows the format `Authorization: Bearer YOUR-ACCESS-TOKEN`.
 
 The following example procedure retrieves a list of deployed products. See the Ops Manager API documentation at `https://YOUR-OPS-MANAGER-FQDN/docs` for the full range of API endpoints.
 
@@ -67,11 +64,11 @@ The following example procedure retrieves a list of deployed products. See the O
 	$ uaac contexts
 	</pre>
 	Locate the entry for your Ops Manager FQDN. Under `client_id: opsman`, record the value for `access_token`.
-1. Use the `GET /api/v0/deployed/products` endpoint to retrieve a list of deployed products, replacing `UAA_ACCESS_TOKEN` with the access token recorded in the previous step:
+1. Use the `GET /api/v0/deployed/products` endpoint to retrieve a list of deployed products, replacing `UAA-ACCESS-TOKEN` with the access token recorded in the previous step:
 	<pre class="terminal">
-	$ curl "http<span>s:</span>//OPS\_MAN\_FQDN/api/v0/deployed/products" \ 
+	$ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products" \ 
 	    -X GET \ 
-	    -H "Authorization: Bearer UAA\_ACCESS\_TOKEN"</pre>
+	    -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
 	The request produces the following response:
 	<pre class="terminal">
 	[{"installation\_name":"p-bosh","guid":"p-bosh

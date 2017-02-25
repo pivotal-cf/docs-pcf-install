@@ -1,0 +1,86 @@
+---
+title: Managing Errands in Ops Manager
+owner: Ops Manager
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes how to manage product errands and their configuration in PCF Ops Manager.
+
+##<a id="about_errands"></a> About Errands
+
+Errands are scripts that can run at the beginning and at the end of an installed product’s availability time. Using Ops Manager, you can adjust whether and when these errands are run. 
+
+Product tile developers can define two types of errands for their product:
+
+* **Post-deploy errands** run after the product installs but before Ops Manager makes the product available for use.
+* **Pre-delete errands** run after an operator chooses to delete the product but before Ops Manager actually finishes deleting it. 
+
+For example, Elastic Runtime provides several post-deploy errands including smoke tests, Apps Manager, notification, Pivotal Account, and autoscaling errands. For more information on Elastic Runtime errands, see the _Deploying Elastic Runtime_ topic for the platform where you are deploying Elastic Runtime. For example, if you are deploying PCF on GCP, see [Deploying Elastic Runtime on GCP](./gcp-er-config.html#errands).
+
+For more information about the errands associated with a particular product, see the documentation provided for the product tile.
+
+##<a id="about_errands"></a> Errand Configuration
+
+An errand's configuration controls when Ops Manager executes the errand. Operators can specify 3 different configurations for errands. 
+
+<table class="nice">
+<tr> 
+ <th>When the errand is configured to be...</th><th>Then the errand...</th>
+</tr>
+<tr>
+ <td>
+On
+ </td>
+ <td>
+always runs, even when there are no changes to the product manifest. 
+ </td>
+ </tr>
+<tr>
+ <td>
+Off
+ </td>
+ <td>
+never runs.
+ </td>
+ </tr>
+ <tr>
+ <td>
+When Changed
+ </td>
+ <td>
+runs only if the associated product manifest has changed since the last time the errand succeeded. <br/><br/>If there are no changes to the product manifest <b>and</b> the most recent run of the errand succeeded, then the errand does not run. 
+ </td>
+</tr>
+</table>
+
+### <a id="defaults"></a> Defaults
+
+The default configuration for an errand can be specified by the product tile developer. 
+
+If the tile developer does not specify a default configuration for an errand, then Ops Manager applies the **When Changed** configuration.
+
+## <a id="modifying_errands"></a> Modifying Errand Configuration in Ops Manager
+
+To modify errand configurations in Ops Manager, perform the following steps:
+
+1. Navigate to your Ops Manager Installation Dashboard and log in.
+
+1. If necessary, make product configuration changes.
+
+1. Return to the Installation Dashboard.
+
+1. In the Pending Changes view, click on product you wish to configure. A list of errands associated with the product appears.
+  <%= image_tag("pending_view_errands.png") %>
+
+1. Use the dropdown next to each errand to select a new configuration, either **On**, **Off**, or **When Changed**, for the errand.
+
+1. Click the **Apply Changes** button.
+
+In addition, each product tile may also have an Errand Configuration screen where you can modify errand configuration. 
+
+For example, Elastic Runtime provides a [dedicated errands configuration page](./gcp-er-config.html#errands).
+
+## <a id="modifying_errands"></a> Related Links
+
+If you are a product developer and want to learn more about adding errands to your product tile for PCF, see [Errands](https://docs.pivotal.io/tiledev/tile-errands.html) in the _PCF Tile Developers Guide_.

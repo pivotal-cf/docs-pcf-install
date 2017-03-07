@@ -159,7 +159,6 @@ To configure HTTP(S) load balancing for PCF on GCP you need to follow two steps:
 #### <a id="instance_group"></a> Create **Instance Group(s)** ####
 
 You need to create and associate one or more **Instance Group(s)** with the HTTP(S) load balancer you create.
-<p class="note"><strong>Note</strong>: You need one Google <strong>Instance Group</strong> for each Availability Zone you plan to support. All <strong>Instance Groups</strong> must connect to the Google <strong>Backend Service</strong> to configure your load balancer, described below. For a high availability production installation of PCF, Pivotal recommends using three availability zones.</p>
 
 1. From the GCP Console, select **Compute Engine** and click **Instance groups**.
   <%= image_tag("gcp/create_instance_group.png") %>
@@ -170,6 +169,7 @@ You need to create and associate one or more **Instance Group(s)** with the HTTP
   * `pcf-instance-group-lb-1a`
   * `pcf-instance-group-lb-1b`
   * `pcf-instance-group-lb-1c`
+  <p class="note"><strong>Note</strong>: You need one Google <strong>Instance Group</strong> for each Availability Zone you plan to support. All <strong>Instance Groups</strong> must connect to the Google <strong>Backend Service</strong> to configure your load balancer, described below. For a high availability production installation of PCF, Pivotal recommends using three availability zones.</p>
 
 1. For each individual instance group, choose **Single-zone** in the **Location** section.
 
@@ -236,7 +236,7 @@ To create a load balancer for HTTP(S) in GCP:
    * **Protocol**: `HTTP`
    * **IP**: Perform the following steps:
        1. Select **Create IP address**. 
-       1. Enter a **Name** for the new static IP address and an optional description. 
+       1. Enter a **Name** for the new static IP address and an optional description. For example, `pcf-router-ip`.
        1. Under **IP**, make sure this new static IP address is selected.
        1. Click **Reserve**.
    * **Port**: `80`
@@ -281,8 +281,8 @@ The load balancer for tailing logs with WebSockets for PCF on GCP operates on TC
 1. In the **New TCP load balancer** window, enter `pcf-websockets` in the **Name** field.
 
 1. Click **Backend configuration** to configure the **Backend service**: 
+  <%= image_tag "gcp/tcp_websockets_backend.png" %>
   * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
-  <%= image_tag "gcp/tcp_websockets_lb_config.png" %>
   * From the **Health check** drop-down menu, select the [**Health check**](#http_https_lb) that you created above.
   The **Backend configuration** section shows a green check mark.
 
@@ -290,10 +290,10 @@ The load balancer for tailing logs with WebSockets for PCF on GCP operates on TC
  * **Protocol**: `TCP`
  * **IP**: Perform the following steps:
        1. Select **Create IP address**. 
-       1. Enter a **Name** for the new static IP address and an optional description.
+       1. Enter a **Name** for the new static IP address and an optional description. For example, `pcf-websockets-ip`.
        1. Click **Reserve**.
  * **Port**: `443` 
-
+   <%= image_tag "gcp/tcp_websockets_frontend.png" %>
 1. Click **Review and finalize** to verify your configuration.
   <%= image_tag "gcp/websockets_lb_finalize.png" %>
 1. Click **Create**.
@@ -359,7 +359,7 @@ To create a load balancer for TCP routing in GCP, perform the following steps:
    * **Protocol**: `TCP`
    * **IP**: Perform the following steps:
        1. Select **Create IP address**. 
-       1. Enter a **Name** for the new static IP address and an optional description.
+       1. Enter a **Name** for the new static IP address and an optional description. For example, `pcf-tcp-router-ip`.
        1. Click **Reserve**.
    * **Port**: `1024-65535`
 

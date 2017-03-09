@@ -91,7 +91,38 @@ This is the same information you entered at the end of deploying [Ops Manager on
        * Hard Disk 1
        * Network Adapter 1. When you configure the new VM, ensure your network adapters are configured properly and are on the same network.
 
-### <a id="check-health"></a>Prep 6: Check System Health Before Upgrade
+### <a id="upgrade-rmq-redis"></a>Prep 6: Upgrade and Configure RabbitMQ for PCF and Redis for PCF
+
+1. If your PCF deployment contains **RabbitMQ for PCF**, perform the following steps:
+   * Download and upgrade RabbitMQ for PCF to v1.7.13 or later. For upgrade instructions, see the [RabbitMQ for PCF documentation](https://docs.pivotal.io/rabbitmq-cf/1-7/index.html).
+   * In the **RabbitMQ metrics configuration** screen, uncheck the **Use non-secure communication for metrics** checkbox.
+
+1. If your PCF deployment contains **Redis for PCF**, perform the following steps:
+  * Download and upgrade to Redis for PCF v1.7.3 or later. For upgrade instructions, see the [Redis for PCF documentation](https://docs.pivotal.io/redis/1-7/index.html).
+  * In the **Redis metrics configuration** screen, uncheck the **Use non-secure communication for metrics** checkbox.
+
+### <a id="upgrade-add-ons"></a>Prep 7: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
+
+ Before upgrading to PCF v1.10, operators who have deployed any PCF add-ons (such as **ClamAV for PCF**, **IPsec for PCF**, or **File Integrity Monitoring for PCF**) and who have deployed or are planning to deploy PCF Elastic Runtime for Windows must modify the add-on manifest to specify a compatible OS stemcell. 
+
+ For example, **ClamAV for PCF** is not supported on Windows. Therefore, the manifest must use an `include` directive to specify the target OS stemcell of `ubuntu-trusty`. 
+
+ To update an add-on manifest, perform the following steps:
+
+ 1. Locate your existing add-on manifest file. For example, for ClamAV, locate the `clamav.yml` you uploaded to the Ops Manager VM.
+
+ 1. Modify the manifest to include following `include` directive to your manifest:
+
+    ```yml
+      include:
+        stemcell:
+          - os: ubuntu-trusty
+    ```
+ 1. Re-upload the manifest file to your PCF deployment. For example instructions, see [Create the ClamAV Manifest](https://docs.pivotal.io/addon-antivirus/index.html#create-mfest). 
+
+ If you are using any other BOSH-managed add-ons in your deployment, you should verify OS compatibility for those component as well. For more information on configuring BOSH add-on manifests, see the [BOSH documentation](https://bosh.io/docs/runtime-config.html#addons). 
+
+### <a id="check-health"></a>Prep 8: Check System Health Before Upgrade
 
 1. Run `bosh cloudcheck` to confirm that the VMs are healthy. For more information, see the [BOSH Cloudcheck](./trouble-advanced.html#cck) topic.
 

@@ -29,15 +29,14 @@ In addition to fulfilling the [prerequisites](./gcp.html), you must create resou
 ## <a id="firewall_rules"></a>Step 2: Create Firewall Rules for the Network
 
 GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-resources#tags) to virtual machine (VM) instances and create firewall rules that apply to VMs based on their tags. This step assigns tags and firewall rules to Ops Manager components and VMs that handle incoming traffic. 
-In the [Google Cloud Platform Config](./gcp-om-config.html#gcp-config) step of the _Configuring Ops Manager Director on GCP_ topic, you assign the `pcf-vms` tag to VMs that BOSH deploys, including Elastic Runtime components and host VMs.
 
 1. In the **Networking** pane, select **Firewall rules**, then **Create Firewall Rule**.
 2. Create a firewall rule to allow all traffic within the subnetwork. 
 	* **Name**: Enter a name, such as `all-internal`.
 	* **Network**: Select the network you created in the section above, [Create a GCP Network with Subnet](#create_network). 
-	* **Source filter**: Choose **Subnetworks**, then select the subnetwork you defined in the section above.
+	* **Source filter**: Choose **Subnetworks**, then select the subnetwork or subnetworks you defined in the section above.
 	* **Allowed protocols and ports**: Enter `tcp:0-65535;udp:0-65535;icmp`.
-	* **Target tags**: Not required. 
+	* **Target tags**: Not used for this firewall rule. This rule uses subnetwork CIDR rules instead to accomodate on-demand service brokers. These brokers deploy VMs outside of Ops Manager and do not apply VM tags.
 1. Create a firewall rule to allow `tcp:22;tcp:80;tcp:443` traffic from any source to VMs tagged with `pcf-opsmanager`.
 	* **Name**: Enter `pcf-opsmanager`. 
 	* **Network**: Select the network you created in the section above, [Create a GCP Network with Subnet](#create_network).

@@ -62,7 +62,7 @@ This topic describes how to configure the Ops Manager Director for Pivotal Cloud
 
     <%= image_tag("gcp/director_gcp.png") %>
 
-1. In the **NTP Servers (comma delimited)** field, enter `169.254.169.254`.
+1. In the **NTP Servers (comma delimited)** field, enter `metadata.google.internal`.
 
 1. (Optional) If you are using [JMX Bridge](./../customizing/use-metrics.html), enter your **Metrics IP Address**.
 
@@ -134,8 +134,8 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
         * **Google Network Name**: Enter the network, subnet and region names of the Google Network you created in [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html#create_network). The format is `NETWORK-NAME/SUBNET-NAME/REGION-NAME`. For example, `opsmgr/central/us-central1`.
         * **CIDR**: Enter `10.0.0.0/20`. Ops Manager deploy VMs to this CIDR block. 
         * **Reserved IP Ranges**: Enter `10.0.0.1-10.0.0.9`. Ops Manager avoids deploying VMs to any IP address in this range. 
-        * **DNS**: Enter `8.8.8.8`.
-        <p class="note"><strong>Note</strong>: If you prefer to use an internal IP address over the Google public server `8.8.8.8` for DNS, you can use the default GCP router in your subnet, which always corresponds to first IP address of the subnet CIDR block. In the CIDR block provided above, the GCP router is `10.0.0.1`.</p>
+        * **DNS**: Enter `169.254.169.254, 8.8.8.8`.
+        <p class="note"><strong>Note</strong>: The `169.254.169.254` address points to the [metadata server](https://cloud.google.com/compute/docs/storing-retrieving-metadata) that hosts metadata for GCP instances. The `8.8.8.8` corresponds to Google's public DNS server. Using both addresses provides PCF with the ability to reach external DNS from app containers, but also keeps NTP working in the event that a VM does not have access to the internet.</p>
         * **Gateway**: Enter `10.0.0.1`.
         * **Availability Zones**: Select the availability zone for the subnet. If you created multiple availability zones, select all listed availability zones.
     * If you want to add more subnets, click **Add Subnet**.

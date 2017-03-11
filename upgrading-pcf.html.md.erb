@@ -230,3 +230,21 @@ Network](https://network.pivotal.io/products/ops-manager) site.
 1. After confirming that the new installation functions correctly, remove the previous (v1.9.x) Ops Manager VM. 
 
 This completes the upgrade to Ops Manager v1.10.
+
+## <a id="postupgrade"></a> After You Upgrade
+
+Since Loggregator now uses the gRPC protocol, your deployment may see an increase in Loggregator message throughput. Pivotal recommends that you monitor throughput in case you need to scale up Dopplers. You can use the following metrics equation to measure  message loss percentage:
+
+```
+100 * ( rate(sum:datadog.nozzle.doppler.loggregator.ingress{*}) +
+rate(sum:datadog.nozzle.DopplerServer.listeners.receivedEnvelopes{*}) ) /
+(rate(sum:datadog.nozzle.MetronAgent.DopplerForwarder.sentMessages{*}) +
+rate(sum:datadog.nozzle.metron.loggregator.egress{*}) )
+```
+
+If you notice an increase in loss percentage, then scale up your Doppler instances.
+
+For more information on monitoring and scaling Loggegrator, see the following documents:
+
+* [How-to-Calculate-the-Loggregators-Message-Throughput](https://discuss.pivotal.io/hc/en-us/articles/225564028-How-to-Calculate-the-Loggregators-Message-Throughput)
+* [Configuring System Logging in Elastic Runtime](../opsguide/logging-config-opsman.html)

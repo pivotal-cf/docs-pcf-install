@@ -91,17 +91,30 @@ This is the same information you entered at the end of deploying [Ops Manager on
        * Hard Disk 1
        * Network Adapter 1. When you configure the new VM, ensure your network adapters are configured properly and are on the same network.
 
-### <a id="upgrade-rmq-redis"></a>Prep 6: Upgrade and Configure RabbitMQ for PCF and Redis for PCF
+### <a id="upgrade-rmq"></a>Prep 6: Upgrade and Configure RabbitMQ for PCF
 
-1. If your PCF deployment contains **RabbitMQ for PCF**, perform the following steps:
-   * Download and upgrade RabbitMQ for PCF to v1.7.13 or later. For upgrade instructions, see the [RabbitMQ for PCF documentation](https://docs.pivotal.io/rabbitmq-cf/1-7/index.html).
-   * In the **RabbitMQ metrics configuration** screen, uncheck the **Use non-secure communication for metrics** checkbox.
+If your PCF deployment contains **RabbitMQ for PCF**, download and upgrade RabbitMQ for PCF to v1.7.13 or later. 
 
-1. If your PCF deployment contains **Redis for PCF**, perform the following steps:
-  * Download and upgrade to Redis for PCF v1.7.3 or later. For upgrade instructions, see the [Redis for PCF documentation](https://docs.pivotal.io/redis/1-7/index.html).
-  * In the **Redis metrics configuration** screen, uncheck the **Use non-secure communication for metrics** checkbox.
+For upgrade instructions, see the [RabbitMQ for PCF documentation](https://docs.pivotal.io/rabbitmq-cf/1-7/index.html). 
 
-### <a id="upgrade-add-ons"></a>Prep 7: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
+Ensure that you complete the following as part of the upgrade:
+
+* Firewall rules on your Rabbit VM instances must allow inbound traffic on port `8301`.  
+* In the **RabbitMQ metrics configuration** screen, deselect the **Use non-secure communication for metrics** checkbox. This checkbox must be unchecked for metrics to be emitted to the Firehose.
+
+### <a id="upgrade-redis"></a>Prep 7: Upgrade and Configure Redis for PCF
+
+If your PCF deployment contains **Redis for PCF**, download and upgrade to Redis for PCF v1.7.3 or later. 
+
+For upgrade instructions, see the [Redis for PCF documentation](https://docs.pivotal.io/redis/1-7/index.html).
+
+Ensure that you complete the following as part of the upgrade:
+
+* When performing the upgrade process, ensure that persistent disk is set to 3.5x the amount of RAM.
+* Firewall rules on your Redis VM instances must allow inbound traffic on port `8301`.
+* In the **Redis metrics configuration** screen, deselect the **Use non-secure communication for metrics** checkbox. This checkbox must be unchecked for metrics to be emitted to the Firehose.
+
+### <a id="upgrade-add-ons"></a>Prep 8: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
 
  Before upgrading to PCF v1.10, operators who have deployed any PCF add-ons (such as **ClamAV for PCF**, **IPsec for PCF**, or **File Integrity Monitoring for PCF**) and who have deployed or are planning to deploy PCF Elastic Runtime for Windows must modify the add-on manifest to specify a compatible OS stemcell. 
 
@@ -122,7 +135,7 @@ This is the same information you entered at the end of deploying [Ops Manager on
 
  If you are using any other BOSH-managed add-ons in your deployment, you should verify OS compatibility for those component as well. For more information on configuring BOSH add-on manifests, see the [BOSH documentation](https://bosh.io/docs/runtime-config.html#addons). 
 
-### <a id="check-health"></a>Prep 8: Check System Health Before Upgrade
+### <a id="check-health"></a>Prep 9: Check System Health Before Upgrade
 
 1. Run `bosh cloudcheck` to confirm that the VMs are healthy. For more information, see the [BOSH Cloudcheck](./trouble-advanced.html#cck) topic.
 
@@ -233,7 +246,9 @@ This completes the upgrade to Ops Manager v1.10.
 
 ## <a id="postupgrade"></a> After You Upgrade
 
-Since Loggregator now uses the gRPC protocol, your deployment may see an increase in Loggregator message throughput. Pivotal recommends that you monitor throughput in case you need to scale up Dopplers. You can use the following metrics equation to measure  message loss percentage:
+Since Loggregator now uses the gRPC protocol, your deployment may see an increase in Loggregator message throughput. Pivotal recommends that you monitor throughput in case you need to scale up Dopplers. 
+
+As an example, the following metrics equation measures the percentage of message loss in a deployment using a DataDog nozzle. 
 
 ```
 100 * ( rate(sum:datadog.nozzle.doppler.loggregator.ingress{*}) +
@@ -241,6 +256,7 @@ rate(sum:datadog.nozzle.DopplerServer.listeners.receivedEnvelopes{*}) ) /
 (rate(sum:datadog.nozzle.MetronAgent.DopplerForwarder.sentMessages{*}) +
 rate(sum:datadog.nozzle.metron.loggregator.egress{*}) )
 ```
+To measure Loggregator message loss in your deployment, substitute the nozzle configured for your deployment in the above equation.
 
 If you notice an increase in loss percentage, then scale up your Doppler instances.
 

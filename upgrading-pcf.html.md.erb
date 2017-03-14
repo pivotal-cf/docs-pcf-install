@@ -28,7 +28,21 @@ For more details about the impact of upgrading on individual PCF components, see
 
 This section contains important preparation steps, **Preps**, that you must follow before beginning an upgrade to Ops Manager v1.9. Failure to follow these instructions may jeopardize your existing deployment data and cause your upgrade to fail.
 
-### <a id="install_1833"></a>Prep 1: Upgrade to Elastic Runtime v1.8.33 or Later
+### <a id="storage"></a>Prep 1: Review File Storage IOPS and Other Upgrade Limiting Factors
+
+During the PCF upgrade process, a large quantity of data is moved around on disk. 
+
+To ensure a successful upgrade of PCF, verify that your underlying Elastic Runtime file storage is performant enough to handle the upgrade. For more information on the configurations to evaluate, see <a href="../opsguide/storage_considerations.html" class="subnav">Upgrade Considerations for Selecting Pivotal Cloud Foundry Storage</a>.
+
+In addition to file storage IOPS, consider additional existing deployment factors that can impact overall upgrade duration and performance:
+
+|**Factor**|**Impact**|
+|----------|----------|
+|**Network latency** | Network latency can contribute to how long it takes to move app instance data to new containers. |
+|**Number of ASGs**| A large number of [Application Security Groups](../adminguide/app-sec-groups.html) in your deployment can contribute to an increase in app instance container startup time.|
+|**Number of app instances and application growth**| Consider that the upgrade impact on your system may increase if your deployment has a large increase in size of number of app instances and average droplet size since the initial deployment. |
+
+### <a id="install_1833"></a>Prep 2: Upgrade to Elastic Runtime v1.8.33 or Later
 
 To prevent potential TCP route data loss, Pivotal recommends that you upgrade to Elastic Runtime v1.8.33 or later before you upgrade to Elastic Runtime v1.9.x.
 
@@ -40,13 +54,13 @@ CREATE database routing;
 
 For more information, see the [Pivotal Elastic Runtime v1.8 Release Notes](http://docs.pivotal.io/pivotalcf/1-8/pcf-release-notes/runtime-rn.html#1.8.33).
 
-### <a id="app_usage"></a>Prep 2: Verify App Usage Service Remedial Steps
+### <a id="app_usage"></a>Prep 3: Verify App Usage Service Remedial Steps
 
 If you are upgrading from a PCF deployment that at one point included Elastic Runtime v1.7.16 or earlier, <i>make sure</i> that you have performed the remedial steps outlined in <a href="https://discuss.pivotal.io/hc/en-us/articles/228639827-App-Usage-Data-and-Events-Data-Becomes-Corrupted-After-Upgrade-or-Install">App Usage Data and Events Data Become Corrupted After Upgrade or Install</a> before proceeding with this upgrade.
 
 <p class="note warning"><strong>WARNING:</strong> If you fail to perform the remedial steps for this issue, this upgrade process may corrupt your existing usage data.</p>
 
-### <a id="review-min-versions"></a>Prep 3: Review Product Compatibility Prerequisites
+### <a id="review-min-versions"></a>Prep 4: Review Product Compatibility Prerequisites
 
 Before upgrading to Ops Manager v1.9, you must be using the following product version:
 
@@ -56,7 +70,7 @@ Before upgrading to Ops Manager v1.9, you must be using the following product ve
 
 For information about how to upgrade product tiles in PCF v1.8, see the <a href="http://docs.pivotal.io/pivotalcf/1-8/customizing/upgrading-products.html">Upgrading Elastic Runtime and Other Pivotal Cloud Foundry Products</a> topic.
 
-### <a id="review-rabbitmq"></a> Prep 4: Review RabbitMQ for PCF Version and Health Status
+### <a id="review-rabbitmq"></a> Prep 5: Review RabbitMQ for PCF Version and Health Status
 
 If you have RabbitMQ for PCF currently deployed in your PCF v1.8 environment, perform the following steps before upgrading to PCF v1.9.
 
@@ -64,7 +78,7 @@ If you have RabbitMQ for PCF currently deployed in your PCF v1.8 environment, pe
 
 1. Examine the RabbitMQ for PCF [management dashboard](https://docs.pivotal.io/rabbitmq-cf/1-7/managing.html) to ensure that the service status is **green** and that all nodes are healthy. For more information, see the [RabbitMQ for Pivotal Cloud Foundry](https://docs.pivotal.io/rabbitmq-cf/1-7/index.html) documentation.
 
-### <a id="remove-products"></a>Prep 5: Review and Remove Unsupported Products
+### <a id="remove-products"></a>Prep 6: Review and Remove Unsupported Products
 
 If your deployment contains any of the following unsupported products, you must remove the associated product tile before upgrading. The following products are no longer maintained and are not compatible with PCF v1.9:
 
@@ -79,17 +93,17 @@ If your deployment contains any of the following unsupported products, you must 
 
 Failure to remove these products prior to upgrade may cause issues with your deployment.
 
-### <a id="review-partners"></a>Prep 6: Review Partner Service Tiles
+### <a id="review-partners"></a>Prep 7: Review Partner Service Tiles
 
 Some partner service tiles may be incompatible with PCF v1.9. Pivotal is working with partners to ensure their tiles are updated to work with the latest versions of PCF. For information about which partner service releases are currently compatible with PCF v1.9, review the appropriate partners services release documentation at [http://docs.pivotal.io](http://docs.pivotal.io), or contact the partner organization that produces the service tile.
 
-### <a id="download-targets"></a>Prep 7: Download Upgrade Versions
+### <a id="download-targets"></a>Prep 8: Download Upgrade Versions
 
 To minimize disruptions to your deployment during the upgrade, and to satisfy any simultaneous upgrade requirements, download the version of the product files you wish to upgrade from [Pivotal Network](https://network.pivotal.io/). 
 
 At the minimum, you must download Elastic Runtime v1.9.x.
 
-### <a id="ccv3-impact"></a>Prep 8: Prepare for CC API v3 Upgrade
+### <a id="ccv3-impact"></a>Prep 9: Prepare for CC API v3 Upgrade
 
 The migration to PCF v1.9 removes all experimental Cloud Controller API v3 data. If you have experimented with the v3 API prior to this release, Pivotal recommends that you remove all existing v3 service bindings. 
 
@@ -115,7 +129,7 @@ To determine if your deployment is using any v3 service bindings, perform the fo
 
 In addition, although existing v2 applications still run normally during the upgrade, some developer interactions with PCF such as pushing apps to PCF may fail. You may want to warn users about potential availability issues during the upgrade window. 
 
-### <a id="prepare-env"></a>Prep 9: Prepare Your Environment
+### <a id="prepare-env"></a>Prep 10: Prepare Your Environment
 
 1. Install the releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.6 and you are upgrading to v1.9, you must sequentially install v1.7 and v1.8 before proceeding with the upgrade to v1.9.
 
@@ -146,7 +160,7 @@ This is the same information you entered at the end of deploying [Ops Manager on
        * Hard Disk 1
        * Network Adapter 1. When you configure the new VM, ensure your network adapters are configured properly and are on the same network.
 
-### <a id="check-health"></a>Prep 10: Check System Health Before Upgrade
+### <a id="check-health"></a>Prep 11: Check System Health Before Upgrade
 
 1. Run `bosh cloudcheck` to confirm that the VMs are healthy. For more information, see the [BOSH Cloudcheck](./trouble-advanced.html#cck) topic.
 

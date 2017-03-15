@@ -85,7 +85,7 @@ and
 $ pg_dump -U admin -p 2544 ccdb > /tmp/ccdb.sql
 </pre>
 
-1. Run `bosh scp` to copy the exported database to your local machine.
+1. Run `bosh scp` to copy the exported database to your bosh client.
 <pre class="terminal">
 $ bosh scp --download ccdb/0 /tmp/ccdb.sql .
 </pre>
@@ -96,37 +96,24 @@ $ bosh scp --download ccdb/0 /tmp/ccdb.sql .
 
 <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
 
-1. In the BOSH deployment manifest, locate the `uaadb` component and record the IP address:
+1. Use `bosh ssh` to SSH into the UAA Database VM:
+  1. Run `ssh-keygen -t rsa` to provide BOSH with the correct public key.
+  1. Accept the defaults.
+  1. Run `bosh ssh`.
+  1. When prompted to choose an instance, enter the number that corresponds to the VM beginning with `uaadb`.
+  1. Create a password for the temporary user that the `bosh ssh` command creates. Use this password if you need `sudo` access in this session.
 
-    ```
-    uaadb:
-      address: 192.0.2.101
-      port: 2544
-      db_scheme: postgresql
-    ```
-1. From the **Installation Dashboard** in Ops Manager, select **Elastic Runtime** and click **Credentials > Link to Credential**. Record the UAA database VM credentials.
-
-    <%= image_tag("uaadb-creds.png") %>
-
-1. SSH into the UAA database VM as the admin using the IP address and password recorded in the previous steps.
-
-1. Run `find /var/vcap | grep 'bin/pg_dump'` to find the locally installed psql client on the UAA database VM.
-<pre class='terminal'>
-$ root<span>@</span>192.0.2.101:~# find /var/vcap | grep 'bin/pg\_dump'
-    /var/vcap/data/packages/postgres/5.1/bin/pg\_dump
+1. Run `pg_dump` to export the database:
+<pre class="terminal">
+$ pg_dump -U admin -p 2544 uaa > /tmp/uaa.sql
 </pre>
 
-1. Run `pg_dump` from the locally installed psql client to export the database:
-<pre class='terminal'>
-$ /var/vcap/data/packages/postgres/5.1/bin/pg_dump -h 192.0.2.101 -U root -p 2544 uaa > uaa.sql
- </pre>
+1. Run `bosh scp` to copy the exported database to your bosh client.
+<pre class="terminal">
+$ bosh scp --download uaadb/0 /tmp/uaa.sql .
+</pre>
 
 1. Exit from the UAA database VM.
-
-1. Run `scp` to copy the exported database to your local machine.
-<pre class='terminal'>
-$ scp vcap<span>@</span>192.0.2.101:~/uaa.sql .
-</pre>
 
 ### <a id='webdav'></a>Back Up WebDAV Server ###
 

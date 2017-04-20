@@ -76,7 +76,7 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     <pre class="terminal">
     $ export STORAGE_NAME="YOUR-BOSH-STORAGE-ACCOUNT-NAME"
     </pre>
-1. Create a standard storage account for BOSH with the following command, replacing `SUBSCRIPTION_ID` with your subscription ID.  This account will be used for BOSH book-keeping and running the OpsManager VM itself, but does not have to be used for running any other VMs.
+1. Create a BOSH storage account with the following command, replacing `SUBSCRIPTION_ID` with your subscription ID.
     <pre class="terminal">
     $ azure storage account create $STORAGE\_NAME --resource-group $RESOURCE\_GROUP \
     --sku-name LRS --kind Storage --subscription SUBSCRIPTION\_ID \
@@ -111,24 +111,15 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     <pre class="terminal">
     $ azure storage table create stemcells
     </pre>
-1. Choose a set of unique names for two or more deployment storage accounts. As with the BOSH storage account above, the names must be unique, alphanumeric, lowercase, and 3-24 characters long. The account names must also be sequential or otherwise identical except for the last character. For example: `xyzdeploystorage1`, `xyzdeploystorage2`, `xyzdeploystorage3`.
-<p class="note"><strong>Note</strong>: You can use either Premium or Standard storage accounts, but they have very different scalability metrics.  We recommend creating 1 standard storage account for every 30 VMs, or 1 premium storage account for every 150 VMs.  You can increase the number of storage accounts later, by provisioning more and following the naming sequence.</p>
+1. Choose a set of unique names for three or more deployment storage accounts. As with the BOSH storage account above, the names must be unique, alphanumeric, lowercase, and 3-24 characters long. The account names must also be sequential or otherwise identical except for the last character. For example: `xyzdeploystorage1`, `xyzdeploystorage2`, `xyzdeploystorage3`.
+<p class="note"><strong>Note</strong>: You can create up to 20 Azure storage accounts if your installation is large, or you can start with three and increase the number later.</p>
 1. Register your subscription with Microsoft.Storage:
     <pre class="terminal">$ azure provider register Microsoft.Storage</pre>
-1. Decide on what kind of storage to use, and run either of these commands:
-    1.  To use premium storage (recommended):
-    <pre class="terminal">
-    $ export $STORAGE\_TYPE=PLRS
-    </pre>
-    1.  To use standard storage:
-    <pre class="terminal">
-    $ export $STORAGE\_TYPE=LRS
-    </pre>
 1. For **each deployment storage account**, do the following:
     1. Create the storage account with the following command, replacing `MY_DEPLOYMENT_STORAGE_X` with one of your deployment storage account names and `SUBSCRIPTION_ID` with your subscription ID.
     <pre class="terminal">
     $ azure storage account create MY\_DEPLOYMENT\_STORAGE\_X \
-    --resource-group $RESOURCE\_GROUP --sku-name $STORAGE\_TYPE --kind Storage \
+    --resource-group $RESOURCE\_GROUP --sku-name LRS --kind Storage \
     --subscription SUBSCRIPTION\_ID --location $LOCATION
     </pre>
     If the command fails, try a different set of account names.
@@ -146,14 +137,18 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     info:    storage account connectionstring show command OK
     </pre>
     1. From the `data:` field in the output above, record the full value of **connectionstring** from the output above, starting with and including `DefaultEndpointsProtocol=`.
-    1. Create two blob containers named `bosh` and `stemcell` in the account.
+    1. Create three blob containers named `opsmanager`, `bosh`, and `stemcell` in the account. 
+    <pre class="terminal">
+    $ azure storage container create opsmanager \
+    --connection-string "YOUR-ACCOUNT-KEY-STRING"
+    </pre>
     <pre class="terminal">
     $ azure storage container create bosh \
     --connection-string "YOUR-ACCOUNT-KEY-STRING"
     </pre>
     <pre class="terminal">
     $ azure storage container create stemcell \
-    --connection-string "YOUR-ACCOUNT-KEY-STRING"
+    --permission blob --connection-string "YOUR-ACCOUNT-KEY-STRING"
     </pre>
 
 ##<a id='lb'></a> Step 3: Create a Load Balancer

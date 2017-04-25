@@ -1,0 +1,286 @@
+---
+title: Restoring Pivotal Cloud Foundry Manually from Backup
+owner: RelEng
+---
+
+<strong><%= modified_date %></strong>
+
+<style>
+    .note.warning {
+       background-color: #fdd;
+       border-color: #fbb
+  	          }
+    .note.warning:before {
+       color: #f99;
+		         }
+</style>
+
+This topic describes the procedure for manually restoring your Pivotal Cloud Foundry (PCF) deployment from a backup. To create a backup, see the [Backing Up Pivotal Cloud Foundry](./backup-pcf.html) topic.
+
+<p class="note"><strong>Note</strong>: You can also use the CF Ops automation utility to perform a restore of your PCF backups. See the <a href="http://www.cfops.io/#the-basics">CF Ops User Guide</a> for more information.</p>
+
+To restore a deployment, you must import installation settings, temporarily stop the Cloud Controller, restore the state of each critical backend component from its backup file, and restart the Cloud Controller. 
+
+To perform these steps, you need the BOSH manifest to locate your critical backend components. BOSH manifests are automatically downloaded to the Ops Manager virtual machine. However, if you are using a separate jumpbox, you must manually download the BOSH deployment manifest.
+
+<p class='note'><strong>Note</strong>:
+The procedure described in this topic restores a running PCF deployment to the state captured by backup files. This procedure does not deploy PCF. See the <a href='../../installing/index.html'>Installing PCF Guide</a> for information.</p>
+
+## <a id='import'></a>Import Installation Settings ##
+
+<p class='note'><strong>Note</strong>: Pivotal recommends that you export your installation settings before importing from a backup. See the <a href='./backup-pcf.html#export'>Export Installation Settings</a> section of the <i>Backing Up Pivotal Cloud Foundry</i> topic for more information.</p>
+
+**Import installation settings** imports the settings and assets of an existing
+PCF installation. Importing an installation overwrites any existing installation. You must provision a new Ops Manager to import settings.
+
+Follow the steps below to import installation settings.
+
+1. Select and follow the instruction below for your IaaS to deploy the new Ops Manager VM.
+  * [Launching an Ops Manager Director Instance on AWS](../cloudform-om-deploy.html)
+  * [Launching an Ops Manager Director Instance on Azure](../azure-arm-template.html)
+  *  [Launching an Ops Manager Director Instance on GCP](../gcp-om-deploy.html)
+  * [Provisioning the OpenStack Infrastructure](../openstack-setup.html)
+  * [Deploying Operations Manager to vSphere](../deploying-vm.html)
+
+1. When redirected to the **Welcome to Ops Manager** page, select **Import Existing Installation**.
+
+    <%= image_tag("../images/upgrading/welcome.png") %>
+
+1. In the import panel, perform the following tasks:
+  * Enter your **Decryption Passphrase**.
+  * Click **Choose File** and browse to the installation zip file that you exported in the [Export Installation Settings](./backup-pcf.html#export) section of this topic.
+
+    <%= image_tag("../images/upgrading/decryption_passphrase.png") %>
+
+1. Click **Import**.
+
+    <p class="note"><strong>Note</strong>:
+      Some browsers do not provide feedback on the status of the import process,
+      and may appear to hang.</p>
+
+1. A "Successfully imported installation" message appears upon completion.
+
+    <%= image_tag("../images/upgrading/success.png") %>
+
+1. Click **Apply Changes**. This immediately imports and applies upgrades to all tiles in a single transaction.
+
+## <a id='restore_bosh'></a>Restore BOSH Using Ops Manager ##
+
+Follow the steps below to restore BOSH using Ops Manager.
+
+1. From the **Product Installation Dashboard**, click the **Ops Manager Director** tile.
+
+1. Make a change to your configuration to trigger a new deployment. For example, you can adjust the number of NTP servers in your deployment. Choose a change in configuration that suits your specific deployment.
+
+1. Follow the instructions in the [SSH into Ops Manager](../../customizing/trouble-advanced.html#ssh) topic. The following example assumes an Amazon Web Services deployment:
+  <pre class='terminal'>
+  $ ssh -i ops_mgr.pem ubuntu@OPS-MGR-IP
+  </pre>
+
+1. Delete the `bosh-deployments.yml` file. Deleting the `bosh-deployments.yml` file causes Ops Manager to treat the deploy as a new deployment, recreating missing Virtual Machines (VMs), including BOSH. The new deployment ignores existing VMs such as your Pivotal Cloud Foundry deployment.
+  <pre class='terminal'>
+  $ sudo rm /var/tempest/workspaces/default/deployments/bosh-deployments.yml
+  </pre>
+
+1. Rename, move, or delete the `bosh-state.json` file. Removing this file causes Ops Manager to treat the deploy as a new deployment, recreating missing VMs, including BOSH. The new deployment ignores existing VMs such as your Pivotal Cloud Foundry deployment.
+  <pre class='terminal'>
+  $ cd /var/tempest/workspaces/default/deployments/
+  $ sudo mv bosh-state.json bosh-state.json.old
+  </pre>
+
+1. Return to the **Product Installation Dashboard** and click **Apply Changes**.
+
+## <a id="bosh-target-director"></a> Target the BOSH Director
+<%= partial 'bosh_target_director' %>
+
+## <a id="download-bosh-manifest"></a> Download BOSH Manifest
+<%= partial 'download_bosh_manifest' %>
+
+## <a id='restore-databases'></a>Restore Critical Backend Components##
+
+Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore. This section describes the procedure for restoring the databases and servers associated with your PCF installation.
+
+You must restore each of the following:
+
+* Cloud Controller Database
+* UAA Database
+* WebDAV Server
+* Pivotal MySQL Server
+
+<p class="note"><strong>Note</strong>: If you are running PostgreSQL and are on the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard instructions for restoring the Cloud Controller and UAA Databases. </p>
+
+### <a id='stop-cc'></a>Stop Cloud Controller###
+
+<%= partial 'stopping_cc' %>
+
+### <a id='restore-ccdb'></a>Restore the Cloud Controller Database
+
+<p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
+
+Use the Cloud Controller Database (CCDB) password and IP address to restore the Cloud Controller Database by following the steps detailed below. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager **Installation Dashboard**, select **Elastic Runtime** and click **Credentials>Link to Credential**.
+
+1. Use `scp` to send the Cloud Controller Database backup file to the Cloud Controller Database VM.
+<pre class='terminal'>
+$ scp ccdb.sql vcap@YOUR-CCDB-VM-IP-ADDRESS:~/.
+</pre>
+
+1. SSH into the Cloud Controller Database VM.
+<pre class='terminal'>
+$ ssh vcap@YOUR-CCDB-VM-IP
+</pre>
+
+1. Log in to the psql client
+<pre class='terminal'>
+$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 ccdb
+</pre>
+
+1. Drop the database schema and create a new one to replace it.
+<pre class='terminal'>
+ccdb=# drop schema public cascade;
+ccdb=# create schema public;
+</pre>
+
+1. Restore the database from the backup file.
+<pre class='terminal'>
+$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 ccdb < ~/ccdb.sql
+</pre>
+
+### <a id='restore-uaa'></a>Restore UAA Database
+
+ <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
+
+#### Drop the UAA Database tables
+
+1. Find your UAA Database VM ID. To view all VM IDs, run `bosh vms` from a command line:
+<pre class='terminal'>$ bosh vms</pre>
+
+1. SSH into the UAA Database VM using the vcap user and password. If you do not have this information recorded, find it in the Ops Manager **Installation Dashboard**. Click the **Elastic Runtime** tile and select **Credentials>Link to Credential**.
+<pre class='terminal'>$ ssh vcap@YOUR-UAADB-VM-IP-ADDRESS</pre>
+
+1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the UAA Database VM.
+<pre class='terminal'>
+$ <span>vcap</span>@198.51.100.101:~# find /var/vcap | grep 'bin/psql'
+/var/vcap/data/packages/postgres/5.1/bin/psql
+</pre>
+
+1. Log in to the psql client:
+<pre class='terminal'>
+$ <span>vcap</span>@198.51.100.101:~# /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 uaa
+</pre>
+
+1. Run the following commands to drop the tables:
+<pre class='terminal'>
+drop schema public cascade;
+create schema public;
+\q
+</pre>
+
+1. Exit the UAA Database VM.
+<pre class='terminal'>$ exit</pre>
+
+#### Restore the UAA Database from its backup state
+
+<p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
+
+1. Use the UAA Database password and IP address to restore the UAA Database by running the following commands. You can find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager **Installation Dashboard**, select **Elastic Runtime** and click **Credentials>Link to Credential**.
+
+1. Use `scp` to copy the database backup file to the UAA Database VM.
+<pre class='terminal'>
+$ scp uaa.sql vcap@YOUR-UAADB-VM-IP-ADDRESS:~/.
+</pre>
+
+1. SSH into the UAA Database VM.
+<pre class='terminal'>
+$ ssh vcap@YOUR-UAADB-VM-IP-ADDRESS
+</pre>
+
+1. Restore the database from the backup file.
+<pre class='terminal'>
+$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 uaa < ~/uaa.sql
+</pre>
+
+### <a id='restore-webdav'></a>Restore WebDAV
+Use the File Storage password and IP address to restore the WebDAV server by following the steps detailed below. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager **Installation Dashboard**, select **Elastic Runtime** and click **Credentials>Link to Credential**.
+
+1. Run `ssh YOUR-WEBDAV-VM-IP-ADDRESS` to enter the WebDAV VM.
+<pre class='terminal'>
+$ ssh <span>vcap</span>@192.0.2.10
+</pre>
+
+1. Log in as root user. When prompted for a password, enter the vcap password you used to `ssh` into the VM:
+<pre class='terminal'>$ sudo su</pre>
+
+1. Temporarily change the permissions on `var/vcap/store` to add write permissions for all.
+<pre class='terminal'>
+$ chmod a+w /var/vcap/store
+</pre>
+
+1. Use `scp` to send the WebDAV backup tarball to the WebDAV VM from your local machine.
+<pre class='terminal'>
+$ scp webdav.tar.gz vcap@YOUR-WEBDAV-VM-IP-ADDRESS:/var/vcap/store
+</pre>
+
+1. Navigate into the `store` folder on the WebDAV VM.
+<pre class='terminal'>
+$ cd /var/vcap/store
+</pre>
+
+1. Decompress and extract the contents of the backup archive.
+<pre class='terminal'>
+$ tar zxf webdav.tar.gz</pre>
+</pre>
+
+1. Change the permissions on `var/vcap/store` to their prior setting.
+<pre class='terminal'>
+$ chmod a-w /var/vcap/store
+</pre>
+
+1. Exit the WebDAV VM.
+<pre class='terminal'>
+$ exit
+</pre>
+
+### <a id='restore-mysql-dev'></a>Restore MySQL Database ###
+
+Restoring from a backup is the same whether one or multiple databases were backed up. Executing the SQL dump will drop, recreate, and refill the specified databases and tables.
+
+<p class="note warning"><strong>Warning</strong>: Restoring a database deletes all data that existed in the database prior to the restore. Restoring a database using a full backup artifact, produced by <code>mysqldump --all-databases</code> for example, replaces all data and user permissions.</p>
+
+1. From the same VM you used to perform the manual backup, or a similar VM, restore from the data dump:
+<pre class="terminal">
+$ mysql -u root -p -h $MYSQL\_NODE\_IP < user_databases.sql
+</pre>
+
+1. Use `scp` to send the MySQL Database backup file to the MySQL Database VM. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager Installation Dashboard, select **Elastic Runtime** and click **Credentials**.
+<pre class='terminal'>
+$ scp user_databases.sql vcap@YOUR-MYSQL-VM-IP-ADDRESS:~/.
+</pre>
+
+1. SSH into the MySQL Database VM.
+<pre class='terminal'>
+$ ssh vcap@YOUR-MYSQL-VM-IP
+</pre>
+
+1. Use the MySQL password and IP address to enable the creation of tables using any storage engine.
+<pre class='terminal'>
+$ mysql -h YOUR-MYSQL-SERVER-IP -u root -p -e "SET GLOBAL enforce\_storage\_engine=NULL;"
+</pre>
+
+1. Use the MySQL password and IP address to restore the MySQL database by running the following command.
+<pre class='terminal'>
+$ mysql -h YOUR-MYSQL-SERVER-IP -u root -p < ~/.user_databases.sql
+</pre>
+
+1. Use the MySQL password and IP address to restore original storage engine restriction.
+<pre class='terminal'>
+$ mysql -h YOUR-MYSQL-SERVER-IP -u root -p -e "SET GLOBAL enforce\_storage\_engine='InnoDB';"
+</pre>
+
+1. Log in to the MySQL client and flush privileges.
+<pre class='terminal'>
+$ mysql -u root -p -h
+mysql > flush privileges;
+</pre>
+
+### <a id='cc-start-2'></a>Start Cloud Controller ###
+<%= partial 'starting_cc' %>

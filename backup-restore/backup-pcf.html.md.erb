@@ -7,20 +7,73 @@ owner: RelEng
 
 <% $this_topic = 'backup-pcf' %>
 
-This topic describes the procedure for manually backing up each critical backend <%= vars.product_full %> component. Pivotal recommends frequently backing up your installation settings before making any changes to your PCF deployment, such as configuration of any tiles in Ops Manager.
+This topic describes the procedure for backing up your critical backend PCF components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments. To restore your backup, see the [Restoring Pivotal Cloud Foundry from Backup](restore-pcf.html) topic.
 
-To back up a deployment, export installation settings, download the BOSH Deployment Manifest, temporarily stop the Cloud Controller, create and export backup files for each critical backend component, and restart the Cloud Controller. It is also important to record your Cloud Controller Database encryption credentials which you will need if you contact Pivotal Support for help restoring your installation.
+<p class="note"><strong>Note</strong>: To back up PCF manually, see the <a href="backup-pcf-manual.html">Backing Up Pivotal Cloud Foundry Manually</a> topic.</p>
 
-To restore your backup, see the [Restoring Pivotal Cloud Foundry from Backup](./restore-pcf.html) topic.
+Pivotal recommends the following:
 
-## <a id='encrypt-key'></a>Record the Cloud Controller Database Encryption Credentials ##
+* Back up your installation settings frequently, especially before making any changes to your PCF deployment, such as configuration of any tiles in Ops Manager.
+* Make redundant copies of your backups and store them in multiple locations in order to minimize the risk of losing your backups in the event of a disaster.
+* Attempt a test restore on every backup in order to validate it.
 
-From the **Installation Dashboard**, select **Pivotal Elastic Runtime > Credentials** and locate the Cloud Controller section.
-Record the Cloud Controller **DB Encryption Credentials**.
-You must provide these credentials if you contact Pivotal Support for help
-restoring your installation.
+## <a id='overview'></a>Overview
 
-<%= image_tag("ccdb-encrypt-creds.png") %>
+BBR is a binary that runs backup scripts included with BOSH releases. BBR backs up the following PCF components:
+
+* Elastic Runtime
+
+Operators download the BBR binary and transfer it to a jumpbox. Then they run BBR from the jumpbox, specifying the name of the BOSH deployment to back up.
+
+BBR examines the jobs in the BOSH deployment, and triggers the backup script for each release in the prescribed order. The backup artifacts are drained to the jumpbox, where the operator can transfer them to storage and use them to [restore](restore-pcf.html) PCF.
+
+The following diagram shows a sample backup flow.
+
+<%= image_tag('backup-flow.png') %>
+
+## <a id='jumpbox'></a>Step 1: Set Up Your Jumpbox
+
+Set up your jumpbox with the following settings:
+
+bbr copies the backed up data from the instances to the jumpbox, so make sure you have minimal network latency between the two, to reduce transfer times.
+
+bbr always tries to connect to the VMs on their private IP, so the jumpbox needs to be in the same network as the deployed VMs. bbr does not support SSH gateways. 
+
+This tool should be placed on a jumpbox that is able to communicate with the network that your BOSH deployment is on and has sufficient storage to house the backups you intend to keep on it. For instance, a PCF backup will be at least 1.5GB in size.
+
+The jumpbox must have sufficient space for the backup. A PCF backup will be at least 1.5 GB in size.
+
+The jumpbox must also communicate with the network that contains your BOSH deployment. BBR needs access to the following:
+
+<p>The <code>bbr</code> utility will thus require access to the following:</p>
+
+<table>
+<tr>
+<th>VM</th>
+<th>Default Port</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>BOSH Director</td>
+<td>25555</td>
+<td><code>bbr</code> interacts with the BOSH director API</td>
+</tr>
+<tr>
+<td>Deployed Instances</td>
+<td>22</td>
+<td><code>bbr</code> uses SSH to orchestrate the backup on the instances</td>
+</tr>
+<tr>
+<td>BOSH Director UAA</td>
+<td>8443</td>
+<td><code>bbr</code> interacts with the UAA API for authentication, if necessary</td>
+</tr>
+</table>
+
+
+
+## <a id='scp'></a>Step 2: Transfer BBR to the Jumpbox
 
 ## <a id='export'></a>Export Installation Settings ##
 
@@ -42,141 +95,5 @@ As a result, an exported installation file can exceed 5 GB in size.
 
 <p class='note'><strong>Note</strong>: For versions of Ops Manager 1.3 or older, the process of archiving files for export may exceed the timeout limit of 600 seconds and result in a <code>500</code> error. To resolve this issue, you can manually increase the timeout value, or assign additional resources to the Ops Manager VM to improve performance. For more information, see the <a href="https://support.pivotal.io/hc/en-us/articles/206113627">Pivotal Support Knowledge Base</a>.</p>
 
-## <a id="bosh-target-director"></a> Target the BOSH Director
-<%= partial 'bosh_target_director' %>
 
-## <a id="download-bosh-manifest"></a>Download BOSH Manifest
-<%= partial 'download_bosh_manifest' %>
-
-## <a id='backup-databases'></a>Back Up Critical Backend Components ##
-
-Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore. This section describes the procedure for backing up the databases and the servers associated with your PCF installation.
-
-You must back up each of the following:
-
-* Cloud Controller Database
-* UAA Database
-* WebDAV Server
-* Pivotal MySQL Server
-
-<p class="note"><strong>Note</strong>: If you are running PostgreSQL and are on the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard instructions for backing up the Cloud Controller, and UAA Databases, and ensure that you back up your external databases and filestores. </p>
-
-<p class="note"><strong>Note</strong>: To follow the backup instructions below, your network must be configured to allow access to the BOSH Director VM from your local machine. If you do not have local administrator access, use the <code>scp</code> command to copy the TAR file to the BOSH Director VM. For example:<code> scp vcap@192.0.2.10:webdav.tar.gz \ </code>
-and
-<code>vcap@192.0.2.3:/webdav.tar.gz</code></p>
-
-
-### <a id='stop-cc-2'></a>Stop Cloud Controller###
-<%= partial './stopping_cc' %>
-
-### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
-
- <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
-
-1. Use `bosh ssh` to SSH into the Cloud Controller Database VM:
-  1. Run `ssh-keygen -t rsa` to provide BOSH with the correct public key.
-  1. Accept the defaults.
-  1. Run `bosh ssh`.
-  1. When prompted to choose an instance, enter the number that corresponds to the VM beginning with `ccdb`.
-  1. Create a password for the temporary user that the `bosh ssh` command creates. Use this password if you need `sudo` access in this session.
-
-1. Run `pg_dump` to export the database:
-<pre class="terminal">
-$ pg_dump -U admin -p 2544 ccdb > /tmp/ccdb.sql
-</pre>
-
-1. Run `bosh scp` to copy the exported database to your BOSH client.
-<pre class="terminal">
-$ bosh scp --download ccdb/0 /tmp/ccdb.sql .
-</pre>
-
-1. Exit from the Cloud Controller database VM.
-
-### <a id='backup-uaadb'></a>Back Up the UAA Database ###
-
-<p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
-
-1. Use `bosh ssh` to SSH into the UAA Database VM:
-  1. Run `ssh-keygen -t rsa` to provide BOSH with the correct public key.
-  1. Accept the defaults.
-  1. Run `bosh ssh`.
-  1. When prompted to choose an instance, enter the number that corresponds to the VM beginning with `uaadb`.
-  1. Create a password for the temporary user that the `bosh ssh` command creates. Use this password if you need `sudo` access in this session.
-
-1. Run `pg_dump` to export the database:
-<pre class="terminal">
-$ pg_dump -U admin -p 2544 uaa > /tmp/uaa.sql
-</pre>
-
-1. Run `bosh scp` to copy the exported database to your BOSH client.
-<pre class="terminal">
-$ bosh scp --download uaadb/0 /tmp/uaa.sql .
-</pre>
-
-1. Exit from the UAA database VM.
-
-### <a id='webdav'></a>Back Up WebDAV Server ###
-
-1. In the BOSH deployment manifest, locate the `nfs_server` component and record the address:
-
-    ```
-    nfs_server:
-      address: 192.0.2.10
-      network: 192.0.2.0/24
-    syslog_aggregator:
-      address:
-      port:
-    ```
-    <p class="note"><strong>Note</strong>: The job name associated with the WebDAV server is <code>nfs_server</code> for historical reasons. The server is not based on NFS.</p>
-
-1. From the **Installation Dashboard** in Ops Manager, select **Elastic Runtime** and click **Credentials > Link to Credential**. Record the File Storage server VM credentials.
-
-    <%= image_tag("file-store-creds.png") %>
-
-1. SSH into the WebDAV server VM and create a TAR file:
-<pre class='terminal'>
-$ ssh vcap<span>@</span>192.0.2.10 'cd /var/vcap/store && tar cz shared' > webdav.tar.gz
-</pre>
-<p class="note"><strong>Note</strong>: The TAR file that you create to back up WebDAV server might be large. To estimate the size of the TAR file before you create it, run the following command:
-<code class=''>ssh vcap<span>@</span>192.0.2.10 tar -cf - /dir/to/archive/ | wc -c</code></p>
-
-### <a id='backup-mysql'></a>Back Up Pivotal MySQL Server ###
-
-<p class="note"><strong>Note</strong>: The Elastic Runtime deploy contains an embedded MySQL Server that serves as the data store for the Application Usage Events, Notifications, and Autoscaler services. If you are using an internal MySQL, this will also include the Cloud Controller and UAA. </p>
-
-There are two ways to backup the MySQL Server:
-
-* [Manual backup](#manual-mysql): If you have not set up automatic backups, you need to do a manual backup of your MySQL server.
-* Automatic backup: If you set automatic backup in your ERT configuration, you do not need to manually backup your MySQL Server. Automatic backup requires S3-compatible blobstores. For more information, see:
-  * AWS: [Configure Internal MySQL](../../customizing/cloudform-er-config.html#internal-mysql)
-  * OpenStack: [Configure Internal MySQL](../../customizing/openstack-er-config.html#internal-mysql)
-  * vSphere [Configure Internal MySQL](../../customizing/config-er-vmware.html#internal-mysql)
-
-
-#### <a id='manual-mysql'></a>Backing up MySQL Server Manually ####
-
-1. From the Installation Dashboard in Ops Manager, select **Pivotal Elastic Runtime**. Click **Status** and record the IP address of the first instance of **MySQL Server**.
-
-    <%= image_tag("mysql-ip.png") %>
-
-1. Click **Credentials** and record the Mysql Admin Credentials of **MySQL Server**.
-
-    <%= image_tag("mysql-cred.png") %>
-
-1. SSH into the MySQL database VM as the admin using the IP address and password recorded in the previous steps.
-
-1. Run the following command to dump the data from the p-mysql database and save it:
- <pre class='terminal'>
-     $ mysqldump -u root -p -h 10.0.1.26 --all-databases > user_databases.sql
- </pre>
-
-1. Run `scp` to copy the exported database to your local machine.
- <pre class='terminal'>
- $ scp vcap<span>@</span>10.0.1.26:~/user_databases.sql .
- </pre>
-
-### <a id='cc-start'></a>Start Cloud Controller ###
-<%= partial './starting_cc' %>
-
-Follow the steps in the [Restoring Pivotal Cloud Foundry from Backup](./restore-pcf.html) topic to restore a backup, import an installation to restore your settings, or to share your settings with another user.
 

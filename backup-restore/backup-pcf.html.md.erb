@@ -7,22 +7,48 @@ owner: RelEng
 
 <% $this_topic = 'backup-pcf' %>
 
-This topic describes the procedure for manually backing up each critical backend <%= vars.product_full %> component. Pivotal recommends frequently backing up your installation settings before making any changes to your PCF deployment, such as configuration of any tiles in Ops Manager.
+This topic describes the procedure for backing up your critical backend PCF components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments. To restore your backup, see the [Restoring Pivotal Cloud Foundry from Backup](restore-pcf.html) topic.
 
-To back up a deployment, export installation settings, download the BOSH Deployment Manifest, temporarily stop the Cloud Controller, create and export backup files for each critical backend component, and restart the Cloud Controller. It is also important to record your Cloud Controller Database encryption credentials which you will need if you contact Pivotal Support for help restoring your installation.
+To back up PCF manually, see the <a href="backup-pcf-manual.html">Backing Up Pivotal Cloud Foundry Manually</a> topic.
 
-To restore your backup, see the [Restoring Pivotal Cloud Foundry from Backup](./restore-pcf.html) topic.
+<p class="note"><strong>Note</strong>: You can only use BBR to back up PCF v1.11 and later. To back up earlier versions of PCF, perform the <a href="backup-pcf-manual.html">manual procedures</a>.</p>
 
-## <a id='encrypt-key'></a>Record the Cloud Controller Database Encryption Credentials ##
+Pivotal recommends backing up your installation settings frequently, especially before making any changes to your PCF deployment, such as configuration of any tiles in Ops Manager.
+
+During the backup, BBR stops the Cloud Controller API and the Cloud Controller workers to create a consistent backup. Only the API functionality, like pushing applications or using the Cloud Foundry Command Line Interface (cf CLI) are affected. The deployed applications do not experience downtime.
+
+## <a id='overview'></a>Overview
+
+BBR is a binary that runs backup scripts included with BOSH releases. BBR backs up the following PCF components:
+
+* Elastic Runtime
+
+Operators download the BBR binary and transfer it to a jumpbox. Then they run BBR from the jumpbox, specifying the name of the BOSH deployment to back up.
+
+BBR examines the jobs in the BOSH deployment, and triggers the backup script for each release in the prescribed order. The backup artifacts are drained to the jumpbox, where the operator can transfer them to storage and use them to [restore](restore-pcf.html) PCF.
+
+The following diagram shows a sample backup flow.
+
+<%= image_tag('backup-flow.png') %>
+
+## <a id='encrypt-key'></a>Step 1: Record the Cloud Controller Database Encryption Credentials ##
 
 From the **Installation Dashboard**, select **Pivotal Elastic Runtime > Credentials** and locate the Cloud Controller section.
 Record the Cloud Controller **DB Encryption Credentials**.
-You must provide these credentials if you contact Pivotal Support for help
+You must provide these credentials if you contact [Pivotal Support](https://support.pivotal.io) for help
 restoring your installation.
 
 <%= image_tag("ccdb-encrypt-creds.png") %>
 
-## <a id='export'></a>Export Installation Settings ##
+## <a id='backup-preparer-node'></a> Step 2: Scale Up Backup Preparer Node
+
+In the Elastic Runtime tile, navigate to the **Resource Config** section and use the dropdown menu to scale up the **Backup Prepare Node** to one instance.
+
+<%= image_tag("backup-prepare-node.png") %>
+
+**Question: Then should we hit Apply Changes to redeploy?**
+
+## <a id='export'></a>Step 3: Export Installation Settings ##
 
 Pivotal recommends that you back up your installation settings by exporting
 frequently. This option is only available after you have deployed at least one time.
@@ -42,144 +68,230 @@ As a result, an exported installation file can exceed 5 GB in size.
 
 <p class='note'><strong>Note</strong>: For versions of Ops Manager 1.3 or older, the process of archiving files for export may exceed the timeout limit of 600 seconds and result in a <code>500</code> error. To resolve this issue, you can manually increase the timeout value, or assign additional resources to the Ops Manager VM to improve performance. For more information, see the <a href="https://support.pivotal.io/hc/en-us/articles/206113627">Pivotal Support Knowledge Base</a>.</p>
 
-## <a id="bosh-target-director"></a> Target the BOSH Director
+## <a id="retrieve"></a> Step 4: Retrieve BOSH Director Address and Credentials
+
+Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in:
+
 <%= partial 'bosh_target_director' %>
 
-## <a id="download-bosh-manifest"></a>Download BOSH Manifest
-<%= partial 'download_bosh_manifest' %>
+## <a id='identify-deployment'></a> Step 5: Identify Your Deployment
 
-## <a id='backup-databases'></a>Back Up Critical Backend Components ##
+After logging in to your BOSH Director, run `bosh deployments` to identify the name of the BOSH deployment that contains PCF. 
 
-Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore. This section describes the procedure for backing up the databases and the servers associated with your PCF installation.
+The following example displays information for a BOSH deployment named `cf-example`:
 
-You must back up each of the following:
-
-* Cloud Controller Database
-* UAA Database
-* WebDAV Server
-* Pivotal MySQL Server
-
-<p class="note"><strong>Note</strong>: If you are running PostgreSQL and are on the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard instructions for backing up the Cloud Controller, and UAA Databases, and ensure that you back up your external databases and filestores. </p>
-
-<p class="note"><strong>Note</strong>: To follow the backup instructions below, your network must be configured to allow access to the BOSH Director VM from your local machine. If you do not have local administrator access, use the <code>scp</code> command to copy the TAR file to the BOSH Director VM. For example:<code> scp vcap@192.0.2.10:webdav.tar.gz \ </code>
-and
-<code>vcap@192.0.2.3:/webdav.tar.gz</code></p>
-
-
-### <a id='stop-cc-2'></a>Stop Cloud Controller###
-<%= partial './stopping_cc' %>
-
-### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
-
- <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
-
-1. Use `bosh ssh` to SSH into the Cloud Controller Database VM:
-  1. Run `ssh-keygen -t rsa` to provide BOSH with the correct public key.
-  1. Accept the defaults.
-  1. Run `bosh ssh`.
-  1. When prompted to choose an instance, enter the number that corresponds to the VM beginning with `ccdb`.
-  1. Create a password for the temporary user that the `bosh ssh` command creates. Use this password if you need `sudo` access in this session.
-
-1. Run `pg_dump` to export the database:
-<pre class="terminal">
-$ pg_dump -U admin -p 2544 ccdb > /tmp/ccdb.sql
-</pre>
-
-1. Run `bosh scp` to copy the exported database to your BOSH client.
-<pre class="terminal">
-$ bosh scp --download ccdb/0 /tmp/ccdb.sql .
-</pre>
-
-1. Exit from the Cloud Controller database VM.
-
-### <a id='backup-uaadb'></a>Back Up the UAA Database ###
-
-<p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
-
-1. Use `bosh ssh` to SSH into the UAA Database VM:
-  1. Run `ssh-keygen -t rsa` to provide BOSH with the correct public key.
-  1. Accept the defaults.
-  1. Run `bosh ssh`.
-  1. When prompted to choose an instance, enter the number that corresponds to the VM beginning with `uaadb`.
-  1. Create a password for the temporary user that the `bosh ssh` command creates. Use this password if you need `sudo` access in this session.
-
-1. Run `pg_dump` to export the database:
-<pre class="terminal">
-$ pg_dump -U admin -p 2544 uaa > /tmp/uaa.sql
-</pre>
-
-1. Run `bosh scp` to copy the exported database to your BOSH client.
-<pre class="terminal">
-$ bosh scp --download uaadb/0 /tmp/uaa.sql .
-</pre>
-
-1. Exit from the UAA database VM.
-
-### <a id='webdav'></a>Back Up WebDAV Server ###
-
-1. In the BOSH deployment manifest, locate the `nfs_server` component and record the address:
-
-    ```
-    - name: nfs_server
-    ...
-      networks:
-      - name: pcfnetwork
-        default:
-        - dns
-        - gateway
-        static_ips:
-        - 172.20.7.25
-    ```
-    <p class="note"><strong>Note</strong>: The job name associated with the WebDAV server is <code>nfs_server</code> for historical reasons. The server is not based on NFS.</p>
-
-1. From the **Installation Dashboard** in Ops Manager, select **Elastic Runtime** and click **Credentials > Link to Credential**. Record the File Storage server VM credentials.
-
-    <%= image_tag("file-store-creds.png") %>
-
-1. SSH into the WebDAV server VM and create a TAR file:
 <pre class='terminal'>
-$ ssh vcap<span>@</span>192.0.2.10 'cd /var/vcap/store && tar cz shared' > webdav.tar.gz
+$ bosh deployments
++-------------+--------------+-------------------------------------------------+
+| Name        | Release(s)   | Stemcell(s)                                     |
++-------------+--------------+-------------------------------------------------+
+| cf-example  | cf-mysql/10  | bosh-vsphere-esxi-ubuntu-trusty-go_agent/2690.3 |
+|             | cf/183.2     |                                                 |
++-------------+--------------+-------------------------------------------------+
 </pre>
-<p class="note"><strong>Note</strong>: The TAR file that you create to back up WebDAV server might be large. To estimate the size of the TAR file before you create it, run the following command:
-<code class=''>ssh vcap<span>@</span>192.0.2.10 tar -cf - /dir/to/archive/ | wc -c</code></p>
 
-### <a id='backup-mysql'></a>Back Up Pivotal MySQL Server ###
+## <a id='jumpbox'></a>Step 6: Set Up Your Jumpbox
 
-<p class="note"><strong>Note</strong>: The Elastic Runtime deploy contains an embedded MySQL Server that serves as the data store for the Application Usage Events, Notifications, and Autoscaler services. If you are using an internal MySQL, this will also include the Cloud Controller and UAA. </p>
+Set up your jumpbox with the following settings:
 
-There are two ways to backup the MySQL Server:
+* The jumpbox must have sufficient space for the backup. A PCF backup will be at least 1.5 GB in size.
+* BBR connects to the VMs at their private IP address, so the jumpbox needs to be in the same network as the deployed VMs. BBR does not support SSH gateways.
+* BBR copies the backed-up data from the VMs to the jumpbox, so ensure you have minimal network latency between them to reduce transfer times.
 
-* [Manual backup](#manual-mysql): If you have not set up automatic backups, you need to do a manual backup of your MySQL server.
-* Automatic backup: If you set automatic backup in your ERT configuration, you do not need to manually backup your MySQL Server. Automatic backup requires S3-compatible blobstores. For more information, see:
-  * AWS: [Configure Internal MySQL](../../customizing/cloudform-er-config.html#internal-mysql)
-  * OpenStack: [Configure Internal MySQL](../../customizing/openstack-er-config.html#internal-mysql)
-  * vSphere [Configure Internal MySQL](../../customizing/config-er-vmware.html#internal-mysql)
+Consult the following table for more information about the network access permissions required by BBR:
+
+<table>
+<tr>
+<th>VM</th>
+<th>Default Port</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>BOSH Director</td>
+<td>25555</td>
+<td>BBR interacts with the BOSH Director API.</td>
+</tr>
+<tr>
+<td>Deployed Instances</td>
+<td>22</td>
+<td>BBR uses SSH to orchestrate the backup on the instances.</td>
+</tr>
+<tr>
+<td>BOSH Director UAA</td>
+<td>8443</td>
+<td>BBR interacts with the UAA API for authentication, if necessary.</td>
+</tr>
+</table>
+
+## <a id='scp'></a>Step 7: Transfer BBR to Your Jumpbox
+
+Perform the following steps to transfer BBR to your jumpbox:
+
+1. Download the latest BBR release.
+1. Change the permissions of `bbr` in order to make it executable:
+	<pre class="terminal">$ chmod a+x bbr</pre>
+1. SCP the binary to your jumpbox:
+	<pre class="terminal">$ scp LOCAL\_PATH\_TO\_BBR/bbr JUMPBOX\_USER/JUMPBOX\_ADDRESS</pre>
+	If your jumpbox has access to the internet, you can also SSH into your jumpbox and use `wget`: 
+	<pre class="terminal">
+	$ ssh JUMPBOX\_USER/JUMPBOX\_ADDRESS -i YOUR\_CERTIFICATE.pem
+	$ wget BBR\_RELEASE\_URL
+	$ chmod a+x bbr
+	</pre>
+
+## <a id='check'></a> Step 8: Check Your Deployment
+
+Perform the following steps to check that your BOSH Director is reachable and has a deployment that can be backed up:
+
+1. SSH into your jumpbox:
+	<pre class="terminal">
+	$ ssh JUMPBOX\_USER/JUMPBOX\_ADDRESS -i YOUR\_CERTIFICATE.pem
+	</pre>
+1. Run the BBR pre-backup check:
+	<pre class="terminal">
+	$ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
+  	bbr --target BOSH\_DIRECTOR\_IP \
+  	--username BOSH\_USERNAME \
+  	--deployment DEPLOYMENT\_NAME \
+  	--ca-cert /var/tempest/workspaces/default/root\_ca\_certificate \
+    pre-backup-check</pre>
+
+    You retrieved the values for `BOSH_USERNAME`, `BOSH_PASSWORD`, and `BOSH_DIRECTOR_IP` in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+    <br><br>
+    You retrieved the value for `DEPLOYMENT-NAME` in the [Step 4: Identify Your Deployment](#identify-deployment) section.
+
+1. If the pre-backup check succeeds, continue to the [next section](#bbr-backup). If it fails, the deployment you selected may not have the correct backup scripts, or the connection to the BOSH Director may have failed. 
+
+## <a id='bbr-backup'></a> Step 9: Back Up Your Deployment
+
+Run the BBR backup command from your jumpbox to back up your BOSH deployment:
+<pre class="terminal">
+$ nohup BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
+	bbr --target BOSH\_DIRECTOR\_IP \
+	--username BOSH\_USERNAME \
+	--deployment DEPLOYMENT\_NAME \
+	--ca-cert /var/tempest/workspaces/default/root\_ca\_certificate \
+	backup</pre>
+</pre>
+Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.	
+<p class="note"><strong>Note</strong>: The BBR backup command can take a long time to complete. Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses `nohup` but you could also run the command in a `screen` or `tmux` session.</p>
+BBR stores each backup in the current working directory, in a directory of the same name as the deployment. As a result, you cannot run multiple backups from the same working directory without first moving or renaming the existing backup. 
+
+If the commands completes successfully, do the following:
+
+1. Move the backup artifact off the jumpbox to your preferred storage space. The backup created by BBR consists of TAR and metadata files, so further compression should not be necessary. 
+1. Make redundant copies of your backup and store them in multiple locations in order to minimize the risk of losing your backups in the event of a disaster.
+
+If the command fails, do the following:
+
+1. Ensure all the parameters in the command are set.
+1. Ensure the BOSH Director credentials are valid.
+1. Ensure the specified deployment exists.
+1. Consult the [Exit Codes](#exit-codes) section below. 
+
+### <a id='exit-codes'></a>Exit Codes
+
+The exit code returned by BBR indicates the status of the backup. The following table matches exit codes to error messages.
+
+<table>
+<tr>
+<th>Value</th>
+<th>Error</th>
+</tr>
+<tr>
+<td>0</td>
+<td>Success</td>
+</tr>
+<tr>
+<td>1</td>
+<td>General failure</td>
+</tr>
+<tr>
+<td>4</td>
+<td>The pre-backup lock failed.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>The post-backup unlock failed. Your deployment may be in a bad state and requires attention.</td>
+</tr>
+<tr>
+<td>16</td>
+<td>The cleanup failed. This is a non-fatal error indicating that the utility has been unable to clean up open BOSH SSH connections to the deployment VMs. Manual cleanup may be required to clear any hanging BOSH users and connections.</td>
+</tr>
+</table>
+
+If multiple failures occur, your exit code reflects a combination of values. Use bitwise AND to determine which failures occurred.
+
+For example, the exit code `5` indicates that the pre-backup lock failed and a general error occurred. 
 
 
-#### <a id='manual-mysql'></a>Backing up MySQL Server Manually ####
+To check that a bit is set, use bitwise AND, as demonstrated by the following example of exit code `20`:
 
-1. From the Installation Dashboard in Ops Manager, select **Pivotal Elastic Runtime**. Click **Status** and record the IP address of the first instance of **MySQL Server**.
+<pre class="highlight ruby"><code><span class="mi">20</span> <span class="o">|</span> <span class="mi">1</span>  <span class="o">==</span> <span class="mi">1</span>    <span class="c1"># false</span>
+<span class="mi">20</span> <span class="o">|</span> <span class="mi">4</span>  <span class="o">==</span> <span class="mi">4</span>    <span class="c1"># true; lock failed</span>
+<span class="mi">20</span> <span class="o">|</span> <span class="mi">8</span>  <span class="o">==</span> <span class="mi">8</span>    <span class="c1"># false</span>
+<span class="mi">20</span> <span class="o">|</span> <span class="mi">16</span> <span class="o">==</span> <span class="mi">16</span>   <span class="c1"># true; cleanup failed</span>
+</code></pre>
 
-    <%= image_tag("mysql-ip.png") %>
+Exit code `20` indicates that the pre-backup lock failed and cleanup failed. 
 
-1. Click **Credentials** and record the Mysql Admin Credentials of **MySQL Server**.
+### <a id='logging'></a>Logging
 
-    <%= image_tag("mysql-cred.png") %>
+**Question: How do we access logs?**
 
-1. SSH into the MySQL database VM as the admin using the IP address and password recorded in the previous steps.
+By default, BBR logs:
 
-1. Run the following command to dump the data from the p-mysql database and save it:
- <pre class='terminal'>
-     $ mysqldump -u root -p -h 10.0.1.26 --all-databases > user_databases.sql
- </pre>
+* The backup and restore scripts that it finds
+* When it starts or finishes a stage, such as pre-backup scripts or backup scripts
+* When the process is complete
+* When any error occurs
 
-1. Run `scp` to copy the exported database to your local machine.
- <pre class='terminal'>
- $ scp vcap<span>@</span>10.0.1.26:~/user_databases.sql .
- </pre>
+If more logging is needed, use the optional `--debug` flag to print the following information:
 
-### <a id='cc-start'></a>Start Cloud Controller ###
-<%= partial './starting_cc' %>
+* Logs about the API requests made to the BOSH server
+* All commands executed on remote instances
+* All commands executed on local environment
+* Standard in and standard out streams for the backup and restore scripts when they are executed
 
-Follow the steps in the [Restoring Pivotal Cloud Foundry from Backup](./restore-pcf.html) topic to restore a backup, import an installation to restore your settings, or to share your settings with another user.
+## <a id='validate-backup'></a> Step 10 (Optional): Validate Your Backup
+
+**This section still needs a lot of work.**
+
+After backing up PCF, you may want to validate your backup by restoring it to a similar environment and checking the applications. Because BBR is designed for disaster recovery, its backups are intended to be restored to an environment deployed with the same configuration. 
+
+Spin up a second environment that matches the original environment in the following ways:
+
+* All the MySql passwords, including:
+	* passwords for Cloud Controller, UAA and Diego
+	* healthcheck passwords
+	* admin password
+* DB Encryption Key
+	* cc.db_encryption_key consumed by cloud_controller_clock, cloud_controller_worker, cloud_controller_ng jobs
+	* diego.bbs.encryption_keys.passphrase consumed by bbs job
+
+**Question: Where does one find these creds on PCF? In the Credentials tab of ERT? And how does one spin up a new PCF with these same creds?**
+
+Restore your backup to the second environment with the credentials set as above. After the restore is completed, you can check the status of your applications by running the command cf apps. Ensure your applications are running. For a more detailed exposition of reviewing your restored CF, see here
+
+The apps would be back up, but under normal circumstances the existing domain will not be pointed to your restored Cloud Foundry. Therefore if you want to make http requests to the restored apps, you have to use the restored CF router IP. However, the restored CF thinks it is on the original domain, so for HTTP requests to be routed to the applications you will have to set the original domain in the Host header.
+
+For example with curl, you could:
+
+```
+# if the cf router IP is '10.0.1.16' and the app domain is 'cf-original-app.com'
+curl -k -H"Host: cf-original-app.com" https://10.0.1.16
+```
+
+The restored apps will have the same service bindings as the original. Therefore if your applications connect to an external data store, your restored applications will also connect, and perform whatever interactions your original applications would do.
+
+We recommend you verify that your restored CF has the same Orgs, Spaces, Applications, Routes and Services as you expect from the CF you backed up.
+
+To see the list of orgs, run `cf orgs`
+Target each org in turn. `cf target -o <org>`
+To see the list of spaces for this org, run `cf spaces`
+Target each space in turn. `cf target -s <space>`
+To see the list of routes (and their domains) for this space, run `cf routes`
+To see the list of apps for this space, run `cf apps`. Check that the apps which should be running can start successfully.
+Ensure that your apps are still bound to the expected services, for this space, run cf services. Backing up Cloud Foundry with BBR doesn’t backup service data.
 

@@ -17,12 +17,20 @@ Pivotal recommends backing up your installation settings frequently, especially 
 
 During the backup, BBR stops the Cloud Controller API and the Cloud Controller workers to create a consistent backup. Only the API functionality, like pushing applications or using the Cloud Foundry Command Line Interface (cf CLI) are affected. The deployed applications do not experience downtime.
 
-## <a id='overview'></a>Overview
+## <a id='supported'></a>Supported Components
 
 BBR is a binary that runs backup scripts included with BOSH releases. BBR backs up the following PCF components:
 
 * Elastic Runtime
-* BOSH
+* BOSH Director
+
+Service tiles have different [levels of integration](http://docs.pivotal.io/tiledev/stages.html). BBR may or may not be able to back up your service tiles depending on their level of integration. Consult the following list:
+
+* Service brokers: You can back up and restore all brokered services with the procedures documented in this topic and in the [Restoring Pivotal Cloud Foundry from Backup](restore-pcf.html) topic. Because a brokered service runs external to PCF, BBR backs up and restores the VMs and the service instances, but not the service data.
+* Managed services: Because managed services are BOSH releases, they must implement the BBR scripts. Otherwise, you cannot use BBR to back up and restore them. If the managed service has implemented BBR scripts, BBR backs up and restores both the VMs and the service data.
+* On-demand services: You must perform additional steps to back up and restore on-demand services with BBR.
+
+## <a id='workflow'></a>Workflow
 
 Operators download the BBR binary and transfer it to a jumpbox. Then they run BBR from the jumpbox, specifying the name of the BOSH deployment to back up.
 
@@ -238,9 +246,7 @@ Exit code `20` indicates that the pre-backup lock failed and cleanup failed.
 
 ### <a id='logging'></a>Logging
 
-**Question: How do we access logs?**
-
-By default, BBR logs:
+BBR outputs logs to stdout. By default, BBR logs:
 
 * The backup and restore scripts that it finds
 * When it starts or finishes a stage, such as pre-backup scripts or backup scripts

@@ -246,13 +246,16 @@ Restoring from a backup is the same whether one or multiple databases were backe
 
 <p class="note warning"><strong>Warning</strong>: Restoring a database deletes all data that existed in the database prior to the restore. Restoring a database using a full backup artifact, produced by <code>mysqldump --all-databases</code> for example, replaces all data and user permissions.</p>
 
-Perform the procedures below for restoring a [highly available cluster](#ha-mysql) or a [single-node cluster](#single-node-mysql).
+There are two ways to restore the MySQL Server:
 
-#### <a id='ha-mysql'></a>Restore a Highly Available Cluster
+* [Automatic backup](#automatic-mysql): If you configured automatic backups in your ERT configuration, follow the instructions below for restoring from an automatic backup
+* [Manual restore](#manual-mysql): If you performed a [manual backup](backup-pcf.html#manual-mysql) of your MySQL server, follow the instructions below for restoring from a manual backup.
 
-If you are running a highly available MySQL cluster, perform the following steps to restore it:
+#### <a id='automatic-mysql'></a>Restore from an Automatic Backup
 
-1. Perform the following steps to reduce the size of the MySQL for PCF cluster to a single node:
+If you configured automatic backups, perform the following steps to restore your MySQL server:
+
+1. If you are running a highly available ERT MySQL cluster, perform the following steps to reduce the size of the cluster to a single node:
     1. From the Ops Manager Installation Dashboard, click the **Elastic Runtime** tile.
     1. Click **Resource Config**.
     1. Set the number of instances for **MySQL Server** to 1.
@@ -282,21 +285,61 @@ If you are running a highly available MySQL cluster, perform the following steps
     1. Watch the summary until all jobs are listed as `running`:
       <pre class="terminal">$ watch monit summary</pre>
     1. Exit out of the MySQL node.
-1. Perform the following steps to increase the size of the cluster back to three:
+1. If you are restoring a highly available ERT MySQL cluster, perform the following steps to increase the size of the cluster back to three:
     1. From the Ops Manager Installation Dashboard, click the **Elastic Runtime** tile.
     1. Click **Resource Config**.
     1. Set the number of instances for **MySQL Server** to `3`.
     1. Click **Save**.
     1. Return to the Ops Manager Installation Dashboard and click **Apply Changes**.
 
-#### <a id='single-node'></a>Restore a Single Node Cluster
+#### <a id='manual-mysql'></a>Restore from a Manual Backup
 
-If you are running a single-node MySQL cluster, perform the following steps to restore it:
+If you performed a manual backup, perform the following steps to restore your MySQL server:
 
 1. Retrieve the IP address of the MySQL server by navigating to the **Elastic Runtime** tile in the Ops Manager Installation Dashboard and clicking the **Status** tab.
 1. Set the IP address of the MySQL server as an environment variable:
   <pre class="terminal">$ MYSQL\_NODE\_IP='YOUR-MYSQL-IP'</pre>
 1. Retrieve the MySQL VM credentials and the MySQL Admin credentials by navigating to the **Elastic Runtime** tile and clicking the **Credentials** tab.
+1. Locate the `user_databases.sql` backup file that you created when performing a [manual backup](backup-pcf.html#manual-mysql).
+1. Use `scp` to send the backup file to the MySQL Database VM: 
+  <pre class='terminal'>
+  $ scp user_databases.sql vcap@$MYSQL\_NODE\_IP:~/.
+  </pre>
+1. SSH into the MySQL Database VM, providing the MySQL VM password when prompted:
+  <pre class='terminal'>
+  $ ssh vcap@$MYSQL\_NODE\_IP
+  </pre>
+1. Enable the creation of tables using any storage engine, providing the MySQL Admin password when prompted: 
+  <pre class='terminal'>
+  $ mysql -h $MYSQL\_NODE\_IP -u root -p -e "SET GLOBAL enforce\_storage\_engine=NULL;"
+  </pre>
+1. Use the MySQL password and IP address to restore the MySQL database by running the following command.
+  <pre class='terminal'>
+  $ mysql -h $MYSQL\_NODE\_IP -u root -p < ~/.user_databases.sql
+  </pre>
+1. Use the MySQL password and IP address to restore original storage engine restriction.
+  <pre class='terminal'>
+  $ mysql -h $MYSQL\_NODE\_IP -u root -p -e "SET GLOBAL enforce\_storage\_engine='InnoDB';"
+  </pre>
+1. Log in to the MySQL client and flush privileges.
+  <pre class='terminal'>
+  $ mysql -u root -p -h
+  mysql > flush privileges;
+  </pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 1. Use `scp` to send the MySQL Database backup file to the MySQL Database VM, entering the MySQL VM password when prompted:
   <pre class='terminal'>
   $ scp user\_databases.sql vcap@$MYSQL\_NODE\_IP:~/.

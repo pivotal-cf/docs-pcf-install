@@ -118,24 +118,22 @@ Ensure that you complete the following as part of the upgrade:
 
 ### <a id="upgrade-add-ons"></a>Prep 8: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
 
- Before upgrading to PCF v1.10, operators who have deployed any PCF add-ons (such as **ClamAV for PCF**, **IPsec for PCF**, or **File Integrity Monitoring for PCF**) and who have deployed or are planning to deploy [PCF Runtime for Windows](../windows/index.html) must modify the add-on manifest to specify a compatible OS stemcell. 
+Before upgrading to PCF v1.10, operators who have deployed or are planning to deploy [PCF Runtime for Windows](../windows/index.html) must specify non-Windows stemcells for any installed PCF add-ons that do not support Windows. To do this, you add `include: stemcell` directives in your manifest that target `ubuntu-trusty` stemcells. These directives prevent PCF from trying to deploy the add-on to incompatible VMs.
 
- For example, **ClamAV for PCF** is not supported on Windows. Therefore, the manifest must use an `include` directive to specify the target OS stemcell of `ubuntu-trusty`. 
+PCF add-ons include **ClamAV for PCF**, **IPsec for PCF**, and **File Integrity Monitoring for PCF**. For each of these that has been installed prior to PCF v1.10, do the following:
 
- To update an add-on manifest, perform the following steps:
+1. In the BOSH manifest that you uploaded to the Ops Manager VM, find the `releases:` and `addons:` definitions for the add-on. This may be from a small add-on manifest file such as `clamav.yml` that added to your BOSH manifest.
 
- 1. Locate your existing add-on manifest file. For example, for ClamAV, locate the `clamav.yml` you uploaded to the Ops Manager VM.
-
- 1. Modify the manifest to include following `include` directive to your manifest:
+1. In the `addons:` definitions, add the following `include` directive:
 
     ```yml
       include:
         stemcell:
           - os: ubuntu-trusty
     ```
- 1. Re-upload the manifest file to your PCF deployment. For example instructions, see [Create the ClamAV Manifest](https://docs.pivotal.io/addon-antivirus/index.html#create-mfest). 
+1. Re-upload the manifest file to your PCF deployment. For example instructions, see [Create the ClamAV Manifest](https://docs.pivotal.io/addon-antivirus/index.html#create-mfest). 
 
- If you are using any other BOSH-managed add-ons in your deployment, you should verify OS compatibility for those component as well. For more information about configuring BOSH add-on manifests, see the [BOSH documentation](https://bosh.io/docs/runtime-config.html#addons). 
+If you are using any BOSH-managed add-ons in addition to PCF-managed add-ons, you should verify their OS compatibility as well. For more information about configuring BOSH add-on manifests, see the [BOSH documentation](https://bosh.io/docs/runtime-config.html#addons). 
 
 ### <a id="check-health"></a>Prep 9: Check System Health Before Upgrade
 

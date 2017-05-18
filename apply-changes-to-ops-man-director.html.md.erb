@@ -1,0 +1,42 @@
+---
+title: Applying Changes to Ops Manager Director
+owner: Ops Manager
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes how to apply pending changes only to Ops Manager Director when you stage multiple products in a new installation or as part of an upgrade.
+
+## <a id='overview'></a>Overview
+
+By default, Ops Manager deploys Ops Manager Director and all your staged products after you click the **Apply Changes** button on the Ops Manager Installation Dashboard. You can use the Ops Manager API to trigger an installation process only for Ops Manager Director.
+
+This Ops Manager API functionality is provided through an optional `deploy_products` query parameter of the `POST /api/v0/installations` request.
+
+The allowed values for the parameter are the following:
+
+* `“all”`: Apply changes to all staged products, including Ops Manager Director.
+* `“none”`: Apply changes only to Ops Manager Director.
+
+If the `deploy_products` parameter is not included in the `POST /api/v0/installations` request, Ops Manager deploys Ops Manager Director and all  staged products.
+
+## <a id='install'></a>Apply Pending Changes to Ops Manager Director
+
+To apply pending changes to Ops Manager Director, perform the steps below:
+
+1. Retrieve your authorization token to access the Ops Manager API. Refer to [Using the Ops Manager API](./ops-man-api.html) for the authentication instructions.
+
+1. Submit the `POST /api/v0/installations` request with the `deploy_products` parameter set to `"none"`. See the following example:
+
+	<pre class='terminal'>
+	$ curl "https://example.com/api/v0/installations" \ 
+	    -X POST \ 
+	    -H "Authorization: Bearer UAA-ACCESS-TOKEN" \ 
+	    -H "Content-Type: application/json" \ 
+	    -d '{
+	  "deploy_products": "none",
+	  "ignore_warnings": true
+	  }'
+	</pre>
+
+For more information about using the Ops Manager API, browse to the Ops Manager API documentation at `https://YOUR-OPS-MANAGER-FQDN/docs`.

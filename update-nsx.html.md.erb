@@ -1,10 +1,101 @@
 ---
-title: Updating NSX Security Groups and Load Balancers
+title: Updating NSX Security Group and Load Balancer Information
 owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
 
-This topic describes how to update security groups and load balancer information for Pivotal Cloud Foundry (PCF) deployments using NSX on vSphere. 
+This topic describes how to update security group and load balancer information for Pivotal Cloud Foundry (PCF) deployments using NSX on vSphere. To update this information, you must use the Ops Manager API. 
 
-To update these Operators make an API request to the Ops Manager API.
+See the Ops Manager API documentation at `https://YOUR-OPS-MANAGER-FQDN/docs` for more information about the API.
+
+## <a id='authenticate'></a> Authenticate
+
+To use the Ops Manager API, you must authenticate and retrieve a token from the Ops Manager User Account and Authentication (UAA) server. For instructions, see the [Using Ops Manager API](ops-man-api.html) topic.
+
+## <a id='update'></a> Update Security Group or Load Balancer Information
+
+To update either NSX security group or load balancer information, you use `curl` to make a PUT request against the `api/v0/staged/products/product_guid/jobs/job_guid/resource_config` endpoint. 
+
+You must first retrieve the GUID of your PCF deployment, and the GUID of the job whose information you want to update.
+
+Perform the following steps: 
+
+1. Retrieve a list of staged products:
+	<pre class="terminal">
+	$ curl 'http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products' \
+	-H "Authorization: Bearer UAA-ACCESS-TOKEN"
+	[
+	   {
+	      "product\_version" : "1.10.6.0",
+	      "guid" : "p-bosh-dee11e111e1111ee1e1a",
+	      "installation\_name" : "p-bosh",
+	      "type" : "p-bosh"
+	   },
+	   {
+	      "type" : "cf",
+	      "product\_version" : "1.10.8-build.7",
+	      "installation\_name" : "cf-01222ab1111111aaa1a",
+	      "guid" : "cf-01222ab1111111aaa1a"
+	   }
+	]
+	</pre>
+
+	Record the GUID of the `cf` product. In the above example, it is `cf-01222ab1111111aaa1a`.
+
+1. Retrieve a list of jobs for your product:
+	<pre class='terminal'>
+	$ curl 'http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs' \
+	-H "Authorization: Bearer UAA-ACCESS-TOKEN'
+	{
+   "jobs" : [
+      {
+         "guid" : "consul\_server-9c37cf48ae7412f2afd1",
+         "name" : "consul\_server"
+      },
+      {
+         "name" : "nats",
+         "guid" : "nats-6af18efdd18d198edee9"
+      },
+      {
+         "guid" : "etcd\_tls\_server-90b3b107449aae7376dc",
+         "name" : "etcd\_tls\_server"
+      },
+      {
+         "name" : "nfs\_server",
+         "guid" : "nfs\_server-b49b0b2aed247302c0e1"
+      },
+      ...
+	</pre>
+
+	Record the GUID of the job whose security groups you want to update. 
+
+1. You can update either your security group or load balancer information, or both.
+	* **Security groups**: To update the security groups for your job, use the following command:
+		<pre class="terminal">
+		$ curl "http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs/JOB-GUID/resource\_config" \ 
+		    -X PUT \ 
+		    -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
+		    -d '{"nsx\_security\_groups": ["SECURITY-GROUP1", "SECURITY-GROUP2"]}' 
+		</pre>
+		The value for `nsx_security_groups` is a list of the security groups you want to set for the job. To clear all security groups for a job, pass an empty list with the value `[]`.
+		<br><br>
+	* **Load balancers**: To update the load balancers for your job, use the following command:
+		<pre class="terminal">
+		$ curl "http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs/JOB-GUID/resource\_config" \ 
+		    -X PUT \ 
+		    -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
+		    -d '{"nsx\_lbs": \
+				    { \
+				      "edge\_name": "EDGE-NAME", \
+				      "pool\_name": "POOL-NAME", \
+				      "security\_group": "SECURITY-GROUP", \
+				      "port": "PORT-NUMBER" \
+				    }
+		</pre>
+		Replace the placeholder values under `nsx_lbs` as follows:
+
+		* `EDGE-NAME`: The name of the NSX Edge
+		* `POOL-NAME`: The name of the NSX Edge's server pool
+		* `SECURITY-GROUP`: The name of the NSX server pool's target security group
+		* `PORT`: The name of the port that the VM service is listening on, such as `5000`

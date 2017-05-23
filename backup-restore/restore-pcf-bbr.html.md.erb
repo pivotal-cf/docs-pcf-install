@@ -60,13 +60,13 @@ Prepare your environment for PCF by following the instructions specific to your 
 
     <%= image_tag("../images/upgrading/success.png") %>
 
-**Question: How do we import "releases"? Or does the Import Installation Settings procedure take care of that?**
+**Question: How do we import "releases"? Or does the Import Installation Settings procedure take care of that?**  **YES**
 
 ## <a id="bosh-state"></a> Step 3: Remove bosh-state.json
 
 **Question: How do we remove bosh-state.json?**
 
-1. Navigate to Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
+1. Navigate to Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.  ***TBD Director only Apply changes***
 
 ## <a id="artifacts-jumpbox"></a> Step 4: Transfer Artifacts to Jumpbox
 
@@ -104,24 +104,25 @@ $ bosh deployments
   $ ssh JUMPBOX\_USER/JUMPBOX\_ADDRESS -i YOUR\_CERTIFICATE.pem
   </pre>
 
+1. Ensure the BOSH director backup artifact is in the folder you will run BBR from. 
+
 1. Run the BBR restore command from your jumpbox to restore the BOSH Director:
 <pre class="terminal">
-$ nohup BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
-  bbr --target BOSH\_DIRECTOR\_IP \
-  --username BOSH\_USERNAME \
-  --deployment DEPLOYMENT\_NAME \
-  --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
-  restore director</pre>
-
-  **Question: Is this the correct command? How do you restore only the BOSH Director, as opposed to an entire deployment?**
-
-  Replace the placeholder values as follows:
+$ bbr director \
+  --debug (OPTIONAL)
+  --name NAME\_FOR\_BACKUP> \
+  --private-key-path PATH\_TO\_PRIVATE\_KEY \
+  --username USER\_NAME
+  --host HOST \
+  restore
+</pre>
   
-  * `BOSH_USERNAME`, `BOSH_PASSWORD`, and `BOSH_DIRECTOR_IP`: You retrieved these values in the [Step 5: Retrieve BOSH Director Address and Credentials](#retrieve) section.
-  * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 6: Identify Your Deployment](#identify-deployment) section.
-  * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
-
-**Question: How does BBR know where to find the backup artifact? Do you have to run it from the same directory as the backup artifact?**
+ Replace the placeholder values as follows:
+   
+ * `--name`: the name to be used for your backup artifact
+ * `--username`: SSH username of the Director, which is `bbr`
+ * `--private-key-path`: path to the SSH private key used to connect to the Director. To create a private key file, navigate to the Credentials tab in Ops Manager and click on the `Link to credential` for the `Bbr credential`. Save the private_key_pem to a file on your jumpbox. 
+ * `--host`: address of the Director to back up, including port
 
 Use the optional `--debug` flag to enable debug logs. See the [Logging](./backup-pcf.html#logging) section of the <em>Backing Up Pivotal Cloud Foundry</em> topic for more information. 
 <p class="note"><strong>Note</strong>: The BBR restore command can take a long time to complete. Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses `nohup` but you could also run the command in a `screen` or `tmux` session.</p>
@@ -136,21 +137,20 @@ If the command fails, do the following:
 1. Ensure the source deployment is incompatible with the target deployment.
 1. Ensure that the jumpbox can reach the BOSH Director.
 
-## <a id='restore-ert'></a> Step 8: Restore Elastic Runtime
+## <a id='restore-ert'></a> Step 8: Apply Changes
+1. Navigate to Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.  ***TBD Director only Apply changes***
+
+## <a id='restore-ert'></a> Step 9: Restore Elastic Runtime
 
 1. Navigate to the Ops Manager Installation Dashboard and click **Apply Changes**. This deploys Elastic Runtime.
 
 1. Run the BBR restore command from your jumpbox to restore Elastic Runtime:
 <pre class="terminal">
-$ nohup BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
-  bbr --target BOSH\_DIRECTOR\_IP \
-  --username BOSH\_USERNAME \
-  --deployment DEPLOYMENT\_NAME \
+$  BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
+  bbr deployment
+  --target BOSH\_DIRECTOR\_IP \
+  --username BOSH\_CLIENT \
+  --deployment DEPLOYMENT\_NAME \	
   --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
-  restore ert</pre>
+  restore </pre>
 
-    **Question: Is this the correct command? How do you restore only ERT, as opposed to an entire deployment?**
-
-## <a id='tiles'></a> Step 9: Restore Service Tiles
-
-**Question: Can users restore service tiles as well?**

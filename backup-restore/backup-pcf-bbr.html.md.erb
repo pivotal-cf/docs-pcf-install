@@ -119,7 +119,6 @@ Consult the following table for more information about the network access permis
 <th>Default Port</th>
 <th>Description</th>
 </tr>
-</thead><tbody>
 <tr>
 <td>BOSH Director</td>
 <td>25555</td>
@@ -141,7 +140,7 @@ Consult the following table for more information about the network access permis
 
 Perform the following steps to transfer BBR to your jumpbox:
 
-1. Download the latest BBR release.
+1. Download the [latest BBR release](https://network.pivotal.io/products/p-bosh-backup-and-restore).
 1. Change the permissions of `bbr` in order to make it executable:
 	<pre class="terminal">$ chmod a+x bbr</pre>
 1. SCP the binary to your jumpbox:
@@ -163,15 +162,17 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 	</pre>
 1. Run the BBR pre-backup check:
 	<pre class="terminal">
-	$ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
-  	bbr --target BOSH\_DIRECTOR\_IP \
-  	--username BOSH\_USERNAME \
+	$ BOSH\_CLIENT\_SECRET=BOSH\_CLIENT\_SECRET \
+  	bbr deployment
+	--target BOSH\_DIRECTOR\_IP \
+  	--username BOSH\_CLIENT \
   	--deployment DEPLOYMENT\_NAME \
   	--ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
     pre-backup-check</pre>
 
     Replace the placeholder values as follows:
-    * `BOSH_USERNAME`, `BOSH_PASSWORD`, and `BOSH_DIRECTOR_IP`: You retrieved these values in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+    * `BOSH_CLIENT`, `BOSH_CLIENT_SECRET`: This is the TBD BOSH UAA user provided here. 
+    * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 4: Identify Your Deployment](#identify-deployment) section.
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
 
@@ -181,20 +182,21 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 
 Run the BBR backup command from your jumpbox to back up your BOSH deployment:
 <pre class="terminal">
-$ nohup BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
-	bbr --target BOSH\_DIRECTOR\_IP \
-	--username BOSH\_USERNAME \
+$ BOSH\_CLIENT\_SECRET=BOSH\_CLIENT\_SECRET \
+	bbr deployment
+	--target BOSH\_DIRECTOR\_IP \
+	--username BOSH\_CLIENT \
 	--deployment DEPLOYMENT\_NAME \
 	--ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
 	backup</pre>
-</pre>
+
 Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.	
 <p class="note"><strong>Note</strong>: The BBR backup command can take a long time to complete. Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses `nohup` but you could also run the command in a `screen` or `tmux` session.</p>
 BBR stores each backup in the current working directory, in a directory of the same name as the deployment. As a result, you cannot run multiple backups of a deployment from the same working directory without first moving or renaming the existing backup. 
 
 If the commands completes successfully, do the following:
 
-1. Move the backup artifact off the jumpbox to your preferred storage space. The backup created by BBR consists of TAR and metadata files, so further compression should not be necessary. However, Pivotal recommends encrypting the files.
+1. Move the backup artifact off the jumpbox to your preferred storage space. The backup created by BBR consists of a folder with the backup artifacts and metadata files. However, Pivotal recommends compressing and encrypting the files. 
 1. Make redundant copies of your backup and store them in multiple locations in order to minimize the risk of losing your backups in the event of a disaster.
 1. Attempt a test restore on every backup in order to validate it by performing the procedures in the [Step 10: Validate Your Backup](#validate-backup) section below.
 

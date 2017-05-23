@@ -171,7 +171,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
     pre-backup-check</pre>
 
     Replace the placeholder values as follows:
-    * `BOSH_CLIENT`, `BOSH_CLIENT_SECRET`: This is the TBD BOSH UAA user provided here. 
+    * `BOSH_CLIENT`, `BOSH_CLIENT_SECRET`: This is the ***TBD*** BOSH UAA user provided here. 
     * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 4: Identify Your Deployment](#identify-deployment) section.
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
@@ -284,10 +284,26 @@ Spin up a second environment that matches the original environment in the follow
 	* cc.db_encryption_key consumed by cloud_controller_clock, cloud_controller_worker, cloud_controller_ng jobs
 	* diego.bbs.encryption_keys.passphrase consumed by bbs job
 
-**Question: Where does one find these creds on PCF? In the Credentials tab of ERT? And how does one spin up a new PCF with these same creds?**
+You can spin up a second environment that matches the original to test a restore, as follows:
+1. Export your Ops Manager installation, via Settings -> Export Installation Settings.
+1. Create a new Ops Manager VM in a different network to the original and import the installation.
+1. On Ops Manager Director -> Create Networks, update the networks as appropriate.
+1. SSH into your Ops Manager VM and delete the `/var/tempest/workspaces/default/deployments/bosh-state.json` file.
+1. Apply changes to deploy a new BOSH director and a new ERT.
 
-Restore your backup to the second environment with the credentials set as above. After the restore is completed, you can check the status of your applications by running the command cf apps. Ensure your applications are running. For a more detailed exposition of reviewing your restored CF, see here
+Restore your backup to the second environment with the credentials set as above. 
 
+Run the BBR restore command from your jumpbox to restore your ERT deployment:
+<pre class="terminal">
+$ BOSH\_CLIENT\_SECRET=BOSH\_CLIENT\_SECRET \
+	bbr deployment
+	--target BOSH\_DIRECTOR\_IP \
+	--username BOSH\_CLIENT \
+	--deployment DEPLOYMENT\_NAME \
+	--ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
+	restore</pre>
+
+After the restore is completed, you can check the status of your applications by running the command cf apps. Ensure your applications are running. For a more detailed exposition of reviewing your restored CF, see here ***TBD***
 The apps would be back up, but under normal circumstances the existing domain will not be pointed to your restored Cloud Foundry. Therefore if you want to make http requests to the restored apps, you have to use the restored CF router IP. However, the restored CF thinks it is on the original domain, so for HTTP requests to be routed to the applications you will have to set the original domain in the Host header.
 
 For example with curl, you could:

@@ -60,13 +60,11 @@ Prepare your environment for PCF by following the instructions specific to your 
 
     <%= image_tag("../images/upgrading/success.png") %>
 
-**Question: How do we import "releases"? Or does the Import Installation Settings procedure take care of that?**  **YES**
+## <a id="bosh-state"></a> Step 3: Remove BOSH State File
 
-## <a id="bosh-state"></a> Step 3: Remove bosh-state.json
-
-**Question: How do we remove bosh-state.json?**
-
-1. Navigate to Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.  ***TBD Director only Apply changes***
+1. SSH into your Ops Manager VM. For more information, see the [SSH into Ops Manager](../trouble-advanced.html#ssh) section of the <em>Advanced Troubleshooting with the BOSH CLI</em> topic. 
+1. On the Ops Manager VM, delete the `/var/tempest/workspaces/default/deployments/bosh-state.json` file.
+1. Navigate to Ops Manager Installation Dashboard and click **Apply Changes** to redeploy. ***TBD Director only Apply changes***.
 
 ## <a id="artifacts-jumpbox"></a> Step 4: Transfer Artifacts to Jumpbox
 
@@ -103,29 +101,29 @@ $ bosh deployments
   <pre class="terminal">
   $ ssh JUMPBOX\_USER/JUMPBOX\_ADDRESS -i YOUR\_CERTIFICATE.pem
   </pre>
-
-1. Ensure the BOSH director backup artifact is in the folder you will run BBR from. 
-
+1. Navigate to the Ops Manager Installation Dashboard.
+1. Click the Elastic Runtime tile.
+1. Click the **Credentials** tab.
+1. Locate **Bbr Credentials** and click **Link to Credential** next to it.
+1. Copy the value for `private_key_pem`, beginning with "-----BEGIN RSA PRIVATE KEY-----" and paste it into a file that you save on your jumpbox.
+1. Ensure the BOSH Director backup artifact is in the folder you will run BBR from. 
 1. Run the BBR restore command from your jumpbox to restore the BOSH Director:
-<pre class="terminal">
-$ bbr director \
-  --debug (OPTIONAL)
-  --name NAME\_FOR\_BACKUP> \
-  --private-key-path PATH\_TO\_PRIVATE\_KEY \
-  --username USER\_NAME
-  --host HOST \
-  restore
-</pre>
-  
- Replace the placeholder values as follows:
-   
- * `--name`: the name to be used for your backup artifact
- * `--username`: SSH username of the Director, which is `bbr`
- * `--private-key-path`: path to the SSH private key used to connect to the Director. To create a private key file, navigate to the Credentials tab in Ops Manager and click on the `Link to credential` for the `Bbr credential`. Save the private_key_pem to a file on your jumpbox. 
- * `--host`: address of the Director to back up, including port
+  <pre class="terminal">
+  $ bbr director \
+    --name NAME\_OF\_BACKUP \
+    --private-key-path PATH\_TO\_PRIVATE\_KEY \
+    --username bbr
+    --host HOST \
+    restore
+  </pre>
+  Use the optional `--debug` flag to enable debug logs. See the [Logging](backup-pcf-bbr.html#logging) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic for more information.
+  <br><br>
+  Replace the placeholder values as follows:
+  * `NAME_OF_BACKUP`: This is the name of your backup artifact.
+  * `PATH_TO_PRIVATE_KEY`: This is the path to the private key file you created above. 
+  * `HOST`: This is the address of the BOSH Director, including the port number. **Question: Can you provide an example?**
 
-Use the optional `--debug` flag to enable debug logs. See the [Logging](./backup-pcf.html#logging) section of the <em>Backing Up Pivotal Cloud Foundry</em> topic for more information. 
-<p class="note"><strong>Note</strong>: The BBR restore command can take a long time to complete. Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses `nohup` but you could also run the command in a `screen` or `tmux` session.</p>
+<p class="note"><strong>Note</strong>: The BBR restore command can take a long time to complete. Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
 
 If the commands completes successfully, continue to [Step 8: Restore Elastic Runtime](#restore-ert).
 
@@ -150,7 +148,7 @@ $  BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
   bbr deployment
   --target BOSH\_DIRECTOR\_IP \
   --username BOSH\_CLIENT \
-  --deployment DEPLOYMENT\_NAME \	
+  --deployment DEPLOYMENT\_NAME \
   --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
   restore </pre>
 

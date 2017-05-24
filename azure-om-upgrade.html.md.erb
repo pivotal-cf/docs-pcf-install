@@ -76,14 +76,20 @@ The command returns output similar to the following:
     </pre>
     When `Status` reads `success`, continue to the next step.
 
-1. You have two choices for the Ops Manager IP address. Choose one of the following:
+##<a id='config-ip'></a> Step 3: Configure IP Address
+
+You have two choices for the Ops Manager IP address. Choose one of the following:
     * [Reuse the existing dynamic public IP address](#reuse-dynamic).
     * [Use a new dynamic public IP](#new-ip).
 
 ###<a id='reuse-dynamic'></a> Reuse Existing Dynamic Public IP 
 
-1. Delete the old Ops Manager VM to release the associated NIC and PIP.
-1. Attach the NIC and PIP to the new Ops Manager VM.
+1. List your VMs and record the name of your Ops Manager VM:
+    <pre class="terminal">$ azure vm list</pre>
+1. Delete your old Ops Manager VM:
+    <pre class="terminal">azure delete $RESOURCE_GROUP YOUR-OPS-MAN-VM</pre>
+1. List your network interfaces and record the name of the Ops Manager network interface:
+    <pre class="terminal">$ azure resource list -g $RESOURCE_GROUP -r Microsoft.Network/networkInterfaces</pre>
 
 ###<a id='new-ip'></a> Use a New Dynamic Public IP 
 
@@ -114,7 +120,7 @@ The command returns output similar to the following:
     $ azure network nic create --subnet-vnet-name pcf-net --subnet-name pcf \
     --network-security-group-name opsmgr-nsg \
     --private-ip-address 10.0.0.5 --public-ip-name ops-manager-ip-new \
-    $RESOURCE_GROUP ops-manager-nic $LOCATION
+    $RESOURCE_GROUP ops-manager-nic-new $LOCATION
     </pre>
 
     <p class="note"><strong>Note</strong>: If the command fails with a <code>parameters must be provided</code> error, run it again and ensure that you place <code>$RESOURCE_GROUP ops-manager-nic $LOCATION</code> at the end of the command as specified above. The Azure CLI requires that you specify options before other parameters.</p>
@@ -127,7 +133,7 @@ The command returns output similar to the following:
 
 1. Update your DNS record to point to your new public IP address of Ops Manager.
 
-##<a id='boot'></a> Step 3: Boot Ops Manager
+##<a id='boot'></a> Step 4: Boot Ops Manager
 
 1. If you want to use the keypair from your previous Ops Manager, locate the path to the file on your local machine. If you want to create a new keypair, enter the following command:
    <pre class="terminal">
@@ -139,13 +145,15 @@ The command returns output similar to the following:
 1. Create a VM against the Ops Manager image, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file.
     <pre class="terminal">
     $ azure vm create $RESOURCE\_GROUP ops-manager $LOCATION \
-    Linux --nic-name ops-manager-nic \
+    Linux --nic-name YOUR-OPS-MAN-NIC \
     --os-disk-vhd https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/os\_disk.vhd \
     --image-urn https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image.vhd \
     --admin-username ubuntu --storage-account-name $STORAGE\_NAME \
     --vm-size Standard\_DS2_v2 --ssh-publickey-file PATH-TO-PUBLIC-KEY
     </pre>
     <br>
+    If you are reusing a dynamic public IP address, replace `YOUR-OPS-MAN-NIC` with the name of your Ops Manager network interface, recorded in the previous section. If you are using a new dynamic public IP address, replace `YOUR-OPS-MAN-NIC` with `ops-manager-nic-new`.
+    <br><br>
     If you are using Azure China, Azure Government Cloud, or Azure Germany, replace `blob.core.windows.net` with the following:
     <br><br>
     * For Azure China, use `blob.core.chinacloudapi.cn`. See the [Azure documentation](https://msdn.microsoft.com/en-us/library/azure/dn578439.aspx) for more information.
@@ -179,7 +187,7 @@ The default OS disk size is too small for deploying PCF. Perform the following s
     <pre class="terminal">$ azure vm start --resource-group $RESOURCE\_GROUP --name ops-manager</pre>
 
 1. SSH into the Ops Manager VM, replacing `YOUR-OPS-MAN-IP` with the public IP address of Ops Manager that you recorded in a previous step:
-    <pre class="terminal">$ ssh -i opsman YOUR-OPS-MAN-IP</pre>
+    <pre class="terminal">$ ssh -i opsman ubuntu@YOUR-OPS-MAN-IP</pre>
     If the private key you generated is not `opsman`, provide the correct filename instead.
 
 1. From the Ops Manager VM, use `df` to confirm that the OS disk has been resized:

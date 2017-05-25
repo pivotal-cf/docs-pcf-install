@@ -1,0 +1,201 @@
+---
+title: Upgrading Ops Manager Director on Azure
+owner: Ops Manager
+---
+
+<strong><%= modified_date %></strong>
+<html class="list-style-none"></html>
+
+This topic describes how to upgrade Ops Manager Director for Pivotal Cloud Foundry (PCF) on Azure.
+
+Follow the procedures below as part of the upgrade process documented in the [Upgrading Pivotal Cloud Foundry](upgrading-pcf.html) topic.
+
+<p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p> 
+
+##<a id='env-vars'></a> Step 1: Export Environment Variables
+
+1. Use the Azure CLI to log in to your Azure account:
+
+    <pre class="terminal">$ azure login --environment AzureCloud</pre>
+
+    If you deployed PCF in an environment other than Azure Cloud, consult the following list: 
+    * For Azure China, replace <code>AzureCloud</code> with <code>AzureChinaCloud</code>. If logging in to <code>AzureChinaCloud</code> fails with a <code>CERT_UNTRUSTED</code> <a href="https://github.com/Azure/azure-xplat-cli/issues/2725">error</a>, use the latest version of node, 4.x or later.
+    * For [Azure Government Cloud](azure-gov-cloud.html), replace `AzureCloud` with `AzureUSGovernment`.
+    * For [Azure Germany](azure-german-cloud.html), replace `AzureCloud` with `AzureGermanCloud`.
+
+1. Ensure that the following environment variables are set to the names of the resources you created when originally deploying Ops Manager by following the procedures in either the [Launching an Ops Manager Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching an Ops Manager Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic.
+    * `$RESOURCE_GROUP`: This should be set to the name of your resource group. Run `azure group list` to list the resource groups for your subscription.
+    * `$LOCATION`: This should be set to your location, such as `westus`. For a list of available locations, run `azure location list`.
+    * `$STORAGE_NAME`: This should be set to your BOSH storage account name. Run `azure storage account list` to list your storage accounts.
+
+1. Retrieve the connection string for the account.
+    <pre class="terminal">
+    $ azure storage account connectionstring show $STORAGE\_NAME \
+    --resource-group $RESOURCE\_GROUP
+    </pre>
+The command returns output similar to the following:
+    <pre class="terminal">
+    info:    Executing command storage account connectionstring show
+    <span>+</span> Getting storage account keys
+    data:    connectionstring: DefaultEndpointsProtocol=https;AccountName=example-storage;AccountKey=accountkeystring
+    info:    storage account connectionstring show command OK
+    </pre>
+1. From the `data:` field in the output above, record the full value of **connectionstring** from the output above, starting with and including `DefaultEndpointsProtocol=`.
+1. Export the value of **connectionstring** as the environment variable `$AZURE_STORAGE_CONNECTION_STRING`.
+    <pre class="terminal">
+    $ export AZURE\_STORAGE\_CONNECTION\_STRING="YOUR-ACCOUNT-KEY-STRING"
+    </pre>
+
+##<a id='setup'></a> Step 2: Set Up Ops Manager
+
+1. Navigate to [Pivotal Network](https://network.pivotal.io/products/ops-manager) and download the release of **Pivotal Cloud Foundry Ops Manager for Azure** you want to upgrade to.
+
+1. View the downloaded PDF and locate the Ops Manager image URL appropriate for your region.
+
+1. Export the Ops Manager image URL as an environment variable.
+    <pre class="terminal">$ export OPS\_MAN\_IMAGE\_URL="YOUR-OPS-MAN-IMAGE-URL"</pre>
+    This command overrides the old Ops Manager image URL with the new Ops Manager image URL.
+
+1. Copy the Ops Manager image into your storage account.
+    <pre class="terminal">
+    $ azure storage blob copy start $OPS\_MAN\_IMAGE\_URL opsmanager \
+    --dest-connection-string $AZURE\_STORAGE\_CONNECTION\_STRING \
+    --dest-container opsmanager \
+    --dest-blob image.vhd 
+    </pre>
+
+1. Copying the image may take several minutes. Run the following command and examine the output under `Status` to check the status:
+    <pre class="terminal">
+    $ azure storage blob copy show opsmanager image.vhd
+    info:    Executing command storage blob copy show
+    <span>+</span> Getting storage blob information
+    data:    Copy ID                               Progress                 Status
+    data:    ------------------------------------  -------------            -------
+    data:    069d413d-be05-4b12-82bc-c96dacee230e  31457280512/31457280512  success
+    info:    storage blob copy show command OK
+    </pre>
+    When `Status` reads `success`, continue to the next step.
+
+##<a id='config-ip'></a> Step 3: Configure IP Address
+
+You have two choices for the Ops Manager IP address. Choose one of the following:
+
+* [Reuse the existing dynamic public IP address](#reuse-dynamic).
+* [Use a new dynamic public IP](#new-ip).
+
+###<a id='reuse-dynamic'></a> Reuse Existing Dynamic Public IP 
+
+1. List your VMs and record the name of your Ops Manager VM:
+    <pre class="terminal">$ azure vm list</pre>
+1. Delete your old Ops Manager VM:
+    <pre class="terminal">azure delete $RESOURCE_GROUP YOUR-OPS-MAN-VM</pre>
+1. List your network interfaces and record the name of the Ops Manager network interface:
+    <pre class="terminal">$ azure resource list -g $RESOURCE_GROUP -r Microsoft.Network/networkInterfaces</pre>
+
+###<a id='new-ip'></a> Use a New Dynamic Public IP 
+
+1. Create a new public IP address named `ops-manager-ip-new`.
+    <pre class="terminal">
+    $ azure network public-ip create $RESOURCE_GROUP ops-manager-ip-new $LOCATION --allocation-method Static
+    info:    Executing command network public-ip create
+    warn:    Using default --idle-timeout 4
+    warn:    Using default --ip-version IPv4
+    <span>+</span> Looking up the public ip "ops-manager-ip-new"
+    <span>+</span> Creating public ip address "ops-manager-ip"
+    data:    Id                              : /subscriptions/222e8ffe-81ce-33ee-e3e2-1a405ffc4134/resourceGroups/pcf-resource-group/providers/Microsoft.Network/publicIPAddresses/ops-manager-ip-new
+    data:    Name                            : ops-manager-ip-new
+    data:    Type                            : Microsoft.Network/publicIPAddresses
+    data:    Location                        : westus
+    data:    Provisioning state              : Succeeded
+    data:    Allocation method               : Static
+    data:    IP version                      : IPv4
+    data:    Idle timeout in minutes         : 4
+    data:    IP Address                      : <%= vars.example_ip_1 %>
+    info:    network public-ip create command OK
+    </pre>
+
+1. Record the **IP Address** from the output above. This is the public IP address of Ops Manager.
+
+1. Create a network interface for Ops Manager.
+    <pre class="terminal">
+    $ azure network nic create --subnet-vnet-name pcf-net --subnet-name pcf \
+    --network-security-group-name opsmgr-nsg \
+    --private-ip-address 10.0.0.5 --public-ip-name ops-manager-ip-new \
+    $RESOURCE_GROUP ops-manager-nic-new $LOCATION
+    </pre>
+
+    <p class="note"><strong>Note</strong>: If the command fails with a <code>parameters must be provided</code> error, run it again and ensure that you place <code>$RESOURCE_GROUP ops-manager-nic $LOCATION</code> at the end of the command as specified above. The Azure CLI requires that you specify options before other parameters.</p>
+
+1. Shut down your old Ops Manager VM:
+    <pre class="terminal">
+    $ azure vm stop $RESOURCE\_GROUP ops-manager
+    </pre>
+    If your Ops Manager VM is not named `ops-manager`, provide the correct name. To list all VMs in your account, use `azure vm list`.
+
+1. Update your DNS record to point to your new public IP address of Ops Manager.
+
+##<a id='boot'></a> Step 4: Boot Ops Manager
+
+1. If you want to use the keypair from your previous Ops Manager, locate the path to the file on your local machine. If you want to create a new keypair, enter the following command:
+   <pre class="terminal">
+   $ ssh-keygen -t rsa -f opsman -C ubuntu
+   </pre>
+   <br>
+   When prompted for a passphrase, press the `enter` key to provide an empty passphrase.
+
+1. Create a VM against the Ops Manager image, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file.
+    <pre class="terminal">
+    $ azure vm create $RESOURCE\_GROUP ops-manager $LOCATION \
+    Linux --nic-name YOUR-OPS-MAN-NIC \
+    --os-disk-vhd https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/os\_disk.vhd \
+    --image-urn https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image.vhd \
+    --admin-username ubuntu --storage-account-name $STORAGE\_NAME \
+    --vm-size Standard\_DS2_v2 --ssh-publickey-file PATH-TO-PUBLIC-KEY
+    </pre>
+    <br>
+    If you are reusing a dynamic public IP address, replace `YOUR-OPS-MAN-NIC` with the name of your Ops Manager network interface, recorded in the previous section. If you are using a new dynamic public IP address, replace `YOUR-OPS-MAN-NIC` with `ops-manager-nic-new`.
+    <br><br>
+    If you are using Azure China, Azure Government Cloud, or Azure Germany, replace `blob.core.windows.net` with the following:
+    <br><br>
+    * For Azure China, use `blob.core.chinacloudapi.cn`. See the [Azure documentation](https://msdn.microsoft.com/en-us/library/azure/dn578439.aspx) for more information.
+    * For Azure Government Cloud, use `blob.core.usgovcloudapi.net`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-government/documentation-government-services-storage) for more information.
+    * For Azure Germany, use `blob.core.cloudapi.de`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/germany/germany-developer-guide) for more information.
+
+1. The VM may take several minutes to boot. Run the following command, and examine the output under **PowerState** to check the status of the VM.
+    <pre class="terminal">
+    $ azure vm list
+    info:    Executing command vm list
+    <span>+</span> Getting virtual machines
+    data:    ResourceGroupName  Name                 ProvisioningState  PowerState  Location  Size
+    data:    -----------------  -------------------  -----------------  ----------  --------  ---------------
+    data:    PCF                ops-manager          Succeeded          VM running  westus    Standard\_DS2\_v2
+    info:    vm list command OK
+    </pre>
+
+    The **PowerState** displays `VM running` when the Ops Manager deployment successfully completes. 
+
+##<a id='resize'></a> Step 5: Resize Ops Manager VM Disk (Required)
+
+The default OS disk size is too small for deploying PCF. Perform the following steps to increase the size of the OS disk of the Ops Manager VM:
+
+1. Stop and deallocate the Ops Manager VM before resizing:
+    <pre class="terminal">$ azure vm deallocate --resource-group $RESOURCE\_GROUP --name ops-manager</pre>
+
+1. Increase the size of the OS disk of the Ops Manager VM to 120 GB:
+    <pre class="terminal">$ azure vm set --resource-group $RESOURCE\_GROUP --name ops-manager --new-os-disk-size 120</pre>
+
+1. Start the Ops Manager VM:
+    <pre class="terminal">$ azure vm start --resource-group $RESOURCE\_GROUP --name ops-manager</pre>
+
+1. SSH into the Ops Manager VM, replacing `YOUR-OPS-MAN-IP` with the public IP address of Ops Manager that you recorded in a previous step:
+    <pre class="terminal">$ ssh -i opsman ubuntu@YOUR-OPS-MAN-IP</pre>
+    If the private key you generated is not `opsman`, provide the correct filename instead.
+
+1. From the Ops Manager VM, use `df` to confirm that the OS disk has been resized:
+    <pre class="terminal">
+    $ df -h
+     Filesystem      Size  Used Avail Use% Mounted on
+     udev            1.7G     0  1.7G   0% /dev
+     tmpfs           344M  5.0M  340M   2% /run
+     /dev/sda1        119G  1.3G   48G   3% /
+    </pre>

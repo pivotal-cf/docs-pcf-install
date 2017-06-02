@@ -104,7 +104,7 @@ $ bosh deployments
 1. Navigate to the Ops Manager Installation Dashboard.
 1. Click the Elastic Runtime tile.
 1. Click the **Credentials** tab.
-1. Locate **Bbr Credentials** and click **Link to Credential** next to it.
+1. Locate **Bbr Ssh Credentials** and click **Link to Credential** next to it.
 1. Copy the value for `private_key_pem`, beginning with "-----BEGIN RSA PRIVATE KEY-----" and paste it into a file that you save on your jumpbox.
 1. Ensure the BOSH Director backup artifact is in the folder you will run BBR from. 
 1. Run the BBR restore command from your jumpbox to restore the BOSH Director:
@@ -121,7 +121,7 @@ $ bosh deployments
   Replace the placeholder values as follows:
   * `NAME_OF_BACKUP`: This is the name of your backup artifact.
   * `PATH_TO_PRIVATE_KEY`: This is the path to the private key file you created above. 
-  * `HOST`: This is the address of the BOSH Director, including the port number. **Question: Can you provide an example?**
+  * `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this will be a URL, e.g. https://my-bosh.xxx.cf-app.com. Otherwise, it will be the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
 
 <p class="note"><strong>Note</strong>: The BBR restore command can take a long time to complete. Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
 
@@ -142,6 +142,8 @@ If the command fails, do the following:
 
 1. Navigate to the Ops Manager Installation Dashboard and click **Apply Changes**. This deploys Elastic Runtime.
 
+1. If the Elastic Runtime backup artifact has been moved from the jumpbox, put it back into the directory bbr is run from. 
+
 1. Run the BBR restore command from your jumpbox to restore Elastic Runtime:
 <pre class="terminal">
 $  BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
@@ -151,4 +153,10 @@ $  BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
   --deployment DEPLOYMENT\_NAME \
   --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
   restore </pre>
+
+    Replace the placeholder values as follows:
+    * `BOSH_CLIENT`, `BOSH_CLIENT_SECRET`: ** Use the BOSH UAA user provided in  **Pivotal Ops Manager > Credentials > Uaa Bbr Client Credentials** 
+    * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 4: Identify Your Deployment](#identify-deployment) section.
+    * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
 

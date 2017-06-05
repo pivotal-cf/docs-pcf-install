@@ -66,20 +66,28 @@ Prepare your environment for PCF by following the instructions specific to your 
 1. On the Ops Manager VM, delete the `/var/tempest/workspaces/default/deployments/bosh-state.json` file.
 1. Navigate to Ops Manager Installation Dashboard and click **Apply Changes** to redeploy. ***TBD Director only Apply changes***.
 
-## <a id="artifacts-jumpbox"></a> Step 4: Transfer Artifacts to Jumpbox
+## <a id="director-only"></a> Step 4: Apply changes to install only the BOSH Director 
+POST "https://example.com/api/v0/installations" \ 
+    -d '{
+"deploy_products": none,
+"errands": {},
+  "ignore_warnings": true
+}'
+
+## <a id="artifacts-jumpbox"></a> Step 5: Transfer Artifacts to Jumpbox
 
 In the [Step 9: Back Up Your Deployment](./backup-pcf-bbr.html#bbr-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic, you moved the TAR and metadata files of the backup artifact off your jumpbox to your preferred storage space. Now you must transfer those files back to your jumpbox.
 
 For instance, you could SCP the backup artifact to your jumpbox:
   <pre class="terminal">$ scp LOCAL\_PATH\_TO\_BACKUP\_ARTIFACT JUMPBOX\_USER/JUMPBOX\_ADDRESS</pre>
 
-## <a id="retrieve"></a> Step 5: Retrieve BOSH Director Address and Credentials
+## <a id="retrieve"></a> Step 6: Retrieve BOSH Director Address and Credentials
 
 Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in:
 
 <%= partial 'bosh_target_director' %>
 
-## <a id='identify-deployment'></a> Step 6: Identify Your Deployment
+## <a id='identify-deployment'></a> Step 7: Identify Your Deployment
 
 After logging in to your BOSH Director, run `bosh deployments` to identify the name of the BOSH deployment that contains PCF. 
 
@@ -95,7 +103,7 @@ $ bosh deployments
 +-------------+--------------+-------------------------------------------------+
 </pre>
 
-## <a id='restore-bosh'></a> Step 7: Restore the BOSH Director
+## <a id='restore-bosh'></a> Step 8: Restore the BOSH Director
 
 1. SSH into your jumpbox:
   <pre class="terminal">
@@ -104,7 +112,7 @@ $ bosh deployments
 1. Navigate to the Ops Manager Installation Dashboard.
 1. Click the Elastic Runtime tile.
 1. Click the **Credentials** tab.
-1. Locate **Bbr Credentials** and click **Link to Credential** next to it.
+1. Locate **Bbr Ssh Credentials** and click **Link to Credential** next to it.
 1. Copy the value for `private_key_pem`, beginning with "-----BEGIN RSA PRIVATE KEY-----" and paste it into a file that you save on your jumpbox.
 1. Ensure the BOSH Director backup artifact is in the folder you will run BBR from. 
 1. Run the BBR restore command from your jumpbox to restore the BOSH Director:
@@ -121,11 +129,11 @@ $ bosh deployments
   Replace the placeholder values as follows:
   * `NAME_OF_BACKUP`: This is the name of your backup artifact.
   * `PATH_TO_PRIVATE_KEY`: This is the path to the private key file you created above. 
-  * `HOST`: This is the address of the BOSH Director, including the port number. **Question: Can you provide an example?**
+  * `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this will be a URL, e.g. https://my-bosh.xxx.cf-app.com. Otherwise, it will be the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
 
 <p class="note"><strong>Note</strong>: The BBR restore command can take a long time to complete. Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
 
-If the commands completes successfully, continue to [Step 8: Restore Elastic Runtime](#restore-ert).
+If the commands completes successfully, continue to [Step 9: Remove the cloud ids for all deployments](#bosh-cck).
 
 If the command fails, do the following:
 
@@ -135,12 +143,18 @@ If the command fails, do the following:
 1. Ensure the source deployment is incompatible with the target deployment.
 1. Ensure that the jumpbox can reach the BOSH Director.
 
-## <a id='restore-ert'></a> Step 8: Apply Changes
+## <a id="bosh-cck"></a> Step 9: Remove the cloud ids for all deployments
+For every deployment in the BOSH Director, run this command `bosh-cli -e [environment] -d [deployment-name] -n cck --resolution delete_disk_reference --resolution delete_vm_reference`
+You can use the list of deployments returned in [Step 7: Identify Your Deployment](#identify-deployment)
+
+## <a id='restore-ert'></a> Step 10: Apply Changes
 1. Navigate to Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.  ***TBD Director only Apply changes***
 
-## <a id='restore-ert'></a> Step 9: Restore Elastic Runtime
+## <a id='restore-ert'></a> Step 11: Restore Elastic Runtime
 
 1. Navigate to the Ops Manager Installation Dashboard and click **Apply Changes**. This deploys Elastic Runtime.
+
+1. If the Elastic Runtime backup artifact has been moved from the jumpbox, put it back into the directory bbr is run from. 
 
 1. Run the BBR restore command from your jumpbox to restore Elastic Runtime:
 <pre class="terminal">
@@ -151,4 +165,10 @@ $  BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
   --deployment DEPLOYMENT\_NAME \
   --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
   restore </pre>
+
+    Replace the placeholder values as follows:
+    * `BOSH_CLIENT`, `BOSH_CLIENT_SECRET`: ** Use the BOSH UAA user provided in  **Pivotal Ops Manager > Credentials > Uaa Bbr Client Credentials** 
+    * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 4: Identify Your Deployment](#identify-deployment) section.
+    * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
 

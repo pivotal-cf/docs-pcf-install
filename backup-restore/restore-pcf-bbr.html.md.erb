@@ -159,6 +159,8 @@ $ bosh-cli -e [environment] -d [deployment-name] -n cck \
 </pre>
 This will reconcile the BOSH Director's internal state with the state in the IaaS. You can use the list of deployments returned in [Step 7: Identify Your Deployment](#identify-deployment).
 
+<p class="note"><strong>Note</strong>: If the <code>bosh-cli cck</code> command does not successfully delete disk references, e.g. if you see <code>Scanning 19 persistent disks: 19 OK, 0 missing ...</code>, please follow the additional instructions in <a href="#removing-disks">Appendix: Removing Unused Disks</a>.</p>
+
 ## <a id='restore-ert'></a> Step 10: Apply Changes
 Navigate to Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
 
@@ -183,3 +185,14 @@ $ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
     * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 4: Identify Your Deployment](#identify-deployment) section.
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
+
+## <a id='removing-disks'></a> Appendix: Removing Unused Disks
+
+If `bosh-cli cck` does not clean up all disk references, there are disks from a previous deployment in the IaaS which will prevent recreated deployments from working.
+
+To clean up these disks, either:
+
+* target the redeployed BOSH Director using the BOSH CLI, list deployments and delete each deployment using `bosh-cli -d DEPLOYMENT_NAME delete-deployment`, or
+* manually log into your IaaS account and delete the disks by hand.
+
+Once the disks are deleted, continue with [Step 9: Remove stale cloud IDs for all deployments](#bosh-cck).

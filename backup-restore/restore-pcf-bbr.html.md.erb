@@ -186,6 +186,13 @@ $ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 4: Identify Your Deployment](#identify-deployment) section.
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
 
+1. If you have container-to-container networking enabled in the Elastic Runtime, you will need to perform an additional cleanup step after restoring ERT.
+  * Get the MySQL admin password from **Pivotal Ops Manager > Pivotal Elastic Runtime > Credentials > Mysql Admin Credentials**
+  * SSH onto the `mysql` VM.
+  * Run `sudo /var/vcap/packages/mariadb/bin/mysql -u root -p` and enter the admin password.
+  * At the MySQL prompt, enter `use silk; drop table subnets; drop table gorp_migrations;`.
+  * SSH onto each `diego_database` VM and run `sudo monit restart silk-controller`.
+
 1. If desired, scale the MySQL Server job back up to its previous number of instances by going to the Ops Manager Installation Dashboard and navigating to **Pivotal Elastic Runtime > Resource Config** and clicking **Apply Changes** to deploy.
 
 

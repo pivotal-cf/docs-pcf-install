@@ -17,7 +17,7 @@ owner: RelEng
 
 <p class="note"><strong>Note</strong>: BBR is a beta feature in PCF v1.11.</p>
 
-This topic describes the procedure for restoring your critical backend PCF components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments. To perform the procedures in this topic, you must have backed up Pivotal Cloud Foundry (PCF) by following the steps in the [Backing Up Pivotal Cloud Foundry with BBR](backup-pcf-bbr.html) topic.
+This topic describes the procedure for restoring your critical backend Pivotal Cloud Foundry (PCF) components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments. To perform the procedures in this topic, you must have backed up Pivotal Cloud Foundry (PCF) by following the steps in the [Backing Up Pivotal Cloud Foundry with BBR](backup-pcf-bbr.html) topic.
 
 To restore PCF manually, see the <a href="restore-pcf.html">Restoring Pivotal Cloud Foundry Manually from Backup</a> topic.
 
@@ -63,45 +63,34 @@ Prepare your environment for PCF by following the instructions specific to your 
 ## <a id="bosh-state"></a> Step 3: Remove BOSH State File
 
 1. SSH into your Ops Manager VM. For more information, see the [SSH into Ops Manager](../trouble-advanced.html#ssh) section of the <em>Advanced Troubleshooting with the BOSH CLI</em> topic.
-1. On the Ops Manager VM, delete the `/var/tempest/workspaces/default/deployments/bosh-state.json` file.
-1. Log into Ops Manager. For each tile that requires one, upload the required stemcell.
-<p class="note"><strong>Note</strong>: Do not click 'Apply Changes' at this time.</p>
-
-## <a id="director-only"></a> Step 4: Apply changes to deploy only the BOSH Director
-
-1. SSH into your jumpbox.
-1. [Download](https://github.com/pivotal-cf/om/releases/latest) the latest version of `om-linux`, by running e.g. `wget https://github.com/pivotal-cf/om/releases/download/0.23.0/om-linux`.
-1. Make the downloaded binary executable by running e.g. `chmod +x om-linux`.
-1. Run the following `om` command:
-  <pre class='terminal'>
-  $ om-linux -t OPS\_MANAGER\_URL -u OPS\_MANAGER\_ADMIN\_USER \
-  -p OPS\_MANAGER\_ADMIN\_PASSWORD \
-  -k curl -p /api/v0/installations -x POST -d \
-  '{"deploy\_products": "none", "errands": {}, "ignore\_warnings": true }'
+1. On the Ops Manager VM, delete the `/var/tempest/workspaces/default/deployments/bosh-state.json` file:
+  <pre class="terminal">
+  $ rm /var/tempest/workspaces/default/deployments/bosh-state.json
   </pre>
-1. The director deploy will begin. Follow its progress in the Ops Manager UI.
+1. Navigate to `YOUR-OPS-MAN-FQDN` in a browser and log into Ops Manager. 
+1. For each tile that requires one, upload the required stemcell.
+1. Click **Apply Changes** to deploy only the BOSH Director.
 
-## <a id="artifacts-jumpbox"></a> Step 5: Transfer Artifacts to Jumpbox
+## <a id="artifacts-jumpbox"></a> Step 4: Transfer Artifacts to Jumpbox
 
 In the [Step 9: Back Up Your Deployment](./backup-pcf-bbr.html#bbr-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic, you moved the TAR and metadata files of the backup artifact off your jumpbox to your preferred storage space. Now you must transfer those files back to your jumpbox.
 
 For instance, you could SCP the backup artifact to your jumpbox:
   <pre class="terminal">$ scp LOCAL\_PATH\_TO\_BACKUP\_ARTIFACT JUMPBOX\_USER/JUMPBOX\_ADDRESS</pre>
 
-## <a id="retrieve"></a> Step 6: Retrieve BOSH Director Address and Credentials
+## <a id="retrieve"></a> Step 5: Retrieve BOSH Director Address and Credentials
 
 Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in:
 
-<%= partial 'bosh_target_director' %>
+<%= partial 'bosh_target_director_bbr' %>
 
-## <a id='identify-deployment'></a> Step 7: Identify Your Deployment
+## <a id='identify-deployment'></a> Step 6: Identify Your Deployment
 
-After logging in to your BOSH Director, run `bosh deployments` to identify the name of the BOSH deployment that contains PCF.
-
-The following example displays information for a BOSH deployment named `cf-example`:
+After logging in to your BOSH Director, run `bosh deployments` to identify the name of the BOSH deployment that contains PCF:
 
 <pre class='terminal'>
-$ bosh-cli -e [environment] -d [deployment-name] deployments
+$ bosh -e DIRECTOR_IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate deployments
+
 Name                     Release(s)
 cf-example               push-apps-manager-release/661.1.24
                          cf-backup-and-restore/0.0.1
@@ -112,17 +101,20 @@ cf-example               push-apps-manager-release/661.1.24
                          ...
 </pre>
 
-## <a id='restore-bosh'></a> Step 8: Restore the BOSH Director
+In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
 
+## <a id='restore-bosh'></a> Step 7: Restore the BOSH Director
+
+1. Navigate to the Ops Manager Installation Dashboard.
+1. Click the Ops Manager tile.
+1. Click the **Credentials** tab.
+1. Locate **Bbr Ssh Credentials** and click **Link to Credential** next to it.
+1. Copy the value for `private_key_pem`, beginning with `"-----BEGIN RSA PRIVATE KEY-----"`.
 1. SSH into your jumpbox.
-1. Using the same `om` binary as in [Step 4: Apply changes to deploy only the BOSH Director](#director-only), run:
-  <pre class='terminal'>
-  $ om-linux -t OPS\_MANAGER\_URL -u OPS\_MANAGER\_ADMIN\_USER \
-  -p OPS\_MANAGER\_ADMIN\_PASSWORD \
-  -k curl -p /api/v0/deployed/director/credentials/bbr\_ssh\_credentials
-  </pre>
-1. Copy the value for `private_key_pem`, beginning with `-----BEGIN RSA PRIVATE KEY-----` to your clipboard.
-1. Run `printf -- "[pasted_private_key]" > PRIVATE_KEY`. This will reformat the key and save it to a file called `PRIVATE_KEY` in the current directory.
+1. Run the following command to reformat the key and save it to a file called `PRIVATE_KEY` in the current directory, pasting in the contents of your private key for `YOUR_PRIVATE_KEY`:
+  <pre class="terminal">
+  printf -- "YOUR\_PRIVATE\_KEY" > PRIVATE_KEY
+  </pre> 
 1. Ensure the BOSH Director backup artifact is in the folder you will run BBR from.
 1. Run the BBR restore command from your jumpbox to restore the BOSH Director:
   <pre class="terminal">
@@ -136,11 +128,11 @@ cf-example               push-apps-manager-release/661.1.24
   <br><br>
   Replace the placeholder values as follows:
   * `PATH_TO_PRIVATE_KEY`: This is the path to the private key file you created above.
-  * `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this will be a URL, e.g. https://my-bosh.xxx.cf-app.com. Otherwise, it will be the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+  * `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this will be a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, it will be the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 5: Retrieve BOSH Director Address and Credentials](#retrieve) section.
 
 <p class="note"><strong>Note</strong>: The BBR restore command can take a long time to complete. Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
 
-If the commands completes successfully, continue to [Step 9: Remove stale cloud IDs for all deployments](#bosh-cck).
+If the commands completes successfully, continue to [Step 8: Remove Stale Cloud IDs for All Deployments](#bosh-cck).
 
 If the command fails, do the following:
 
@@ -150,25 +142,32 @@ If the command fails, do the following:
 1. Ensure the source deployment is incompatible with the target deployment.
 1. Ensure that the jumpbox can reach the BOSH Director.
 
-## <a id="bosh-cck"></a> Step 9: Remove stale cloud IDs for all deployments
-For **every deployment** in the BOSH Director, run this command:
+## <a id="bosh-cck"></a> Step 8: Remove Stale Cloud IDs for All Deployments
+
+For every deployment in the BOSH Director, run the following command:
+
 <pre class="terminal">
-$ bosh-cli -e [environment] -d [deployment-name] -n cck \
+$ bosh -e DIRECTOR_IP -d DEPLOYMENT_NAME -n cck \
 --resolution delete\_disk\_reference \
 --resolution delete\_vm\_reference
 </pre>
-This will reconcile the BOSH Director's internal state with the state in the IaaS. You can use the list of deployments returned in [Step 7: Identify Your Deployment](#identify-deployment).
 
-<p class="note"><strong>Note</strong>: If the <code>bosh-cli cck</code> command does not successfully delete disk references, e.g. if you see <code>Scanning 19 persistent disks: 19 OK, 0 missing ...</code>, please follow the additional instructions in <a href="#removing-disks">Appendix: Removing Unused Disks</a>.</p>
+This reconciles the BOSH Director's internal state with the state in the IaaS. You can use the list of deployments returned in [Step 6: Identify Your Deployment](#identify-deployment).
 
-## <a id='redeploy-ert'></a> Step 10: Redeploy ERT
+If the <code>bosh-cli cck</code> command does not successfully delete disk references and you see a message similar to the following:
+<pre class="terminal">
+Scanning 19 persistent disks: 19 OK, 0 missing ...
+</pre>
+Follow the additional instructions in the <a href="#removing-disks">Remove Unused Disks</a> section below.
+
+## <a id='redeploy-ert'></a> Step 9: Redeploy Elastic Runtime
 1. From the Ops Manager Installation Dashboard, navigate to **Pivotal Elastic Runtime > Resource Config**.
-1. Ensure the number of instances for MySQL Server is set to 1.
+1. Ensure the number of instances for MySQL Server is set to `1`.
 1. Navigate to Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
 
-## <a id='restore-ert'></a> Step 11: Restore Elastic Runtime
+## <a id='restore-ert'></a> Step 19: Restore Elastic Runtime
 
-1. If the Elastic Runtime backup artifact has been moved from the jumpbox, put it back into the directory bbr is run from.
+1. If the Elastic Runtime backup artifact has been moved from the jumpbox, put it back into the directory that BBR is run from.
 
 1. Run the BBR restore command from your jumpbox to restore Elastic Runtime:
 <pre class="terminal">
@@ -182,27 +181,28 @@ $ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
 
     Replace the placeholder values as follows:
     * `BOSH_CLIENT`, `BOSH_CLIENT_SECRET`: Use the BOSH UAA user provided in  **Pivotal Ops Manager > Credentials > Uaa Bbr Client Credentials**.
-    * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
-    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 4: Identify Your Deployment](#identify-deployment) section.
+    * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 5: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 6: Identify Your Deployment](#identify-deployment) section.
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
 
-1. If you have container-to-container networking enabled in the Elastic Runtime, you will need to perform an additional cleanup step after restoring ERT.
-  * Get the MySQL admin password from **Pivotal Ops Manager > Pivotal Elastic Runtime > Credentials > Mysql Admin Credentials**
-  * SSH onto the `mysql` VM.
-  * Run `sudo /var/vcap/packages/mariadb/bin/mysql -u root -p` and enter the admin password.
-  * At the MySQL prompt, enter `use silk; drop table subnets; drop table gorp_migrations;`.
-  * SSH onto each `diego_database` VM and run `sudo monit restart silk-controller`.
+1. If you have container-to-container networking enabled in the Elastic Runtime, perform the following steps after restoring Elastic Runtime:
+  1. Retrieve the MySQL admin password from **Pivotal Elastic Runtime > Credentials > Mysql Admin Credentials**
+  1. SSH onto the `mysql` VM.
+  1. Run `sudo /var/vcap/packages/mariadb/bin/mysql -u root -p` and enter the admin password.
+  1. At the MySQL prompt, enter `use silk; drop table subnets; drop table gorp_migrations;`.
+  1. SSH onto each `diego_database` VM and run `sudo monit restart silk-controller`.
 
 1. If desired, scale the MySQL Server job back up to its previous number of instances by going to the Ops Manager Installation Dashboard and navigating to **Pivotal Elastic Runtime > Resource Config** and clicking **Apply Changes** to deploy.
 
+1. Validate your restored PCF by performing the steps in the [Step 11: (Optional) Validate Your Backup](backup-pcf-bbr.html#validate-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em>.
 
-## <a id='removing-disks'></a> Appendix: Removing Unused Disks
+## <a id='removing-disks'></a> Remove Unused Disks
 
-If `bosh-cli cck` does not clean up all disk references, there are disks from a previous deployment in the IaaS which will prevent recreated deployments from working.
+If `bosh cck` does not clean up all disk references, there are disks from a previous deployment in the IaaS which will prevent recreated deployments from working.
 
-To clean up these disks, either:
+To clean up these disks, perform one of the following steps:
 
-* target the redeployed BOSH Director using the BOSH CLI, list deployments and delete each deployment using `bosh-cli -d DEPLOYMENT_NAME delete-deployment`, or
-* manually log into your IaaS account and delete the disks by hand.
+* Target the redeployed BOSH Director using the BOSH CLI, list the deployments, and delete each deployment using `bosh -d DEPLOYMENT_NAME delete-deployment`.
+* Log into your IaaS account and delete the disks manually.
 
-Once the disks are deleted, continue with [Step 9: Remove stale cloud IDs for all deployments](#bosh-cck).
+Once the disks are deleted, continue with [Step 8: Remove Stale Cloud IDs for All Deployments](#bosh-cck).

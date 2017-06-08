@@ -9,7 +9,7 @@ owner: RelEng
 
 <p class="note"><strong>Note</strong>: BBR is a beta feature in PCF v1.11.</p>
 
-This topic describes the procedure for backing up your critical backend PCF components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments. To restore your backup, see the [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html) topic.
+This topic describes the procedure for backing up your critical backend Pivotal Cloud Foundry (PCF) components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments. To restore your backup, see the [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html) topic.
 
 To back up PCF manually, see the <a href="backup-pcf.html">Backing Up Pivotal Cloud Foundry Manually</a> topic.
 
@@ -26,19 +26,25 @@ BBR is a binary that can back up and restore BOSH deployments and BOSH Directors
 BBR backs up the following PCF components:
 
 * **Elastic Runtime**: Elastic Runtime must be configured with an internal MySQL database and a WebDAV/NFS blobstore to be backed up and restored with BBR.
-* **BOSH Director**: The BOSH Director must have an internal Postgres database to be backed up and restored with BBR.
+* **BOSH Director**: The BOSH Director must have an internal Postgres database to be backed up and restored with BBR. As part of backing up the BOSH Director, BBR backs up the BOSH UAA database and the CredHub database.
 
-Service tiles have different [levels of integration](http://docs.pivotal.io/tiledev/stages.html). BBR may or may not be able to back up your service tiles depending on their level of integration. Consult the following list:
+Service tiles have different [levels of integration](https://docs.pivotal.io/tiledev/stages.html). BBR may or may not be able to back up your service tiles depending on their level of integration. Consult the following list:
 
 * Service brokers: You can back up and restore all brokered services with the procedures documented in this topic and in the [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html) topic. Because a brokered service runs external to PCF, BBR backs up and restores the VMs and the service instances, but not the service data.
 * Managed services: Because managed services are BOSH releases, they must implement the BBR scripts. Otherwise, you cannot use BBR to back up and restore them. If the managed service has implemented BBR scripts, BBR backs up and restores both the VMs and the service data.
-* On-demand services: On-demand instances will be redeployed, but at present the data in the instance is not backed up. A new, empty instance of the on-demand service will be restored.
+* On-demand services: On-demand instances are redeployed, but the data in the instance is not backed up. A new, empty instance of the on-demand service is restored.
 
 ## <a id='workflow'></a>Workflow
 
 Operators download the BBR binary and transfer it to a jumpbox. Then they run BBR from the jumpbox, specifying the name of the BOSH deployment to back up.
 
-BBR examines the jobs in the BOSH deployment, and triggers the scripts in stages -- first pre-backup lock, then backup, then post-backup unlock. Scripts in the same stage are all triggered together -- e.g. all pre-backup lock scripts are triggered before any backup scripts. Scripts within a stage may be triggered in any order.
+BBR examines the jobs in the BOSH deployment, and triggers the scripts in the following stages: 
+
+1. **Pre-backup lock**: The pre-backup lock scripts locks the job so backups are consistent across the cluster.
+1. **Backup**: The backup script backs up the release.
+1. **Post-backup unlock**: The post-backup unlock script unlocks the job after the backup is complete.
+
+Scripts in the same stage are all triggered together. For instance, BBR triggers all pre-backup lock scripts before any backup scripts. Scripts within a stage may be triggered in any order.
 
 The backup artifacts are drained to the jumpbox, where the operator can transfer them to storage and use them to [restore](restore-pcf.html) PCF.
 
@@ -91,19 +97,17 @@ As a result, an exported installation file can exceed 5 GB in size.
 
 Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in:
 
-<%= partial 'bosh_target_director' %>
+<%= partial 'bosh_target_director_bbr' %>
 
 ## <a id='identify-deployment'></a> Step 5: Identify Your Deployment
 
 After logging in to your BOSH Director, run the following command to identify the name of the BOSH deployment that contains PCF:
 
-`$ bosh-cli -e <DIRECTOR_IP> --ca-cert /var/tempest/workspaces/default/root_ca_certificate deployments`
+<pre class="terminal">
+$ bosh -e DIRECTOR_IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate deployments
 
-The following example displays information for a BOSH deployment named `cf-example`:
-
-<pre class='terminal'>
 Name                     Release(s)
-cf-a3a6ae6c15a2774fba54  push-apps-manager-release/661.1.24
+cf-example               push-apps-manager-release/661.1.24
                          cf-backup-and-restore/0.0.1
                          binary-buildpack/1.0.11
                          capi/1.28.0
@@ -111,6 +115,8 @@ cf-a3a6ae6c15a2774fba54  push-apps-manager-release/661.1.24
                          cf-mysql/35
                          ...
 </pre>
+
+In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
 
 ## <a id='jumpbox'></a>Step 6: Set Up Your Jumpbox
 
@@ -180,9 +186,9 @@ Perform the following steps to check that your BOSH Director is reachable and ha
     pre-backup-check</pre>
 
     Replace the placeholder values as follows:
-    * `BOSH_CLIENT`, `BOSH_CLIENT_SECRET`: ** Use the BOSH UAA user provided in  **Pivotal Ops Manager > Credentials > Uaa Bbr Client Credentials**
-    * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
-    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 4: Identify Your Deployment](#identify-deployment) section.
+    * `BOSH_CLIENT`, `BOSH_CLIENT_SECRET`: From the Installation Dashboard in Ops Manager, select **Ops Manager Director > Credentials** and click **Uaa Bbr Client Credentials** to retrieve the BOSH UAA credentials.
+    * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 4: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 5: Identify Your Deployment](#identify-deployment) section.
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
 
 1. If the pre-backup check succeeds, continue to the [next section](#bbr-backup). If it fails, the deployment you selected may not have the correct backup scripts, or the connection to the BOSH Director may have failed.
@@ -214,7 +220,7 @@ If the commands completes successfully, do the following:
 
 1. Move the backup artifact off the jumpbox to your preferred storage space. The backup created by BBR consists of a folder with the backup artifacts and metadata files. However, Pivotal recommends compressing and encrypting the files.
 1. Make redundant copies of your backup and store them in multiple locations in order to minimize the risk of losing your backups in the event of a disaster.
-1. Attempt a test restore on every backup in order to validate it by performing the procedures in the [Step 10: Validate Your Backup](#validate-backup) section below.
+1. Attempt a test restore on every backup in order to validate it by performing the procedures in the [Step 11: Validate Your Backup](#validate-backup) section below.
 
 If the command fails, do the following:
 
@@ -231,8 +237,7 @@ Perform the following steps to back up your BOSH Director:
 1. Click the Ops Manager tile.
 1. Click the **Credentials** tab.
 1. Locate **Bbr Ssh Credentials** and click **Link to Credential** next to it.
-1. Copy the value for `private_key_pem`, beginning with "-----BEGIN RSA PRIVATE KEY-----" and paste it into a file that you save on your jumpbox.
-1.
+1. Copy the value for `private_key_pem`, beginning with `"-----BEGIN RSA PRIVATE KEY-----"` and paste it into a file that you save on your jumpbox.
 1. Run the BBR backup command from your jumpbox to back up your BOSH Director:
 	<pre class="terminal">
 	$ bbr director \
@@ -246,9 +251,7 @@ Perform the following steps to back up your BOSH Director:
 	<br><br>
 	Replace the placeholder values as follows:
 	* `PATH_TO_PRIVATE_KEY`: This is the path to the private key file you created above.
-	* `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, for example `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
-
-Included in the BOSH Director backup are the BOSH UAA database and the CredHub database.
+	* `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 4: Retrieve BOSH Director Address and Credentials](#retrieve) section.
 
 ## <a id='validate-backup'></a> Step 11: (Optional) Validate Your Backup
 

@@ -67,7 +67,7 @@ Prepare your environment for PCF by following the instructions specific to your 
   <pre class="terminal">
   $ rm /var/tempest/workspaces/default/deployments/bosh-state.json
   </pre>
-1. Navigate to `YOUR-OPS-MAN-FQDN` in a browser and log into Ops Manager. 
+1. Navigate to `YOUR-OPS-MAN-FQDN` in a browser and log into Ops Manager.
 1. For each tile that requires one, upload the required stemcell.
 1. Click **Apply Changes** to deploy only the BOSH Director.
 
@@ -114,7 +114,7 @@ In the above example, the name of the BOSH deployment that contains PCF is `cf-e
 1. Run the following command to reformat the key and save it to a file called `PRIVATE_KEY` in the current directory, pasting in the contents of your private key for `YOUR_PRIVATE_KEY`:
   <pre class="terminal">
   printf -- "YOUR\_PRIVATE\_KEY" > PRIVATE_KEY
-  </pre> 
+  </pre>
 1. Ensure the BOSH Director backup artifact is in the folder you will run BBR from.
 1. Run the BBR restore command from your jumpbox to restore the BOSH Director:
   <pre class="terminal">
@@ -122,11 +122,13 @@ In the above example, the name of the BOSH deployment that contains PCF is `cf-e
     --private-key-path PRIVATE\_KEY \
     --username bbr
     --host HOST \
+    --artifact-path PATH\_TO\_DIRECTOR\_BACKUP \
     restore
   </pre>
   Use the optional `--debug` flag to enable debug logs. See the [Logging](backup-pcf-bbr.html#logging) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic for more information.
   <br><br>
   Replace the placeholder values as follows:
+  * `PATH_TO_DIRECTOR_BACKUP`: This is the path to the Director backup you want to restore.
   * `PATH_TO_PRIVATE_KEY`: This is the path to the private key file you created above.
   * `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this will be a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, it will be the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 5: Retrieve BOSH Director Address and Credentials](#retrieve) section.
 
@@ -167,8 +169,6 @@ Follow the additional instructions in the <a href="#removing-disks">Remove Unuse
 
 ## <a id='restore-ert'></a> Step 19: Restore Elastic Runtime
 
-1. If the Elastic Runtime backup artifact has been moved from the jumpbox, put it back into the directory that BBR is run from.
-
 1. Run the BBR restore command from your jumpbox to restore Elastic Runtime:
 <pre class="terminal">
 $ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
@@ -177,6 +177,7 @@ $ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
   --username BOSH\_CLIENT \
   --deployment DEPLOYMENT\_NAME \
   --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
+  --artifact-path PATH\_TO\_ERT\_BACKUP \
   restore </pre>
 
     Replace the placeholder values as follows:
@@ -184,6 +185,7 @@ $ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
     * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 5: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 6: Identify Your Deployment](#identify-deployment) section.
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
+    * `PATH_TO_ERT_BACKUP`: This is the path to the ERT backup you wish to restore.
 
 1. If you have container-to-container networking enabled in the Elastic Runtime, perform the following steps after restoring Elastic Runtime:
   1. Retrieve the MySQL admin password from **Pivotal Elastic Runtime > Credentials > Mysql Admin Credentials**

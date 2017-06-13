@@ -124,7 +124,22 @@ Ensure that you complete the following as part of the upgrade:
 
  If you are using any other BOSH-managed add-ons in your deployment, you should verify OS compatibility for those component as well. For more information about configuring BOSH add-on manifests, see the [BOSH documentation](https://bosh.io/docs/runtime-config.html#addons). 
 
-### <a id="check-health"></a>Prep 9: Check System Health Before Upgrade
+### <a id="autoscaler"></a>Prep 9: Scale Down App Autoscaler
+
+Before upgrading to PCF v1.11, operators must scale down the App Autoscaler service to one instance. Otherwise, the App Autoscaler may panic and fail due to leader elections conflicts.
+
+Perform the following steps:
+
+1. Target the Cloud Controller of your PCF deployment:
+  <pre class="terminal">$ cf api api.YOUR-SYSTEM-DOMAIN</pre>
+1. Log in:
+  <pre class="terminal">$ cf login</pre>
+1. Target the `system` org and the `autoscaling` space:
+  <pre class="terminal">$ cf target -s system -o autoscaling</pre>
+1. Scale the App Autoscaler down to one instance:
+  <pre class="terminal">$ cf scale autoscale -i 1</pre>
+
+### <a id="check-health"></a>Prep 10: Check System Health Before Upgrade
 
 1. Run `bosh cloudcheck` to confirm that the VMs are healthy. For more information, see the [BOSH Cloudcheck](./trouble-advanced.html#cck) topic.
 

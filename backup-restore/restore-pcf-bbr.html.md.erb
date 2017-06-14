@@ -214,3 +214,30 @@ To clean up these disks, perform one of the following steps:
 <p class="note warning"><strong>Note</strong>: This is a very destructive operation.</p>
 
 Once the disks are deleted, continue with [Step 8: Remove Stale Cloud IDs for All Deployments](#bosh-cck).
+
+## <a id="troubleshooting"></a> Troubleshooting
+
+### Scenario
+
+During BBR restore, restoring job `mysql-restore` fails with:
+
+<pre class="terminal">
+1 error occurred:
+
+* restore script for job mysql-restore failed on mysql/0.
+...
+Monit start failed: Timed out waiting for monit: 2m0s
+</pre>
+
+This happens when `mariadb` fails to start within the timeout period -- it will end up in "Execution Failed" state and `monit` will never try to start it again. To validate that this:
+
+1. `bosh ssh` into the MySQL VM.
+1. Run `ps aux | grep mariadb` and check that the `mariadb` process is running.
+1. Run `sudo monit summary` and check that it reports `mariadb_ctrl` is not running.
+
+###  Solution
+
+1. `bosh ssh` into the MySQL VM.
+1. Run `monit unmonitor`
+1. Run `monit monitor` -- after a few minutes, `monit summary` should report that all the processes are running.
+1. Re-attempt the restore.

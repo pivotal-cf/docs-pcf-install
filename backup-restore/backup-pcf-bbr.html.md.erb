@@ -400,3 +400,12 @@ If more logging is needed, use the optional `--debug` flag to print the followin
 * All commands executed on remote instances
 * All commands executed on local environment
 * Standard in and standard out streams for the backup and restore scripts when they are executed
+
+## <a id='cancelling-backup'></a>Cancelling a backup
+
+<p class="note warning">Cancelling a backup can leave the CF API inaccessible. It may also prevent future backups from starting.</p>
+
+BBR will ignore `SIGINT` signals such as hitting `Ctrl-c` during a backup. If you absolutely need to cancel a backup, you can send `SIGTERM` to the `bbr` process to terminate it. However, if you do this, you should follow the steps below afterwards.
+
+1. On each `cloud_controller` VM in your deployment, run `sudo /var/vcap/jobs/cloud-controller-backup/bin/bbr/post-backup-unlock`.
+1. Run `bbr deployment pre-backup-check` (using the flags from your original backup command). If this command reports that the deployment is not backupable, SSH onto each VM mentioned in the error and remove the `/var/vcap/store/bbr-backup` directory if present.

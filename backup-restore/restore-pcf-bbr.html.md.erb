@@ -71,7 +71,7 @@ Prepare your environment for PCF by following the instructions specific to your 
   </pre>
 1. Navigate to `YOUR-OPS-MAN-FQDN` in a browser and log into Ops Manager.
 1. For each tile that requires one, upload the required stemcell.
-1. Do not click **Apply Changes**. Instead, perform the steps in the [Applying Changes to Ops Manager Director](../deploy-ops-man-director.html) topic to use the Ops Manager API to only deploy the Ops Manager Director. 
+1. Do not click **Apply Changes**. Instead, perform the steps in the [Applying Changes to Ops Manager Director](../deploy-ops-man-director.html) topic to use the Ops Manager API to only deploy the Ops Manager Director.
 
 ## <a id="artifacts-jumpbox"></a> Step 4: Transfer Artifacts to Jumpbox
 
@@ -86,26 +86,7 @@ Perform the following steps to retrieve the IP address of your BOSH Director and
 
 <%= partial 'bosh_target_director_bbr' %>
 
-## <a id='identify-deployment'></a> Step 6: Identify Your Deployment
-
-After logging in to your BOSH Director, run `bosh deployments` to identify the name of the BOSH deployment that contains PCF:
-
-<pre class='terminal'>
-$ bosh -e DIRECTOR_IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate deployments
-
-Name                     Release(s)
-cf-example               push-apps-manager-release/661.1.24
-                         cf-backup-and-restore/0.0.1
-                         binary-buildpack/1.0.11
-                         capi/1.28.0
-                         cf-autoscaling/91
-                         cf-mysql/35
-                         ...
-</pre>
-
-In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
-
-## <a id='restore-bosh'></a> Step 7: Restore the BOSH Director
+## <a id='restore-bosh'></a> Step 6: Restore the BOSH Director
 
 1. Navigate to the Ops Manager Installation Dashboard.
 1. Click the Ops Manager tile.
@@ -121,11 +102,11 @@ In the above example, the name of the BOSH deployment that contains PCF is `cf-e
 1. Run the BBR restore command from your jumpbox to restore the BOSH Director:
   <pre class="terminal">
   $ nohup bbr director \
-    --private-key-path PRIVATE\_KEY \
-    --username bbr
-    --host HOST \
-    --artifact-path PATH\_TO\_DIRECTOR\_BACKUP \
-    restore
+      --private-key-path PRIVATE\_KEY \
+      --username bbr \
+      --host HOST \
+      restore \
+        --artifact-path PATH\_TO\_DIRECTOR\_BACKUP
   </pre>
   Use the optional `--debug` flag to enable debug logs. See the [Logging](backup-pcf-bbr.html#logging) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic for more information.
   <br><br>
@@ -146,17 +127,36 @@ If the command fails, do the following:
 1. Ensure the source deployment is incompatible with the target deployment.
 1. Ensure that the jumpbox can reach the BOSH Director.
 
+## <a id='identify-deployment'></a> Step 7: Identify Your Deployment
+
+After logging in to your BOSH Director, run `bosh deployments` to identify the name of the BOSH deployment that contains PCF:
+
+<pre class='terminal'>
+$ bosh -e DIRECTOR_IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate deployments
+
+Name                     Release(s)
+cf-example               push-apps-manager-release/661.1.24
+                         cf-backup-and-restore/0.0.1
+                         binary-buildpack/1.0.11
+                         capi/1.28.0
+                         cf-autoscaling/91
+                         cf-mysql/35
+                         ...
+</pre>
+
+In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
+
 ## <a id="bosh-cck"></a> Step 8: Remove Stale Cloud IDs for All Deployments
 
 For every deployment in the BOSH Director, run the following command:
 
 <pre class="terminal">
 $ bosh -e DIRECTOR_IP -d DEPLOYMENT_NAME -n cck \
---resolution delete\_disk\_reference \
---resolution delete\_vm\_reference
+  --resolution delete_disk_reference \
+  --resolution delete_vm_reference
 </pre>
 
-This reconciles the BOSH Director's internal state with the state in the IaaS. You can use the list of deployments returned in [Step 6: Identify Your Deployment](#identify-deployment).
+This reconciles the BOSH Director's internal state with the state in the IaaS. You can use the list of deployments returned in [Step 7: Identify Your Deployment](#identify-deployment).
 
 If the <code>bosh-cli cck</code> command does not successfully delete disk references and you see a message similar to the following:
 <pre class="terminal">
@@ -167,6 +167,7 @@ Follow the additional instructions in the <a href="#removing-disks">Remove Unuse
 ## <a id='redeploy-ert'></a> Step 9: Redeploy Elastic Runtime
 1. From the Ops Manager Installation Dashboard, navigate to **Pivotal Elastic Runtime > Resource Config**.
 1. Ensure the number of instances for MySQL Server is set to `1`.
+  <p class="note warning"><strong>Note</strong>: Restore will fail if there is not exactly one MySQL Server instance deployed.</p>
 1. Navigate to Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
 
 ## <a id='restore-ert'></a> Step 10: Restore Elastic Runtime
@@ -174,18 +175,19 @@ Follow the additional instructions in the <a href="#removing-disks">Remove Unuse
 1. Run the BBR restore command from your jumpbox to restore Elastic Runtime:
 <pre class="terminal">
 $ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
-  bbr deployment
-  --target BOSH\_DIRECTOR\_IP \
-  --username BOSH\_CLIENT \
-  --deployment DEPLOYMENT\_NAME \
-  --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
-  --artifact-path PATH\_TO\_ERT\_BACKUP \
-  restore </pre>
+      bbr deployment \
+        --target BOSH\_DIRECTOR\_IP \
+        --username BOSH\_CLIENT \
+        --deployment DEPLOYMENT\_NAME \
+        --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
+        restore \
+          --artifact-path PATH\_TO\_ERT\_BACKUP
+</pre>
 
     Replace the placeholder values as follows:
     * `BOSH_CLIENT`, `BOSH_CLIENT_SECRET`: Use the BOSH UAA user provided in  **Pivotal Ops Manager > Credentials > Uaa Bbr Client Credentials**.
     * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 5: Retrieve BOSH Director Address and Credentials](#retrieve) section.
-    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 6: Identify Your Deployment](#identify-deployment) section.
+    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 7: Identify Your Deployment](#identify-deployment) section.
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
     * `PATH_TO_ERT_BACKUP`: This is the path to the Elastic Runtime backup you want to restore.
 

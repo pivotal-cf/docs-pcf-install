@@ -64,16 +64,20 @@ restoring your installation.
 
 	<%= image_tag("ccdb-encrypt-creds.png") %>
 
-## <a id='backup-preparer-node'></a> Step 2: Enable Backup Preparer Node
+## <a id='backup-prepare-node'></a> Step 2: Enable Backup Prepare Node
 
-Perform the following steps to enable the backup preparer node:
+BBR requires the MySQL backup prepare node to be present in order to successfully backup ERT. Currently, the only way to ensure the presence of this node is to enable automated MySQL backups. If you already have these enabled, you may skip this section. In the future, there will be an option to deploy the backup prepare node without enabling automatic MySQL backups.
+
+Perform the following steps to enable the backup prepare node:
 
 1. In the Elastic Runtime tile, click **Internal MySQL**.
-1. Under **Automated Backups Configuration**, select **Enable automated backups from MySQL to an S3 bucket or other S3-compatible file store**. Fill in the required fields with any text value, and set the **Cron Schedule** to a cron-formatted date that doesn't exist. For example, use February 31: `0 0 12 31 2 ? *`.
-	<p class="note"><strong>Note</strong>: If you do not select this option, the backup will fail.</p>
+1. Under **Automated Backups Configuration**, select **Enable automated backups from MySQL to an S3 bucket or other S3-compatible file store**. Fill in the required fields with any text value, and set the **Cron Schedule** to a cron-formatted date that doesn't exist. For example, use February 31: `0 0 31 2 *`.
+	<p class="note"><strong>Note</strong>: If you do not enable automated backups, the BBR backup will fail.</p>
 1. Click **Resource Config** and use the dropdown menu to scale up the **Backup Prepare Node** to one instance.
 	<%= image_tag("backup-prepare-node.png") %>
 1. Navigate back to the Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
+
+
 
 ## <a id='export'></a>Step 3: Export Installation Settings ##
 
@@ -177,13 +181,14 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 	</pre>
 1. Run the BBR pre-backup check:
 	<pre class="terminal">
-	$ BOSH\_CLIENT\_SECRET=BOSH\_CLIENT\_SECRET \
-  	bbr deployment
-	--target BOSH\_DIRECTOR\_IP \
-  	--username BOSH\_CLIENT \
-  	--deployment DEPLOYMENT\_NAME \
-  	--ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
-    pre-backup-check</pre>
+  $ BOSH\_CLIENT\_SECRET=BOSH\_CLIENT\_SECRET \
+      bbr deployment \
+      --target BOSH\_DIRECTOR\_IP \
+      --username BOSH\_CLIENT \
+      --deployment DEPLOYMENT\_NAME \
+      --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
+      pre-backup-check
+	</pre>
 
     Replace the placeholder values as follows:
     * `BOSH_CLIENT`, `BOSH_CLIENT_SECRET`: From the Installation Dashboard in Ops Manager, select **Ops Manager Director > Credentials** and click **Uaa Bbr Client Credentials** to retrieve the BOSH UAA credentials.
@@ -198,19 +203,19 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 		1 error occurred:
 
 		* The mysql restore script expects a backup script which produces mysql-artifact artifact which is not present in the deployment.
-	Follow the instructions in the [Step 2: Enable Backup Preparer Node](#backup-preparer-node) section and retry.
+	Follow the instructions in the [Step 2: Enable Backup Prepare Node](#backup-prepare-node) section and retry.
 
 ## <a id='bbr-backup'></a> Step 9: Back Up Your Elastic Runtime Deployment
 
 Run the BBR backup command from your jumpbox to back up your Elastic Runtime deployment:
 <pre class="terminal">
 $ BOSH\_CLIENT\_SECRET=BOSH\_CLIENT\_SECRET \
-	nohup bbr deployment
-	--target BOSH\_DIRECTOR\_IP \
-	--username BOSH\_CLIENT \
-	--deployment DEPLOYMENT\_NAME \
-	--ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
-	backup</pre>
+  nohup bbr deployment \
+  --target BOSH\_DIRECTOR\_IP \
+  --username BOSH\_CLIENT \
+  --deployment DEPLOYMENT\_NAME \
+  --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
+  backup</pre>
 
 Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
 <p class="note"><strong>Note</strong>: The BBR backup command can take a long time to complete. Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses `nohup` but you could also run the command in a `screen` or `tmux` session.</p>
@@ -245,6 +250,7 @@ Perform the following steps to back up your BOSH Director:
 	  --host HOST \
 	  backup
 	</pre>
+
 
 	Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
 	<br><br>
@@ -295,12 +301,12 @@ Perform the following steps to spin up a second environment that matches the ori
 1. Run the BBR restore command from your jumpbox to restore your Elastic Runtime deployment:
 <pre class="terminal">
 $ BOSH\_CLIENT\_SECRET=BOSH\_CLIENT\_SECRET \
-	bbr deployment
-	--target BOSH\_DIRECTOR\_IP \
-	--username BOSH\_CLIENT \
-	--deployment DEPLOYMENT\_NAME \
-	--ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
-	restore</pre>
+	  bbr deployment \
+      --target BOSH\_DIRECTOR\_IP \
+      --username BOSH\_CLIENT \
+      --deployment DEPLOYMENT\_NAME \
+      --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
+      restore</pre>
 1. Check the status of your applications by performing the procedures in the [next section](#check-status).
 
 ### <a id='check-status'></a> Check Status of Applications

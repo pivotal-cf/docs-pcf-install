@@ -4,7 +4,16 @@ owner: Ops Manager
 ---
 <strong><%= modified_date %></strong>
 <html class="list-style-none"></html>
+<style>
+    .note.warning {
+        background-color: #fdd;
+        border-color: #fbb
+    }
 
+    .note.warning:before {
+        color: #f99;
+     }
+</style>
 This topic describes how to install and configure Elastic Runtime after
 deploying the CloudFormation template for [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Amazon Web Services (AWS).
 Use this topic when [installing Pivotal Cloud Foundry on AWS](./cloudform.html).
@@ -140,25 +149,29 @@ Then proceed to [Step 13: (Optional) Configure Internal MySQL](#internal-mysql) 
 
 If you want to use an external database provider for your Elastic Runtime databases, you must first create the databases on the RDS instance provided by the CloudFormation script.
 
+<p class="note warning">
+<strong>Warning</strong>: Protect whichever database you use in your deployment with a password.</p>
+
 To create the required databases on an AWS RDS instance, perform the following steps.
 
 1. Add the AWS-provided key pair to your SSH profile so that you can access the Ops Manager VM:
 
-    <pre class='terminal'>ssh-add aws-keypair.pem</pre>
+    <pre class='terminal'>$ ssh-add aws-keypair.pem</pre>
 
 1. SSH into your Ops Manager using the [Ops Manager FQDN](../customizing/cloudform-om-deploy.html#create-dns) and the username `ubuntu`:
 
-    <pre class='terminal'>ssh ubuntu@OPS_MANAGER_FQDN</pre>
+    <pre class='terminal'>$ ssh ubuntu@OPS_MANAGER_FQDN</pre>
 
 1. Run the following terminal command to log in to your RDS instance through the MySQL client, using values from your AWS dashboard [**Outputs**](#open-outputs) tab to fill in the following output keys:
 
-     <pre class='terminal'>mysql --host=PcfRdsAddress --user=PcfRdsUsername --password=PcfRdsPassword</pre>
+     <pre class='terminal'>$ mysql --host=PcfRdsAddress --user=PcfRdsUsername --password=PcfRdsPassword</pre>
 
 1. Run the following MySQL commands to create databases for the Elastic Runtime components that require a relational database:
   <pre class="terminal">CREATE database uaa;
   CREATE database ccdb;
   CREATE database notifications;
   CREATE database autoscale;
+  CREATE database routing;
   CREATE database app\_usage\_service;
   CREATE database console;</pre>
   <p class="note">The <code>console</code> database is deprecated but must be created to complete the installation procedure. After successfully deploying PCF v1.8, you can manually drop this database from the MySQL server. If you keep the database, you no longer need to backup and restore it. For more information, see <a href="http://docs.pivotal.io/pivotalcf/1-8/pcf-release-notes/runtime-rn.html#consoledeprecation">Pivotal Elastic Runtime v1.8 Release Notes</a>.</p>

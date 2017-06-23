@@ -32,9 +32,31 @@
 
 ###<a id='uaa-external'></a> External Database Configuration
 
-<p class="note"><strong>Note</strong>: You must create your external database before completing this configuration. The exact procedure to create databases depends upon the database provider you select for your deployment. UAA supports AWS RDS and Azure SQL Server.</p>
+<p class="note"><strong>Note</strong>: You must create your external database before completing this configuration. The exact procedure to create databases depends upon the database provider you select for your deployment. The following procedure uses AWS RDS as an example, but UAA also supports Azure SQL Server.</p>
 
-1. Select **External**.
+<p class="note warning">
+<strong>Warning</strong>: Protect whichever database you use in your deployment with a password.</p>
+
+To create your UAA database, perform the following steps:
+
+1. Add the `ubuntu` account key pair from your IaaS deployment to your local SSH profile so you can access the Ops Manager VM. For example, in AWS, you add a key pair created in AWS:
+
+    <pre class='terminal'>ssh-add aws-keypair.pem</pre>
+
+1. SSH in to your Ops Manager using the [Ops Manager FQDN](../customizing/cloudform-om-deploy.html#create-dns) and the username `ubuntu`:
+
+    <pre class='terminal'>ssh ubuntu@OPS_MANAGER_FQDN</pre>
+
+1. Log in to your MySQL database instance using the appropriate hostname and user login values configured in your IaaS account. For example, to log in to your AWS RDS instance, run the following MySQL command:
+
+     <pre class='terminal'>mysql --host=RDSHOSTNAME --user=RDSUSERNAME --password=RDSPASSWORD</pre>
+
+1. Run the following MySQL commands to create a database for UAA:
+  <pre class="terminal">CREATE database uaa;</pre>
+
+1. Type `exit` to quit the MySQL client, and `exit` again to close your connection to the Ops Manager VM.
+
+1. From the **UAA** section in Elastic Runtime, select **External**.
     <%= image_tag('ert_uaa_external.png') %>
 1. For **Hostname**, enter the hostname of the database server.
 1. For **TCP Port**, enter the port of the database server.

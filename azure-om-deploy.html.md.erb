@@ -29,41 +29,56 @@ Before you perform the procedures in this topic, you must have completed the pro
     <p class="note"><strong>Note</strong>: For a list of available locations, run <code>azure location list</code>.</p>
 1. Create a network security group named `pcf-nsg`.
     <pre class="terminal">
-    $ azure network nsg create $RESOURCE_GROUP pcf-nsg $LOCATION
+    $ az network nsg create --name pcf-nsg \
+    --resource-group $RESOURCE_GROUP \
+    --location $LOCATION
     </pre> 
 1. Add a network security group rule to the `pcf-nsg` group to allow traffic from the public Internet.
     <pre class="terminal">
-    $ azure network nsg rule create $RESOURCE_GROUP pcf-nsg internet-to-lb \
-    --protocol Tcp --priority 100 --destination-port-range '*'
+    $ az network nsg rule create --name internet-to-lb \
+    --nsg-name pcf-nsg --resource-group $RESOURCE_GROUP \
+    --protocol Tcp --priority 100 \
+    --destination-port-range '*'
     </pre>
     <p class="note"><strong>Note</strong>: Because the VMs do not have public IP addresses, this network security group rule only affects the load balancer.</p>
 1. Create a network security group named `opsmgr-nsg`.
     <pre class="terminal">
-    $ azure network nsg create $RESOURCE_GROUP opsmgr-nsg $LOCATION
+    $ az network nsg create --name opsmgr-nsg \
+    --resource-group $RESOURCE_GROUP \
+    --location $LOCATION
     </pre> 
 1. Add a network security group rule to the `opsmgr-nsg` group that allow HTTP traffic to the Ops Manager VM.
     <pre class="terminal">
-    $ azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg http \
-    --protocol Tcp --destination-port-range 80 --priority 100
+    $ az network nsg rule create --name http \
+    --nsg-name opsmgr-nsg --resource-group $RESOURCE_GROUP \
+    --protocol Tcp --priority 100 \
+    --destination-port-range 80 
     </pre>
 1. Add a network security group rule to the `opsmgr-nsg` group that allow HTTPS traffic to the Ops Manager VM.
     <pre class="terminal">
-    $ azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg https \
-    --protocol Tcp --destination-port-range 443 --priority 200
+    $ az network nsg rule create --name https \
+    --nsg-name opsmgr-nsg --resource-group $RESOURCE_GROUP \
+    --protocol Tcp --priority 200 \
+    --destination-port-range 443 
     </pre>
 1. Add a network security group rule to the `opsmgr-nsg` group that allow SSH traffic to the Ops Manager VM.
     <pre class="terminal">
-    $ azure network nsg rule create $RESOURCE_GROUP opsmgr-nsg ssh \
-    --protocol Tcp --destination-port-range 22 --priority 300
+    $ az network nsg rule create --name ssh \
+    --nsg-name opsmgr-nsg --resource-group $RESOURCE_GROUP \
+    --protocol Tcp --priority 300 \
+    --destination-port-range 22 
     </pre>
 1. Create a virtual network named `pcf-net`.
     <pre class="terminal">
-    $ azure network vnet create $RESOURCE_GROUP pcf-net $LOCATION \
+    $ az network vnet create --name pcf-net \
+    --resource-group $RESOURCE_GROUP --location $LOCATION \
     --address-prefixes 10.0.0.0/16
     </pre>
 1. Add a subnet to the network for PCF VMs.
     <pre class="terminal">
-    $ azure network vnet subnet create $RESOURCE_GROUP pcf-net pcf \
+    $ az network vnet subnet create --name pcf \
+    --vnet-name pcf-net \
+    --resource-group $RESOURCE_GROUP \
     --address-prefix 10.0.0.0/20
     </pre>
     <p class="note"><strong>Note</strong>: To use the <a href="http://docs.pivotal.io/p-identity/index.html">Single Sign-On for PCF</a> service, you must configure a network that contains only one subnet.</p>
@@ -76,83 +91,82 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     <pre class="terminal">
     $ export STORAGE_NAME="YOUR-BOSH-STORAGE-ACCOUNT-NAME"
     </pre>
-1. Create a standard storage account for BOSH with the following command, replacing `SUBSCRIPTION_ID` with your subscription ID.  This account will be used for BOSH book-keeping and running the Ops Manager VM itself, but does not have to be used for running any other VMs.
+1. Create a standard storage account for BOSH with the following command. This account will be used for BOSH book-keeping and running the Ops Manager VM itself, but does not have to be used for running any other VMs.
     <pre class="terminal">
-    $ azure storage account create $STORAGE\_NAME --resource-group $RESOURCE\_GROUP \
-    --sku-name LRS --kind Storage --subscription SUBSCRIPTION\_ID \
+    $ az storage account create --name $STORAGE\_NAME \
+    --resource-group $RESOURCE\_GROUP \
+    --sku Standard_LRS --kind Storage \
     --location $LOCATION
     </pre>
     If the command fails, ensure you have followed the rules for naming your storage account. Re-export a new storage account name if necessary.
 1. Configure the Azure CLI to use the BOSH storage account as its default.
     1. Retrieve the connection string for the account.
     <pre class="terminal">
-    $ azure storage account connectionstring show $STORAGE\_NAME \
-    --resource-group $RESOURCE\_GROUP
+    $ az storage account show-connection-string \
+    --name $STORAGE\_NAME --resource-group $RESOURCE_GROUP
     </pre>
     The command returns output similar to the following:
     <pre class="terminal">
-    info:    Executing command storage account connectionstring show
-    <span>+</span> Getting storage account keys
-    data:    connectionstring: DefaultEndpointsProtocol=https;AccountName=example-storage;AccountKey=accountkeystring
-    info:    storage account connectionstring show command OK
+    {
+      "connectionString": "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=cfdocsboshstorage;AccountKey=KwKQqVXgVcEVBZUY/leiIy/Lprnc5igFxYWsgq016Tu9uGwseOl8bqNBEL/2tp7wX92QMUM19Pz9BYTXt8aq4A=="
+    }
     </pre>
-    1. From the `data:` field in the output above, record the full value of **connectionstring** from the output above, starting with and including `DefaultEndpointsProtocol=`.
-    1. Export the value of **connectionstring** as the environment variable `$AZURE_STORAGE_CONNECTION_STRING`.
+    1. Record the full value of `connectionString` from the output above, starting with and including `DefaultEndpointsProtocol=`.
+    1. Export the value of `connectionString` as the environment variable `$AZURE_STORAGE_CONNECTION_STRING`.
     <pre class="terminal">
     $ export AZURE\_STORAGE\_CONNECTION\_STRING="YOUR-ACCOUNT-KEY-STRING"
     </pre>
 1. Create three blob containers in the BOSH storage account, named `opsmanager`, `bosh`, and `stemcell`.
     <pre class="terminal">
-    $ azure storage container create opsmanager
-    $ azure storage container create bosh
-    $ azure storage container create stemcell --permission blob
+    $ az storage container create --name opsmanager
+    $ az storage container create --name bosh
+    $ az storage container create --name stemcell --public-access blob
     </pre>
 1. Create a table named `stemcells`.
     <pre class="terminal">
-    $ azure storage table create stemcells
+    $ az storage table create --name stemcells
     </pre>
 1. Choose a set of unique names for five or more deployment storage accounts. As with the BOSH storage account above, the names must be unique, alphanumeric, lowercase, and 3-24 characters long. The account names must also be sequential or otherwise identical except for the last character. For example: `xyzdeploystorage1`, `xyzdeploystorage2`, `xyzdeploystorage3`, `xyzdeploystorage4`, and `xyzdeploystorage5`.
 1. Register your subscription with Microsoft.Storage:
-    <pre class="terminal">$ azure provider register Microsoft.Storage</pre>
+    <pre class="terminal">$ az provider register --namespace Microsoft.Storage</pre>
 1. Decide which type of storage to use and run the corresponding command below:
     <p class="note"><strong>Note</strong>: Pivotal recommends five Premium storage accounts, which provides a reasonable amount of initial storage capacity. You can use either Premium or Standard storage accounts, but they have very different scalability metrics.  Pivotal recommends creating 1 Standard storage account for every 30 VMs, or 1 Premium storage account for every 150 VMs.  You can increase the number of storage accounts later by provisioning more and following the naming sequence.</p>
     * To use Premium storage (recommended):
     <pre class="terminal">
-    $ export STORAGE\_TYPE=PLRS
+    $ export STORAGE\_TYPE="Premium_LRS"
     </pre>
     *  To use Standard storage:
     <pre class="terminal">
-    $ export STORAGE\_TYPE=LRS
+    $ export STORAGE\_TYPE="Standard_LRS"
     </pre>
 1. For **each deployment storage account**, do the following:
     1. Create the storage account with the following command, replacing `MY_DEPLOYMENT_STORAGE_X` with one of your deployment storage account names and `SUBSCRIPTION_ID` with your subscription ID.
     <pre class="terminal">
-    $ azure storage account create MY\_DEPLOYMENT\_STORAGE\_X \
-    --resource-group $RESOURCE\_GROUP --sku-name $STORAGE\_TYPE --kind Storage \
-    --subscription SUBSCRIPTION\_ID --location $LOCATION
+    $ az storage account create --name MY\_DEPLOYMENT\_STORAGE\_X \
+    --resource-group $RESOURCE\_GROUP --sku $STORAGE\_TYPE \
+    --kind Storage --location $LOCATION
     </pre>
     If the command fails, try a different set of account names.
 
     1. Retrieve the connection string for the account.
     <pre class="terminal">
-    $ azure storage account connectionstring show MY\_DEPLOYMENT\_STORAGE\_X \
-    --resource-group $RESOURCE\_GROUP
+    $ az storage account show-connection-string \
+    --name MY\_DEPLOYMENT\_STORAGE\_X --resource-group $RESOURCE_GROUP
     </pre>
     The command returns output similar to the following:
     <pre class="terminal">
-    info:    Executing command storage account connectionstring show
-    <span>+</span> Getting storage account keys
-    data:    connectionstring: DefaultEndpointsProtocol=https;AccountName=example-storage;AccountKey=accountkeystring
-    info:    storage account connectionstring show command OK
+    {
+      "connectionString": "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=cfdocsdeploystorage1;AccountKey=oa/QiSAmqj1OocsGhKBwn/Mf8wEwdeJMvvonrbmNk27bfkSL8ZFzAhs3Kb78si5CTPHhjHHiK4qPcYzn/8OmFg=="
+    }
     </pre>
-    1. From the `data:` field in the output above, record the full value of **connectionstring** from the output above, starting with and including `DefaultEndpointsProtocol=`.
+    1. Record the full value of `connectionString` from the output above, starting with and including `DefaultEndpointsProtocol=`.
     1. Create two blob containers named `bosh` and `stemcell` in the account.
     <pre class="terminal">
-    $ azure storage container create bosh \
+    $ az storage container create --name bosh \
     --connection-string "YOUR-ACCOUNT-KEY-STRING"
     </pre>
     <pre class="terminal">
-    $ azure storage container create stemcell \
+    $ az storage container create --name stemcell \
     --connection-string "YOUR-ACCOUNT-KEY-STRING"
     </pre>
 
@@ -160,59 +174,78 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
 
 1. Create a load balancer named `pcf-lb`.
     <pre class="terminal">
-    $ azure network lb create $RESOURCE_GROUP pcf-lb $LOCATION
+    $ az network lb create --name pcf-lb \
+    --resource-group $RESOURCE_GROUP --location $LOCATION
     </pre>
 1. Create a static IP address for the load balancer named `pcf-lb-ip`.
     <pre class="terminal">
-    $ azure network public-ip create $RESOURCE_GROUP pcf-lb-ip $LOCATION --allocation-method Static
-    info:    Executing command network public-ip create
-    warn:    Using default --idle-timeout 4
-    warn:    Using default --ip-version IPv4
-    <span>+</span> Looking up the public ip "pcf-lb-ip"
-    <span>+</span> Creating public ip address "pcf-lb-ip"
-    data:    Id                              : /subscriptions/222e8ffe-81ce-33ee-e3e2-1a405ffc4134/resourceGroups/pcf-resource-group/providers/Microsoft.Network/publicIPAddresses/pcf-lb-ip
-    data:    Name                            : pcf-lb-ip
-    data:    Type                            : Microsoft.Network/publicIPAddresses
-    data:    Location                        : westus
-    data:    Provisioning state              : Succeeded
-    data:    Allocation method               : Static
-    data:    IP version                      : IPv4
-    data:    Idle timeout in minutes         : 4
-    data:    IP Address                      : <%= vars.example_ip_2 %>
-    info:    network public-ip create command OK
+    $ az network public-ip create --name pcf-lb-ip \
+    --resource-group $RESOURCE_GROUP --location $LOCATION \
+    --allocation-method Static
+    {
+      "publicIp": {
+        "dnsSettings": null,
+        "etag": "W/\"a9b780e8-38bc-4a28-a563-e13a5859169d\"",
+        "id": "/subscriptions/995b7eed-77ef-45ff-a5c9-1a405ffb8243/resourceGroups/cf-docs/providers/Microsoft.Network/publicIPAddresses/pcf-lb-ip",
+        "idleTimeoutInMinutes": 4,
+        "ipAddress": "13.64.255.40",
+        "ipConfiguration": null,
+        "location": "westus",
+        "name": "pcf-lb-ip",
+        "provisioningState": "Succeeded",
+        "publicIpAddressVersion": "IPv4",
+        "publicIpAllocationMethod": "Static",
+        "resourceGroup": "cf-docs",
+        "resourceGuid": "4fbf2fe5-6f7e-449a-ae70-e513a9f5cddc",
+        "tags": null,
+        "type": "Microsoft.Network/publicIPAddresses"
+      }
+    }
     </pre>
 
-1. Record the **IP Address** from the output above. This is the public IP address of your load balancer.
+1. Record the `ipAddress` from the output above. This is the public IP address of your load balancer.
 
 1. Add a front-end IP configuration to the load balancer.
     <pre class="terminal">
-    $ azure network lb frontend-ip create $RESOURCE_GROUP pcf-lb pcf-fe-ip \
-    --public-ip-name pcf-lb-ip
+    $ az network lb frontend-ip create --lb-name pcf-lb \
+    --name pcf-fe-ip --resource-group $RESOURCE_GROUP \
+    --public-ip-address pcf-lb-ip
     </pre>
 1. Add a probe to the load balancer.
     <pre class="terminal">
-    $ azure network lb probe create $RESOURCE_GROUP pcf-lb tcp80 \
+    $ az network lb probe create --lb-name pcf-lb \
+    --name tcp80 --resource-group $RESOURCE_GROUP \
     --protocol Tcp --port 80
     </pre>
 1. Add a backend address pool to the load balancer.
     <pre class="terminal">
-    $ azure network lb address-pool create $RESOURCE_GROUP pcf-lb pcf-vms
+    $ az network lb address-pool create --lb-name pcf-lb \
+    --name pcf-vms --resource-group $RESOURCE_GROUP
     </pre>
     <p class="note"><strong>Note</strong>: This backend pool is empty when you create it.</p>
 1. Add a load balancing rule for HTTP.
     <pre class="terminal">
-    $ azure network lb rule create $RESOURCE_GROUP pcf-lb http --protocol tcp \
-    --frontend-port 80 --backend-port 80
+    $ az network lb rule create --lb-name pcf-lb \
+    --name http --resource-group $RESOURCE_GROUP \
+    --protocol Tcp --frontend-port 80 \
+    --backend-port 80 --frontend-ip-name pcf-fe-ip \
+    --backend-pool-name pcf-vms
     </pre>
 1. Add a load balancing rule for HTTPS.
     <pre class="terminal">
-    $ azure network lb rule create $RESOURCE_GROUP pcf-lb https --protocol tcp \
-    --frontend-port 443 --backend-port 443
+    $ az network lb rule create --lb-name pcf-lb \
+    --name https --resource-group $RESOURCE_GROUP \
+    --protocol Tcp --frontend-port 443 \
+    --backend-port 443 --frontend-ip-name pcf-fe-ip \
+    --backend-pool-name pcf-vms
     </pre>
 1. Add a load balancing rule for SSH.
     <pre class="terminal">
-    $ azure network lb rule create $RESOURCE_GROUP pcf-lb diego-ssh --protocol tcp \
-    --frontend-port 2222 --backend-port 2222
+    $ az network lb rule create --lb-name pcf-lb \
+    --name diego-ssh --resource-group $RESOURCE_GROUP \
+    --protocol Tcp --frontend-port 2222 \
+    --backend-port 2222 --frontend-ip-name pcf-fe-ip \
+    --backend-pool-name pcf-vms
     </pre>
 
 1.  Navigate to your DNS provider, and create an entry that points `*.YOUR-SUBDOMAIN` to the public IP address of your load balancer that you recorded in a previous step. For example, create an entry that points `azure.example.com` to `198.51.100.1`.
@@ -235,49 +268,60 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     --dest-blob image.vhd 
     </pre>
 
-1. Copying the image may take several minutes. Run the following command and examine the output under `Status` to check the status:
+1. Copying the image may take several minutes. Run the following command and examine the output under `"copy"`:
     <pre class="terminal">
-    $ azure storage blob copy show opsmanager image.vhd
-    info:    Executing command storage blob copy show
-    <span>+</span> Getting storage blob information
-    data:    Copy ID                               Progress                 Status
-    data:    ------------------------------------  -------------            -------
-    data:    069d413d-be05-4b12-82bc-c96dacee230e  31457280512/31457280512  success
-    info:    storage blob copy show command OK
+    $ az storage blob show --name image.vhd \
+    --container-name opsmanager \
+    --account-name $STORAGE_NAME
+    ...
+    "copy": {
+      "completionTime": "2017-06-26T22:24:11+00:00",
+      "id": "b9c8b272-a562-4574-baa6-f1a04afcefdf",
+      "progress": "53687091712/53687091712",
+      "source": "http<span>s:/</span>/opsmanagerwestus.blob.core.windows.net/images/ops-manager-1.11.3.vhd",
+      "status": "success",
+      "statusDescription": null
+    },
     </pre>
-    When `Status` reads `success`, continue to the next step.
+    When `status` reads `success`, continue to the next step.
 
 1. Create a public IP address named `ops-manager-ip`.
     <pre class="terminal">
-    $ azure network public-ip create $RESOURCE_GROUP ops-manager-ip $LOCATION --allocation-method Static
-    info:    Executing command network public-ip create
-    warn:    Using default --idle-timeout 4
-    warn:    Using default --ip-version IPv4
-    <span>+</span> Looking up the public ip "ops-manager-ip"
-    <span>+</span> Creating public ip address "ops-manager-ip"
-    data:    Id                              : /subscriptions/222e8ffe-81ce-33ee-e3e2-1a405ffc4134/resourceGroups/pcf-resource-group/providers/Microsoft.Network/publicIPAddresses/ops-manager-ip
-    data:    Name                            : ops-manager-ip
-    data:    Type                            : Microsoft.Network/publicIPAddresses
-    data:    Location                        : westus
-    data:    Provisioning state              : Succeeded
-    data:    Allocation method               : Static
-    data:    IP version                      : IPv4
-    data:    Idle timeout in minutes         : 4
-    data:    IP Address                      : <%= vars.example_ip_1 %>
-    info:    network public-ip create command OK
+    $ az network public-ip create --name ops-manager-ip \
+    --resource-group $RESOURCE_GROUP --location $LOCATION \
+    --allocation-method Static
+   {
+      "publicIp": {
+        "dnsSettings": null,
+        "etag": "W/\"4450ebe2-9e97-4b17-9cf2-44838339c661\"",
+        "id": "/subscriptions/995b7eed-77ef-45ff-a5c9-1a405ffb8243/resourceGroups/cf-docs/providers/Microsoft.Network/publicIPAddresses/ops-manager-ip",
+        "idleTimeoutInMinutes": 4,
+        "ipAddress": "40.83.148.183",
+        "ipConfiguration": null,
+        "location": "westus",
+        "name": "ops-manager-ip",
+        "provisioningState": "Succeeded",
+        "publicIpAddressVersion": "IPv4",
+        "publicIpAllocationMethod": "Static",
+        "resourceGroup": "cf-docs",
+        "resourceGuid": "950d4831-1bec-42da-8a79-959bcddea9dd",
+        "tags": null,
+        "type": "Microsoft.Network/publicIPAddresses"
+      }
+    }
     </pre>
 
-1. Record the **IP Address** from the output above. This is the public IP address of Ops Manager.
+1. Record the `ipAddress` from the output above. This is the public IP address of Ops Manager.
 
 1. Create a network interface for Ops Manager.
     <pre class="terminal">
-    $ azure network nic create --subnet-vnet-name pcf-net --subnet-name pcf \
-    --network-security-group-name opsmgr-nsg \
-    --private-ip-address 10.0.0.5 --public-ip-name ops-manager-ip \
-    $RESOURCE_GROUP ops-manager-nic $LOCATION
+    $ az network nic create --vnet-name pcf-net \
+    --subnet pcf --network-security-group opsmgr-nsg \
+    --private-ip-address 10.0.0.5 \
+    --public-ip-address ops-manager-ip \
+    --resource-group $RESOURCE_GROUP \
+    --name ops-manager-nic --location $LOCATION
     </pre>
-
-    <p class="note"><strong>Note</strong>: If the command fails with a <code>parameters must be provided</code> error, run it again and ensure that you place <code>$RESOURCE_GROUP ops-manager-nic $LOCATION</code> at the end of the command as specified above. The Azure CLI requires that you specify options before other parameters.</p>
 
 1. Create a keypair on your local machine with the username `ubuntu`. For example, enter the following command:
    <pre class="terminal">
@@ -288,12 +332,13 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
 
 1. Create a VM against the Ops Manager image, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file.
     <pre class="terminal">
-    $ azure vm create $RESOURCE\_GROUP ops-manager $LOCATION \
-    Linux --nic-name ops-manager-nic \
-    --os-disk-vhd https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/os\_disk.vhd \
-    --image-urn https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image.vhd \
-    --admin-username ubuntu --storage-account-name $STORAGE\_NAME \
-    --vm-size Standard\_DS2_v2 --ssh-publickey-file PATH-TO-PUBLIC-KEY
+     $ az vm create --name ops-manager --resource-group $RESOURCE\_GROUP \
+     --location $LOCATION --os-type linux \
+     --nics ops-manager-nic \
+     --image https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image.vhd \
+     --admin-username ubuntu \
+     --storage-account $STORAGE\_NAME --size Standard\_DS2_v2 \
+     --ssh-key-value azure-opsman.pub --use-unmanaged-disk
     </pre>
     <br>
     If you are using Azure China, Azure Government Cloud, or Azure Germany, replace `blob.core.windows.net` with the following:
@@ -302,28 +347,15 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     * For Azure Government Cloud, use `blob.core.usgovcloudapi.net`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-government/documentation-government-services-storage) for more information.
     * For Azure Germany, use `blob.core.cloudapi.de`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/germany/germany-developer-guide) for more information.
 
-1. The VM may take several minutes to boot. Run the following command, and examine the output under **PowerState** to check the status of the VM.
-    <pre class="terminal">
-    $ azure vm list
-    info:    Executing command vm list
-    <span>+</span> Getting virtual machines
-    data:    ResourceGroupName  Name                 ProvisioningState  PowerState  Location  Size
-    data:    -----------------  -------------------  -----------------  ----------  --------  ---------------
-    data:    PCF                ops-manager          Succeeded          VM running  westus    Standard\_DS2\_v2
-    info:    vm list command OK
-    </pre>
-
-    The **PowerState** displays `VM running` when the Ops Manager deployment successfully completes. 
-
 ##<a id='resize'></a> Step 5: Resize Ops Manager VM Disk (Required)
 
 The default OS disk size is too small for deploying PCF. Perform the following steps to increase the size of the OS disk of the Ops Manager VM:
 
 1. Stop and deallocate the Ops Manager VM before resizing:
-    <pre class="terminal">$ azure vm deallocate --resource-group $RESOURCE\_GROUP --name ops-manager</pre>
+    <pre class="terminal">$ az vm deallocate --resource-group $RESOURCE\_GROUP --name ops-manager</pre>
 
 1. Increase the size of the OS disk of the Ops Manager VM to 120 GB:
-    <pre class="terminal">$ azure vm set --resource-group $RESOURCE\_GROUP --name ops-manager --new-os-disk-size 120</pre>
+    <pre class="terminal">$ az vm set --resource-group $RESOURCE\_GROUP --name ops-manager --new-os-disk-size 120</pre>
 
 1. Start the Ops Manager VM:
     <pre class="terminal">$ azure vm start --resource-group $RESOURCE\_GROUP --name ops-manager</pre>

@@ -12,40 +12,30 @@ After you complete this procedure, follow the instructions in either the [Launch
 
 ##<a id="install"></a> Step 1: Install and Configure the Azure CLI
 
-1. Use the `azure --version` command to verify you have installed Azure CLI v0.10.5 or higher.
-    <pre class="terminal">$ azure --version</pre> 
-   If you have the correct version of the Azure CLI installed, skip the next step.
+1. Install the Azure CLI 2.0 by following the instructions for your operating system in the [Azure documentation](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli).
 
-1. To install a new or updated Azure CLI, follow the instructions for your operating system: 
-    * **Mac OS X**: [Download](http://aka.ms/mac-azure-cli) and run the **Mac OS X Azure CLI** installer.
-    * **Windows**: [Download](http://aka.ms/webpi-azure-cli) and run the **Windows Azure CLI** installer. Use the command line, not PowerShell, to run the Azure CLI.
-    * **Linux**: 
-      1. If not already installed, install Node.js and npm. 
-      1. [Download](http://aka.ms/linux-azure-cli) the Linux Azure CLI tar file. 
-      1. Run <code>sudo npm install -g PATH-TO-TAR-FILE</code>.
-      1. If you encounter the error <code>/usr/bin/env: node: No such file or directory</code> when running <code>azure</code> commands, run <code>sudo ln -s /usr/bin/nodejs /usr/bin/node</code>.
-    <p class="note"><strong>Note</strong>: To perform the procedures in this section, you must use the Azure CLI 1.0, not the Azure CLI 2.0.</p>
-
-1. Set the mode of the Azure CLI to Azure Resource Management:
+1. Set your cloud:
 
     <pre class="terminal">
-    $ azure config mode arm
+    $ az cloud set --name AzureCloud
     </pre>
 
-1. Log in to your Azure account:
+    <p class="note"><strong>Note</strong>: To use the Azure China environment, replace <code>AzureCloud</code> with <code>AzureChinaCloud</code>. If logging in to <code>AzureChinaCloud</code> fails with a <code>CERT_UNTRUSTED</code> <a href="https://github.com/Azure/azure-xplat-cli/issues/2725">error</a>, use the latest version of node, 4.x or later.</p>
+
+1. Log in:
 
     <pre class="terminal">
-    $ azure login --environment AzureCloud
+    $ az login
     </pre>
 
-    <p class="note"><strong>Note</strong>: To target the Azure China environment, replace <code>AzureCloud</code> with <code>AzureChinaCloud</code>. If logging in to <code>AzureChinaCloud</code> fails with a <code>CERT_UNTRUSTED</code> <a href="https://github.com/Azure/azure-xplat-cli/issues/2725">error</a>, use the latest version of node, 4.x or later.</p>
+    Authenticate by navigating to the URL in the output, entering the provided code, and clicking your account.
 
 ##<a id="default-subscription"></a> Step 2: Set Your Default Subscription
 
-1. Run `azure account list --json` to list your Azure subscriptions:
+1. Run `az account list` to list your Azure subscriptions:
 
     <pre class="terminal">
-    $ azure account list --json
+    $ az account list
     [
      {
       "id": "12345678-1234-5678-1234-567891234567",
@@ -76,14 +66,10 @@ After you complete this procedure, follow the instructions in either the [Launch
     ]
     </pre>
  
-1. Locate your default subscription by finding the subscription with **isDefault** set to `true`. If your default subscription is not where you want to deploy PCF, run `azure account set SUBSCRIPTION_ID` to set a new default, where `SUBSCRIPTION_ID` is the value of the **id** field. For example: `"87654321-1234-5678-1234-567891234567"`.
+1. Locate your default subscription by finding the subscription with **isDefault** set to `true`. If your default subscription is not where you want to deploy PCF, run `az account set --subscription SUBSCRIPTION_ID` to set a new default, where `SUBSCRIPTION_ID` is the value of the **id** field. For example: `"87654321-1234-5678-1234-567891234567"`.
 
     <pre class="terminal">
-    $ azure account set SUBSCRIPTION_ID
-    info:  Executing command account set
-    info:  Setting subscription to "Sample Subscription" with id "SUBSCRIPTION-ID".
-    info:  Changes saved
-    info:  account set command OK
+    $ az account set --subscription SUBSCRIPTION_ID
     </pre>
 
 1. Record the value of the **id** set as the default. You use this value in future configuration steps.
@@ -93,24 +79,28 @@ After you complete this procedure, follow the instructions in either the [Launch
 ##<a id='create-aad'></a> Step 3: Create an Azure Active Directory (AAD) Application
 
 1. Run the following command to create an AAD application, replacing `PASSWORD` with a password of your choice. This is your `CLIENT_SECRET` for creating a service principal. 
-    <pre class="terminal">$ azure ad app create --name "Service Principal for BOSH" \
-    --password "PASSWORD" --home-page "<span>http:</span>//BOSHAzureCPI" \
+    <pre class="terminal">$ az ad app create --name "Service Principal for BOSH" \
+    --password "PASSWORD" --homepage "<span>http:</span>//BOSHAzureCPI" \
     --identifier-uris "<span>http</span>://BOSHAzureCPI"
     </pre>
     <p class="note"><strong>Note</strong>: You can provide any string for the <code>home-page</code> and <code>identifier-uris</code> flags, but the value of <code>identifer-uris</code> must be unique within the organization associated with your Azure subscription. For the <code>home-page</code>, Pivotal recommends using <code><span>http:</span>//BOSHAzureCPI</code>, as shown in the example above.
     </p>
 
-1. Record the value of **AppId** from the output. This is your `APPLICATION_ID` for creating a service principal. 
+1. Record the value of `appId` from the output. This is your `APPLICATION_ID` for creating a service principal. 
     <pre class="terminal">
-    info:    Executing command ad app create
-    <span>+</span> Creating application Service Principal for BOSH
-    data:    AppId:                   246e4af7-75b5-494a-89b5-363addb9f0fa
-    data:    ObjectId:                208096bb-4899-49e2-83ea-1a270154f427
-    data:    DisplayName:             Service Principal for BOSH
-    data:    IdentifierUris:          0=<span>http</span>://BOSHAzureCPI
-    data:    ReplyUrls:
-    data:    AvailableToOtherTenants:  False
-    info:    ad app create command OK
+    {
+      "appId": "5c552e8f-b977-45f5-a50b-981cfe17cb9d",
+      "appPermissions": null,
+      "availableToOtherTenants": false,
+      "displayName": "Service Principal for BOSH",
+      "homepage": "http<span>://</span>BOSHAzureCIP",
+      "identifierUris": [
+        "http<span>://</span>BOSHAzureCPI"
+      ],
+      "objectId": "f3884df4-7d1d-4894-a78c-c1fe75750436",
+      "objectType": "Application",
+      "replyUrls": []
+    }
     </pre>
 
 ##<a id="create-configure"></a> Step 4: Create and Configure a Service Principal 
@@ -118,58 +108,71 @@ After you complete this procedure, follow the instructions in either the [Launch
 1. To create a service principal, run `azure ad sp create --applicationId YOUR-APPLICATION-ID`, replacing `YOUR-APPLICATION-ID` with the `APPLICATION_ID` you recorded in the [previous step](#create-aad):
 
     <pre class="terminal">
-    $ azure ad sp create --applicationId YOUR-APPLICATION-ID
-    info:    Executing command ad sp create
-    <span>+</span> Creating service principal for application YOUR-APPLICATION-ID
-    data:    Object Id:               fcf68d7a-262b-42c4-8ef8-6a4856611155
-    data:    Display Name:            Service Principal for BOSH
-    data:    Service Principal Names:
-    data:                             YOUR-APPLICATION-ID
-    data:                             http://BOSHAzureCPI
-    info:    ad sp create command OK
+    $ az ad sp create --id YOUR-APPLICATION-ID
+    {
+      "appId": "5c552e8f-b977-45f5-a50b-981cfe17cb9d",
+      "displayName": "Service Principal for BOSH",
+      "objectId": "cc13c685-4c3b-461e-ae96-7a0563960b83",
+      "objectType": "ServicePrincipal",
+      "servicePrincipalNames": [
+        "5c552e8f-b977-45f5-a50b-981cfe17cb9d",
+        "http://BOSHAzureCPI"
+      ]
+    }
     </pre>
 
 1. You must have the Contributor role on your service principal to deploy PCF. Run the following command to assign this role:
     <pre class="terminal">
-    $ azure role assignment create --spn "SERVICE-PRINCIPAL-NAME" \
-    --roleName "Contributor" --subscription SUBSCRIPTION-ID
+    $ az role assignment create --assignee "SERVICE-PRINCIPAL-NAME" \
+    --role "Contributor" --scope /subscriptions/SUBSCRIPTION-ID
     </pre>
-    * For **SERVICE-PRINCIPAL-NAME**: Use any value of **Service Principal Names** from the output above, such as `YOUR-APPLICATION-ID`.
-    * For **SUBSCRIPTION-ID**: Use the ID of the default subscription that you recorded in [Step 2](#default-subscription).
+    * For `SERVICE-PRINCIPAL-NAME`, use any value of `Service Principal Names` from the output above, such as `YOUR-APPLICATION-ID`.
+    * For `SUBSCRIPTION-ID`, use the ID of the default subscription that you recorded in [Step 2](#default-subscription).
 
     <p class="note"><strong>Note</strong>: If you need to use multiple resource groups for your PCF deployment on Azure, you can define custom roles for your Service Principal. These roles allow BOSH to deploy PCF to pre-existing network resources outside the PCF resource group. For more information, see <a href="../refarch/azure/azure_ref_arch.html#multiple_resource_groups">Reference Architecture for Pivotal Cloud Foundry on Azure</a>.</p>
 
-    For more information about Azure Role-Based Access Control, refer to <a href="https://azure.microsoft.com/en-us/documentation/articles/role-based-access-built-in-roles/">RBAC: Built-in roles</a>.
+    For more information about Azure Role-Based Access Control, refer to the <a href="https://azure.microsoft.com/en-us/documentation/articles/role-based-access-built-in-roles/">RBAC: Built-in roles</a> topic in the Azure documentation.
 
 1. Verify the assignment by running the following command:
 
     <pre class="terminal">
-$ azure role assignment list --spn "SERVICE-PRINCIPAL-NAME"
-
-    info:    Executing command role assignment list
-    <span>+</span> Searching for role assignments
-    data:    RoleAssignmentId     : /subscriptions/112a3bbc-44de-56ff-a7b8-9a012bbc3456/providers/Microsoft.Authorization/roleAssignments/061581af-118b-45e9-95a5-4e4ccf22c75d
-    data:    RoleDefinitionName   : Contributor
-    data:    RoleDefinitionId     : b24988ac-6180-42a0-ab88-20f7382dd24c
-    data:    Scope                : /subscriptions/112a3bbc-44de-56ff-a7b8-9a012bbc3456
-    data:    Display Name         : Service Principal for BOSH
-    data:    SignInName           : undefined
-    data:    ObjectId             : 11b11a1-11c1-1111-a222-3df3f33e333f
-    data:    ObjectType           : ServicePrincipal
-    data:
-    info:    role assignment list command OK
+    $ az role assignment list --assignee "SERVICE-PRINCIPAL-NAME"
+    [
+      {
+        "id": "/subscriptions/995b7eed-77ef-45ff-a5c9-1a405ffb8243/providers/Microsoft.Authorization/roleAssignments/32e644cf-ba1a-4f43-bf7c-68bf4583e463",
+        "name": "32e644cf-ba1a-4f43-bf7c-68bf4583e463",
+        "properties": {
+          "principalId": "cc13c685-4c3b-461e-ae96-7a0563960b83",
+          "principalName": "http://BOSHAzureCPI",
+          "roleDefinitionId": "/subscriptions/995b7eed-77ef-45ff-a5c9-1a405ffb8243/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",
+          "roleDefinitionName": "Contributor",
+          "scope": "/subscriptions/995b7eed-77ef-45ff-a5c9-1a405ffb8243"
+        },
+        "type": "Microsoft.Authorization/roleAssignments"
+      }
+    ]
     </pre>
 
 ##<a id="verify-your-service-principal"></a> Step 5: Verify Your Service Principal
 
-To verify your service principal, log in to your service principal with your `APPLICATION_ID`, `CLIENT_SECRET`, and `TENANT_ID`. Replace `YOUR-ENVIRONMENT` with `AzureCloud` or `AzureChinaCloud`.
+To verify your service principal, log in to your service principal with your `APPLICATION_ID`, `CLIENT_SECRET`, and `TENANT_ID`. 
 <pre class="terminal">
-$ azure login --username APPLICATION\_ID --password CLIENT\_SECRET \
---service-principal --tenant TENANT\_ID --environment YOUR-ENVIRONMENT
-info:    Executing command login
--info:    Added subscription Example
-<span>+</span>
-info:    login command OK
+$ az login --username APPLICATION\_ID --password CLIENT\_SECRET \
+--service-principal --tenant TENANT\_ID 
+[
+  {
+    "cloudName": "AzureCloud",
+    "id": "995b7eed-77ef-45ff-a5c9-1a405ffb8243",
+    "isDefault": true,
+    "name": "CF-Docs",
+    "state": "Enabled",
+    "tenantId": "29248f74-371f-4db2-9a50-c62a6877a0c1",
+    "user": {
+      "name": "5c552e8f-b977-45f5-a50b-981cfe17cb9d",
+      "type": "servicePrincipal"
+    }
+  }
+]
 </pre>
 
 If you cannot log in, the service principal is invalid. Create a new service principal and try again.

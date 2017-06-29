@@ -167,11 +167,11 @@ delimited)** field, separated by a comma:
 
 1. Select **Create Availability Zones**.
 <%= image_tag("cloudform/create-az.png") %>
-1. Use the following steps to create one or more Availability Zones for your applications to use:
+1. Use the following steps to create Availability Zones for your applications to use. If you completed the steps in [Manually
+    Configuring PCF for AWS](./pcf-aws-manual-config.html#pcfaws-vpc), add the 3 availability zones you used when configuring VPC. 
     * Click **Add**.
-    * For **Amazon Availability Zone**, enter the name of the AWS AZ that contains the
-    private subnet CIDR (10.0.16.0/20) for your VPC, such as `us-east-1b`. Find the **Availability Zone** name on the **Summary** tab of the VPC Subnets page. For more information, refer to the [Manually
-    Configuring PCF for AWS](./pcf-aws-manual-config.html#pcfaws-vpc) topic.
+    * For **Amazon Availability Zone**, enter the name of the AWS AZ.
+    * Repeat until you have entered all AZs. 
     <%= image_tag("pcfaws/om_az_step4.png") %>
 
 1. Click **Save**.
@@ -179,37 +179,138 @@ delimited)** field, separated by a comma:
 ## <a id='pcfaws-om-networks'></a>Step 5: Create Networks Page ##
 1. Select **Create Networks**.
 <%= image_tag("cloudform/create-networks.png") %>
-1. Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
-1. Use the following steps to create one or more Ops Manager networks:
+1. (Optional) Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
+1. Based on the VPC configuration from [Manually
+    Configuring PCF for AWS](./pcf-aws-manual-config.html#pcfaws-vpc), add an Ops Manager Network for each VPC subnet you created by following these steps:
     * Click **Add Network**.
-    * Enter a unique **Name** for the network.
-    * If you want to dynamically provision VMs in this network for use with on-demand services, select the **Service Networks** checkbox. When the checkbox is selected, Ops Manager does not provision VMs within the specified CIDR range.
-    * Click **Add Subnet** to create one or more subnets for the network.
-    <p class="note"><strong>Note</strong>: To use the <a href="http://docs.pivotal.io/p-identity/index.html">Single Sign-On for PCF</a> service, you must configure a network with only one subnet.</p>
-    * Enter your private subnet ID in **VPC Subnet ID**. This ID displays on the **Subnets** page of the **VPC Dashboard**.
-    * For **CIDR**, enter `10.0.16.0/20`. Ops Manager will deploy VMs to this CIDR block.
-    <p class="note"><strong>Note</strong>: You can assign a single CIDR block to
-    a VPC. The allowed block size is between a /28 netmask and /16 netmask.</p>
-    * For **Reserved IP Ranges**, enter `10.0.16.1-10.0.16.9` to exclude Amazon IPs used at the bottom of the private range. Ops Manager will not deploy VMs to any address in this range.
-    * Enter `10.0.0.2` for **DNS** and `10.0.16.1` for **Gateway**.
-    * Select which **Availability Zones** to use with the network.
-    * **(Optional)** If you are using a second subnet, click **Add Subnet**.
-
-    <p class="note"><strong>Note</strong>: If you are using multiple Availability Zones, you must add a new network with at least one subnet for each Availability Zone.</p>
+    * Enter `pcf-management-network` in **Name** field
+    * Create a subnet for each availability zone by clicking Add **Subnet** and fill in the following values per subnet:
+    <p class="note">
+    <strong>Note</strong>: 
+    * You can assign a single CIDR block to a VPC. The allowed block size is between a /28 netmask and /16 netmask.
+    * For **CIDR**, this is the IP range Ops Manager will deploy VMs into.
+    * For **Reserved IP Ranges**, we exclude Amazon IPs used at the bottom of the private range. Ops Manager will not deploy VMs to any address in this range.
+    * For **DNS**, we use Amazon's DNS Server which is 169.254.169.253.
+    * For **Gateway**, the second IP of the CIDR block is used.
+    </p>
+<table>
+ <tr>
+   <th>VPC Subnet ID</th>
+   <th>CIDR</th>
+   <th>Reserved IP Ranges</th>
+   <th>DNS</th>
+   <th>Gateway</th>
+   <th>Availability Zones</th>
+ </tr>
+ <tr>
+   <td>Enter Subnet ID for pcf-management-subnet-az0</td>
+   <td>10.0.16.0/28</td>
+   <td>10.0.16.0-10.0.16.4</td>
+   <td>169.254.169.253</td>
+   <td>10.0.16.1</td>
+   <td>Enter Availability Zone for pcf-management-subnet-az0</td>
+ </tr>
+ <tr>
+   <td>Enter Subnet ID for pcf-management-subnet-az1</td>
+   <td>10.0.16.16/28</td>
+   <td>10.0.16.16-10.0.16.20</td>
+   <td>169.254.169.253</td>
+   <td>10.0.16.17</td>
+   <td>Enter Availability Zone for pcf-management-subnet-az1</td>
+ </tr>
+ <tr>
+   <td>Enter Subnet ID for pcf-management-subnet-az2</td>
+   <td>10.0.16.32/28</td>
+   <td>10.0.16.32-10.0.16.36</td>
+   <td>169.254.169.253</td>
+   <td>10.0.16.33</td>
+   <td>Enter Availability Zone for pcf-management-subnet-az2</td>
+ </tr>
+ </table>
+ * Click **Add Network**.
+ * Enter `pcf-ert-network` in **Name** field
+    * Create a subnet for each availability zone by clicking Add **Subnet** and fill in the following values per subnet:
+<table>
+ <tr>
+   <th>VPC Subnet ID</th>
+   <th>CIDR</th>
+   <th>Reserved IP Ranges</th>
+   <th>DNS</th>
+   <th>Gateway</th>
+   <th>Availability Zones</th>
+ </tr>
+ <tr>
+   <td>Enter Subnet ID for pcf-ert-subnet-az0</td>
+   <td>10.0.4.0/24</td>
+   <td>10.0.4.0-10.0.4.4</td>
+   <td>169.254.169.253</td>
+   <td>10.0.4.1</td>
+   <td>Enter Availability Zone for pcf-ert-subnet-az0</td>
+ </tr>
+ <tr>
+   <td>Enter Subnet ID for pcf-ert-subnet-az1</td>
+   <td>10.0.5.0/24</td>
+   <td>10.0.5.0-10.0.5.4</td>
+   <td>169.254.169.253</td>
+   <td>10.0.5.1</td>
+   <td>Enter Availability Zone for pcf-ert-subnet-az1</td>
+ </tr>
+ <tr>
+   <td>Enter Subnet ID for pcf-ert-subnet-az2</td>
+   <td>10.0.6.0/24</td>
+   <td>10.0.6.0-10.0.6.4</td>
+   <td>169.254.169.253</td>
+   <td>10.0.6.1</td>
+   <td>Enter Availability Zone for pcf-ert-subnet-az2</td>
+ </tr>
+ </table>
+ * Click **Add Network**.
+ * Check the **Service Network** box. This allows you to dynamically provision VMs in this network for use with on-demand services. Ops Manager does not provision VMs within the specified CIDR range.
+ * Enter `pcf-services-network` in **Name** field
+    * Create a subnet for each availability zone by clicking Add **Subnet** and fill in the following values per subnet:
+<table>
+ <tr>
+   <th>VPC Subnet ID</th>
+   <th>CIDR</th>
+   <th>Reserved IP Ranges</th>
+   <th>DNS</th>
+   <th>Gateway</th>
+   <th>Availability Zones</th>
+ </tr>
+ <tr>
+   <td>Enter Subnet ID for pcf-services-subnet-az0</td>
+   <td>10.0.8.0/24</td>
+   <td>10.0.8.0-10.0.8.3</td>
+   <td>169.254.169.253</td>
+   <td>10.0.8.1</td>
+   <td>Enter Availability Zone for pcf-services-subnet-az0</td>
+ </tr>
+ <tr>
+   <td>Enter Subnet ID for pcf-services-subnet-az1</td>
+   <td>10.0.9.0/24</td>
+   <td>10.0.9.0-10.0.9.3</td>
+   <td>169.254.169.253</td>
+   <td>10.0.9.1</td>
+   <td>Enter Availability Zone for pcf-services-subnet-az1</td>
+ </tr>
+ <tr>
+   <td>Enter Subnet ID for pcf-services-subnet-az2</td>
+   <td>10.0.10.0/24</td>
+   <td>10.0.10.0-10.0.10.3</td>
+   <td>169.254.169.253</td>
+   <td>10.0.10.1</td>
+   <td>Enter Availability Zone for pcf-services-subnet-az2</td>
+ </tr>
+ </table>
 
 1. Click **Save**.
-
-1. A verification error displays because the PCF Security Group blocks ICMP. You can ignore this error.
-
-    <%= image_tag("pcfaws/network-error.png") %>
-
 
 ## <a id="assign-azs"></a>Step 6: Assign AZs and Networks ##
 
 1. Select **Assign AZs and Networks**.
 <%= image_tag("images/assign-az.png") %>
-1. Use the drop-down menu to select a **Singleton Availability Zone**. The Ops Manager Director installs in this Availability Zone.
-1. Use the drop-down menu to select a **Network** for your Ops Manager Director.
+1. Use the drop-down menu to select a **Singleton Availability Zone**. The Ops Manager Director is deployed into this Availability Zone.
+1. Use the drop-down menu to select `pcf-management-network` under **Network**. The Ops Manager Director is deployed into this Network.
 1. Click **Save**.
 
 
@@ -222,6 +323,10 @@ delimited)** field, separated by a comma:
 1. In **Trusted Certificates**, enter a custom certificate authority (CA) certificate to insert into your organization's certificate trust chain. This feature enables all BOSH-deployed components in your deployment to trust a custom root certificate. If you want to use Docker Registries for running app instances in Docker containers, use this field to enter your certificate for your private Docker Registry. See the [Using Docker Registries](../opsguide/docker-registry.html) topic for more information.
 1. Choose **Generate passwords** or **Use default BOSH password**. Pivotal recommends that you use the **Generate passwords** option for greater security.
 1. Click **Save**. To view your saved Director password, click the **Credentials** tab.
+
+## <a id='security'></a>Step 8: Syslog Page ##
+
+(use cloudform for this section)
 
 ## <a id='pcfaws-om-rscestem'></a>Step 8: Resource Config Page ##
 
@@ -239,12 +344,7 @@ choose **Automatic** from the drop-down menu to allocate the recommended resourc
 ## <a id='pcfaws-om-complete'></a>Step 9: Complete the Ops Manager Director Installation ##
 
 1. Return to the **Installation Dashboard**.
-1. Click **Apply Changes**. An ICMP error message appears.
-
-    <%= image_tag("pcfaws/install-error.png") %>
-
-1. Click **Ignore errors and start the install**.
-
+1. Click **Apply Changes**. 
 1. Ops Manager Director begins to install. The **Changes Applied** window displays when the installation process successfully completes.
 
     <%= image_tag("aws/vpc-step16.png") %>

@@ -84,31 +84,27 @@ Manager.
 
 <%= partial 'networking-cloudform' %>\
 
-## <a id='application-containers-config'></a>Step 7: Configure Application Containers ##
+## <a id='application-containers-config'></a>Step 5: Configure Application Containers ##
 
 <%= partial 'application_container_config' %>
 
-## <a id='internal-mysql'></a> Step 6: (Optional) Configure Internal MySQL ##
-
-<%= partial 'mysql_proxy_config' %>
-
-## <a id='er-appdevctrl-config'></a>Step 8: Configure Application Developer Controls ##
+## <a id='er-appdevctrl-config'></a>Step 6: Configure Application Developer Controls ##
 
 <%= partial 'application_developer_controls' %>
 
-## <a id='app-security'></a>Step 9: Review Application Security Group ##
+## <a id='app-security'></a>Step 7: Review Application Security Group ##
 
 <%= partial 'application_security_group' %>
 
-## <a id='er-auth-config'></a>Step 10: Configure Authentication and Enterprise SSO ##
+## <a id='er-auth-config'></a>Step 8: Configure Authentication and Enterprise SSO ##
 
 <%= partial 'authsso_config' %>
 
-## <a id='uaa'></a>Step 10: Configure UAA ##
+## <a id='uaa'></a>Step 9: Configure UAA ##
 
 <%= partial 'uaa' %>
 
-## <a id='db-config'></a>Step 5: Configure Databases ##
+## <a id='db-config'></a>Step 10: Configure Databases ##
 
 You can configure Elastic Runtime to use the internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by Elastic Runtime.
 
@@ -125,7 +121,11 @@ Then proceed to [Step 6: (Optional) Configure Internal MySQL](#internal-mysql) t
 
 <%= partial 'ert_database_external' %>
 
-## <a id='file-store-config'></a>Step 11: Configure File Storage ##
+## <a id='internal-mysql'></a> Step 11: (Optional) Configure Internal MySQL ##
+
+<%= partial 'mysql_proxy_config' %>
+
+## <a id='file-store-config'></a>Step 12: Configure File Storage ##
 
 <%= partial 'filestore_config' %>
 
@@ -145,26 +145,24 @@ For more factors to consider when selecting file storage, see the <a href="../op
 
 [Google Cloud Storage](./gcp-er-config.html#external_gcp) and [Azure Storage](./gcp-er-config.html#external_azure) are also available as file storage options, but are not recommended for typical PCF on AWS installations. 
 
-## <a id='config-sys-logging'></a>Step 12: (Optional) Configure System Logging ##
+## <a id='sys-logging'></a>Step 13: (Optional) Configure System Logging ##
 
-If you are forwarding logging messages to an external Reliable Event Logging Protocol (RELP) server, complete the following steps:
+If you forward logging messages to an external Reliable Event Logging Protocol (RELP) server, complete the following steps:
 
-1. Select **System Logging**.
-  <%= image_tag("cloudform/sys-logging.png") %>
-  
-1. If you want to include security events in your log stream, select the **Enable Cloud Controller security event logging** checkbox. This logs all API requests, including the endpoint, user, source IP, and request result, in the Common Event Format (CEF).
-
-1. Enter the IP address of your syslog server in **External Syslog Aggregator Hostname** and its port in **External Syslog Aggregator Port**. The default port for a syslog server is `514`.
+1. Select the **System Logging** section that is located within your Pivotal Elastic Runtime **Settings** tab.
+  <%= image_tag("updated-system-logging.png") %>
+1. Enter the IP address of your syslog server in **Address**.
+1. Enter the port of your syslog server in **Port**. The default port for a syslog server is `514`.
 <p class="note"><strong>Note</strong>: The host must be reachable from the Elastic Runtime network, accept TCP connections, and use the RELP protocol. Ensure your syslog server listens on external interfaces.</p>
-1. Select an **External Syslog Network Protocol** to use when forwarding logs.
+1. Select a **Transport Protocol** to use when forwarding logs.
+1. If you plan to use TLS encryption when sending logs to the remote server, select **Yes** when answering the **Encrypt syslog using TLS?** question.
+  1. In the **Permitted Peer** field, enter either the name or SHA1 fingerprint of the remote peer.
+  1. In the **TLS CA Certificate** field, enter the TLS CA Certificate for the remote server.
 1. For the **Syslog Drain Buffer Size**, enter the number of messages the Doppler server can hold from Metron agents before the server starts to drop them. See the [Loggregator Guide for Cloud Foundry Operators](../loggregator/log-ops-guide.html) topic for more details.
+1. If you want to include security events in your log stream, select the **Enable Cloud Controller security event logging** checkbox. This logs all API requests, including the endpoint, user, source IP address, and request result, in the Common Event Format (CEF).
 1. Click **Save**.
 
-## <a id='lb'></a>Step 13: Finalize the Load Balancer Setup ##
-
-<%= partial 'configure_aws_elb' %>
-
-## <a id='customize-apps-man'></a>Step 14: (Optional) Customize Apps Manager##
+## <a id='customize-apps-man'></a>Step 14: (Optional) Customize Apps ##
 
 <%= partial 'custombranding' %>
 
@@ -198,47 +196,7 @@ the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating a
 
 ## <a id='advanced-features'></a>Step 18: (Optional) Enable Advanced Features
 
-Use caution when enabling advanced features if you have other Pivotal Cloud Foundry service tiles installed in your Pivotal Cloud Foundry deployment. Not all of the services are guaranteed to work as expected with these features enabled.
-
-### <a id="disk-memory-overcommit"></a>Diego Cell Memory and Disk Overcommit
-
-If your apps do not use the full allocation of disk space and memory set in the **Resource Config** tab, you might want use this feature. These fields control the amount to overcommit disk and memory resources to each Diego Cell VM.
-
-For example, you might want to use the overcommit if your apps use a small amount of disk and memory capacity compared with the **Resource Config** settings for **Diego Cell**.
-
-<p class="note"><strong>Note</strong>: Due to the risk of app failure and the deployment-specific nature of disk and memory use, Pivotal has no recommendation about how much, if any, memory or disk space to overcommit.</p>
-
-To enable overcommit, follow these steps:
-
-1. Select **Advanced Features**.
-
-    <%= image_tag("./disk-memory-overcommit.png") %>
-
-1. Enter the total desired amount of Diego cell memory value in the **Cell Memory Capacity (MB)** field. Refer to the **Diego Cell** row in the **Resource Config** tab for the current Cell memory capacity settings that this field overrides.
-
-1. Enter the total desired amount of Diego cell disk capacity value in the **Cell Disk Capacity (MB)** field. Refer to the **Diego Cell** row in the **Resource Config** tab for the current Cell disk capacity settings that this field overrides.
-
-1. Click **Save**.
-
-<p class="note"><strong>Note</strong>: Entries made to each of these two fields set the total amount of resources allocated, not the overage.</p>
-
-### <a id="enable-tcp"></a>Enable TCP Routing
-
-TCP Routing is available for users who want an alternative to HTTP. For more information, including details about setting up your networking infrastructure for TCP Routing, see [Enabling TCP Routing](../adminguide/enabling-tcp-routing.html). 
-
-1. TCP Routing is disabled by default. To enable this feature, select **Enable TCP Routing**. 
-
-    <%= image_tag("./tcp_routing.png") %>
-
-1. You do not need to enter **TCP Router IPs** if you are using an ELB. Instead, navigate to <strong>Resource Config</strong> and, in the **TCP Router** job, enter your **ELB Name**.
-
-1. In **TCP Routing Ports**, enter the range of ports you reserved for TCP routes. These ports must be available on your load balancer. You can specify a list of ports with commas between each port number and specify ranges of ports with dashes between the first and last port number. This configuration only applies the first time you specify it here. If you later want to update the ports, see the [HTTP vs TCP Routes](../devguide/deploy-apps/routes-domains.html#http-vs-tcp-routes) topic on how to use the cf CLI to update TCP Routing ports.
-
-### <a id="disable-tcp"></a>Disable TCP Routing
-
-1. If you want to disable TCP routing after enabling it, click **Select this option if you prefer to enable TCP Routing at a later time**.
-
-1. Manually remove the TCP routing domain. 
+<%= partial '_advanced-features' %>
 
 ## <a id='consul-cc'></a>Step 19: Disable Consul Locks
 
@@ -267,18 +225,21 @@ This step is only required if your Ops Manager does not already have the Stemcel
     <%= image_tag("stemcell_18.png") %>
 
 
-## <a id='config-elb'></a>Step 23: Configure Router to Elastic Load Balancer ##
+## <a id='config-elb'></a>Step 23: Configure Router to Elastic Load Balancers ##
+
+1. If you do not know the names of your ELBs, find the name of your Elastic Load Balancer (ELB) by clicking **Load Balancers** in the AWS EC2 dashboard. If you followed the instructions to Manually Configure AWS for PCF, you created the following: 
+  * `pcf-ssh-elb`: An SSH load balancer
+  * `pcf-web-elb`: A load balancer
+  * `pcf-tcp-elb`: A TCP load balancer
 
 1. In the **Elastic Runtime** tile, click **Resource Config**.
+  <%= image_tag("pcfaws/er-aws-resource-config.png") %>
 
-1. In the **ELB Name** field of the **TCP Router** row, enter the name of your TOC load balancer if you have enabled TCP routing in the [Advanced Features](#advanced-features) pane. Specify multiple load balancers by entering the names separated by commas.
+1. In the **ELB Name** field of the **Diego Brain** row, enter the name of your SSH load balancer: `pcf-ssh-elb`. You can specify multiple load balancers by entering the names separated by commas.
 
-1. In the **ELB Name** field of the **Diego Brain** row, enter the name of your SSH load balancer. Specify multiple load balancers by entering the names separated by commas.
+1. In the **ELB Name** field of the **Router** row, enter the name of your web load balancer: `pcf-web-elb`. You can specify multiple load balancers by entering the names separated by commas.
 
-
-1. Click **Save**.
-
-    <%= image_tag("pcfaws/er-aws-resource-config.png") %>
+1. In the **ELB Name** field of the **TCP Router** row, enter the name of your TCP load balancer if you enabled TCP routing: `pcf-tcp-elb`. You can specify multiple load balancers by entering the names separated by commas.
 
 ## <a id='complete'></a>Step 24: Complete the Elastic Runtime Installation ##
 
@@ -286,11 +247,6 @@ This step is only required if your Ops Manager does not already have the Stemcel
 Dashboard.
 
 1. Click **Apply Changes** to begin your installation of Elastic Runtime.
-<br /><br />
-    If an ICMP error message appears, click **Ignore errors and start the
-	install**.
-
-	<%= image_tag("pcfaws/er-install-error.png") %>
 
     The install process generally requires a minimum of 90 minutes to complete.
 	The image shows the **Changes Applied** window that displays when the

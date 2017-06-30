@@ -13,6 +13,7 @@ section of this topic for more information.</p>
   * **Forward SSL to Elastic Runtime Router**: Select this option if your deployment uses an external load balancer that can forward encrypted traffic to the Elastic Runtime Router, or for a development environment that does not require load balancing. Complete the fields for the **Router SSL Termination Certificate and Private Key** and **Router SSL Ciphers**.
   <%= image_tag 'images/ert_lb_encrypted_certs.png' %>
   * **Forward unencrypted traffic to Elastic Runtime Router**: Select this option if your deployment uses an external load balancer that cannot forward encrypted traffic to the Elastic Runtime Router, or for a development environment that does not require load balancing.
+  <p class="note"><strong>Note:</strong> If you setup your load balancers according to <a href="../pcf-aws-manual-config.html">Manually Configuring AWS for PCF</a>, select this option. HTTPS traffic will be decrypted at the load balancer and sent to the Gorouter unencrypted.</p> 
   <%= image_tag 'images/ert_lb_unencrypted.png' %> 
   * **Forward SSL to HAProxy**: Select this option to use HAProxy as your first point of entry. Complete the fields for **SSL Certificate and Private Key**, and **HAProxy SSL Ciphers**. Select **Disable HTTP traffic to HAProxy** if you want the HAProxy to only allow HTTPS traffic. For more information, on configuring HAProxy, see <a href="../opsguide/ssl-term-haproxy.html">Configuring SSL/TLS Termination at HAProxy</a>.
   <%= image_tag 'images/ert_haproxy_certs.png' %>
@@ -27,7 +28,6 @@ section of this topic for more information.</p>
  
 1. For Loggregator Port, you must enter `4443`. In AWS deployments, port 4443 forwards SSL traffic that supports WebSockets from the ELB. Do not use the default port of `443`.
 
-1. <%= partial 'app_subnet_field' %>
 1. <%= partial 'app_mtu' %>  
 
     <%= image_tag 'images/ert_log_port_mtu_aws.png' %>
@@ -44,8 +44,13 @@ section of this topic for more information.</p>
 1. <%= partial 'http_headers_to_log' %>
     ![Http Headers to Log](images/headers_to_log.png)
 
-1. <%= partial 'tcp_routing_enable' %>
-   1. For AWS, you also need to specify the name of a TCP ELB in the **LOAD BALANCER** column of TCP Router job of the <b>Resource Config</b> screen. You configure this later on in Elastic Runtime. For more information, see the <a href="#config-elb">Configure Router to Elastic Load Balancer</a> topic.</p>
+1. TCP Routing is disabled by default. To enable this feature, perform the following steps:
+   1. Select **Enable TCP Routing**. 
+   1. In **TCP Routing Ports**, enter `1024-1123`. This corresponds to the rules you created for `pcf-tcp-elb` when [Manually Configuring AWS for PCF](./pcf-aws-manual-config.html). <br/>
+      Configuration of this field is only applied on the first deploy, and update updates to the port range are made using the cf CLI. For details about modifying the port range, see the [Router Groups](../adminguide/enabling-tcp-routing.html#router-groups) topic.
+      <%= image_tag 'images/ert_tcp_routing_enable.png' %> 
+    1. For AWS, you also need to specify the name of a TCP ELB in the **LOAD BALANCER** column of TCP Router job of the <b>Resource Config</b> screen. You configure this later on in Elastic Runtime. For more information, see the <a href="#config-elb">Configure Router to Elastic Load Balancer</a> topic.</p>
+
 1. <%= partial 'tcp_routing_disable' %>
 
 1. <%= partial 'c2c_ert_config' %>

@@ -30,9 +30,9 @@ BBR backs up the following PCF components:
 
 Service tiles have different [levels of integration](https://docs.pivotal.io/tiledev/stages.html). BBR may or may not be able to back up your service tiles depending on their level of integration. Consult the following list:
 
-* Service brokers: You can back up and restore all brokered services with the procedures documented in this topic and in the [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html) topic. Because a brokered service runs external to PCF, BBR backs up and restores the VMs and the service instances, but not the service data.
-* Managed services: Because managed services are BOSH releases, they must implement the BBR scripts. Otherwise, you cannot use BBR to back up and restore them. If the managed service has implemented BBR scripts, BBR backs up and restores both the VMs and the service data.
-* On-demand services: On-demand instances are redeployed, but the data in the instance is not backed up. A new, empty instance of the on-demand service is restored.
+* **Service brokers**: You can back up and restore all brokered services with the procedures documented in this topic and in the [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html) topic. Because a brokered service runs external to PCF, BBR backs up and restores the VMs and the service instances, but not the service data.
+* **Managed services**: Because managed services are BOSH releases, they must implement the BBR scripts. Otherwise, you cannot use BBR to back up and restore them. If the managed service has implemented BBR scripts, BBR backs up and restores both the VMs and the service data.
+* **On-demand services**: On-demand instances are redeployed, but the data in the instance is not backed up. A new, empty instance of the on-demand service is restored.
 
 ## <a id='workflow'></a>Workflow
 
@@ -268,7 +268,7 @@ Perform the following steps to spin up a second environment that matches the ori
 
 1. Export your Ops Manager installation by performing the steps in the [Step 3: Export Installation Settings](#export) section.
 1. Create a new Ops Manager VM in a different network to the original. Consult the topic specific to your IaaS:
-	* [Launching an Ops Manager Director Instance on AWS](../pcf-aws-manual-om-config.html)
+	* [Manually Configuring AWS for PCF](../pcf-aws-manual-config.html)
 	* [Launching an Ops Manager Director Instance with an ARM Template](../azure-arm-template.html)
     * [Launching an Ops Manager Director Instance on GCP](../gcp-om-deploy.html)
     * [Provisioning the OpenStack Infrastructure](../openstack-setup.html)
@@ -403,14 +403,20 @@ If more logging is needed, use the optional `--debug` flag to print the followin
 * All commands executed on local environment
 * Standard in and standard out streams for the backup and restore scripts when they are executed
 
-## <a id='cancelling-backup'></a>Cancelling a backup
+## <a id='canceling-backup'></a>Canceling a Backup
 
-<p class="note warning">Cancelling a backup can leave the CF API inaccessible. It may also prevent future backups from starting.</p>
+BBR will ignore `SIGINT` signals such as hitting `Ctrl-C` during a backup. 
 
-BBR will ignore `SIGINT` signals such as hitting `Ctrl-c` during a backup. If you absolutely need to cancel a backup, you can send `SIGTERM` to the `bbr` process to terminate it. However, if you do this, you should follow the steps below afterwards.
+If you need to cancel a backup, perform the following steps:
 
-1. On each `cloud_controller` VM in your deployment, run `sudo /var/vcap/jobs/cloud-controller-backup/bin/bbr/post-backup-unlock`.
-1. Run `bbr deployment pre-backup-check` (using the flags from your original backup command). If this command reports that the deployment is not backupable, SSH onto each VM mentioned in the error and remove the `/var/vcap/store/bbr-backup` directory if present.
+1. Send `SIGTERM` to the `bbr` process to terminate it. 
+1. Log in to your BOSH Director with the BOSH CLI by following the steps in the [Log into BOSH](../trouble-advanced.html#log-in) section of the <em>Advanced Troubleshooting with the BOSH CLI</em> topic.
+1. Select your Elastic Runtime deployment with the BOSH CLI by following the steps in the [Select a Product Deployment to Troubleshoot](../trouble-advanced.html#product) section of the <em>Advanced Troubleshooting with the BOSH CLI</em> topic.
+1. Perform the following steps for each `cloud_controller` VM in your deployment:
+	1. Run `bosh ssh` to list the VMs in the deployment and select the VM you want to SSH into.
+	1. Run the following command from the VM:
+		<pre class="terminal">$ sudo /var/vcap/jobs/cloud-controller-backup/bin/bbr/post-backup-unlock</pre>
+1. Run the BBR pre-backup check from your jumpbox by following the steps in the [Step 8: Check Your Deployment](#check) section above. If the command reports that it cannot back up the deployment, SSH onto each VM mentioned in the error using the BOSH CLI and remove the `/var/vcap/store/bbr-backup` directory if present.
 
 ## <a id="troubleshooting"></a> Troubleshooting
 ### Scenario

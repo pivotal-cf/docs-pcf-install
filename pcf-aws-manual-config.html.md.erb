@@ -15,7 +15,7 @@ After completing the procedures in this topic, proceed to [Manually Configuring 
 
 ##<a id='file-ticket'></a> Step 1: File a Ticket
 
-Log in to the AWS Management Console, and file a ticket with Amazon to ensure that your account can launch more than the default 20 instances. In the ticket, ask for a limit of <strong>50 t2.micro</strong> instances and <strong>20 c4.large</strong> instances in the region you are using. 
+Log in to the AWS Management Console, and file a ticket with Amazon to ensure that your account can launch more than the default 20 instances. In the ticket, ask for a limit of 50 `t2.micro` instances and 20 `c4.large` instances in the region you are using. 
 
 You can check the limits on your account by visiting the EC2 Dashboard on the AWS Management Console and clicking <strong>Limits</strong> on the left navigation.
 
@@ -84,14 +84,91 @@ Perform the following steps to create an Amazon Identity and Access Management (
     * **IPv6 CIDR block**: Select **No IPv6 CIDR Block**.
     * **VPC name**: `pcf-vpc`.
     * **Public subnet's IPv4 CIDR**: Enter `10.0.0.0/24`.
-    * Set both **Availability Zone** fields to an available zone within the region you have selected. You must set both subnets to the same AZ, such as **us-east-1a**.
-    * **Public subnet name**: Enter `public-az1`.
-    * **Private subnet's IPv4 CIDR**: Enter `10.0.16.0/20`.
-    * **Private subnet name**: Enter `pcf-private-az1`.
+    * Set the **Availability Zone** fields for both subnets to **us-east-1a**. For example, **us-east-1a**.
+    * **Public subnet name**: Enter `pcf-public-subnet-az0`.
+    * **Private subnet's IPv4 CIDR**: Enter `10.0.16.0/28`.
+    * **Private subnet name**: Enter `pcf-management-subnet-az0`.
     * Click **Use a NAT instance instead** and under **Specify the details of your NAT instance**, set the **Instance type** to **t2.medium** and select the `pcf-ops-manager-key` SSH key you created for **Key Pair name**.
     * **Enable DNS hostnames**: Click **Yes**.
     * **Hardware tenancy**: Select **Default**.
+    * **Enable ClassicLink**: Select **No**.
     * Click **Create VPC**.
+
+1. After the VPC is successfully created, click **Subnets** in the left navigation.
+1. Click **Create Subnet**.
+1. Add the following subnets to the `pcf-vpc` VPC:
+     <table>
+     <tr>
+       <th>Name</th>
+       <th>AZ</th>
+       <th>IPv4 CIDR block</th>
+     </tr>
+     <tr>
+       <td>`pcf-public-subnet-az1`</td>
+       <td>`REGION-#b` (for example, `us-west-2b`)</td>
+       <td>`10.0.1.0/24`</td>
+     </tr>
+     <tr>
+       <td>`pcf-public-subnet-az2`</td>
+       <td>`REGION-#c` (for example, `us-west-2c`)</td>
+       <td>`10.0.2.0/24`</td>
+     </tr>
+     <tr>
+       <td>`pcf-management-subnet-az1`</td>
+       <td>`REGION-#b` (for example, `us-west-2b`)</td>
+       <td>`10.0.16.16/28`</td>
+     </tr>
+     <tr>
+       <td>`pcf-management-subnet-az2`</td>
+       <td>`REGION-#c` (for example, `us-west-2c`)</td>
+       <td>`10.0.16.32/28`</td>
+     </tr>
+     <tr>
+       <td>`pcf-ert-subnet-az0`</td>
+       <td>`REGION-#a` (for example, `us-west-2a`)</td>
+       <td>`10.0.4.0/24`</td>
+     </tr>
+     <tr>
+       <td>`pcf-ert-subnet-az1`</td>
+       <td>`REGION-#b` (for example, `us-west-2b`)</td>
+       <td>`10.0.5.0/24`</td>
+     </tr>
+     <tr>
+       <td>`pcf-ert-subnet-az2`</td>
+       <td>`REGION-#c` (for example, `us-west-2c`)</td>
+       <td>`10.0.6.0/24`</td>
+     </tr>
+     <tr>
+       <td>`pcf-services-subnet-az0`</td>
+       <td>`REGION-#a` (for example, `us-west-2a`)</td>
+       <td>`10.0.8.0/24`</td>
+     </tr>
+     <tr>
+       <td>`pcf-services-subnet-az1`</td>
+       <td>`REGION-#b` (for example, `us-west-2b`)</td>
+       <td>`10.0.9.0/24`</td>
+     </tr>
+     <tr>
+       <td>`pcf-services-subnet-az2`</td>
+       <td>`REGION-#c` (for example, `us-west-2c`)</td>
+       <td>`10.0.10.0/24`</td>
+     </tr>
+     <tr>
+       <td>`pcf-rds-subnet-az0`</td>
+       <td>`REGION-#a` (for example, `us-west-2a`)</td>
+       <td>`10.0.12.0/24`</td>
+     </tr>
+     <tr>
+       <td>`pcf-rds-subnet-az1`</td>
+       <td>`REGION-#b` (for example, `us-west-2b`)</td>
+       <td>`10.0.13.0/24`</td>
+     </tr>
+     <tr>
+       <td>`pcf-rds-subnet-az2`</td>
+       <td>`REGION-#c` (for example, `us-west-2c`)</td>
+       <td>`10.0.14.0/24`</td>
+     </tr>
+     </table>
 
 ##<a id='pcfaws-om-secgrp'></a> Step 5: Configure a Security Group for Ops Manager ##
 
@@ -338,41 +415,37 @@ Perform the following steps to create an Amazon Identity and Access Management (
 1. For **Description**, enter a description to identify this security group.
 1. For **VPC**, select the VPC where you want to deploy MySQL.
 1. Click the **Inbound** tab. Add a rule of type MYSQL and specify the subnet of your VPC in **Source**, as the table and image show.
-
-<table border="1" class="nice" >
-<tr>
-  <th><strong>Type </strong></th>
-  <th><strong>Protocol</strong></th>
-  <th><strong>Port Range</strong></th>
-  <th colspan='2'><strong>Source</strong></th>
-</tr>
-<tr>
-  <td>MySQL</td>
-  <td>TCP</td>
-  <td>3306</td>
-  <td>Custom IP</td>
-  <td>10.0.0.0/16</td>
-</tr>
-</table>
-
-1. Click the **Outbound** tab. Add a rule of type All traffic and specify the subnet of your VPC in **Destination**, as the table and image show.
-
     <table border="1" class="nice" >
-<tr>
-  <th><strong>Type </strong></th>
-  <th><strong>Protocol</strong></th>
-  <th><strong>Port Range</strong></th>
-  <th colspan='2'><strong>Destination</strong></th>
-</tr>
-<tr>
-  <td>All traffic</td>
-  <td>All</td>
-  <td>All</td>
-  <td>Custom IP</td>
-  <td>10.0.0.0/16</td>
-</tr>
-</table>
-
+    <tr>
+      <th><strong>Type </strong></th>
+      <th><strong>Protocol</strong></th>
+      <th><strong>Port Range</strong></th>
+      <th colspan='2'><strong>Source</strong></th>
+    </tr>
+    <tr>
+      <td>MySQL</td>
+      <td>TCP</td>
+      <td>3306</td>
+      <td>Custom IP</td>
+      <td>10.0.0.0/16</td>
+    </tr>
+    </table>
+1. Click the **Outbound** tab. Add a rule of type All traffic and specify the subnet of your VPC in **Destination**, as the table and image show.
+    <table border="1" class="nice" >
+    <tr>
+      <th><strong>Type </strong></th>
+      <th><strong>Protocol</strong></th>
+      <th><strong>Port Range</strong></th>
+      <th colspan='2'><strong>Destination</strong></th>
+    </tr>
+    <tr>
+      <td>All traffic</td>
+      <td>All</td>
+      <td>All</td>
+      <td>Custom IP</td>
+      <td>10.0.0.0/16</td>
+    </tr>
+    </table>
 1. Click **Create**.
 
     <%= image_tag("pcfaws/pcf_aws_secgrp_mysql.png") %>
@@ -831,9 +904,9 @@ You must create a NAT instance when creating a VPC. The NAT instance must have t
 * **Enable DNS hostnames**: Yes 
 * **Hardware tenancy**: Default
 
-You must also assign the NAT instance to the `pcf-nat-security-group`.
-
 See [Step 4: Create a VPC](#pcfaws-vpc).
+
+You must also assign the NAT instance to the `pcf-nat-security-group`. See [Step 17: Secure the NAT Instance](#pcfaws-nat).
 
 ### Security Groups ###
 
@@ -1131,23 +1204,14 @@ You must navigate to your DNS provider and create CNAME and A records for all th
 
 See [Step 16: Configure DNS Records](#pcfaws-dns).
 
+### RDS Subnet Group ###
 
-<dt><strong>Step 14: Subnets for RDS</strong></dt><dd><strong>Dashboard: VPC</strong></dd><dd>rds-1 (region A)</dd><dd>rds-2 (region B)</dd><dd><a href="#pcfaws-rds-subnets">Details</a></dd><br>
+You must create a subnet group for RDS named `pcf-rds-subnet-group` from the RDS Dashboard.
 
-<dt><strong>Step 15: RDS Subnet Group</strong></dt><dd><strong>Dashboard: RDS</strong></dd><dd>Name: PCF_RDSGroup</dd><dd><a href="#pcfaws-rds-subnet-group">Details</a></dd><br>
+See [Step 18: Create RDS Subnet Group](#pcfaws-rds-subnet-group).
 
-<dt><strong>Step 16: MySQL Database using AWS RDS</strong></dt><dd><strong>Dashboard: VPC</strong></dd><dd>Name: bosh</dd>
-<dd>DB Instance Class: db.m3.large - 2 vCPU, 7.5 GiB RAM</dd>
-<dd>Multi-AZ Deployment: Yes</dd>
-<dd>Allocated Storage: 100 GB</dd>
-<dd>DB Instance Identifier: pcf-bosh</dd>
-<dd>VPC: pcf-vpc</dd>
-<dd>Subnet Group: PCF_RDSGroup</dd>
-<dd>Publicly Accessible: No</dd>
-<dd>VPC Security Groups: MySQL</dd>
-<dd>Database Name: bosh</dd>
-<dd><a href="#pcfaws-mysql-rds">Details</a></dd>
+### MySQL Database ###
 
-</dl>
+You must create a MySQL database from the RDS Dashboard.
 
-[Next Step: Configure Ops Manager Director for AWS](./pcf-aws-manual-om-config.html)
+See [Step 19: Create a MySQL Database using AWS RDS](#pcfaws-mysql-rds).

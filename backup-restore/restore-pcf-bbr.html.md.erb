@@ -6,13 +6,13 @@ owner: RelEng
 <strong><%= modified_date %></strong>
 
 <style>
-    .note.warning {
-       background-color: #fdd;
-       border-color: #fbb
-  	          }
-    .note.warning:before {
-       color: #f99;
-		         }
+.note.warning {
+  background-color: #fdd;
+  border-color: #fbb
+}
+.note.warning:before {
+  color: #f99;
+}
 </style>
 
 <p class="note"><strong>Note</strong>: BBR is a beta feature in PCF v1.11.</p>
@@ -61,6 +61,8 @@ Prepare your environment for PCF by following the instructions specific to your 
 1. A **Successfully imported installation** message appears upon completion.
 
     <%= image_tag("../images/upgrading/success.png") %>
+
+1. If you are restoring to a different PCF, i.e. if you had to recreate the networks, load balances, etc, see <a href="#restore-to-new">Appendix C</a>.
 
 ## <a id="bosh-state"></a> Step 3: Remove BOSH State File
 
@@ -218,7 +220,7 @@ If `bosh cck` does not clean up all disk references, there are disks from a prev
 To clean up these disks, perform one of the following steps:
 
 * Target the redeployed BOSH Director using the BOSH CLI, list the deployments, and delete each deployment using `bosh -d DEPLOYMENT_NAME delete-deployment`.
-* Log into your IaaS account and delete the disks manually.
+* Or: Log into your IaaS account and delete the disks manually (run `bosh instances --details` to get the list of disk ids).  
 
 <p class="note warning"><strong>Note</strong>: This is a very destructive operation.</p>
 
@@ -250,3 +252,20 @@ This happens when `mariadb` fails to start within the timeout period -- it will 
 1. Run `monit unmonitor`
 1. Run `monit monitor` -- after a few minutes, `monit summary` should report that all the processes are running.
 1. Re-attempt the restore.
+
+## <a id="restore-to-new"></a> Appendix C: Restoring to a different PCF
+
+In an event of a disaster, it's possible to lose not only the VMs and disks, but the infrastructure configuration (networks, load balancers, etc) as well. 
+
+If the PCF you are restoring to is similar, but not exactly the same, a few extra steps need to be taken for a successfull restore:
+
+1. Navigate to "Ops Manager Director tile > Create Networks" and update the network names to reflect the network names on the IaaS for the new environment.
+
+1. Updated the "Load Balancer" column on the Elastic Runtime tile to the new Load Balancers in "ERT > Resource Config".
+  
+  1. If necessary, update the Load Balancer SSL certificate and Private key to match the new load balancer certificate and key on "ERT > Networking > Router SSL Termination Certificate and Private Key".
+  
+1. If your environment is running in a different DNS endpoint, update the old environment DNS entries to point to the new Load Balancer addresses (see the "Configure Network" section for your IaaS <a href="../custom-load-balancer.html#configure-networking">here</a>). 
+Also, we updated the Load Balancer SSL certificate and Private key to match with the new ones.
+
+1. [Optional] Update "Ops Manager Director tile > Google Config > Default Deployment Tag" to reflect the new environment

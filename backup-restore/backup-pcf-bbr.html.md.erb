@@ -77,8 +77,6 @@ Perform the following steps to enable the backup prepare node:
 	<%= image_tag("backup-prepare-node.png") %>
 1. Navigate back to the Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
 
-
-
 ## <a id='export'></a>Step 3: Export Installation Settings ##
 
 Pivotal recommends that you back up your installation settings by exporting
@@ -298,7 +296,8 @@ Perform the following steps to spin up a second environment that matches the ori
 1. Click the **Ops Manager Director** tile.
 1. Click **Create Networks** and update the networks as appropriate.
 1. SSH into your Ops Manager VM. For more information, see the [SSH into Ops Manager](../trouble-advanced.html#ssh) section of the <em>Advanced Troubleshooting with the BOSH CLI</em> topic.
-1. On the Ops Manager VM, delete the `/var/tempest/workspaces/default/deployments/bosh-state.json` file.
+1. On the Ops Manager VM, delete the `/var/tempest/workspaces/default/deployments/bosh-state.json` file:
+	<pre class="terminal">$ rm /var/tempest/workspaces/default/deployments/bosh-state.json</pre>
 1. Navigate to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy a new BOSH Director and a new Elastic Runtime.
 1. Run the BBR restore command from your jumpbox to restore your Elastic Runtime deployment:
 <pre class="terminal">
@@ -410,10 +409,13 @@ BBR will ignore `SIGINT` signals such as hitting `Ctrl-C` during a backup.
 If you need to cancel a backup, perform the following steps:
 
 1. Send `SIGTERM` to the `bbr` process to terminate it. 
-1. Log in to your BOSH Director with the BOSH CLI by following the steps in the [Log into BOSH](../trouble-advanced.html#log-in) section of the <em>Advanced Troubleshooting with the BOSH CLI</em> topic.
-1. Select your Elastic Runtime deployment with the BOSH CLI by following the steps in the [Select a Product Deployment to Troubleshoot](../trouble-advanced.html#product) section of the <em>Advanced Troubleshooting with the BOSH CLI</em> topic.
+1. Log in to your BOSH Director with the BOSH CLI by performing the procedures in the [Step 4: Retrieve BOSH Director Address and Credentials](#retrieve) section above.
 1. Perform the following steps for each `cloud_controller` VM in your deployment:
-	1. Run `bosh ssh` to list the VMs in the deployment and select the VM you want to SSH into.
+	1. List the VMs in your deployment:
+		<pre class="terminal">$ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate \
+		-d DEPLOYMENT\_NAME \
+		ssh</pre>
+	1. Select the VM you want to SSH into.
 	1. Run the following command from the VM:
 		<pre class="terminal">$ sudo /var/vcap/jobs/cloud-controller-backup/bin/bbr/post-backup-unlock</pre>
 1. Run the BBR pre-backup check from your jumpbox by following the steps in the [Step 8: Check Your Deployment](#check) section above. If the command reports that it cannot back up the deployment, SSH onto each VM mentioned in the error using the BOSH CLI and remove the `/var/vcap/store/bbr-backup` directory if present.

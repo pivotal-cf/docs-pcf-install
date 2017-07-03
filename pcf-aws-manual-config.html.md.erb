@@ -84,7 +84,7 @@ Perform the following steps to create an Amazon Identity and Access Management (
     * **IPv6 CIDR block**: Select **No IPv6 CIDR Block**.
     * **VPC name**: `pcf-vpc`.
     * **Public subnet's IPv4 CIDR**: Enter `10.0.0.0/24`.
-    * Set the **Availability Zone** fields for both subnets to **us-east-1a**. For example, **us-east-1a**.
+    * Set the **Availability Zone** fields for both subnets to the **a** availability zone of your region. For example, **us-east-1a**.
     * **Public subnet name**: Enter `pcf-public-subnet-az0`.
     * **Private subnet's IPv4 CIDR**: Enter `10.0.16.0/28`.
     * **Private subnet name**: Enter `pcf-management-subnet-az0`.
@@ -97,6 +97,9 @@ Perform the following steps to create an Amazon Identity and Access Management (
 1. After the VPC is successfully created, click **Subnets** in the left navigation.
 1. Click **Create Subnet**.
 1. Add the following subnets to the `pcf-vpc` VPC:
+
+     <p class="note"><strong>Note</strong>: The first subnets for public and management (<code>pcf-public-subnet-az0</code> and <code>pcf-management-subnet-az0</code>) were created via the steps above</p>
+
      <table>
      <tr>
        <th>Name</th>
@@ -230,7 +233,7 @@ Perform the following steps to create an Amazon Identity and Access Management (
 1. For **VPC**, select the VPC where you want to deploy the PCF VMs.
 1. Click the **Inbound** tab and add rules for all traffic from your public and private subnets to your private subnet, as the table and image show.
     This rule configuration does the following:
-    * Enables BOSH to deploy ERS and other services.
+    * Enables BOSH to deploy ERT and other services.
     * Enables application VMs to communicate through the router.
     * Allows the load balancer to send traffic to Elastic Runtime.
 
@@ -320,22 +323,6 @@ Perform the following steps to create an Amazon Identity and Access Management (
       <td>0.0.0.0/0</td>
     </tr>
     </table>
-1. Click the **Outbound** tab and add the following rule:
-    <table border="1" class="nice" >
-    <tr>
-      <th><strong>Type </strong></th>
-      <th><strong>Protocol</strong></th>
-      <th><strong>Port Range</strong></th>
-      <th colspan='2'><strong>Source</strong></th>
-    </tr>
-    <tr>
-      <td>All traffic</td>
-      <td>All</td>
-      <td>All</td>
-      <td>Anywhere</td>
-      <td>0.0.0.0/0</td>
-    </tr>
-    </table>
 1. Click **Create**.
 
 ##<a id='pcfaws-om-tcpelbsecgrp'></a> Step 9: Configure a Security Group for the TCP ELB ##
@@ -356,22 +343,6 @@ Perform the following steps to create an Amazon Identity and Access Management (
       <td>Custom TCP rule</td>
       <td>TCP</td>
       <td>1024 - 1123</td>
-      <td>Anywhere</td>
-      <td>0.0.0.0/0</td>
-    </tr>
-    </table>
-1. Click the **Outbound** tab and add the following rule:
-    <table border="1" class="nice" >
-    <tr>
-      <th><strong>Type </strong></th>
-      <th><strong>Protocol</strong></th>
-      <th><strong>Port Range</strong></th>
-      <th colspan='2'><strong>Source</strong></th>
-    </tr>
-    <tr>
-      <td>All traffic</td>
-      <td>All</td>
-      <td>All</td>
       <td>Anywhere</td>
       <td>0.0.0.0/0</td>
     </tr>
@@ -542,6 +513,8 @@ The default persistent disk value is 50 GB. Pivotal recommends increasing this v
     <%= image_tag("pcfaws/lb_assign_sec_groups.png") %>
 
 1. On the **Configure Security Settings** page, select **Upload a new SSL certificate to AWS Identity and Access Management (IAM)**. For a production environment, use a certificate from a Certificate Authority. For a development environment, use a self-signed certificate.
+
+    <p class="note"><strong>Note</strong>: In this configuration, SSL traffic will be decrypted at the load balancer and then sent to Gorouter instances in the VPC.</p>
 
 1. On the **Configure Health Check** page, enter the following values:
   * **Ping Protocol**: Select **HTTP**.

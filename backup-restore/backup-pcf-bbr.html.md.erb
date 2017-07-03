@@ -241,11 +241,16 @@ Perform the following steps to back up your BOSH Director:
 1. Click the Ops Manager tile.
 1. Click the **Credentials** tab.
 1. Locate **Bbr Ssh Credentials** and click **Link to Credential** next to it.
-1. Copy the value for `private_key_pem`, beginning with `"-----BEGIN RSA PRIVATE KEY-----"` and paste it into a file that you save on your jumpbox.
+1. Copy the value for `private_key_pem`, beginning with `"-----BEGIN RSA PRIVATE KEY-----"`.
+1. SSH into your jumpbox.
+1. Run the following command to reformat the key and save it to a file called `PRIVATE_KEY` in the current directory, pasting in the contents of your private key for `YOUR_PRIVATE_KEY`:
+  <pre class="terminal">
+  printf -- "YOUR\_PRIVATE\_KEY" > PRIVATE_KEY
+  </pre>
 1. Run the BBR backup command from your jumpbox to back up your BOSH Director:
 	<pre class="terminal">
 	$ bbr director \
-	  --private-key-path PATH\_TO\_PRIVATE\_KEY \
+	  --private-key-path PRIVATE\_KEY \
 	  --username bbr \
 	  --host HOST \
 	  backup
@@ -255,7 +260,7 @@ Perform the following steps to back up your BOSH Director:
 	Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
 	<br><br>
 	Replace the placeholder values as follows:
-	* `PATH_TO_PRIVATE_KEY`: This is the path to the private key file you created above.
+	* `PRIVATE_KEY`: This is the path to the private key file you created above.
 	* `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 4: Retrieve BOSH Director Address and Credentials](#retrieve) section.
 
 ## <a id='validate-backup'></a> Step 11: (Optional) Validate Your Backup

@@ -15,15 +15,15 @@ owner: RelEng
 }
 </style>
 
-<p class="note"><strong>Note</strong>: BBR is a beta feature in PCF v1.11.</p>
+<p class="note warning"><strong>Warning</strong>: Restoring Pivotal Cloud Foundry (PCF) with BBR is a destructive operation. If the restore fails, the new environment may be left in an unusable state and require reprovisioning. Only perform the procedures in this topic for the purpose of disaster recovery, such as recreating PCF after a storage-area network (SAN) corruption.</p>
 
-This topic describes the procedure for restoring your critical backend Pivotal Cloud Foundry (PCF) components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments. To perform the procedures in this topic, you must have backed up Pivotal Cloud Foundry (PCF) by following the steps in the [Backing Up Pivotal Cloud Foundry with BBR](backup-pcf-bbr.html) topic.
+<p class="note"><strong>Note</strong>: BBR is a beta feature in PCF v1.11. You can only use BBR to back up PCF v1.11 and later. To restore earlier versions of PCF, perform the <a href="restore-pcf.html">manual procedures</a>.</p>
+
+This topic describes the procedure for restoring your critical backend PCF components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments. To perform the procedures in this topic, you must have backed up Pivotal Cloud Foundry (PCF) by following the steps in the [Backing Up Pivotal Cloud Foundry with BBR](backup-pcf-bbr.html) topic.
 
 To restore PCF manually, see the <a href="restore-pcf.html">Restoring Pivotal Cloud Foundry Manually from Backup</a> topic.
 
-<p class="note"><strong>Note</strong>: You can only use BBR to back up PCF v1.11 and later. To restore earlier versions of PCF, perform the <a href="restore-pcf.html">manual procedures</a>.</p>
-
-<p class="note warning"><strong>Note</strong>: BBR restore is a destructive operation. These instructions are for recreating PCF after a disaster such as SAN corruption. If the restore fails, the new environment may be left in an unusable state and needing to be reprovisioned. </p>
+To restore PCF to a new environment, see the <a href="#restore-to-new">Restore to a New Environment</a> section below. Perform these procedures if you have lost not only your VMs and disks, but your IaaS resources as well.
 
 The procedures described in this topic prepare your environment for PCF, deploy Ops Manager, import your installation settings, and use BBR to restore your PCF components.
 
@@ -34,7 +34,7 @@ Prepare your environment for PCF by following the instructions specific to your 
 ## <a id='deploy-import'></a>Step 2: Deploy Ops Manager and Import Installation Settings ##
 
 1. Perform the procedures for your IaaS to deploy Ops Manager:
-  * [Launching an Ops Manager Director Instance on AWS](../pcf-aws-manual-om-config.html)
+  * [Manually Configuring AWS for PCF](../pcf-aws-manual-config.html)
   * [Launching an Ops Manager Director Instance on Azure](../azure-arm-template.html)
   * [Launching an Ops Manager Director Instance on GCP](../gcp-om-deploy.html)
   * [Provisioning the OpenStack Infrastructure](../openstack-setup.html)
@@ -160,14 +160,13 @@ $ bosh -e DIRECTOR_IP -d DEPLOYMENT_NAME -n cck \
 
 This reconciles the BOSH Director's internal state with the state in the IaaS. You can use the list of deployments returned in [Step 7: Identify Your Deployment](#identify-deployment).
 
-If the <code>bosh cck</code> command does not successfully delete disk references and you see a message similar to the following:
+If the <code>bosh cck</code> command does not successfully delete disk references and you see a message similar to the following, perform the additional procedures in the <a href="#removing-disks">Remove Unused Disks</a> section below.
 <pre class="terminal">
 Scanning 19 persistent disks: 19 OK, 0 missing ...
 </pre>
-Follow the additional instructions in the <a href="#removing-disks">Remove Unused Disks</a> section below.
 
 ## <a id='redeploy-ert'></a> Step 9: Redeploy Elastic Runtime
-1. Reupload the stemcell used by the ERT via the bosh cli:
+1. Re-upload the stemcell used by Elastic Runtime by running the following command:
   <pre class="terminal">
   $ bosh -e BOSH\_DIRECTOR\_IP \
       -d DEPLOYMENT\_NAME \
@@ -200,37 +199,41 @@ $ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
     * `PATH_TO_ERT_BACKUP`: This is the path to the Elastic Runtime backup you want to restore.
 
-1. If you have container-to-container networking enabled in the Elastic Runtime, perform the following steps after restoring Elastic Runtime:
-  1. Retrieve the MySQL admin password from **Pivotal Elastic Runtime > Credentials > Mysql Admin Credentials**
-  1. SSH onto the `mysql` VM.
-  1. Run `sudo /var/vcap/packages/mariadb/bin/mysql -u root -p` and enter the admin password.
-  1. At the MySQL prompt, enter `use silk; drop table subnets; drop table gorp_migrations;`.
-  1. SSH onto each `diego_database` VM and run `sudo monit restart silk-controller`.
-  <p class="note"><strong>Note</strong>: As this time, restored apps will begin to start.
-    The time this takes depends on the number of app instances, the resources available to the underlying infrastructure, and the "Max Inflight Container Starts" setting on the ERT tile.</p>
+1. If you have Container-to-Container Networking enabled in the Elastic Runtime, perform the following steps after restoring Elastic Runtime:
+  1. Retrieve the MySQL admin password from **Pivotal Elastic Runtime > Credentials > Mysql Admin Credentials**.
+  1. List the VMs in your deployment:
+    <pre class="terminal">$ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate \
+    -d DEPLOYMENT\_NAME \
+    ssh</pre>
+  1. Select the `mysql` VM to SSH into.
+  1. From the `mysql` VM, run the following command: 
+    <pre class="terminal">$ sudo /var/vcap/packages/mariadb/bin/mysql -u root -p</pre> When prompted, enter the MySQL admin password.<br><br>
+  1. At the MySQL prompt, run the following command: 
+    <pre class="terminal">mysql> use silk; drop table subnets; drop table gorp_migrations;</pre>
+  1. Exit MySQL:
+    <pre class="terminal">mysql> exit</pre>
+  1. Exit the `mysql` VM:
+    <pre class="terminal">$ exit</pre>
+  1. List the VMs in your deployment:
+    <pre class="terminal">$ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate \
+    -d DEPLOYMENT\_NAME \
+    ssh</pre>
+  1. SSH onto each `diego_database` VM and run the following command: 
+    <pre class="terminal">$ sudo monit restart silk-controller</pre>
 
-1. If desired, scale the MySQL Server job back up to its previous number of instances by going to the Ops Manager Installation Dashboard and navigating to **Pivotal Elastic Runtime > Resource Config** and clicking **Apply Changes** to deploy.
+      Restored apps will begin to start. The amount of time it takes for all apps to start depends on the number of app instances, the resources available to the underlying infrastructure, and the value of the **Max Inflight Container Starts** field in the Elastic Runtime tile.
+
+1. If desired, scale the MySQL Server job back up to its previous number of instances by navigating to the **Resource Config** section of the Elastic Runtime tile. After scaling the job, return to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy.
 
 1. Validate your restored PCF by performing the steps in the [Step 11: (Optional) Validate Your Backup](backup-pcf-bbr.html#validate-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em>.
 
-## <a id='removing-disks'></a> Appendix A: Remove Unused Disks
+## <a id="troubleshooting"></a> Troubleshooting
 
-If `bosh cck` does not clean up all disk references, there are disks from a previous deployment in the IaaS which will prevent recreated deployments from working.
+This section lists common troubleshooting scenarios and their solutions.
 
-To clean up these disks, perform one of the following steps:
+### Symptom
 
-* Target the redeployed BOSH Director using the BOSH CLI, list the deployments, and delete each deployment using `bosh -d DEPLOYMENT_NAME delete-deployment`.
-* Or: Log into your IaaS account and delete the disks manually (run `bosh instances --details` to get the list of disk ids).  
-
-<p class="note warning"><strong>Note</strong>: This is a very destructive operation.</p>
-
-Once the disks are deleted, continue with [Step 8: Remove Stale Cloud IDs for All Deployments](#bosh-cck).
-
-## <a id="troubleshooting"></a> Appendix B: Troubleshooting
-
-### Scenario
-
-During BBR restore, restoring job `mysql-restore` fails with:
+While running the BBR restore command, restoring the job `mysql-restore` fails with:
 
 <pre class="terminal">
 1 error occurred:
@@ -240,32 +243,73 @@ During BBR restore, restoring job `mysql-restore` fails with:
 Monit start failed: Timed out waiting for monit: 2m0s
 </pre>
 
-This happens when `mariadb` fails to start within the timeout period -- it will end up in "Execution Failed" state and `monit` will never try to start it again. To validate that this:
+### Explanation
 
-1. `bosh ssh` into the MySQL VM.
-1. Run `ps aux | grep mariadb` and check that the `mariadb` process is running.
-1. Run `sudo monit summary` and check that it reports `mariadb_ctrl` is not running.
+This happens when `mariadb` fails to start within the timeout period. It will end up in an "Execution Failed" state and `monit` will never try to start it again. 
 
 ###  Solution
 
-1. `bosh ssh` into the MySQL VM.
-1. Run `monit unmonitor`
-1. Run `monit monitor` -- after a few minutes, `monit summary` should report that all the processes are running.
-1. Re-attempt the restore.
+To validate that `mariadb` is in an "Execution Failed" state, perform the following steps:
 
-## <a id="restore-to-new"></a> Appendix C: Restoring to a different PCF
+  1. List the VMs in your deployment:
+    <pre class="terminal">$ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate \
+    -d DEPLOYMENT\_NAME \
+    ssh</pre>
+  1. Select the `mysql` VM to SSH into.
+  1. From the `mysql` VM, run the following command to check that the `mariadb` process is running:
+    <pre class="terminal">
+    $ ps aux | grep mariadb
+    </pre>
+  1. Run the following command to check that `monit` reports `mariadb_ctrl` is not running:
+    <pre class="terminal">$ sudo monit summary</pre>
 
-In an event of a disaster, it's possible to lose not only the VMs and disks, but the infrastructure configuration (networks, load balancers, etc) as well. 
+After validating that `mariadb` is in an "Execution Failed" state, perform the following steps:
 
-If the PCF you are restoring to is similar, but not exactly the same, a few extra steps need to be taken for a successfull restore:
+  1. From the `mysql` VM, run the following command to disable monitoring:
+    <pre class="terminal">$ monit unmonitor</pre>
+  1. Run the following command to enable monitoring:
+    <pre class="terminal">$ monit monitor</pre>
+  1. After a few minutes, run the following command:
+    <pre class="terminal">$ monit summary</pre>
+    The command should report that all the processes are running.
+  1. Re-attempt the restore with BBR.
 
-1. Navigate to "Ops Manager Director tile > Create Networks" and update the network names to reflect the network names on the IaaS for the new environment.
+## <a id='removing-disks'></a> Remove Unused Disks
 
-1. Updated the "Load Balancer" column on the Elastic Runtime tile to the new Load Balancers in "ERT > Resource Config".
-  
-  1. If necessary, update the Load Balancer SSL certificate and Private key to match the new load balancer certificate and key on "ERT > Networking > Router SSL Termination Certificate and Private Key".
-  
-1. If your environment is running in a different DNS endpoint, update the old environment DNS entries to point to the new Load Balancer addresses (see the "Configure Network" section for your IaaS <a href="../custom-load-balancer.html#configure-networking">here</a>). 
-Also, we updated the Load Balancer SSL certificate and Private key to match with the new ones.
+If `bosh cck` does not clean up all disk references, you must manually delete the disks from a previous deployment that will prevent recreated deployments from working.
 
-1. [Optional] Update "Ops Manager Director tile > Google Config > Default Deployment Tag" to reflect the new environment
+<p class="note warning"><strong>Warning</strong>: This is a very destructive operation.</p>
+
+To delete the disks, perform the following steps:
+
+1. Target the redeployed BOSH Director using the BOSH CLI by performing the procedures in [Step 4: Retrieve BOSH Director Address and Credentials](#retrieve).
+1. List the deployments by running the following command:
+  <pre class="terminal">
+  $ bosh -e DIRECTOR_IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate deployments
+  </pre>
+1. Delete each deployment with the following command:
+  <pre class="terminal">
+  $ bosh -d DEPLOYMENT_NAME delete-deployment
+  </pre>
+
+Alternatively, you can log in to your IaaS account and delete the disks manually. Run the following command to retrieve a list of disk IDs:
+
+<pre class="terminal">
+bosh -e DIRECTOR_IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate instances
+</pre>
+
+Once the disks are deleted, continue with [Step 8: Remove Stale Cloud IDs for All Deployments](#bosh-cck).
+
+## <a id="restore-to-new"></a> Restore to a New Environment
+
+In an event of a disaster, you may lose not only your VMs and disks, but your IaaS resources as well, such as networks and load balancers. 
+
+If you create a new environment in your IaaS with new resources, perform the following additional steps for a successful restore:
+
+1. Navigate to the Ops Manager Installation Dashboard and click the Ops Manager Director tile.
+1. Click **Create Networks** and update the network names to reflect the network names for the new environment.
+1. Return to the Ops Manager Installation Dashboard and click the Elastic Runtime tile.
+1. Click **Resource Config**. If necessary for your IaaS, enter the name of your new load balancer in the **Load Balancer** column. 
+1. If necessary, click **Networking** and update the load balancer SSL certificate and private key under **Router SSL Termination Certificate and Private Key**.  
+1. If your environment has a new DNS address, update the old environment DNS entries to point to the new load balancer addresses. For more information, see the [Step 4: Configure Networking](../custom-load-balancer.html#configure-networking) section of the <em>Using Your Own Load Balancer</em> topic and follow the link to the instructions for your IaaS.
+1. If you are using Google Cloud Platform (GCP), navigate to the **Google Config** section of the Ops Manager Director tile and update the **Default Deployment Tag** to reflect the new environment.

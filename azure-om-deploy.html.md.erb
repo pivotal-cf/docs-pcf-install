@@ -283,7 +283,7 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
       "statusDescription": null
     },
     </pre>
-    When `status` reads `success`, continue to the next step.
+    Wait a few moments and re-run the command above if `status` is `pending`. When `status` reads `success`, continue to the next step.
 
 1. Create a public IP address named `ops-manager-ip`.
     <pre class="terminal">
@@ -330,16 +330,13 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
    <br>
    When prompted for a passphrase, press the `enter` key to provide an empty passphrase.
 
-1. Create a VM against the Ops Manager image, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file.
+1. Create a managed disk from the Ops Manager image:
     <pre class="terminal">
-     $ az vm create --name ops-manager --resource-group $RESOURCE\_GROUP \
-     --location $LOCATION --os-type linux \
-     --nics ops-manager-nic \
-     --image https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image.vhd \
-     --admin-username ubuntu \
-     --storage-account $STORAGE\_NAME --size Standard\_DS2_v2 \
-     --ssh-key-value PATH-TO-PUBLIC-KEY --use-unmanaged-disk
-    </pre> TK
+    $ az disk create --resource-group $RESOURCE_GROUP \
+    --name opsman-disk \
+    --source https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image.vhd \
+    --location $LOCATION --size-gb 120
+    </pre>
     <br>
     If you are using Azure China, Azure Government Cloud, or Azure Germany, replace `blob.core.windows.net` with the following:
     <br><br>
@@ -347,35 +344,16 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     * For Azure Government Cloud, use `blob.core.usgovcloudapi.net`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-government/documentation-government-services-storage) for more information.
     * For Azure Germany, use `blob.core.cloudapi.de`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/germany/germany-developer-guide) for more information.
 
-##<a id='resize'></a> Step 5: Resize Ops Manager VM Disk (Required)
-
-The default OS disk size is too small for deploying PCF. Perform the following steps to increase the size of the OS disk of the Ops Manager VM:
-
-1. Stop and deallocate the Ops Manager VM before resizing:
-    <pre class="terminal">$ az vm deallocate --resource-group $RESOURCE\_GROUP --name ops-manager</pre>
-
-1. Increase the size of the OS disk of the Ops Manager VM to 120 GB:
-    <pre class="terminal">$ az disk update \
-    --resource-group $RESOURCE_GROUP \
-    --name ops-manager \
-    --size-gb 120
-    </pre> TK
-
-1. Start the Ops Manager VM:
-    <pre class="terminal">$ az vm start --resource-group $RESOURCE\_GROUP --name ops-manager</pre>
-
-1. SSH into the Ops Manager VM, replacing `YOUR-OPS-MAN-IP` with the public IP address of Ops Manager that you recorded in a previous step:
-    <pre class="terminal">$ ssh -i opsman ubuntu@YOUR-OPS-MAN-IP</pre>
-    If the private key you generated is not `opsman`, provide the correct filename instead.
-
-1. From the Ops Manager VM, use `df` to confirm that the OS disk has been resized:
+1. Create your Ops Manager VM, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file.
     <pre class="terminal">
-    $ df -h
-     Filesystem      Size  Used Avail Use% Mounted on
-     udev            1.7G     0  1.7G   0% /dev
-     tmpfs           344M  5.0M  340M   2% /run
-     /dev/sda1        119G  1.3G   48G   3% /
-    </pre>
+     $ az vm create --name ops-manager --resource-group $RESOURCE\_GROUP \
+     --location $LOCATION --os-type linux \
+     --nics ops-manager-nic \
+     --attach-os-disk opsman-disk \
+     --admin-username ubuntu \
+     --size Standard\_DS2\_v2 \
+     --ssh-key-value PATH-TO-PUBLIC-KEY
+    </pre> 
 
 ##<a id='post-deploy'></a> Step 6: Complete Ops Manager Director Configuration
 

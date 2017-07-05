@@ -25,56 +25,57 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     <pre class="terminal">
     $ export LOCATION="YOUR-LOCATION"
     </pre>
-    <p class="note"><strong>Note</strong>: For a list of available locations, run <code>azure location list</code>.</p>
+    <p class="note"><strong>Note</strong>: For a list of available locations, run <code>az account list-locations</code>.</p>
 1. Create your resource group:
-    <pre class="terminal">$ azure group create $RESOURCE_GROUP $LOCATION
+    <pre class="terminal">$ az group create --name $RESOURCE_GROUP --location $LOCATION
     </pre>
 1. Choose a name for your BOSH storage account, and export it as the environment variable `$STORAGE_NAME`. Storage account names must be globally unique across Azure, between 3 and 24 characters in length, and contain only lowercase letters and numbers. 
     <pre class="terminal">
     $ export STORAGE_NAME="YOUR-BOSH-STORAGE-ACCOUNT-NAME"
     </pre>
 1. Register your subscription with Microsoft.Storage:
-    <pre class="terminal">$ azure provider register Microsoft.Storage
-    </pre>
+    <pre class="terminal">$ az provider register --namespace Microsoft.Storage</pre>
 1. Create the storage account.
-    <pre class="terminal">$ azure storage account create -l $LOCATION -g $RESOURCE\_GROUP \
-    --sku-name LRS --kind Storage $STORAGE\_NAME
+    <pre class="terminal">
+    $ az storage account create --name $STORAGE\_NAME \
+    --resource-group $RESOURCE\_GROUP --sku Standard\_LRS \
+    --kind Storage --location $LOCATION
     </pre>
-    <p class="note"><strong>Note</strong>: LRS refers to Standard Azure Storage Account. BOSH Director requires table storage to store stemcell information. Azure Premium Storage does not support table storage and cannot be used in this.</p>
+    <p class="note"><strong>Note</strong>: <code>Standard_LRS</code> refers to a Standard Azure Storage Account. The BOSH Director requires table storage to store stemcell information. Because Azure Premium Storage does not support table storage, it cannot be used to store this information.</p>
 1. Retrieve the connection string for your BOSH storage account:
-    <pre class="terminal">
-    $ azure storage account connectionstring show $STORAGE\_NAME \
-    --resource-group $RESOURCE\_GROUP
+  <pre class="terminal">
+    $ az storage account show-connection-string \
+    --name $STORAGE\_NAME --resource-group $RESOURCE_GROUP
     </pre>
-    The command returns the following output:
+    The command returns output similar to the following:
     <pre class="terminal">
-    info:    Executing command storage account connectionstring show
-    <span>+</span> Getting storage account keys
-    data:    connectionstring: DefaultEndpointsProtocol=https;AccountName=example-storage;AccountKey=accountkeystring
-    info:    storage account connectionstring show command OK
-    </pre>
-1. From the `data:` field in the output above, record the full value of `connectionstring`, starting with and including `DefaultEndpointsProtocol=`.
+    {
+      "connectionString": "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=cfdocsdeploystorage1;AccountKey=oa/QiSAmqj1OocsGhKBwn/Mf8wEwdeJMvvonrbmNk27bfkSL8ZFzAhs3Kb78si5CTPHhjHHiK4qPcYzn/8OmFg=="
+    }
+  </pre>
+1. Record the full value of `connectionString` from the output above, starting with and including `DefaultEndpointsProtocol=`.
 1. Export the connection string:
     <pre class="terminal">$ export CONNECTION_STRING="YOUR-CONNECTION-STRING"</pre>
 1. Create a container for the Ops Manager image:
-    <pre class="terminal">$ azure storage container create opsman-image \
+    <pre class="terminal">$ az storage container create --name opsman-image \
     --connection-string $CONNECTION_STRING</pre>
 1. Create a container for the Ops Manager VM: 
-    <pre class="terminal">$ azure storage container create vhds \
+    <pre class="terminal">$ az storage container create --name vhds \
     --connection-string $CONNECTION_STRING</pre>
 1. Create a container for Ops Manager:
-    <pre class="terminal">$ azure storage container create opsmanager \
+    <pre class="terminal">$ az storage container create --name opsmanager \
     --connection-string $CONNECTION_STRING</pre>
 1. Create a container for BOSH:
-    <pre class="terminal">$ azure storage container create bosh \
+    <pre class="terminal">$ az storage container create --name bosh \
     --connection-string $CONNECTION_STRING</pre>
 1. Create a container for the stemcell:
-    <pre class="terminal">$ azure storage container create stemcell --permission blob \
+    <pre class="terminal">$ az storage container create --name stemcell \
+    --public-access blob \
     --connection-string $CONNECTION_STRING</pre>
     </pre>
-   <p class="note"><strong>Note</strong>: Make sure the stemcell storage container is assigned `blob` permissions.</p>
 1. Create a table for stemcell data:
-    <pre class="terminal">azure storage table create stemcells --connection-string $CONNECTION_STRING</pre>
+    <pre class="terminal">$ az storage table create --name stemcells \
+    --connection-string $CONNECTION_STRING</pre>
 
 ##<a id='copy'></a> Step 2: Copy Ops Manager Image
 
@@ -87,23 +88,28 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
 
 1. Copy the Ops Manager image into your storage account:
     <pre class="terminal">
-    $ azure storage blob copy start $OPS\_MAN\_IMAGE\_URL opsmanager \
-    --dest-connection-string $CONNECTION_STRING \
-    --dest-container opsman-image \
-    --dest-blob image.vhd 
+    $ az storage blob copy start --source-uri $OPS\_MAN\_IMAGE\_URL \
+    --connection-string $CONNECTION_STRING \
+    --destination-container opsman-image \
+    --destination-blob image.vhd 
     </pre>
 
-1. Copying the image may take several minutes. Run the following command and examine the output under `Status` to check the status:
+1. Copying the image may take several minutes. Run the following command and examine the output under `"copy"`:
     <pre class="terminal">
-    $ azure storage blob copy show opsman-image image.vhd --connection-string $CONNECTION_STRING
-    info:    Executing command storage blob copy show
-    <span>+</span> Getting storage blob information
-    data:    Copy ID                               Progress                 Status
-    data:    ------------------------------------  -------------            -------
-    data:    069d413d-be05-4b12-82bc-c96dacee230e  31457280512/31457280512  success
-    info:    storage blob copy show command OK
+    $ az storage blob show --name image.vhd \
+    --container-name opsman-image \
+    --account-name $STORAGE_NAME
+    ...
+    "copy": {
+      "completionTime": "2017-06-26T22:24:11+00:00",
+      "id": "b9c8b272-a562-4574-baa6-f1a04afcefdf",
+      "progress": "53687091712/53687091712",
+      "source": "http<span>s:/</span>/opsmanagerwestus.blob.core.windows.net/images/ops-manager-1.11.3.vhd",
+      "status": "success",
+      "statusDescription": null
+    },
     </pre>
-    When `Status` reads `success`, continue to the next step.
+    When `status` reads `success`, continue to the next step.
 
 ##<a id='configure'></a> Step 3: Configure the ARM Template
 
@@ -131,65 +137,71 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
 
 1. Deploy the template:
     <pre class="terminal">
-    $ azure group deployment create -f azure-deploy.json \
-    -e azure-deploy-parameters.json -v $RESOURCE_GROUP cfdeploy
+    $ az group deployment create --template-file azure-deploy.json \
+    --parameters azure-deploy-parameters.json \
+    --resource-group $RESOURCE_GROUP --name cfdeploy
     </pre>
-1. When the command finishes, examine the last five lines of the output:
-    <pre class="terminal">
-    data:    Name                          Type    Value
-    data:    ----------------------------  ------  --------------------------------------------------
-    data:    opsMan-FQDN                   String  pcf-opsman-e8ddgelqqlq22.westus.cloudapp.azure.com
-    data:    extra Storage Account Prefix  String  xtrastrgm7qcfdqljlq62
-    info:    group deployment create command OK
-    </pre>
-    Record the following values:
-    * `opsMan-FQDN`: In the example above, `pcf-opsman-e8ddgelqqlq22.westus.cloudapp.azure.com`
-    * `extra Storage Account Prefix`: In the example above, `xtrastrgm7qcfdqljlq62`
+1. When the command finishes, examine the output for the following values:
+    * `opsMan-FQDN`
+        <pre class="terminal">
+          "opsMan-FQDN": {
+            "type": "String",
+            "value": "pcf-opsman-efecrvhdf7w7g.westus.cloudapp.azure.com"
+          }
+        </pre>
+    * `extra Storage Account Prefix`
+        <pre class="terminal">
+        "extra Storage Account Prefix": {
+          "type": "String",
+          "value": "xtrastrgefecrvhdf7w7g"
+          },
+        </pre>
 1. The template creates five new Premium deployment storage accounts. The names of the deployment storage accounts are the value of `extra Storage Account Prefix` appended with `1`, `2`, `3`, `4`, and `5`. In the example above, the names of the five deployment storage accounts are the following:
-    * `xtrastrgm7qcfdqljlq621`
-    * `xtrastrgm7qcfdqljlq622`
-    * `xtrastrgm7qcfdqljlq623`
-    * `xtrastrgm7qcfdqljlq624`
-    * `xtrastrgm7qcfdqljlq625`
+    * `xtrastrgefecrvhdf7w7g1`
+    * `xtrastrgefecrvhdf7w7g2`
+    * `xtrastrgefecrvhdf7w7g3`
+    * `xtrastrgefecrvhdf7w7g4`
+    * `xtrastrgefecrvhdf7w7g5`
     <br/><br/>
-   If you want to use Standard Azure Storage, replace Premium\_LRS with Standard\_LRS. Pivotal recommends Premium\_LRS for better performance.
    <p class="note"><strong>Note</strong>: The five Premium storage accounts created by the template provide a reasonable amount of initial storage capacity. Pivotal recommends creating one Standard storage account for every 30 VMs, or one Premium storage account for every 150 VMs. You can increase the number of storage accounts later by provisioning more with the Azure CLI and following the naming sequence listed above.</p>
    <br/>
    For each of the five new deployment storage accounts, perform the following steps:<br/>
-        1. Retrieve the connection string for your storage account, replacing `YOUR-DEPLOYMENT-STORAGE-ACCOUNT-NAME` with the name of the storage account. For example, `xtrastrgm7qcfdqljlq621`.
+        1. Retrieve the connection string for your storage account, replacing `YOUR-DEPLOYMENT-STORAGE-ACCOUNT-NAME` with the name of the storage account. For example, `xtrastrgefecrvhdf7w7g1`.
         <pre class="terminal">
-        $ azure storage account connectionstring \
-        show YOUR-DEPLOYMENT-STORAGE-ACCOUNT-NAME \
-        --resource-group $RESOURCE_GROUP
+        $ az storage account show-connection-string \
+        --name YOUR-DEPLOYMENT-STORAGE-ACCOUNT-NAME --resource-group $RESOURCE_GROUP
         </pre>
         The command returns output similar to the following:
         <pre class="terminal">
-        info:    Executing command storage account connectionstring show
-        <span>+</span> Getting storage account keys
-        data:    connectionstring: DefaultEndpointsProtocol=https;AccountName=example-storage;AccountKey=accountkeystring
-        info:    storage account connectionstring show command OK
+        {
+          "connectionString": "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=xtrastrgefecrvhdf7w7g1;AccountKey=e7R178h5teLtnkWLPxesFkAKLRO7oC7dlfujsW0PYV6vUhnJZSutCvVhla9u4xwtOV7liVZNAN6oJyoutO32fQ=="
+        }
         </pre>
-        1. From the `data:` field in the output above, record the full value of `connectionstring` from the output above, starting with and including `DefaultEndpointsProtocol=`.
+        1. Record the full value of `connectionstring` from the output above, starting with and including `DefaultEndpointsProtocol=`.
         1. Export the connection string, choosing a unique name for `CONNECTION_STRING_N`. For example, `CONNECTION_STRING_2`.
         <pre class="terminal">$ export CONNECTION\_STRING\_N="YOUR-CONNECTION-STRING"</pre> 
         1. Create a container for BOSH:
-        <pre class="terminal">$ azure storage container create bosh \
+        <pre class="terminal">$ az storage container create --name bosh \
         --connection-string $CONNECTION\_STRING\_N</pre>
         1. Create a container for the stemcell:
-        <pre class="terminal">$ azure storage container create stemcell \
+        <pre class="terminal">$ az storage container create --name stemcell \
         --connection-string $CONNECTION\_STRING\_N</pre>
         </pre>
 
 1. Create a network security group named `pcf-nsg`.
-<pre class="terminal">
-$ azure network nsg create $RESOURCE_GROUP pcf-nsg $LOCATION
-</pre>
+    <pre class="terminal">
+    $ az network nsg create --name pcf-nsg \
+    --resource-group $RESOURCE_GROUP \
+    --location $LOCATION
+    </pre> 
 
 1. Add a network security group rule to the `pcf-nsg` group to allow traffic from the public Internet.
-<pre class="terminal">
-$ azure network nsg rule create $RESOURCE_GROUP pcf-nsg internet-to-lb \
---protocol Tcp --priority 100 --destination-port-range '*'  
-</pre>
+    <pre class="terminal">
+    $ az network nsg rule create --name internet-to-lb \
+    --nsg-name pcf-nsg --resource-group $RESOURCE_GROUP \
+    --protocol Tcp --priority 100 \
+    --destination-port-range '*'
+    </pre>
 
 ##<a id='post-deploy'></a> Step 5: Complete Ops Manager Director Configuration
 

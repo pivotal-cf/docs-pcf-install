@@ -64,6 +64,14 @@ restoring your installation.
 
 	<%= image_tag("ccdb-encrypt-creds.png") %>
 
+You can also retrieve the credentials using the Ops Manager API. To do this:
+
+* visit the following endpoint: `/api/v0/deployed/products`;
+* find the product with an `installation_name` starting with `cf-` and copy its `guid`;
+* visit the following endpoint: `/api/v0/deployed/products/:guid/credentials/.cloud_controller.db_encryption_credentials` (where `:guid` is the value you've just copied).
+
+You will need to authenticate to use the API. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.
+
 ## <a id='backup-prepare-node'></a> Step 2: Enable Backup Prepare Node
 
 BBR requires the MySQL backup prepare node to be present in order to successfully backup ERT. Currently, the only way to ensure the presence of this node is to enable automated MySQL backups. If you already have these enabled, you may skip this section. In the future, there will be an option to deploy the backup prepare node without enabling automatic MySQL backups.
@@ -191,7 +199,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 	</pre>
 
     Replace the placeholder values as follows:
-    * `BOSH_CLIENT`, `BOSH_CLIENT_SECRET`: From the Ops Manager Installation Dashboard, click **Ops Manager Director**, navigate to the **Credentials** tab, and click **Uaa Bbr Client Credentials** to retrieve the BOSH UAA credentials. You can also retrieve the credentials using the Ops Manager API at the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.
+    * `BOSH_CLIENT`, `BOSH_CLIENT_SECRET`: From the Ops Manager Installation Dashboard, click **Ops Manager Director**, navigate to the **Credentials** tab, and click **Uaa Bbr Client Credentials** to retrieve the BOSH UAA credentials. You can also retrieve the credentials using the Ops Manager API at the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. You will need to authenticate to use the API. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.
     * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 4: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 5: Identify Your Deployment](#identify-deployment) section.
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain. If you are using the Ops Manager VM as your jumpbox, locate the certificate at `/var/tempest/workspaces/default/root_ca_certificate`. 
@@ -241,21 +249,28 @@ Perform the following steps to back up your BOSH Director:
 1. Click the Ops Manager tile.
 1. Click the **Credentials** tab.
 1. Locate **Bbr Ssh Credentials** and click **Link to Credential** next to it.
-1. Copy the value for `private_key_pem`, beginning with `"-----BEGIN RSA PRIVATE KEY-----"` and paste it into a file that you save on your jumpbox.
+
+    You can also retrieve the credentials using the Ops Manager API at the following endpoint: `/api/v0/deployed/director/credentials/bbr_ssh_credentials`. You will need to authenticate to use the API. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.
+
+1. Copy the value for `private_key_pem`, beginning with `"-----BEGIN RSA PRIVATE KEY-----"`.
+1. SSH into your jumpbox.
+1. Run the following command to reformat the key and save it to a file called `PRIVATE_KEY` in the current directory, pasting in the contents of your private key for `YOUR_PRIVATE_KEY`:
+  <pre class="terminal">
+  printf -- "YOUR\_PRIVATE\_KEY" > PRIVATE_KEY
+  </pre>
 1. Run the BBR backup command from your jumpbox to back up your BOSH Director:
 	<pre class="terminal">
 	$ bbr director \
-	  --private-key-path PATH\_TO\_PRIVATE\_KEY \
+	  --private-key-path PRIVATE\_KEY \
 	  --username bbr \
 	  --host HOST \
 	  backup
 	</pre>
 
-
 	Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
 	<br><br>
 	Replace the placeholder values as follows:
-	* `PATH_TO_PRIVATE_KEY`: This is the path to the private key file you created above.
+	* `PRIVATE_KEY`: This is the path to the private key file you created above.
 	* `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 4: Retrieve BOSH Director Address and Credentials](#retrieve) section.
 
 ## <a id='validate-backup'></a> Step 11: (Optional) Validate Your Backup

@@ -84,9 +84,19 @@ For instance, you could SCP the backup artifact to your jumpbox:
 
 ## <a id="retrieve"></a> Step 5: Retrieve BOSH Director Address and Credentials
 
-Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in:
+You can retrieve the IP address of your BOSH Director and the credentials for logging in either from the Ops Manager Director tile or by using the Ops Manager API.
+
+### <a id='tile-bosh'></a>Retrieve the Information from Ops Manager Director
+
+Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in from the Ops Manager Director tile:
 
 <%= partial 'bosh_target_director_bbr' %>
+
+### <a id='tile-bosh'></a>Retrieve the Information from the Ops Manager API
+
+Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in from the Ops Manager API:
+
+<%= partial 'bosh_target_director_bbr_api' %>
 
 ## <a id='restore-bosh'></a> Step 6: Restore the BOSH Director
 
@@ -94,8 +104,8 @@ Perform the following steps to retrieve the IP address of your BOSH Director and
 1. Click the Ops Manager tile.
 1. Click the **Credentials** tab.
 1. Locate **Bbr Ssh Credentials** and click **Link to Credential** next to it.
-
-    You can also retrieve the credentials using the Ops Manager API at the following endpoint: `/api/v0/deployed/director/credentials/bbr_ssh_credentials`. You will need to authenticate to use the API. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.
+<br><br>
+    You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/bbr_ssh_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.
 
 1. Copy the value for `private_key_pem`, beginning with `"-----BEGIN RSA PRIVATE KEY-----"`.
 1. SSH into your jumpbox.
@@ -197,18 +207,28 @@ $ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
 
     Replace the placeholder values as follows:
     * `BOSH_CLIENT`, `BOSH_CLIENT_SECRET`: Use the BOSH UAA user provided in  **Pivotal Ops Manager > Credentials > Uaa Bbr Client Credentials**.
-       You can also retrieve the credentials using the Ops Manager API at the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. You will need to authenticate to use the API. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.
+    <br><br>
+       You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
     * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 5: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 7: Identify Your Deployment](#identify-deployment) section.
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
     * `PATH_TO_ERT_BACKUP`: This is the path to the Elastic Runtime backup you want to restore.
 
 1. If you have Container-to-Container Networking enabled in the Elastic Runtime, perform the following steps after restoring Elastic Runtime:
-  1. Retrieve the MySQL admin password from **Pivotal Elastic Runtime > Credentials > Mysql Admin Credentials**. You can also retrieve the credentials using the Ops Manager API. To do this:
-      * visit the following endpoint: `/api/v0/deployed/products`;
-      * find the product with an `installation_name` starting with `cf-` and copy its `guid`;
-      * visit the following endpoint: `/api/v0/deployed/products/:guid/credentials/.mysql.mysql_admin_credentials` (where `:guid` is the value you've just copied).
-      * You will need to authenticate to use the API. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.
+  1. Retrieve the MySQL admin password by following one of the procedures below: 
+        * Log in to Ops Manager and navigate to **Pivotal Elastic Runtime > Credentials > Mysql Admin Credentials**. 
+        * Retrieve the credentials using the Ops Manager API by performing the following steps:
+          1. Perform the procedures in the [Using the Ops Manager API](ops-man-api.html) topic to authenticate and access the Ops Manager API.
+          1. Use the `GET /api/v0/deployed/products` endpoint to retrieve a list of deployed products, replacing `UAA-ACCESS-TOKEN` with the access token recorded in the [Using the Ops Manager API](ops-man-api.html) topic:
+              <pre class="terminal">$ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products" \ 
+                -X GET \ 
+                -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
+          1. In the response to the above request, locate the product with an `installation_name` starting with `cf-` and copy its `guid`.
+          1. Run the following `curl` command, replacing `PRODUCT-GUID` with the value of `guid` from the previous step:
+              <pre class="terminal">$ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products/PRODUCT-GUID/credentials/" \ 
+                -X GET \ 
+                -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
+          1. Retrieve the MySQL admin password from the response to the above request.
   1. List the VMs in your deployment:
     <pre class="terminal">$ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate \
     -d DEPLOYMENT\_NAME \
@@ -303,7 +323,7 @@ To delete the disks, perform the following steps:
 Alternatively, you can log in to your IaaS account and delete the disks manually. Run the following command to retrieve a list of disk IDs:
 
 <pre class="terminal">
-bosh -e DIRECTOR_IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate instances
+$ bosh -e DIRECTOR_IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate instances
 </pre>
 
 Once the disks are deleted, continue with [Step 8: Remove Stale Cloud IDs for All Deployments](#bosh-cck).

@@ -91,15 +91,15 @@ OpenStack Access & Security page.
 	ssh -i ops_mgr.pem ubuntu@OPS-MANAGER-FQDN
 	</pre>
 
-### <a id='log-in'></a>Log into BOSH ###
+### <a id='log-in'></a>Log into the BOSH Director
 
 Log into the BOSH Director using one of the following options below:
 
-- [Internal UAAC Login](#log-in-uaa) - target the BOSH UAA using the [UAA Command Line Interface (UAAC)](../adminguide/uaa-user-management.html) to log into BOSH.
+- [Internal User Store Login via UAA](#log-in-uaa) - target and log into the Director using BOSH.
 
-- [External User Store Login via SAML](#log-in-saml) - use an external user store to log into BOSH.
+- [External User Store Login via SAML](#log-in-saml) - use an external user store to log into the BOSH Director.
 
-#### <a id='log-in-uaa'></a>Internal UAAC Login ####
+#### <a id='log-in-uaa'></a>Internal User Store Login via UAA ####
 
 1. Target the BOSH UAA on Ops Manager with the UAAC command `uaac target`.
 
@@ -109,7 +109,7 @@ Log into the BOSH Director using one of the following options below:
 
 1. Run `bosh target DIRECTOR-IP-ADDRESS` to target your Ops Manager VM using the BOSH CLI.
 
-1. Retrieve the UAA admin user password from the **Ops Manager Director>Credentials** tab. Alternatively, launch a browser and visit the following URL to obtain the password:
+1. Retrieve the Director password from the **Ops Manager Director>Credentials** tab. Alternatively, launch a browser and visit the following URL to obtain the password:
 ```
 https://{OPSMANAGER}/api/v0/deployed/director/credentials/director_credentials
 ```
@@ -124,34 +124,31 @@ https://{OPSMANAGER}/api/v0/deployed/director/credentials/director_credentials
     Logged in as 'director'
     </pre>
 
-#### <a id='log-in-saml'></a>External User Store Login via SAML ####
+#### <a id='log-in-saml'></a>External User Store Login via SAML
 
-To log into BOSH Director you need browser access to the BOSH Director in order to get a UAA Passcode. If you have browser access, skip to step 1 below.
+1. Log in to your identity provider and use the following information to configure SAML Service Provider Properties:
+  * **Service Provider Entity ID**: `bosh-uaa`
+  * **ACS URL**: `https://BOSH-DIRECTOR-IP:8443/saml/SSO/alias/bosh-uaa`
+  * **Binding**: HTTP Post
+  * **SLO URL**: `https://BOSH-DIRECTOR-IP:8443/saml/SSO/alias/bosh-uaa`
+  * **Binding**: HTTP Redirect
+  * **Name ID**: Email Address
 
-If you do not have browser access to the BOSH Director, consider running `sshuttle` on your local workstation (Linux only). This permits you to browse the BOSH Director IP as if it were a local address.
-
-<pre class='terminal'>
-$ git clone https://github.com/apenwarr/sshuttle.git
-$ cd sshuttle
-$ ./sshuttle -r username@opsmanagerIP 0.0.0.0/0 -vv
-</pre>
-
-1. Log in to your identity provider and use the information below to configure SAML Service Provider Properties:
-  * Service Provider Entity ID: bosh-uaa
-  * ACS URL : https:<span>//</span>BOSH-DIRECTOR-IP:8443/saml/SSO/alias/bosh-uaa
-  * Binding : HTTP Post
-  * SLO URL: https:<span>//</span>BOSH-DIRECTOR-IP:8443/saml/SSO/alias/bosh-uaa
-  * Binding : HTTP Redirect
-  * Name ID : Email Address
-
-1. Log into BOSH using your SAML credentials.
-
+1. Log into BOSH using your SAML credentials:
     <pre class='terminal'>
     $ bosh login
     Email: admin
     Password:
-    One Time Code (Get one at https://192.0.2.16.11:8888/passcode):
+    One Time Code (Get one at https:<span>//</span>192.0.2.16.11:8888/passcode):
     </pre>
+
+     If you do not have browser access to the BOSH Director, run `sshuttle` on a local Linux workstation to browse the BOSH Director IP as if it were a local address. Retrieve a UAA passcode using the browser:
+    <pre class='terminal'>
+    $ git clone https:<span>//</span>github.com/apenwarr/sshuttle.git
+    $ cd sshuttle
+    $ ./sshuttle -r username@opsmanagerIP 0.0.0.0/0 -vv
+    </pre>
+
 
 1. Click **Login with organization credentials (SAML)**.
 
@@ -165,7 +162,6 @@ $ ./sshuttle -r username@opsmanagerIP 0.0.0.0/0 -vv
 
     <pre class='terminal'>Logged in as admin@example.org
     </pre>
-
 
 ### <a id='product'></a>Select a Product Deployment to Troubleshoot ###
 

@@ -179,12 +179,34 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
 </pre>
 
 ## <a id='redeploy-ert'></a> Step 9: Redeploy Elastic Runtime
+
+1. Determine which stemcell is used by Elastic Runtime:
+  * Navigate to the Ops Manager Installation Dashboard
+  * Click on the *Pivotal Elastic Runtime* tile
+  * In the *Settings* tab, click on *Stemcell* in the menu on the left
+  * Take note of the release number included in the filename showed next to "Using":
+      <%= image_tag('images/stemcell.png') %>
+    In the example, the stemcell release number will be **3421.9**.
+
+    You can also retrieve the stemcell release using the BOSH CLI:
+
+    <pre class="terminal">
+      $ bosh -e DIRECTOR_IP deployments
+      Using environment '10.0.0.5' as user 'director' (bosh.*.read, openid, bosh.*.admin, bosh.read, bosh.admin)
+
+      Name                     Release(s)                            Stemcell(s)                                    Team(s)  Cloud Config
+      cf-9cb6995b7d746cd77438  push-apps-manager-release/661.1.24    bosh-google-kvm-ubuntu-trusty-go_agent/3421.9  -        latest
+      ...
+    </pre>
+
+1. Download the stemcell from [Pivotal Network](https://network.pivotal.io/products/stemcells).
+
 1. Re-upload the stemcell used by Elastic Runtime by running the following command:
   <pre class="terminal">
   $ bosh -e BOSH\_DIRECTOR\_IP \
       -d DEPLOYMENT\_NAME \
       --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
-      upload-stemcell --fix STEMCELL\_URL
+      upload-stemcell --fix light-bosh-stemcell-3421.9-aws-xen-hvm-ubuntu-trusty-go_agent.tgz
   </pre>
 1. From the Ops Manager Installation Dashboard, navigate to **Pivotal Elastic Runtime > Resource Config**.
 1. Ensure the number of instances for MySQL Server is set to `1`.

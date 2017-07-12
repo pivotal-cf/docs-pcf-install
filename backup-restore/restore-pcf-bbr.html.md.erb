@@ -23,21 +23,26 @@ This topic describes the procedure for restoring your critical backend PCF compo
 
 To restore PCF manually, see the <a href="restore-pcf.html">Restoring Pivotal Cloud Foundry Manually from Backup</a> topic.
 
-To restore PCF to a new environment, see the <a href="#restore-to-new">Restore to a New Environment</a> section below. Perform these procedures if you have lost not only your VMs and disks, but your IaaS resources as well.
-
 The procedures described in this topic prepare your environment for PCF, deploy Ops Manager, import your installation settings, and use BBR to restore your PCF components.
 
-## <a id='prepare-env'></a>Step 1: Prepare Your Environment
+## <a id='prepare-env'></a>(Optional) Step 1: Prepare Your Environment
 
-Prepare your environment for PCF by following the instructions specific to your IaaS in <a href='../../installing/index.html'>Installing Pivotal Cloud Foundry</a>.
+In an event of a disaster, you may lose not only your VMs and disks, but your IaaS resources as well, such as networks and load balancers. 
+
+If you need to recreate your IaaS resources, prepare your environment for PCF by following the instructions specific to your IaaS in <a href='../../installing/index.html'>Installing Pivotal Cloud Foundry</a>. 
+
+<p class="note"><strong>Note</strong>: The instructions for installing PCF on Amazon Web Services (AWS) and OpenStack combine the procedures for preparing your environment and deploying Ops Manager into a single topic. The instructions for the other supported IaaSes split these procedures into two separate topics.</p>
+
+If you recreate your IaaS resources, you must also add those resources to Ops Manager by performing the procedures in
+the [(Optional) Step 11: Configure Ops Manager for New Resources](#config-new-resources) section.
 
 ## <a id='deploy-import'></a>Step 2: Deploy Ops Manager and Import Installation Settings ##
 
 1. Perform the procedures for your IaaS to deploy Ops Manager:
-  * [Manually Configuring AWS for PCF](../pcf-aws-manual-config.html)
+  * [Step 12](../pcf-aws-manual-config.html#pcfaws-om-ami) through [Step 19](../pcf-aws-manual-config.html#pcfaws-mysql-rds) of the <em>Manually Configuring AWS for PCF</em> topic.
   * [Launching an Ops Manager Director Instance on Azure](../azure-arm-template.html)
   * [Launching an Ops Manager Director Instance on GCP](../gcp-om-deploy.html)
-  * [Provisioning the OpenStack Infrastructure](../openstack-setup.html)
+  * [Step 3](../openstack-setup.html#create-om-image) through [Step 7](../openstack-setup.html#dns-entry) of the <em>Provisioning the OpenStack Infrastructure</em> topic.
   * [Deploying Operations Manager to vSphere](../deploying-vm.html)
 
 1. Access your new Ops Manager by navigating to `YOUR-OPS-MAN-FQDN` in a browser.
@@ -235,7 +240,7 @@ $ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
     * `PATH_TO_ERT_BACKUP`: This is the path to the Elastic Runtime backup you want to restore.
 
-1. If you have Container-to-Container Networking enabled in the Elastic Runtime, perform the following steps after restoring Elastic Runtime:
+1. If you have Container-to-Container Networking enabled in  Elastic Runtime, perform the following steps after restoring Elastic Runtime:
   1. Retrieve the MySQL admin password by following one of the procedures below: 
         * Log in to Ops Manager and navigate to **Pivotal Elastic Runtime > Credentials > Mysql Admin Credentials**. 
         * Retrieve the credentials using the Ops Manager API by performing the following steps:
@@ -276,6 +281,18 @@ $ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
 
 1. Validate your restored PCF by performing the steps in the [Step 11: (Optional) Validate Your Backup](backup-pcf-bbr.html#validate-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em>.
 
+## <a id="config-new-resources"></a> (Optional) Step 11: Configure Ops Manager for New Resources
+
+If you recreated your IaaS resources by following the steps in the [(Optional) Step 1: Prepare Your Environment](#prepare-env) section above, perform the following steps to update Ops Manager with your new resources:
+
+1. Navigate to the Ops Manager Installation Dashboard and click the Ops Manager Director tile.
+1. Click **Create Networks** and update the network names to reflect the network names for the new environment.
+1. Return to the Ops Manager Installation Dashboard and click the Elastic Runtime tile.
+1. Click **Resource Config**. If necessary for your IaaS, enter the name of your new load balancer in the **Load Balancer** column. 
+1. If necessary, click **Networking** and update the load balancer SSL certificate and private key under **Router SSL Termination Certificate and Private Key**.  
+1. If your environment has a new DNS address, update the old environment DNS entries to point to the new load balancer addresses. For more information, see the [Step 4: Configure Networking](../custom-load-balancer.html#configure-networking) section of the <em>Using Your Own Load Balancer</em> topic and follow the link to the instructions for your IaaS.
+1. If you are using Google Cloud Platform (GCP), navigate to the **Google Config** section of the Ops Manager Director tile and update the **Default Deployment Tag** to reflect the new environment.
+
 ## <a id="troubleshooting"></a> Troubleshooting
 
 This section lists common troubleshooting scenarios and their solutions.
@@ -311,10 +328,7 @@ To validate that `mariadb` is in an "Execution Failed" state, perform the follow
     </pre>
   1. Run the following command to check that `monit` reports `mariadb_ctrl` is not running:
     <pre class="terminal">$ sudo monit summary</pre>
-
-After validating that `mariadb` is in an "Execution Failed" state, perform the following steps:
-
-  1. From the `mysql` VM, run the following command to disable monitoring:
+  1. After validating that `mariadb` is in an "Execution Failed" state, run the following command from the `mysql` VM to disable monitoring:
     <pre class="terminal">$ monit unmonitor</pre>
   1. Run the following command to enable monitoring:
     <pre class="terminal">$ monit monitor</pre>
@@ -328,37 +342,22 @@ After validating that `mariadb` is in an "Execution Failed" state, perform the f
 If `bosh cck` does not clean up all disk references, you must manually delete the disks from a previous deployment that will prevent recreated deployments from working.
 
 <p class="note warning"><strong>Warning</strong>: This is a very destructive operation.</p>
+<br><br>
+To delete the disks, perform one of the following procedures:
 
-To delete the disks, perform the following steps:
-
-1. Target the redeployed BOSH Director using the BOSH CLI by performing the procedures in [Step 4: Retrieve BOSH Director Address and Credentials](#retrieve).
-1. List the deployments by running the following command:
+* Use the BOSH CLI to delete the disks by performing the following steps:
+  1. Target the redeployed BOSH Director using the BOSH CLI by performing the procedures in [Step 4: Retrieve BOSH Director Address and Credentials](#retrieve).
+  1. List the deployments by running the following command:
+    <pre class="terminal">
+    $ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate deployments
+    </pre>
+  1. Delete each deployment with the following command:
+    <pre class="terminal">
+    $ bosh -d DEPLOYMENT\_NAME delete-deployment
+    </pre>
+* Log in to your IaaS account and delete the disks manually. Run the following command to retrieve a list of disk IDs:
   <pre class="terminal">
-  $ bosh -e DIRECTOR_IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate deployments
+  $ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate instances
   </pre>
-1. Delete each deployment with the following command:
-  <pre class="terminal">
-  $ bosh -d DEPLOYMENT_NAME delete-deployment
-  </pre>
-
-Alternatively, you can log in to your IaaS account and delete the disks manually. Run the following command to retrieve a list of disk IDs:
-
-<pre class="terminal">
-$ bosh -e DIRECTOR_IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate instances
-</pre>
 
 Once the disks are deleted, continue with [Step 8: Remove Stale Cloud IDs for All Deployments](#bosh-cck).
-
-## <a id="restore-to-new"></a> Restore to a New Environment
-
-In an event of a disaster, you may lose not only your VMs and disks, but your IaaS resources as well, such as networks and load balancers. 
-
-If you create a new environment in your IaaS with new resources, perform the following additional steps for a successful restore:
-
-1. Navigate to the Ops Manager Installation Dashboard and click the Ops Manager Director tile.
-1. Click **Create Networks** and update the network names to reflect the network names for the new environment.
-1. Return to the Ops Manager Installation Dashboard and click the Elastic Runtime tile.
-1. Click **Resource Config**. If necessary for your IaaS, enter the name of your new load balancer in the **Load Balancer** column. 
-1. If necessary, click **Networking** and update the load balancer SSL certificate and private key under **Router SSL Termination Certificate and Private Key**.  
-1. If your environment has a new DNS address, update the old environment DNS entries to point to the new load balancer addresses. For more information, see the [Step 4: Configure Networking](../custom-load-balancer.html#configure-networking) section of the <em>Using Your Own Load Balancer</em> topic and follow the link to the instructions for your IaaS.
-1. If you are using Google Cloud Platform (GCP), navigate to the **Google Config** section of the Ops Manager Director tile and update the **Default Deployment Tag** to reflect the new environment.

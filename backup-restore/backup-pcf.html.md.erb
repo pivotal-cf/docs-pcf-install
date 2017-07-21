@@ -67,7 +67,7 @@ You must back up each of the following:
 * WebDAV Server
 * Pivotal MySQL Server
 
-<p class="note"><strong>Note</strong>: If you are running PostgreSQL and are on the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard instructions for backing up the Cloud Controller, and UAA Databases, and ensure that you back up your external databases and filestores. </p>
+<p class="note"><strong>Note</strong>: If you are running your databases or filestores externally, ensure that you back up your external databases and filestores. </p>
 
 <p class="note"><strong>Note</strong>: To follow the backup instructions below, your network must be configured to allow access to the BOSH Director VM from your local machine. If you do not have local administrator access, use the <code>scp</code> command to copy the TAR file to the BOSH Director VM. For example:<code> scp vcap@192.0.2.10:webdav.tar.gz \ </code>
 and
@@ -76,52 +76,6 @@ and
 
 ### <a id='stop-cc-2'></a>Stop Cloud Controller###
 <%= partial './stopping_cc' %>
-
-### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
-
- <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
-
-1. Use `bosh ssh` to SSH into the Cloud Controller Database VM:
-  1. Run `ssh-keygen -t rsa` to provide BOSH with the correct public key.
-  1. Accept the defaults.
-  1. Run `bosh ssh`.
-  1. When prompted to choose an instance, enter the number that corresponds to the VM beginning with `ccdb`.
-  1. Create a password for the temporary user that the `bosh ssh` command creates. Use this password if you need `sudo` access in this session.
-
-1. Run `pg_dump` to export the database:
-<pre class="terminal">
-$ pg_dump -U admin -p 2544 ccdb > /tmp/ccdb.sql
-</pre>
-
-1. Run `bosh scp` to copy the exported database to your BOSH client.
-<pre class="terminal">
-$ bosh scp --download ccdb/0 /tmp/ccdb.sql .
-</pre>
-
-1. Exit from the Cloud Controller database VM.
-
-### <a id='backup-uaadb'></a>Back Up the UAA Database ###
-
-<p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
-
-1. Use `bosh ssh` to SSH into the UAA Database VM:
-  1. Run `ssh-keygen -t rsa` to provide BOSH with the correct public key.
-  1. Accept the defaults.
-  1. Run `bosh ssh`.
-  1. When prompted to choose an instance, enter the number that corresponds to the VM beginning with `uaadb`.
-  1. Create a password for the temporary user that the `bosh ssh` command creates. Use this password if you need `sudo` access in this session.
-
-1. Run `pg_dump` to export the database:
-<pre class="terminal">
-$ /var/vcap/packages/postgres-9.6.3/bin/pg_dump -U root -p 2544 uaa > /tmp/uaa.sql
-</pre>
-
-1. Run `bosh scp` to copy the exported database to your BOSH client.
-<pre class="terminal">
-$ bosh scp --download uaadb/0 /tmp/uaa.sql .
-</pre>
-
-1. Exit from the UAA database VM.
 
 ### <a id='webdav'></a>Back Up WebDAV Server ###
 

@@ -296,6 +296,71 @@ If you recreated your IaaS resources by following the steps in the [(Optional) S
 1. If your environment has a new DNS address, update the old environment DNS entries to point to the new load balancer addresses. For more information, see the [Step 4: Configure Networking](../custom-load-balancer.html#configure-networking) section of the <em>Using Your Own Load Balancer</em> topic and follow the link to the instructions for your IaaS.
 1. If you are using Google Cloud Platform (GCP), navigate to the **Google Config** section of the Ops Manager Director tile and update the **Default Deployment Tag** to reflect the new environment.
 
+##<a id='odb'></a> (Optional) Step 12: Restore On-Demand Service Instances
+
+If you have on-demand service instances provisioned by an on-demand service broker, perform the following steps to restore them after successfully restoring PCF:
+
+1. Use the Cloud Foundry Command Line Interface (cf CLI) to target your PCF deployment:
+  <pre class="terminal">
+  $ cf api api.YOUR-SYSTEM-DOMAIN
+  </pre>
+1. Log in:
+  <pre class="terminal">
+  $ cf login
+  </pre>
+1. Perform the following steps to make a list of all the service instances provisioned by your on-demand service broker: 
+  1. List your service offerings:
+    <pre class="terminal">
+    $ cf curl /v2/services
+    </pre> 
+  1. Record the GUID of the on-demand service offering you want to restore by examining the value for `guid` under `metadata`:
+    <pre class="terminal">
+     "metadata": {
+        "guid": "ab2b01cc-2a22-525a-a333-e6e666a6aa66",
+        "url": "/v2/services/ab2b01cc-2a22-525a-a333-e6e666a6aa66",
+        "created\_at": "2017-02-10T18:19:35Z",
+        "updated\_at": "2017-02-10T18:19:35Z"
+    </pre>
+  1. List all service plans for the service offering, replacing `SERVICE-OFFERING-GUID` with the GUID obtained in the previous step:
+    <pre class="terminal">
+    $ cf curl /v2/services/SERVICE-OFFERING-GUID/service_plans
+    </pre>
+  1. Record the GUID of each service plan by examining the value for `guid` under `metadata`.
+  1. For each service plan, list all service instances:
+    <pre class="terminal">
+    $ cf curl /v2/service_plans/SERVICE-PLAN-GUID/service\_instances
+    </pre>
+  1. Record the GUID of each service instance by examining the value for `guid` under `metadata`.
+1. Perform the following steps to obtain the BOSH credentials used by your on-demand service broker:
+  1. Navigate to `https://YOUR-OPS-MAN-FQDN/api/v0/staged/products` in a browser to obtain the product GUID of your tile.
+  1. Navigate to `https://YOUR-OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/manifest` to obtain your product's staged manifest.
+  1. Copy the manifest into a file on your local machine called `manifest.json`.
+  1. Run the following command to extract the BOSH credentials:
+    <pre class="terminal">
+    $ cat manifest.json | jq '(.manifest.instance_groups[] |
+     select(.name == "redis-on-demand-broker").jobs[] | 
+     select(.name == "broker").properties.bosh.authentication.uaa )'
+    </pre>
+1. SSH into your Ops Manager VM. For more information, see the [SSH into Ops Manager](../trouble-advanced.html#ssh) section of the <em>Advanced Troubleshooting with the BOSH CLI</em> topic.
+1. Using the BOSH credentials retrieved above, authenticate with your BOSH Director by running the following commands with the [BOSH CLI v2](https://bosh.io/docs/cli-v2.html):
+  <pre class="terminal">
+  $ export BOSH\_CLIENT=YOUR-CLIENT-ID
+  $ export BOSH\_CLIENT\_SECRET=YOUR-CLIENT-SECRET
+  $ bosh alias-env opsmanager -e YOUR-OPS-MAN-FQDN \
+  --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate
+  </pre>
+1. Using the list of service instance GUIDs gathered above, deploy each instance with the following commands:
+  <pre class="terminal">
+  $ bosh -e opsmanager manifest \
+  -d service-instance\_SERVICE-INSTANCE-GUID > /tmp/manifest.yml
+  $ bosh -e opsmanager \
+  -d service-instance\_SERVICE-INSTANCE-GUID deploy /tmp/manifest.yml
+  </pre>
+1. After deploying all service instances, remove the manifest from `tmp`.
+  <pre class="terminal">
+  $ rm /tmp/manifest.yml
+  </pre>
+
 ## <a id="troubleshooting"></a> Troubleshooting
 
 This section lists common troubleshooting scenarios and their solutions.

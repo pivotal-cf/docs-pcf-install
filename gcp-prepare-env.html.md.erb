@@ -10,7 +10,29 @@ This guide describes the preparation steps required to install Pivotal Cloud Fou
 
 In addition to fulfilling the prerequisites listed in the [Installing Pivotal Cloud Foundry on GCP](./gcp.html) topic, you must create resources in GCP such as a new network, firewall rules, load balancers, and a service account before deploying PCF. Follow these procedures to prepare your GCP environment. You may also find it helpful to review different deployment options in the [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html).
 
-## <a id="create_network"></a>Step 1: Create a GCP Network with Subnet ##
+## <a id="create_nat"></a>Step 1: Create NAT Instances ##
+
+```
+Name: my-pcf-nat-gateway-pri
+Zone: your zone (3 for HA deployment, one per zone)
+Machine type: n1-standard-4
+Boot disk: Ubuntu 14.04 LTS
+Network tags: nat-traverse, my-pcf-nat-instance 
+network interface: ops manager network 
+automation > startup script: 
+#! /bin/bash
+sudo sh -c 'echo 1 > /proc/sys/net/ipv4/ip_forward'
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+
+notes
+can_ip_forward set to true?
+ssh key? Ryan to ask Kris
+Start up script in custom metadata instead as `startup-script` ?
+
+https://github.com/pivotal-cf/pcf-pipelines/blob/master/install-pcf/gcp/terraform/nats.tf
+```
+
+## <a id="create_network"></a>Step 2: Create a GCP Network with Subnet ##
 
 1. Log in to the GCP Console at [https://console.cloud.google.com](https://console.cloud.google.com/).
  
@@ -25,6 +47,13 @@ In addition to fulfilling the prerequisites listed in the [Installing Pivotal Cl
 	<%= image_tag("gcp/gcp-network-create.png") %>
   <p class="note"><strong>Note</strong>: To use the <a href="http://docs.pivotal.io/p-identity/index.html">Single Sign-On for PCF</a> service, you must configure a network with only one subnet.</p>
 1. Click **Create**.
+
+```
+Create network/subnets as outlined here: https://github.com/pivotal-cf/pcf-pipelines/blob/master/install-pcf/gcp/terraform/networks.tf
+
+Can be any RFC 1918 address (not used on public internet) but its important
+that the subnetworks have the /## so that they have enough IPs available. 
+```
 
 ## <a id="firewall_rules"></a>Step 2: Create Firewall Rules for the Network
 

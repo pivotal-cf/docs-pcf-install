@@ -21,7 +21,7 @@ To view the BBR release notes, see the [BOSH Backup and Restore Release Notes](.
 
 The procedures described in this topic prepare your environment for PCF, deploy Ops Manager, import your installation settings, and use BBR to restore your PCF components.
 
-<p class="note warning"><strong>Warning</strong>: Restoring Pivotal Cloud Foundry (PCF) with BBR is a destructive operation. If the restore fails, the environment may be left in an unusable state and require reprovisioning.</p>
+<p class="note warning"><strong>Warning</strong>: Restoring Pivotal Cloud Foundry (PCF) with BBR is a destructive operation. If the restore fails, the environment may be left in an unusable state and require reprovisioning. Only perform the procedures in this topic for the purpose of recovering from a failed ERT upgrade.</p>
 
 <p class="note"><strong>Note</strong>: BBR is a beta feature in PCF v1.11. You can only use BBR to back up PCF v1.11 and later. To restore earlier versions of PCF, perform the <a href="restore-pcf.html">manual procedures</a>.</p>
 
@@ -82,15 +82,19 @@ For instance, you could SCP the backup artifact to your jumpbox:
 
 ## <a id="retrieve"></a> Step 5: Retrieve BOSH Director Address and Credentials
 
-You can retrieve the IP address of your BOSH Director and the credentials for logging in either from the Ops Manager Director tile or by using the Ops Manager API.
+You can retrieve the IP address of your BOSH Director and the credentials for logging in either of two ways:
 
-### <a id='tile-bosh'></a>Retrieve the Information from Ops Manager Director
+* Option 1: from the Ops Manager Director tile<br>
+* Option 2: by using the Ops Manager API
+
+
+### <a id='tile-bosh'></a>Option 1: Retrieve the Information from Ops Manager Director
 
 Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in from the Ops Manager Director tile:
 
 <%= partial 'bosh_target_director_bbr' %>
 
-### <a id='tile-bosh'></a>Retrieve the Information from the Ops Manager API
+### <a id='tile-bosh'></a>Option 2: Retrieve the Information from the Ops Manager API
 
 Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in from the Ops Manager API:
 
@@ -121,14 +125,14 @@ Perform the following steps to retrieve the IP address of your BOSH Director and
       restore \
         --artifact-path PATH\_TO\_DIRECTOR\_BACKUP
   </pre>
-  Use the optional `--debug` flag to enable debug logs. See the [Logging](backup-pcf-bbr.html#logging) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic for more information.
+  Use the optional `--debug` flag to enable debug logs. See [Logging](backup-pcf-bbr.html#logging) for more information.
   <br><br>
   Replace the placeholder values as follows:
   * `PATH_TO_DIRECTOR_BACKUP`: This is the path to the Director backup you want to restore.
   * `PRIVATE_KEY`: This is the path to the private key file you created above.
-  * `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this will be a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, it will be the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 5: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+  * `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this will be a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, it will be the `BOSH_DIRECTOR_IP`, which you retrieved in [Step 5: Retrieve BOSH Director Address and Credentials](#retrieve).
 
-<p class="note"><strong>Note</strong>: The BBR restore command can take a long time to complete. Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
+<p class="note"><strong>Note</strong>: The BBR <code>restore</code> command can take a long time to complete. Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
 
 If the command fails, do the following:
 
@@ -169,7 +173,7 @@ $ bosh -e DIRECTOR_IP -d DEPLOYMENT_NAME -n cck \
 
 This reconciles the BOSH Director's internal state with the state in the IaaS. You can use the list of deployments returned in [Step 7: Identify Your Deployment](#identify-deployment).
 
-If the <code>bosh cck</code> command does not successfully delete disk references and you see a message similar to the following, perform the additional procedures in the <a href="#removing-disks">Remove Unused Disks</a> section below.
+If the <code>bosh cck</code> command does not successfully delete disk references and you see a message similar to the following, perform the additional procedures in <a href="#removing-disks">Remove Unused Disks</a> below.
 <pre class="terminal">
 Scanning 19 persistent disks: 19 OK, 0 missing ...
 </pre>
@@ -205,7 +209,7 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
   </pre>
 1. From the Ops Manager Installation Dashboard, navigate to **Pivotal Elastic Runtime > Resource Config**.
 1. Ensure the number of instances for MySQL Server is set to `1`.
-  <p class="note warning"><strong>Note</strong>: Restore will fail if there is not exactly one MySQL Server instance deployed.</p>
+  <p class="note warning"><strong>Warning</strong>: Restore will fail if there is not exactly one MySQL Server instance deployed.</p>
 1. Return to the Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
 
 ## <a id='restore-ert'></a> Step 10: Restore Elastic Runtime
@@ -226,8 +230,8 @@ $ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
     * `BOSH_CLIENT`, `BOSH_CLIENT_SECRET`: Use the BOSH UAA user provided in  **Pivotal Ops Manager > Credentials > Uaa Bbr Client Credentials**.
     <br><br>
        You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
-    * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 5: Retrieve BOSH Director Address and Credentials](#retrieve) section.
-    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 7: Identify Your Deployment](#identify-deployment) section.
+    * `BOSH_DIRECTOR_IP`: You retrieved this value in [Step 5: Retrieve BOSH Director Address and Credentials](#retrieve).
+    * `DEPLOYMENT-NAME`: You retrieved this value in [Step 7: Identify Your Deployment](#identify-deployment).
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
     * `PATH_TO_ERT_BACKUP`: This is the path to the Elastic Runtime backup you want to restore.
 
@@ -268,7 +272,7 @@ $ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
 
       Restored apps will begin to start. The amount of time it takes for all apps to start depends on the number of app instances, the resources available to the underlying infrastructure, and the value of the **Max Inflight Container Starts** field in the Elastic Runtime tile.
 
-1. If desired, scale the MySQL Server job back up to its previous number of instances by navigating to the **Resource Config** section of the Elastic Runtime tile. After scaling the job, return to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy.
+1. (Optional) Scale the MySQL Server job back up to its previous number of instances by navigating to the **Resource Config** section of the Elastic Runtime tile. After scaling the job, return to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy.
 
 1. Validate your restored PCF by performing the steps in the [Step 11: (Optional) Validate Your Backup](backup-pcf-bbr.html#validate-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em>.
 

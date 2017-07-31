@@ -7,7 +7,15 @@ owner: RelEng
 
 <% $this_topic = 'backup-pcf' %>
 
-This topic describes the procedure for manually backing up each critical backend <%= vars.product_full %> component. Pivotal recommends frequently backing up your installation settings before making any changes to your PCF deployment, such as configuration of any tiles in Ops Manager.
+This topic describes the procedure for manually backing up each critical backend PCF component. Pivotal recommends frequently backing up your installation settings before making any changes to your PCF deployment, such as configuration of any tiles in Ops Manager.
+
+To back up a deployment, you must do the following:
+
+* Export installation settings
+* Download the BOSH Deployment Manifest
+* Temporarily stop the Cloud Controller
+* Create and export backup files for each critical backend component
+* Restart the Cloud Controller 
 
 To back up a deployment, export installation settings, download the BOSH Deployment Manifest, temporarily stop the Cloud Controller, create and export backup files for each critical backend component, and restart the Cloud Controller. It is also important to record your Cloud Controller Database encryption credentials which you will need if you contact Pivotal Support for help restoring your installation.
 
@@ -54,66 +62,64 @@ Your Elastic Runtime deployment contains several critical data stores that must 
 
 You must back up each of the following:
 
-* Cloud Controller Database
-* UAA Database
 * WebDAV Server
 * Pivotal MySQL Server
 
-<p class="note"><strong>Note</strong>: If you are running PostgreSQL and are on the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard instructions for backing up the Cloud Controller, and UAA Databases, and ensure that you back up your external databases and filestores. </p>
+<p class="note"><strong>Note</strong>: If you are running your databases or filestores externally, ensure that you back up your external databases and filestores. </p>
 
 <p class="note"><strong>Note</strong>: To follow the backup instructions below, your network must be configured to allow access to the BOSH Director VM from your local machine. If you do not have local administrator access, use the <code>scp</code> command to copy the TAR file to the BOSH Director VM. For example:<code> scp vcap@192.0.2.10:webdav.tar.gz \ </code>
 and
 <code>vcap@192.0.2.3:/webdav.tar.gz</code></p>
 
-
 ### <a id='stop-cc-2'></a>Stop Cloud Controller###
 <%= partial './stopping_cc' %>
 
-### <a id='ccdb'></a>Back Up the Cloud Controller Database ###
+### <a id='backup-mysql'></a>Back Up Pivotal MySQL Server ###
 
- <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
+<p class="note"><strong>Note</strong>: The Elastic Runtime deploy contains an embedded MySQL Server that serves as the data store for the Application Usage Events, Notifications, and Autoscaler services. If you are using an internal MySQL, this will also include the Cloud Controller and UAA. </p>
 
-1. Use `bosh ssh` to SSH into the Cloud Controller Database VM:
-  1. Run `ssh-keygen -t rsa` to provide BOSH with the correct public key.
-  1. Accept the defaults.
-  1. Run `bosh ssh`.
-  1. When prompted to choose an instance, enter the number that corresponds to the VM beginning with `ccdb`.
-  1. Create a password for the temporary user that the `bosh ssh` command creates. Use this password if you need `sudo` access in this session.
+There are two ways to backup the MySQL Server:
 
-1. Run `pg_dump` to export the database:
-<pre class="terminal">
-$ pg_dump -U admin -p 2544 ccdb > /tmp/ccdb.sql
-</pre>
+* [Manual backup](#manual-mysql): If you have not set up automatic backups, you need to do a manual backup of your MySQL server.
+* Automatic backup: If you configured automatic backups in your ERT configuration, you do not need to manually backup your MySQL Server. Automatic backup requires S3-compatible blobstores. For more information, see:
+  * AWS Manual: [Configure Internal MySQL](../../customizing/pcf-aws-manual-er-config.html#internal-mysql)
+  * AWS CloudFormation: [Configure Internal MySQL](../../customizing/cloudform-er-config.html#internal-mysql)
+  * OpenStack: [Configure Internal MySQL](../../customizing/openstack-er-config.html#internal-mysql)
+  * vSphere [Configure Internal MySQL](../../customizing/config-er-vmware.html#internal-mysql)
 
-1. Run `bosh scp` to copy the exported database to your BOSH client.
-<pre class="terminal">
-$ bosh scp --download ccdb/0 /tmp/ccdb.sql .
-</pre>
+#### <a id='manual-mysql'></a>Backing up MySQL Server Manually ####
 
-1. Exit from the Cloud Controller database VM.
+1. From the **Installation Dashboard** in Ops Manager, select **Pivotal Elastic Runtime**.
+1. Click **Credentials** and record the **Mysql Admin Credentials** of **MySQL Server**.
 
-### <a id='backup-uaadb'></a>Back Up the UAA Database ###
+    <%= image_tag("mysql-cred.png") %>
 
-<p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
+1. From your local machine, use `bosh ssh` to SSH into the MySQL database VM. Using the BOSH v2 CLI command:
+    <pre class="terminal">
+    $ bosh -e ENVIRONMENT -d DEPLOYMENT-NAME ssh mysql
+    </pre>
+    For example:
+    <pre class="terminal">
+    $ bosh -e myenv -d cf-1234567 ssh mysql
+    </pre>
 
-1. Use `bosh ssh` to SSH into the UAA Database VM:
-  1. Run `ssh-keygen -t rsa` to provide BOSH with the correct public key.
-  1. Accept the defaults.
-  1. Run `bosh ssh`.
-  1. When prompted to choose an instance, enter the number that corresponds to the VM beginning with `uaadb`.
-  1. Create a password for the temporary user that the `bosh ssh` command creates. Use this password if you need `sudo` access in this session.
+1. On the MySQL database VM, run the following command to export data from all the internal MySQL databases used by Elastic Runtime:
+    <pre class="terminal">
+    $ /var/vcap/packages/mariadb/bin/mysqldump -u root -p \
+     --all-databases > /tmp/cf_databases.sql
+    </pre>
+    When prompted, enter the password you obtained for the **Mysql Admin Credentials**.
 
-1. Run `pg_dump` to export the database:
-<pre class="terminal">
-$ pg_dump -U admin -p 2544 uaa > /tmp/uaa.sql
-</pre>
-
-1. Run `bosh scp` to copy the exported database to your BOSH client.
-<pre class="terminal">
-$ bosh scp --download uaadb/0 /tmp/uaa.sql .
-</pre>
-
-1. Exit from the UAA database VM.
+1. From your local machine, run `bosh scp` to download the exported databases to your local machine. Using the BOSH v2 CLI command:
+    <pre class="terminal">
+    $ bosh -e ENVIRONMENT -d DEPLOYMENT-NAME \
+    scp mysql:/tmp/cf\_databases.sql FILEPATH/cf\_databases.sql
+    </pre>
+    For example:
+    <pre class='terminal'>
+    $ bosh2 -e myenv -d cf-1234567\
+    scp mysql:/tmp/cf\_databases.sql ~/cf\_databases.sql
+    </pre>
 
 ### <a id='webdav'></a>Back Up WebDAV Server ###
 
@@ -142,41 +148,6 @@ $ ssh vcap<span>@</span>192.0.2.10 'cd /var/vcap/store && tar cz shared' > webda
 </pre>
 <p class="note"><strong>Note</strong>: The TAR file that you create to back up WebDAV server might be large. To estimate the size of the TAR file before you create it, run the following command:
 <code class=''>ssh vcap<span>@</span>192.0.2.10 tar -cf - /dir/to/archive/ | wc -c</code></p>
-
-### <a id='backup-mysql'></a>Back Up Pivotal MySQL Server ###
-
-<p class="note"><strong>Note</strong>: The Elastic Runtime deploy contains an embedded MySQL Server that serves as the data store for the Application Usage Events, Notifications, and Autoscaler services. If you are using an internal MySQL, this will also include the Cloud Controller and UAA. </p>
-
-There are two ways to backup the MySQL Server:
-
-* [Manual backup](#manual-mysql): If you have not set up automatic backups, you need to do a manual backup of your MySQL server.
-* Automatic backup: If you configured automatic backups in your ERT configuration, you do not need to manually backup your MySQL Server. Automatic backup requires S3-compatible blobstores. For more information, see:
-  * AWS: [Configure Internal MySQL](../../customizing/cloudform-er-config.html#internal-mysql)
-  * OpenStack: [Configure Internal MySQL](../../customizing/openstack-er-config.html#internal-mysql)
-  * vSphere [Configure Internal MySQL](../../customizing/config-er-vmware.html#internal-mysql)
-
-
-#### <a id='manual-mysql'></a>Backing up MySQL Server Manually ####
-
-1. From the Installation Dashboard in Ops Manager, select **Pivotal Elastic Runtime**. Click **Status** and record the IP address of the first instance of **MySQL Server**.
-
-    <%= image_tag("mysql-ip.png") %>
-
-1. Click **Credentials** and record the Mysql Admin Credentials of **MySQL Server**.
-
-    <%= image_tag("mysql-cred.png") %>
-
-1. SSH into the MySQL database VM as the admin using the IP address and password recorded in the previous steps.
-
-1. Run the following command to dump the data from the p-mysql database and save it:
- <pre class='terminal'>
-     $ mysqldump -u root -p -h 10.0.1.26 --all-databases > user_databases.sql
- </pre>
-
-1. Run `scp` to copy the exported database to your local machine.
- <pre class='terminal'>
- $ scp vcap<span>@</span>10.0.1.26:~/user_databases.sql .
- </pre>
 
 ### <a id='cc-start'></a>Start Cloud Controller ###
 <%= partial './starting_cc' %>

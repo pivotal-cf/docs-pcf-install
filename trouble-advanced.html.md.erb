@@ -288,22 +288,44 @@ troubleshoot.
 
     <p class="note"><strong>Note</strong>: Where there is more than one installation of the same product, record the release number shown on the product tile in Operations Manager. Then, from the YAML files for that product, find the deployment that specifies the same release version as the product tile.</p>
 
-1. Run `bosh -e MY-ENV environment`, replacing `MY-ENV` with the alias you set for the BOSH Director. For example:
-    <pre class="terminal">$ bosh -e gcp environment</pre>
+1. Depending on the version of the BOSH CLI you are using, continue to either the [BOSH CLI v1](#product-bosh1) or [BOSH CLI v2](#product-bosh2) instructions.
+
+#### <a id='product-bosh1'></a>BOSH CLI v1
+
+1. Run `bosh status` and record the UUID value.
+
+1. Open the `DEPLOYMENT-FILENAME.yml` file in a text editor and compare the
+`director_uuids` value in this file with the UUID value that you recorded. If
+the values do not match, perform the following steps:
+    1. Replace the `director_uuids` value with the UUID value.
+    1. Run `bosh deployment DEPLOYMENT-FILENAME.yml` to reset the file for your
+    deployment.
+
+1. Run `bosh deployment DEPLOYMENT-FILENAME.yml` to instruct the BOSH Director
+to apply BOSH CLI commands against the deployment described by the YAML file that you identified:
+
+    <pre class='terminal'>
+    $ bosh deployment /var/tempest/workspaces/default/deployments/cf-cca1234abcd.yml
+    </pre>
+
+#### <a id='product-bosh2'></a>BOSH CLI v2
+
+1. Run `bosh2 -e MY-ENV environment`, replacing `MY-ENV` with the alias you set for the BOSH Director. For example:
+    <pre class="terminal">$ bosh2 -e gcp environment</pre>
     The output of the command includes the BOSH Director UUID. Record the UUID value.
 
 1. Open the `DEPLOYMENT-FILENAME.yml` file in a text editor and compare the
 `director_uuids` value in this file with the UUID value that you recorded.
 If the values do not match, replace the `director_uuids` value with the UUID value that you recorded before continuing to the next step.
 
-1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT deploy DEPLOYMENT-FILENAME.yml` to reset the file for your deployment. Replace the placeholder text as follows:
+1. Run `bosh2 -e MY-ENV -d MY-DEPLOYMENT deploy DEPLOYMENT-FILENAME.yml` to reset the file for your deployment. Replace the placeholder text as follows:
     * `MY-ENV`: Enter the alias you set for the BOSH Director.
     * `MY-DEPLOYMENT`: Enter the name of the deployment you are troubleshooting.
     * `DEPLOYMENT-FILENAME`: Enter the manifest file for the deployment you are troubleshooting.
 
     For example:
     <pre class='terminal'>
-    $ bosh -e gcp -d cf deploy /var/tempest/workspaces/default/deployments/cf-cca1234abcd.yml
+    $ bosh2 -e gcp -d cf deploy /var/tempest/workspaces/default/deployments/cf-cca1234abcd.yml
     </pre>
 
 ## <a id='cli'></a>Use the BOSH CLI for Troubleshooting
@@ -311,14 +333,17 @@ If the values do not match, replace the `director_uuids` value with the UUID val
 This section describes three BOSH CLI commands commonly used during
 troubleshooting.
 
-* **VMs**: Lists all VMs in a deployment
+* **VMs**: Lists the VMs in a deployment
 * **Cloud Check**: Runs a cloud consistency check and interactive repair
 * **SSH**: Starts an interactive session or executes commands with a VM
 
 ### <a id='vms'></a>BOSH VMs
 
 The `bosh vms` command provides an overview of the virtual machines that BOSH manages.
-To use the `bosh vms` command, run `bosh -e MY-ENV -d MY-DEPLOYMENT vms`. Replace `MY-ENV` with your environment, and `MY-DEPLOYMENT` with a deployment. `-d MY-DEPLOYMENT` is optional.
+
+If you use BOSH CLI v1, run `bosh vms`.
+
+If you use BOSH CLI v2, run `bosh2 -e MY-ENV -d MY-DEPLOYMENT vms`. Replace `MY-ENV` with your environment, and `MY-DEPLOYMENT` with a deployment. `-d MY-DEPLOYMENT` is optional.
 
 When troubleshooting an issue with your deployment, `bosh vms` may show a VM in
 an **unknown** state.
@@ -361,7 +386,9 @@ following repair options:
   Select this option only if you know that this reference is in error.
   Once you delete the VM reference, BOSH can no longer control the VM.
 
-To use the `bosh cloud-check` command, run `bosh -e MY-ENV -d MY-DEPLOYMENT cloud-check`.  Replace `MY-ENV` with your environment, and `MY-DEPLOYMENT` with your deployment. 
+If you use BOSH CLI v1, run `bosh cloudcheck`.
+
+If you use BOSH CLI v2, run `bosh -e MY-ENV -d MY-DEPLOYMENT cloud-check`. Replace `MY-ENV` with your environment, and `MY-DEPLOYMENT` with your deployment. 
 
 ####Example Scenarios ####
 

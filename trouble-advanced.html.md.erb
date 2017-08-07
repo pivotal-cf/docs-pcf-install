@@ -5,9 +5,9 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-_This topic assumes you are using BOSH CLI v2.0 or later._
+To perform advanced troubleshooting, you must log in to the BOSH Director. 
 
-To perform advanced troubleshooting, you must log in to the BOSH Director. From there, you can run specific commands using the BOSH Command Line Interface (BOSH CLI). BOSH Director diagnostic commands have access to information about your entire [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) installation.
+After authenticating into the BOSH Director, you can run specific commands using the BOSH Command Line Interface (BOSH CLI). BOSH Director diagnostic commands have access to information about your entire [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) installation.
 
 The BOSH Director runs on the virtual machine (VM) that Ops Manager deploys on the first install of the Ops Manager Director tile.
 
@@ -20,15 +20,19 @@ BOSH Director diagnostic commands have access to information about your entire
 <p class="note"><strong>Note</strong>: Verify that no BOSH Director tasks are running on the Ops Manager VM before running any commands.
 See the <i>Tasks</i> section of the <a href="https://bosh.io/docs/cli-v2#task-mgmt">BOSH CLI commands</a> for more information.</p>
 
-## <a id='prepare'></a>Prepare to Use the BOSH CLI ##
+## <a id='about'></a>About the BOSH CLI ##
 
-This section guides you through preparing to use the BOSH CLI.
+The BOSH CLI is available in two major versions, v1 and v2. You can use either BOSH CLI, but Pivotal recommends that you use the BOSH CLI v2 since v1 will be deprecated. BOSH CLI v2 is installed on Ops Manager as `/usr/local/bin/bosh2`.
 
-### <a id='gather'></a>Gather Information ###
+Ops Manager includes both versions for backwards compatibility purposes. Any manifests that have been generated using BOSH v2 cannot be deployed with the BOSH v1 CLI.
+
+This topic provides examples of using each version of the BOSH CLI.
+
+## <a id='gather'></a>Gather Credential and IP Address Information ##
 
 Before you begin troubleshooting with the BOSH CLI, follow the instructions below to collect the information you need from the Ops Manager interface.
 
-1. Open the Ops Manager interface by navigating to the Ops Manager fully qualified domain name (FQDN) in a web browser. Ensure that there are no installations or updates in progress.
+1. Open the Ops Manager interface by navigating to the Ops Manager fully qualified domain name (FQDN) in a web browser. 
 
 1. Click the **Ops Manager Director** tile and select the **Status** tab.
 
@@ -51,9 +55,9 @@ and VM credentials for that job VM.
 
 1. Log out of Ops Manager.
 
-<p class="note"><strong>Note</strong>: You must log out of the Ops Manager interface to use the BOSH CLI.</p>
+<p class="note"><strong>Note</strong>: Ensure that there are no Ops Manager installations or updates in progress while using the BOSH CLI.</p>
 
-### <a id='ssh'></a>SSH into Ops Manager ###
+## <a id='ssh'></a>SSH into Ops Manager ##
 
 Use SSH to connect to the Ops Manager web application VM.
 
@@ -109,33 +113,47 @@ into vCenter. For example:
     $ gcloud compute ssh om-pcf-1a --zone us-central1-b
     </pre>
 
-1. Run `sudo su ubuntu`.
+1. Run `sudo su - ubuntu` to switch to the `ubuntu` user.
 
-### <a id='log-in'></a>Log in to the BOSH Director
+## <a id='log-in'></a>Log in to the BOSH Director
 
-#### <a id='bosh-alias'></a>Create a Local Alias
+Depending on the BOSH CLI version you are using, follow the procedure for [BOSH CLI v1](#bosh1-access) or [BOSH CLI v2](#bosh2-access).
 
-1. Run the following command to create a local alias for the BOSH Director using the BOSH CLI: `bosh alias-env MY-ENV -e DIRECTOR-IP-ADDRESS --ca-cert /var/tempest/workspaces/default/root_ca_certificate`
+### <a id='bosh1-access'></a>BOSH CLI v1
 
-    Replace the placeholder text with the following:
-    * `MY-ENV`: Enter an alias for the BOSH Director, such as `gcp`.
-    * `DIRECTOR-IP-ADDRESS`: Enter the IP address of your Ops Manager Director VM.
-For example:
-    <pre class="terminal">$ bosh alias-env gcp -e 192.0.0.1 --ca-cert /var/tempest/workspaces/default/root_ca_certificate</pre>
+#### <a id='bosh-target'></a>Target the BOSH Director
+
+1. Target the BOSH UAA on Ops Manager with the UAAC command `uaac target`.
+
+    <pre class='terminal'>
+    $ uaac target --ca-cert /var/tempest/workspaces/default/root_ca_certificate https://DIRECTOR-IP-ADDRESS:8443
+    </pre>
+
+1. Run `bosh target DIRECTOR-IP-ADDRESS` to target your Ops Manager VM using the BOSH CLI.
 
 1. Log in to the BOSH Director using one of the following options:
-  * [Internal User Store Login through UAA](#log-in-uaa): Log in to the Director using BOSH.
-  * [External User Store Login through SAML](#log-in-saml): Use an external user store to log in to the BOSH Director.
+  * [Internal User Store Login through UAA](#uaa-bosh1): Log in to the Director using BOSH.
+  * [External User Store Login through SAML](#saml-bosh1): Use an external user store to log in to the BOSH Director.
 
-#### <a id='log-in-uaa'></a>Internal User Store Login through UAA
+#### <a id='uaa-bosh1'></a>Log in to the BOSH Director with UAA 
 
-1. Retrieve the Director password from the **Ops Manager Director > Credentials** tab. Alternatively, launch a browser and visit `https://OPS-MANAGER-FQDN/api/v0/deployed/director/credentials/director_credentials` to obtain the password. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager.
+1. Retrieve the Director password from the **Ops Manager Director > Credentials** tab. Alternatively, launch a browser and visit the following URL to obtain the password:
 
-1. Run `bosh -e MY-ENV log-in` to log in to the BOSH Director. Replace `MY-ENV` with the alias for your BOSH Director. For example:
-    <pre class='terminal'>$ bosh -e gcp log-in</pre>
-    Follow the BOSH CLI prompts and enter the Ops Manager Director credentials to log in to the BOSH Director.
+    ```
+    https://{OPSMANAGER-FQDN}/api/v0/deployed/director/credentials/director_credentials
+    ```
 
-#### <a id='log-in-saml'></a>External User Store Login through SAML
+1. Log in using the BOSH Director credentials:
+
+    <pre class='terminal'>
+    $ bosh --ca-cert /var/tempest/workspaces/default/root_ca_certificate target DIRECTOR-IP-ADDRESS
+    Target set to 'DIRECTOR_UUID'
+    Email: director
+    Enter password: (DIRECTOR_CREDENTIAL)
+    Logged in as 'director'
+    </pre>
+
+#### <a id='saml-bosh1'></a>Log in to the BOSH Director with SAML
 
 1. Log in to your identity provider and use the following information to configure SAML Service Provider Properties:
   * **Service Provider Entity ID**: `bosh-uaa`
@@ -145,8 +163,70 @@ For example:
   * **Binding**: HTTP Redirect
   * **Name ID**: Email Address
 
-1. Run `bosh -e MY-ENV log-in` to log in to the BOSH Director. Replace `MY-ENV` with the alias for your BOSH Director. For example:
-    <pre class='terminal'>$ bosh -e gcp log-in</pre>
+1. Log in to BOSH using your SAML credentials:
+    <pre class='terminal'>
+    $ bosh login
+    Email: admin
+    Password:
+    One Time Code (Get one at https:<span>//</span>10.0.0.3:8888/passcode):
+    </pre>
+
+     If you do not have browser access to the BOSH Director, run `sshuttle` on a local Linux workstation to browse the BOSH Director IP as if it were a local address. Retrieve a UAA passcode using the browser:
+    <pre class='terminal'>
+    $ git clone https:<span>//</span>github.com/apenwarr/sshuttle.git
+    $ cd sshuttle
+    $ ./sshuttle -r username@opsmanagerIP 0.0.0.0/0 -vv
+    </pre>
+
+1. Click **Log in with organization credentials (SAML)**.
+
+    <%= image_tag("login-saml-credentials.png") %>
+
+1. Copy the **Temporary Authentication Code** that appears in your browser.
+
+    <%= image_tag("saml-login-temp-auth-code.png") %>
+
+1. You see a login confirmation. For example:
+
+    <pre class='terminal'>Logged in as admin@example.org
+    </pre>
+
+### <a id='bosh2-access'></a>BOSH CLI v2
+
+#### <a id='bosh-alias'></a>Create a Local BOSH Director Alias
+
+1. Run the following command to create a local alias for the BOSH Director using the BOSH CLI: `bosh2 alias-env MY-ENV -e DIRECTOR-IP-ADDRESS --ca-cert /var/tempest/workspaces/default/root_ca_certificate`
+
+    Replace the placeholder text with the following:
+    * `MY-ENV`: Enter an alias for the BOSH Director, such as `gcp`.
+    * `DIRECTOR-IP-ADDRESS`: Enter the IP address of your Ops Manager Director VM.
+For example:
+    <pre class="terminal">$ bosh2 alias-env gcp -e 10.0.0.3 --ca-cert /var/tempest/workspaces/default/root_ca_certificate</pre>
+
+1. Log in to the BOSH Director using one of the following options:
+  * [Internal User Store Login through UAA](#uaa-bosh2): Log in to the Director using BOSH.
+  * [External User Store Login through SAML](#saml-bosh2): Use an external user store to log in to the BOSH Director.
+
+#### <a id='uaa-bosh2'></a>Log in to the BOSH Director with UAA 
+
+1. Retrieve the Director password from the **Ops Manager Director > Credentials** tab. Alternatively, launch a browser and visit `https://OPS-MANAGER-FQDN/api/v0/deployed/director/credentials/director_credentials` to obtain the password. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager.
+
+1. Run `bosh2 -e MY-ENV log-in` to log in to the BOSH Director. Replace `MY-ENV` with the alias for your BOSH Director. For example:
+    <pre class='terminal'>$ bosh2 -e gcp log-in</pre>
+    Follow the BOSH CLI prompts and enter the Ops Manager Director credentials to log in to the BOSH Director.
+
+#### <a id='saml-bosh2'></a>Log in to the BOSH Director with SAML
+
+1. Log in to your identity provider and use the following information to configure SAML Service Provider Properties:
+  * **Service Provider Entity ID**: `bosh-uaa`
+  * **ACS URL**: `https://DIRECTOR-IP-ADDRESS:8443/saml/SSO/alias/bosh-uaa`
+  * **Binding**: HTTP Post
+  * **SLO URL**: `https://DIRECTOR-IP-ADDRESS:8443/saml/SSO/alias/bosh-uaa`
+  * **Binding**: HTTP Redirect
+  * **Name ID**: Email Address
+
+1. Run `bosh2 -e MY-ENV log-in` to log in to the BOSH Director. Replace `MY-ENV` with the alias for your BOSH Director. For example:
+    <pre class='terminal'>$ bosh2 -e gcp log-in</pre>
     Follow the BOSH CLI prompts and enter your SAML credentials to log in to the BOSH Director.
     <br><br>
     If you do not have browser access to the BOSH Director, run `sshuttle` on a local Linux workstation to browse the BOSH Director IP address as if it were a local address. Retrieve a UAA passcode using the browser:
@@ -208,22 +288,44 @@ troubleshoot.
 
     <p class="note"><strong>Note</strong>: Where there is more than one installation of the same product, record the release number shown on the product tile in Operations Manager. Then, from the YAML files for that product, find the deployment that specifies the same release version as the product tile.</p>
 
-1. Run `bosh -e MY-ENV environment`, replacing `MY-ENV` with the alias you set for the BOSH Director. For example:
-    <pre class="terminal">$ bosh -e gcp environment</pre>
+1. Depending on the version of the BOSH CLI you are using, continue to either the [BOSH CLI v1](#product-bosh1) or [BOSH CLI v2](#product-bosh2) instructions.
+
+#### <a id='product-bosh1'></a>BOSH CLI v1
+
+1. Run `bosh status` and record the UUID value.
+
+1. Open the `DEPLOYMENT-FILENAME.yml` file in a text editor and compare the
+`director_uuids` value in this file with the UUID value that you recorded. If
+the values do not match, perform the following steps:
+    1. Replace the `director_uuids` value with the UUID value.
+    1. Run `bosh deployment DEPLOYMENT-FILENAME.yml` to reset the file for your
+    deployment.
+
+1. Run `bosh deployment DEPLOYMENT-FILENAME.yml` to instruct the BOSH Director
+to apply BOSH CLI commands against the deployment described by the YAML file that you identified:
+
+    <pre class='terminal'>
+    $ bosh deployment /var/tempest/workspaces/default/deployments/cf-cca1234abcd.yml
+    </pre>
+
+#### <a id='product-bosh2'></a>BOSH CLI v2
+
+1. Run `bosh2 -e MY-ENV environment`, replacing `MY-ENV` with the alias you set for the BOSH Director. For example:
+    <pre class="terminal">$ bosh2 -e gcp environment</pre>
     The output of the command includes the BOSH Director UUID. Record the UUID value.
 
 1. Open the `DEPLOYMENT-FILENAME.yml` file in a text editor and compare the
 `director_uuids` value in this file with the UUID value that you recorded.
 If the values do not match, replace the `director_uuids` value with the UUID value that you recorded before continuing to the next step.
 
-1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT deploy DEPLOYMENT-FILENAME.yml` to reset the file for your deployment. Replace the placeholder text as follows:
+1. Run `bosh2 -e MY-ENV -d MY-DEPLOYMENT deploy DEPLOYMENT-FILENAME.yml` to reset the file for your deployment. Replace the placeholder text as follows:
     * `MY-ENV`: Enter the alias you set for the BOSH Director.
     * `MY-DEPLOYMENT`: Enter the name of the deployment you are troubleshooting.
     * `DEPLOYMENT-FILENAME`: Enter the manifest file for the deployment you are troubleshooting.
 
     For example:
     <pre class='terminal'>
-    $ bosh -e gcp -d cf deploy /var/tempest/workspaces/default/deployments/cf-cca1234abcd.yml
+    $ bosh2 -e gcp -d cf deploy /var/tempest/workspaces/default/deployments/cf-cca1234abcd.yml
     </pre>
 
 ## <a id='cli'></a>Use the BOSH CLI for Troubleshooting
@@ -231,14 +333,17 @@ If the values do not match, replace the `director_uuids` value with the UUID val
 This section describes three BOSH CLI commands commonly used during
 troubleshooting.
 
-* **VMs**: Lists all VMs in a deployment
+* **VMs**: Lists the VMs in a deployment
 * **Cloud Check**: Runs a cloud consistency check and interactive repair
 * **SSH**: Starts an interactive session or executes commands with a VM
 
 ### <a id='vms'></a>BOSH VMs
 
 The `bosh vms` command provides an overview of the virtual machines that BOSH manages.
-To use the `bosh vms` command, run `bosh vms -e MY-ENV -d MY-DEPLOYMENT vms`. Replace `MY-ENV` with your environment, and `MY-DEPLOYMENT` with a deployment. `-d MY-DEPLOYMENT` is optional.
+
+If you use BOSH CLI v1, run `bosh vms`.
+
+If you use BOSH CLI v2, run `bosh2 -e MY-ENV -d MY-DEPLOYMENT vms`. Replace `MY-ENV` with your environment, and `MY-DEPLOYMENT` with a deployment. `-d MY-DEPLOYMENT` is optional.
 
 When troubleshooting an issue with your deployment, `bosh vms` may show a VM in
 an **unknown** state.
@@ -281,7 +386,9 @@ following repair options:
   Select this option only if you know that this reference is in error.
   Once you delete the VM reference, BOSH can no longer control the VM.
 
-To use the `bosh cloud-check` command, run `bosh -e MY-ENV -d MY-DEPLOYMENT cloud-check`.  Replace `MY-ENV` with your environment, and `MY-DEPLOYMENT` with your deployment. 
+If you use BOSH CLI v1, run `bosh cloudcheck`.
+
+If you use BOSH CLI v2, run `bosh -e MY-ENV -d MY-DEPLOYMENT cloud-check`. Replace `MY-ENV` with your environment, and `MY-DEPLOYMENT` with your deployment. 
 
 ####Example Scenarios ####
 

@@ -17,8 +17,12 @@ After you complete this procedure, follow the instructions in the [Configuring O
 
 1. From the **Releases** drop-down, select the release to install.
 
-1. Select **Pivotal Cloud Foundry Ops Manager for GCP**. When you click on the download link, your browser downloads or opens the <code>OpsManager\_<i>version</i>\_onGCP.pdf</code> file. <br/><br/>
-   This PDF document provides the GCP location of the Ops Manager `.tar.gz` installation file based on the geographic location of your installation.
+1. Select one of the following download files:
+    * **Pivotal Cloud Foundry Ops Manager for GCP**
+    * **Pivotal Cloud Foundry Ops Manager YAML for GCP**
+
+    When you click on the download link, your browser downloads or opens the <code>OpsManager\_<i>version</i>\_onGCP.pdf</code> or <code>OpsManager\_<i>version</i>\_onGCP.yml</code> file. <br/><br/>
+   These documents provide the GCP location of the Ops Manager `.tar.gz` installation file based on the geographic location of your installation.
 
 1. Copy the filepath string of the Ops Manager image based on your deployment location.
 
@@ -44,39 +48,45 @@ After you complete this procedure, follow the instructions in the [Configuring O
 
     <%= image_tag("gcp/create_instance.png") %>
 
-1. Click **Create Instance**. 
+1. Click **Create Instance**.
 
 1. In the **Create an instance form**, complete the following fields:
-  * **Name**: Enter a name, such as `MY-PCF-ops-manager`.
-  * **Zone**: Choose a zone from the region in which you created your network. 
+  * **Name**: Enter a name that matches the naming conventions of your deployment.
+  * **Zone**: Choose a zone from the region in which you created your network.
   * **Machine type**: Choose `n1-standard-2`. 
-    <p class="note"><strong>Note</strong>: Ops Manager v1.11 requires a Director VM with at least 8&nbsp;GB memory.</p>
+    * Click **Customize** to manually configure the vCPU and memory. An Ops Manager VM instance requires the following minimum specifications:
+
+        | **Machine Spec** | **Minimum Value** |
+        |------------------|----------------------|
+        |CPU |2&nbsp;vCPUs |
+        |Memory| 8&nbsp;GB |
   * **Boot disk**: Click **Change**, then perform the following steps:
      * Click **Custom images** if it is not already selected. 
+     * Select the **Boot disk type**. If you have an Ops Manager environment with high performance needs, select **SSD**. For example, environments used to [develop tiles](http://docs.pivotal.io/tiledev/) may benefit from a higher performing Ops Manager VM boot disk. For most environments, however, you can select **Standard**. 
+     * Set the **Size (GB)** of the boot disk to the minimum or higher.
+
+            | **Machine Spec** | **Minimum Value** |
+            |------------------|----------------------|
+            |Boot disk|100&nbsp;GB|
      * Select the Ops Manager image you created in the previous step if it is not already selected.<br> 
         <%= image_tag("gcp/boot_image.png") %>
      * Click **Select** to save.
   * Under **Identity and API access**, choose the **Service account** you created when preparing your environment during the step [Set up an IAM Service Account](./gcp-prepare-env.html#iam_account). 
-  * **Allow HTTP traffic**: Deselect this checkbox. 
-  * **Allow HTTPS traffic**: Deselect this checkbox. 
+  * **Allow HTTP traffic**: Leave this checkbox unselected.  
+  * **Allow HTTPS traffic**: Leave this checkbox unselected. 
   * **Networking**: Select the **Networking** tab, and perform the following steps:
      * For **Network** and **Subnetwork**, select the network and subnetwork you created when preparing your environment in the [Create a GCP Network with Subnet](./gcp-prepare-env.html#create_network) section of the _Preparing to Deploy PCF on GCP_ topic. 
      * For **Network tags**, enter `MY-PCF-opsman` and `allow-https`. These tags tag apply the firewall rules you created in [Create Firewall Rules for the Network](gcp-prepare-env.html#firewall_rules) to the Ops Manager VM.
      * For **Internal IP**, select `Custom`. Enter an IP address (for example, `192.168.101.5`) in the **Internal IP address** field. Specify the next available internal IP address located within the reserved IP range that you will [configure in Ops Manager Director](./gcp-om-config.html#network). Do not use `192.168.101.1`, which is configured for the Gateway.y.
      * For **External IP**, select **New static IP address...**. In the next form, enter a name for the static IP. For example, `om-public-ip`. Click **Reserve**. In the **External IP** drop-down, select the static IP address you just reserved.
-  * **SSH Keys**: Select the **SSH Keys** tab, and perform the following steps.
-      * Generate an SSH key for the `ubuntu` user. Creating the `ubuntu` user allows you to directly access the Ops Manager VM using SSH. For example, on your local machine, open a terminal and type:      
-         <pre class="terminal">$ ssh-keygen -t rsa -f ubuntu-key -C ubuntu@local</pre>
-         Press enter twice to provide no passphrase. This command outputs a private key and a public key, in this example `ubuntu-key.pub`.
-      * Open the public key file. Then copy and paste the public key data including the username at the end, `ubuntu@local`, into the **key data** field. The form then adds an `ubuntu` SSH entry with the username `ubuntu` automatically populated for you.
-      * Store the private key in a secure location.
-      <%= image_tag("gcp/om-ssh-keys.png") %>
 1. Click **Create** to deploy the new Ops Manager VM. This may take a few moments.
 
 1. Navigate to your DNS provider, and create an entry that points a fully qualified domain name (FQDN) `opsman.MY-DOMAIN` to the `MY-PCF-opsman` static IP address of Ops Manager that you created in a previous step. 
 
    <p class="note"><b>Note</b>: In order to set up Ops Manager authentication correctly, Pivotal recommends using a Fully Qualified Domain Name (FQDN) to access Ops Manager. Using an ephemeral IP address to access Ops Manager can cause authentication errors upon subsequent access.</p>
 
-### <a id="next"></a> What to Do Next ###
+## <a id="next"></a> What to Do Next ###
 
 After you complete this procedure, follow the instructions in the [Configuring Ops Manager Director on GCP](./gcp-om-config.html) topic.
+
+Later on, if you need to SSH into the Ops Manager VM to perform diagnostic troubleshooting, see [SSH into Ops Manager](trouble-advanced.html#ssh).

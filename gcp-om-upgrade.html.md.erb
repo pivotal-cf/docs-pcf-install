@@ -1,30 +1,30 @@
 ---
-title: Launching an Ops Manager Director Instance on GCP
+title: Upgrading Ops Manager Director on GCP
 owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
 <html class="list-style-none"></html>
 
-This topic describes how to deploy Ops Manager Director for Pivotal Cloud Foundry (PCF) on Google Cloud Platform (GCP).
+This topic describes how to upgrade Ops Manager Director for Pivotal Cloud Foundry (PCF) on Google Cloud Platform (GCP).
 
-After you complete this procedure, follow the instructions in the [Configuring Ops Manager Director on GCP](./gcp-om-config.html) and
-[Configuring Elastic Runtime on GCP](./gcp-er-config.html) topics.
+In this procedure, you create a new Ops Manager VM instance that hosts the new version of Ops Manager. To upgrade, you export your existing Ops Manager installation into this new VM.
+
+After you complete this procedure, follow the instructions in [Upgrading Elastic Runtime and Other Pivotal Cloud Foundry Products](./upgrading-products.html).
 
 ## <a id='select-tgz'></a>Step 1: Locate the Pivotal Ops Manager Installation File ##
 
 1. Log in to the [Pivotal Network](https://network.pivotal.io/products/pivotal-cf), and click on **Pivotal Cloud Foundry Operations Manager**.
 
-1. From the **Releases** drop-down, select the release to install.
+1. From the **Releases** drop-down, select the release for your upgrade.
 
 1. Select one of the following download files:
     * **Pivotal Cloud Foundry Ops Manager for GCP**
     * **Pivotal Cloud Foundry Ops Manager YAML for GCP**
-
     When you click on the download link, your browser downloads or opens the <code>OpsManager\_<i>version</i>\_onGCP.pdf</code> or <code>OpsManager\_<i>version</i>\_onGCP.yml</code> file. <br/><br/>
    These documents provide the GCP location of the Ops Manager `.tar.gz` installation file based on the geographic location of your installation.
 
-1. Copy the filepath string of the Ops Manager image based on your deployment location.
+1. Copy the filepath string of the Ops Manager image based on your existing deployment location.
 
 ## <a id="create-image"></a>Step 2: Create a Private VM Image
 
@@ -35,10 +35,10 @@ After you complete this procedure, follow the instructions in the [Configuring O
 1. Click **Create Image**.
 
 1. Complete the following fields:
-  * **Name**: Enter a name. For example, `om-pcf`. 
+  * **Name**: Enter a name that matches the naming convention of your existing Ops Manager image files.
   * **Encryption**: Leave **Automatic (recommended)** selected.
   * **Source**: Choose **Cloud Storage file**.
-  * **Cloud Storage file**: Paste in the Google Cloud Storage filepath you copied from the PDF file in the [previous step](#select-tgz). 
+  * **Cloud Storage file**: Paste in the Google Cloud Storage filepath you copied from the PDF or YAML file in the [previous step](#select-tgz). 
       <%= image_tag("gcp/create_image.png") %>
 1. Click **Create**. The file may take a few minutes to import. 
 
@@ -48,11 +48,11 @@ After you complete this procedure, follow the instructions in the [Configuring O
 
     <%= image_tag("gcp/create_instance.png") %>
 
-1. Click **Create Instance**.
+1. Click **Create Instance**. 
 
 1. In the **Create an instance form**, complete the following fields:
-  * **Name**: Enter a name that matches the naming conventions of your deployment.
-  * **Zone**: Choose a zone from the region in which you created your network. 
+  * **Name**: Enter a name that matches the naming conventions of your existing deployment.
+  * **Zone**: Choose a zone from the region of your existing deployment. 
   * **Machine type**: Click **Customize** to manually configure the vCPU and memory. An Ops Manager VM instance requires the following minimum specifications:
 
         | **Machine Spec** | **Minimum Value** |
@@ -66,29 +66,29 @@ After you complete this procedure, follow the instructions in the [Configuring O
 
             | **Machine Spec** | **Minimum Value** |
             |------------------|----------------------|
-            |Boot disk|100&nbsp;GB|
+            |Boot disk|100&nbsp;GB| 
      * Select the Ops Manager image you created in the previous step if it is not already selected.<br> 
         <%= image_tag("gcp/boot_image.png") %>
      * Click **Select** to save.
-  * Under **Identity and API access**, choose the **Service account** you created when preparing your environment during the step [Set up an IAM Service Account](./gcp-prepare-env.html#iam_account). 
-  * **Allow HTTP traffic**: Leave this checkbox unselected.  
-  * **Allow HTTPS traffic**: Leave this checkbox unselected. 
+  * Under **Identity and API access**, choose the **Service account** you created when you initially installed Pivotal Cloud Foundry. See [Set up an IAM Service Account](./gcp-prepare-env.html#iam_account). 
+  * **Allow HTTP traffic**: Only select this checkbox if you selected it in your original Ops Manager VM configuration. 
+  * **Allow HTTPS traffic**: Only select this checkbox if you selected it in your original Ops Manager VM configuration. 
       <%= image_tag("gcp/om_instance_1.png") %>
   * **Networking**: Select the **Networking** tab, and perform the following steps:
-     * For **Network** and **Subnetwork**, select the network and subnetwork you created when preparing your environment in the [Create a GCP Network with Subnet](./gcp-prepare-env.html#create_network) section of the _Preparing to Deploy PCF on GCP_ topic. 
-     * For **Network tags**, enter `pcf-opsmanager`. This tag applies the firewall rule you created in [Create Firewall Rules for the Network](gcp-prepare-env.html#firewall_rules) to the Ops Manager VM.
-     * For **Internal IP**, select `Custom`. Enter an IP address (for example, `10.0.0.4`) in the **Internal IP address** field. Specify an internal IP address located within the reserved IP range that you will [configure in Ops Manager Director](./gcp-om-config.html#network). Do not use `10.0.0.1`, which is configured for the Gateway.
+     * For **Network** and **Subnetwork**, select the network and subnetwork you created when you initially deployed Pivotal Cloud Foundry. See [Create a GCP Network with Subnet](./gcp-prepare-env.html#create_network) section of the _Preparing to Deploy PCF on GCP_ topic. 
+     * For **Network tags**, enter any tags that you applied to your original Ops Manager. For example, if you used the `pcf-opsmanager` tag to apply the firewall rule you created in [Create Firewall Rules for the Network](gcp-prepare-env.html#firewall_rules), then apply the same tag to this Ops Manager VM.
+     * For **Internal IP**, select `Custom`. In the **Internal IP address** field, enter a spare address located within the reserved IP range [configured in your existing Ops Manager Director](./gcp-om-config.html#network). Do not use `10.0.0.1`, which is configured for the Gateway.
      * For **External IP**, select **New static IP address...**. In the next form, enter a name for the static IP. For example, `om-public-ip`. Click **Reserve**. In the **External IP** drop-down, select the static IP address you just reserved.
            <%= image_tag("gcp/instance_networking.png") %>
-
+           
 1. Click **Create** to deploy the new Ops Manager VM. This may take a few moments.
 
-1. Navigate to your DNS provider, and create an entry that points a fully qualified domain name (FQDN) to the `om-public-ip` static IP address of Ops Manager that you created in a previous step. 
+1. Navigate to your DNS provider, and modify the entry that points a fully qualified domain name (FQDN) to the Ops Manager VM. Replace the original Ops Manager static IP address with the public IP address of the new Ops Manager VM you created in a previous step. 
 
    <p class="note"><b>Note</b>: In order to set up Ops Manager authentication correctly, Pivotal recommends using a Fully Qualified Domain Name (FQDN) to access Ops Manager. Using an ephemeral IP address to access Ops Manager can cause authentication errors upon subsequent access.</p>
 
-## <a id="next"></a> What to Do Next ###
+### <a id="next"></a> What to Do Next ###
 
-After you complete this procedure, follow the instructions in the [Configuring Ops Manager Director on GCP](./gcp-om-config.html) topic.
+After you complete this procedure, continue the upgrade instructions in [Upgrading Pivotal Cloud Foundry](./upgrading-pcf.html) topic.
 
 Later on, if you need to SSH into the Ops Manager VM to perform diagnostic troubleshooting, see [SSH into Ops Manager](trouble-advanced.html#ssh).

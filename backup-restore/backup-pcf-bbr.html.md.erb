@@ -55,7 +55,11 @@ The following diagram shows a sample backup flow.
 
 <%= image_tag('backup-flow.png') %>
 
-## <a id='encrypt-key'></a>Step 1: Record the Cloud Controller Database Encryption Credentials ##
+## <a id='system-setup'></a>Step 0: Set up your system for BBR
+
+Before using BBR, follow the instructions in the [Setting up your system for BBR](system-setup-bbr.html) section.
+
+## <a id='encrypt-key'></a>Step 1: Record the Cloud Controller Database Encryption Credentials
 
 You can retrieve the Cloud Controller Database encryption credentials either from the Elastic Runtime tile or by using the Ops Manager API.
 
@@ -155,56 +159,7 @@ cf-example               push-apps-manager-release/661.1.24
 
 In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
 
-## <a id='jumpbox'></a>Step 6: Set Up Your Jumpbox
-
-Set up your jumpbox with the following settings:
-
-* The jumpbox must have sufficient space for the backup. A PCF backup will be at least 1.5 GB in size.
-* BBR connects to the VMs at their private IP address, so the jumpbox needs to be in the same network as the deployed VMs. BBR does not support SSH gateways.
-* BBR copies the backed-up data from the VMs to the jumpbox, so ensure you have minimal network latency between them to reduce transfer times.
-
-Consult the following table for more information about the network access permissions required by BBR.
-
-<table>
-<tr>
-<th>VM</th>
-<th>Default Port</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>BOSH Director</td>
-<td>25555</td>
-<td>BBR interacts with the BOSH Director API.</td>
-</tr>
-<tr>
-<td>Deployed Instances</td>
-<td>22</td>
-<td>BBR uses SSH to orchestrate the backup on the instances.</td>
-</tr>
-<tr>
-<td>BOSH Director UAA</td>
-<td>8443</td>
-<td>BBR interacts with the UAA API for authentication, if necessary.</td>
-</tr>
-</table>
-
-## <a id='scp'></a>Step 7: Transfer BBR to Your Jumpbox
-
-Perform the following steps to transfer BBR to your jumpbox:
-
-1. Download the [latest BBR release](https://network.pivotal.io/products/p-bosh-backup-and-restore).
-1. Change the permissions of `bbr` in order to make it executable:
-	<pre class="terminal">$ chmod a+x bbr</pre>
-1. SCP the binary to your jumpbox:
-	<pre class="terminal">$ scp LOCAL\_PATH\_TO\_BBR/bbr JUMPBOX\_USER/JUMPBOX\_ADDRESS</pre>
-	If your jumpbox has access to the internet, you can also SSH into your jumpbox and use `wget`:
-	<pre class="terminal">
-	$ ssh JUMPBOX\_USER/JUMPBOX\_ADDRESS -i YOUR\_CERTIFICATE.pem
-	$ wget BBR\_RELEASE\_URL
-	$ chmod a+x bbr
-	</pre>
-
-## <a id='check'></a> Step 8: Check Your Deployment
+## <a id='check'></a> Step 6: Check Your Deployment
 
 Perform the following steps to check that your BOSH Director is reachable and has a deployment that can be backed up:
 
@@ -239,7 +194,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 		* The mysql restore script expects a backup script which produces mysql-artifact artifact which is not present in the deployment.
 	Follow the instructions in the [Step 2: Enable Backup Prepare Node](#backup-prepare-node) section and retry.
 
-## <a id='bbr-backup'></a> Step 9: Back Up Your Elastic Runtime Deployment
+## <a id='bbr-backup'></a> Step 7: Back Up Your Elastic Runtime Deployment
 
 Run the BBR backup command from your Jumpbox to back up your Elastic Runtime deployment:
 <pre class="terminal">
@@ -258,7 +213,7 @@ If the commands completes successfully, do the following:
 
 1. Move the backup artifact off the Jumpbox to your preferred storage space. The backup created by BBR consists of a folder with the backup artifacts and metadata files. However, Pivotal recommends compressing and encrypting the files.
 1. Make redundant copies of your backup and store them in multiple locations in order to minimize the risk of losing your backups in the event of a disaster.
-1. Attempt a test restore on every backup in order to validate it by performing the procedures in the [Step 11: Validate Your Backup](#validate-backup) section below.
+1. Attempt a test restore on every backup in order to validate it by performing the procedures in the [Step 9: Validate Your Backup](#validate-backup) section below.
 
 If the command fails, do the following:
 
@@ -267,7 +222,7 @@ If the command fails, do the following:
 1. Ensure the specified deployment exists.
 1. Consult the [Exit Codes](#exit-codes) section below.
 
-## <a id='bbr-backup-director'></a> Step 10: Back Up Your BOSH Director
+## <a id='bbr-backup-director'></a> Step 8: Back Up Your BOSH Director
 
 Perform the following steps to back up your BOSH Director:
 
@@ -299,7 +254,7 @@ You can also retrieve the credentials using the Ops Manager API with a GET reque
 	* `PRIVATE_KEY`: This is the path to the private key file you created above.
 	* `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 4: Retrieve BOSH Director Address and Credentials](#retrieve) section.
 
-## <a id='validate-backup'></a> Step 11: (Optional) Validate Your Backup
+## <a id='validate-backup'></a> Step 9: (Optional) Validate Your Backup
 
 <p class="note warning"><strong>Warning</strong>: When validating your backup, the VMs and disks from the backed up BOSH Director should not visible to the new BOSH Director. As a result, Pivotal recommends that you deploy the new BOSH Director to a different IaaS network and account than the VMs and disks of the backed up BOSH Director.</p>
 
@@ -460,4 +415,4 @@ If you need to cancel a backup, perform the following steps:
 	1. Select the VM you want to SSH into.
 	1. Run the following command from the VM:
 		<pre class="terminal">$ sudo /var/vcap/jobs/cloud-controller-backup/bin/bbr/post-backup-unlock</pre>
-1. Run the BBR pre-backup check from your Jumpbox by following the steps in the [Step 8: Check Your Deployment](#check) section above. If the command reports that it cannot back up the deployment, SSH onto each VM mentioned in the error using the BOSH CLI and remove the `/var/vcap/store/bbr-backup` directory if present.
+1. Run the BBR pre-backup check from your Jumpbox by following the steps in the [Step 6: Check Your Deployment](#check) section above. If the command reports that it cannot back up the deployment, SSH onto each VM mentioned in the error using the BOSH CLI and remove the `/var/vcap/store/bbr-backup` directory if present.

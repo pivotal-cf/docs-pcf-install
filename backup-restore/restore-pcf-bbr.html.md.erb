@@ -70,9 +70,19 @@ the [(Optional) Step 11: Configure Ops Manager for New Resources](#config-new-re
 
     <%= image_tag("../images/upgrading/success.png") %>
 
-1. If you are restoring to a different PCF, i.e. if you had to recreate the networks, load balances, etc, see <a href="#restore-to-new">Appendix C</a>.
+## <a id="config-new-resources"></a> (Optional) Step 3: Configure Ops Manager for New Resources
 
-## <a id="bosh-state"></a> Step 3: Remove BOSH State File
+If you recreated your IaaS resources (i.e. if you had to recreate the networks, load balances, etc) by following the steps in the [(Optional) Step 1: Prepare Your Environment](#prepare-env) section above, perform the following steps to update Ops Manager with your new resources:
+
+1. Navigate to the Ops Manager Installation Dashboard and click the Ops Manager Director tile.
+1. Click **Create Networks** and update the network names to reflect the network names for the new environment.
+1. Return to the Ops Manager Installation Dashboard and click the Elastic Runtime tile.
+1. Click **Resource Config**. If necessary for your IaaS, enter the name of your new load balancer in the **Load Balancer** column. 
+1. If necessary, click **Networking** and update the load balancer SSL certificate and private key under **Router SSL Termination Certificate and Private Key**.  
+1. If your environment has a new DNS address, update the old environment DNS entries to point to the new load balancer addresses. For more information, see the [Step 4: Configure Networking](../custom-load-balancer.html#configure-networking) section of the <em>Using Your Own Load Balancer</em> topic and follow the link to the instructions for your IaaS.
+1. If you are using Google Cloud Platform (GCP), navigate to the **Google Config** section of the Ops Manager Director tile and update the **Default Deployment Tag** to reflect the new environment.
+
+## <a id="bosh-state"></a> Step 4: Remove BOSH State File
 
 1. SSH into your Ops Manager VM. For more information, see the [SSH into Ops Manager](../trouble-advanced.html#ssh) section of the <em>Advanced Troubleshooting with the BOSH CLI</em> topic.
 1. On the Ops Manager VM, delete the `/var/tempest/workspaces/default/deployments/bosh-state.json` file:
@@ -83,14 +93,14 @@ the [(Optional) Step 11: Configure Ops Manager for New Resources](#config-new-re
 1. For each tile that requires one, upload the required stemcell.
 1. Do not click **Apply Changes**. Instead, perform the steps in the [Applying Changes to Ops Manager Director](../deploy-ops-man-director.html) topic to use the Ops Manager API to only deploy the Ops Manager Director.
 
-## <a id="artifacts-jumpbox"></a> Step 4: Transfer Artifacts to Jumpbox
+## <a id="artifacts-jumpbox"></a> Step 5: Transfer Artifacts to Jumpbox
 
 In the [Step 9: Back Up Your Deployment](./backup-pcf-bbr.html#bbr-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic, you moved the TAR and metadata files of the backup artifact off your jumpbox to your preferred storage space. Now you must transfer those files back to your jumpbox.
 
 For instance, you could SCP the backup artifact to your jumpbox:
   <pre class="terminal">$ scp LOCAL\_PATH\_TO\_BACKUP\_ARTIFACT JUMPBOX\_USER/JUMPBOX\_ADDRESS</pre>
 
-## <a id="retrieve"></a> Step 5: Retrieve BOSH Director Address and Credentials
+## <a id="retrieve"></a> Step 6: Retrieve BOSH Director Address and Credentials
 
 You can retrieve the IP address of your BOSH Director and the credentials for logging in either from the Ops Manager Director tile or by using the Ops Manager API.
 
@@ -106,7 +116,7 @@ Perform the following steps to retrieve the IP address of your BOSH Director and
 
 <%= partial 'bosh_target_director_bbr_api' %>
 
-## <a id='restore-bosh'></a> Step 6: Restore the BOSH Director
+## <a id='restore-bosh'></a> Step 7: Restore the BOSH Director
 
 1. Navigate to the Ops Manager Installation Dashboard.
 1. Click the Ops Manager tile.
@@ -150,7 +160,7 @@ If the command fails, do the following:
 1. Ensure the source deployment is compatible with the target deployment.
 1. Ensure that the jumpbox can reach the BOSH Director.
 
-## <a id='identify-deployment'></a> Step 7: Identify Your Deployment
+## <a id='identify-deployment'></a> Step 8: Identify Your Deployment
 
 After logging in to your BOSH Director, run `bosh deployments` to identify the name of the BOSH deployment that contains PCF:
 
@@ -169,7 +179,7 @@ cf-example               push-apps-manager-release/661.1.24
 
 In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
 
-## <a id="bosh-cck"></a> Step 8: Remove Stale Cloud IDs for All Deployments
+## <a id="bosh-cck"></a> Step 9: Remove Stale Cloud IDs for All Deployments
 
 For every deployment in the BOSH Director, run the following command:
 
@@ -186,7 +196,7 @@ If the <code>bosh cck</code> command does not successfully delete disk reference
 Scanning 19 persistent disks: 19 OK, 0 missing ...
 </pre>
 
-## <a id='redeploy-ert'></a> Step 9: Redeploy Elastic Runtime
+## <a id='redeploy-ert'></a> Step 10: Redeploy Elastic Runtime
 
 1. Perform the following steps to determine which stemcell is used by Elastic Runtime:
   1. Navigate to the Ops Manager Installation Dashboard.
@@ -220,7 +230,7 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
   <p class="note warning"><strong>Note</strong>: Restore will fail if there is not exactly one MySQL Server instance deployed.</p>
 1. Return to the Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
 
-## <a id='restore-ert'></a> Step 10: Restore Elastic Runtime
+## <a id='restore-ert'></a> Step 11: Restore Elastic Runtime
 
 1. Run the BBR restore command from your jumpbox to restore Elastic Runtime:
 <pre class="terminal">
@@ -283,18 +293,6 @@ $ BOSH\_CLIENT\_SECRET=BOSH_PASSWORD \
 1. If desired, scale the MySQL Server job back up to its previous number of instances by navigating to the **Resource Config** section of the Elastic Runtime tile. After scaling the job, return to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy.
 
 1. Validate your restored PCF by performing the steps in the [Step 11: (Optional) Validate Your Backup](backup-pcf-bbr.html#validate-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em>.
-
-## <a id="config-new-resources"></a> (Optional) Step 11: Configure Ops Manager for New Resources
-
-If you recreated your IaaS resources by following the steps in the [(Optional) Step 1: Prepare Your Environment](#prepare-env) section above, perform the following steps to update Ops Manager with your new resources:
-
-1. Navigate to the Ops Manager Installation Dashboard and click the Ops Manager Director tile.
-1. Click **Create Networks** and update the network names to reflect the network names for the new environment.
-1. Return to the Ops Manager Installation Dashboard and click the Elastic Runtime tile.
-1. Click **Resource Config**. If necessary for your IaaS, enter the name of your new load balancer in the **Load Balancer** column. 
-1. If necessary, click **Networking** and update the load balancer SSL certificate and private key under **Router SSL Termination Certificate and Private Key**.  
-1. If your environment has a new DNS address, update the old environment DNS entries to point to the new load balancer addresses. For more information, see the [Step 4: Configure Networking](../custom-load-balancer.html#configure-networking) section of the <em>Using Your Own Load Balancer</em> topic and follow the link to the instructions for your IaaS.
-1. If you are using Google Cloud Platform (GCP), navigate to the **Google Config** section of the Ops Manager Director tile and update the **Default Deployment Tag** to reflect the new environment.
 
 ##<a id='odb'></a> (Optional) Step 12: Restore On-Demand Service Instances
 

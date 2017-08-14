@@ -1,0 +1,123 @@
+---
+title: Troubleshooting BBR
+owner: RelEng
+---
+
+<strong><%= modified_date %></strong>
+
+<% $this_topic = 'troubleshoot-bbr' %>
+
+
+## <a id="troubleshooting-backup"></a> Troubleshooting during backup
+
+### BBR expects a backup script that isn't there
+
+The Elastic Runtime backup fails with the following error:
+
+<pre class="terminal">
+The mysql restore script expects a backup script
+which produces mysql-artifact artifact which
+is not present in the deployment.
+</pre>
+
+#### Explanation
+
+The ERT BBR backup for the ERT 1.11 MySQL needs the backup-preparer node to be enabled.
+
+#### Solution
+
+Follow the procedures in [Step 2: Enable Backup Prepare Node](backup-pcf-bbr.html#backup-prepare-node) and re-run the BBR backup command.
+
+---
+
+## <a id="troubleshooting-restore"></a> Troubleshooting during restore
+
+### Restore fails with MySQL monit start timeout
+
+While running the BBR restore command, restoring the job `mysql-restore` fails with:
+
+<pre class="terminal">
+1 error occurred:
+
+* restore script for job mysql-restore failed on mysql/0.
+...
+Monit start failed: Timed out waiting for monit: 2m0s
+</pre>
+
+#### Explanation
+
+This happens when `mariadb` fails to start within the timeout period. It will end up in an "Execution Failed" state and `monit` will never try to start it again.
+
+#### Solution
+
+To validate that `mariadb` is in an "Execution Failed" state, perform the following steps:
+
+  1. List the VMs in your deployment:
+    <pre class="terminal">$ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate \
+    -d DEPLOYMENT\_NAME \
+    ssh</pre>
+  1. Select the `mysql` VM to SSH into.
+  1. From the `mysql` VM, run the following command to check that the `mariadb` process is running:
+    <pre class="terminal">
+    $ ps aux | grep mariadb
+    </pre>
+  1. Run the following command to check that `monit` reports `mariadb_ctrl` is not running:
+    <pre class="terminal">$ sudo monit summary</pre>
+  1. After validating that `mariadb` is in an "Execution Failed" state, run the following command from the `mysql` VM to disable monitoring:
+    <pre class="terminal">$ monit unmonitor</pre>
+  1. Run the following command to enable monitoring:
+    <pre class="terminal">$ monit monitor</pre>
+  1. After a few minutes, run the following command:
+    <pre class="terminal">$ monit summary</pre>
+    The command should report that all the processes are running.
+  1. Re-attempt the restore with BBR.
+
+---
+
+### ERT mysql restore fails
+
+The Elastic Runtime restore fails with the following error:
+
+<pre class="terminal">
+Restore script for job mysql-restore failed on mysql/….
+</pre>
+#### Explanation
+
+MySQL cluster not scaled down to one node.
+
+#### Solution
+Scale down the MySQL cluster to one node.
+
+---
+
+### Deployment does not match structure of backup
+
+Error displayed on screen:
+
+<pre class="terminal">
+Deployment 'deployment-name' does not match the structure of the provided backup
+</pre>
+
+#### Explanation
+
+The instance groups with restore scripts in the destination environment don't match up with the backup metadata (e.g. there are the wrong number of instances of a particular instance group, or the metadata names an instance group that doesn’t exist in the destination environment).
+
+#### Solution
+
+BBR only supports restoring to an environment that matches your original environment. We suggest altering the destination environment to match the structure of the backup.
+
+---
+
+## <a id="troubleshooting-general"></a> Troubleshooting generally
+
+### Connection errors
+
+An error message containing "SSH Dial Error" or connection error is displayed on the screen.
+
+#### Explanation
+
+Connection problems between the jumpbox and VMs in the deployment.
+
+#### Solution
+
+Ensure deployment is healthy by running `bosh vms`. Run `bbr deployment backup-cleanup` command, as the failed backup will have left data on the instances and further backup commands will fail until that’s cleaned up. Then repeat the BBR operation.

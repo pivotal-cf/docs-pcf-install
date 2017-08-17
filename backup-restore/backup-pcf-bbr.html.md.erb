@@ -246,70 +246,8 @@ Perform the following steps to spin up a second environment that matches the ori
     * [Launching an Ops Manager Director Instance on GCP](../gcp-om-deploy.html)
     * [Provisioning the OpenStack Infrastructure](../openstack-setup.html)
     * [Deploying Operations Manager to vSphere](../deploying-vm.html)
-1. In a browser, navigate to the FQDN of your new Ops Manager. When redirected to the **Welcome to Ops Manager** page, select **Import Existing Installation**.
 
-    <%= image_tag("../images/upgrading/welcome.png") %>
-
-1. In the import panel, perform the following tasks:
-  * Enter your **Decryption Passphrase**.
-  * Click **Choose File** and browse to the installation zip file that you exported in the [Export Installation Settings](./backup-pcf.html#export) section of this topic.
-
-    <%= image_tag("../images/upgrading/decryption_passphrase.png") %>
-
-1. Click **Import**.
-
-    <p class="note"><strong>Note</strong>:
-      Some browsers do not provide feedback on the status of the import process,
-      and may appear to hang.</p>
-
-1. A "Successfully imported installation" message appears upon completion.
-
-    <%= image_tag("../images/upgrading/success.png") %>
-    <br>
-	Importing your installation ensures that your new PCF deployment has the same credentials and configuration as your original deployment.
-
-1. Click the **Ops Manager Director** tile.
-1. Click **Create Networks** and update the networks as appropriate.
-1. SSH into your Ops Manager VM. For more information, see the [SSH into Ops Manager](../trouble-advanced.html#ssh) section of the <em>Advanced Troubleshooting with the BOSH CLI</em> topic.
-1. On the Ops Manager VM, delete the `/var/tempest/workspaces/default/deployments/bosh-state.json` file:
-	<pre class="terminal">$ rm /var/tempest/workspaces/default/deployments/bosh-state.json</pre>
-1. Navigate to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy a new BOSH Director and a new Elastic Runtime.
-1. Run the BBR restore command from your Jumpbox to restore your Elastic Runtime deployment:
-<pre class="terminal">
-$ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
-	  bbr deployment \
-      --target BOSH\_DIRECTOR\_IP \
-      --username BOSH\_CLIENT \
-      --deployment DEPLOYMENT\_NAME \
-      --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
-      restore</pre>
-1. Check the status of your applications by performing the procedures in the [next section](#check-status).
-
-#### <a id='check-status'></a> Check Status of Applications
-
-After the restore is completed, perform the following steps to check the status of your applications:
-
-1. Target the Cloud Controller of your new deployment:
-	<pre class="terminal">$ cf api api.YOUR-SYSTEM-DOMAIN</pre>
-1. Log in:
-	<pre class="terminal">$ cf login</pre>
-1. Verify that your restored PCF has the same orgs, spaces, apps, routes and services as your original deployment:
-	* To see the list of orgs, run `cf orgs`.
-	* Target each org in turn with `cf target -o YOUR-ORG`.
-	* To see the list of spaces for your targeted org, run `cf spaces`.
-	* Target each space in turn with `cf target -s YOUR-SPACE`.
-	* To see the list of routes and their domains for your targeted space, run `cf routes`.
-	* To see the list of apps for your targeted space, run `cf apps`. Check that the apps which should be running can start successfully.
-	* Ensure that your apps are still bound to the expected services with `cf services`. Backing up PCF with BBR doesn't back up service data.
-	<br><br>
-	Under normal circumstances, the existing domain will not be pointed to your restored PCF deployment. Therefore, if you want to make HTTP requests to the restored applications, you must use the IP address of the restored Router. However, the restored PCF deployment remains linked to the original domain. As a result, you must set the original domain in the `Host` header in order to route HTTP requests to the restored applications.
-	<br><br>
-	You can use `curl` to set the original domain in the header. In the following example command, the Router IP address is `10.0.1.16` and the app domain is `cf-original-app.com`:
-
-		<pre class="terminal">
-		$ curl -k -H"Host: cf-original-app.com" https://10.0.1.16
-		</pre>
-	The restored applications will have the same service bindings as the original. If your applications connect to an external data store, your restored applications will also connect, and perform whatever interactions your original applications would do.
+Once the second environment is deployed, follow the instructions documented in [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html).
 
 ## <a id='exit-codes-logging'></a>Exit Codes and Logging
 

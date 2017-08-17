@@ -220,13 +220,12 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
 
 ## <a id="firewall_rules"></a>Step 5: Create Firewall Rules for the Network
 
-TODO: Add note about modifying source ranges if a customer only wants to allow traffic within their private network. Also, confirm with Kris that if no source is specificed, it's 0.0.0.0/0. 
-
 GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-resources#tags) to virtual machine (VM) instances and create firewall rules that apply to VMs based on their tags. This step assigns tags and firewall rules to Ops Manager components and VMs that handle incoming traffic. 
 
 1. In the **Networking** pane, select **Firewall rules**. 
 
 1. Create firewall rules according to the table below: 
+  <p class="note"><strong>Note</strong>: If you want your firewalls rules to only allow traffic within your private network, modify the <b>Source IP Ranges</b> from the table accordingly.</p>
   <table>
   <tr><th colspan="2" style="text-align: center;">Firewall Rules</th></tr>
    <tr>
@@ -311,8 +310,6 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
 
 ### Create Database Instance  
 
-TODO: Find out about depends on
-
 1. From the GCP Console, select **SQL** and click **CREATE INSTANCE**. 
 1. Ensure **MySQL** is selected and click **Next**. 
 1. Click **Choose Second Generation**. 
@@ -369,9 +366,7 @@ TODO: Find out about depends on
   * `silk`
   * `uaa`
 1. Select the **Access Control** tab. 
-1. Use the **Create user account** button to create a unique username and password for each database you created above. You must create a total of 13 user accounts. 
-
-TODO: Find out about **Host Name**. Allow any or restrict? 
+1. Use the **Create user account** button to create a unique username and password for each database you created above. For **Host name**, select **Allow any host**. You must create a total of 13 user accounts. 
 
 ## <a id="dbs"></a>Step 8: Create Storage Buckets ##
 
@@ -383,7 +378,7 @@ TODO: Find out about **Host Name**. Allow any or restrict?
   * `MY-PCF-resources`
 
     
-## <a id="http_loadbalancers"></a>Step 7: Create HTTP Load Balancer ##
+## <a id="http_loadbalancers"></a>Step 9: Create HTTP Load Balancer ##
 
 ### Create Instance Group
 
@@ -391,18 +386,29 @@ TODO: Find out about **Host Name**. Allow any or restrict?
 1. Click **CREATE INSTANCE GROUP**.
 1. Complete the form as follows: 
   * For **Name**, enter `MY-PCF-http-lb`
-  * For **Location**, select **Multi-zone**. 
-  * For **Region**, select the region you specified when creating networks.
-  * For **Number of instances**, select `3`.
-
-1. Navigate to **Compute Engine** > **Instance groups**. 
-1. Click **CREATE INSTANCE GROUP**.
-1. Complete the form as follows: 
-  * For **Name**, enter `MY-PCF-http-lb`
   * For **Location**, select **Single-zone**. 
-  * For **Zone**, select the first zone from your region. 
-  * For **Number of instances**, select `3`.
-
+  * For **Zone**, select the first zone from your region.<br>
+    Example: For region `us-west1`, select zone `us-west1-a`.
+  * Under **Group type**, select **Unmanaged instance group**. 
+  * For **Network**, select `MY-PCF-virt-net`. 
+  * For **Subnetwork**, select the `MY-PCF-subnet-ert-MY-GCP-REGION` subnet that you created previously.  
+  * Click **Create**. 
+1. Create a second instance group with the following details:
+  * **Name**: `MY-PCF-http-lb`
+  * **Location**: **Single-zone**
+  * **Zone**: Select the second zone from your region.<br>
+    Example: For region `us-west1`, select zone `us-west1-b`.
+  * **Group type**: Select **Unmanaged instance group**. 
+  * **Network**: Select `MY-PCF-virt-net`. 
+  * **Subnetwork**: Select the `MY-PCF-subnet-ert-MY-GCP-REGION` subnet that you created previously.  
+1. Create a third instance group with the following details:
+  * **Name**: `MY-PCF-http-lb`
+  * **Location**: **Single-zone**
+  * **Zone**: Select the third zone from your region.<br>
+    Example: For region `us-west1`, select zone `us-west1-c`.
+  * **Group type**: Select **Unmanaged instance group**. 
+  * **Network**: Select `MY-PCF-virt-net`. 
+  * **Subnetwork**: Select the `MY-PCF-subnet-ert-MY-GCP-REGION` subnet that you created previously.  
 
 ### Create Health Check
 
@@ -423,6 +429,7 @@ TODO: Find out about **Host Name**. Allow any or restrict?
 1. Navigate to **Network Services** > **Load Balancing**. 
 1. Click **CREATE LOAD BALANCER**. 
 1. Under **HTTP(S) Load Balancing**, click the **Start configuration** button.
+1. For the **Name**, enter `MY-PCF-global-pcf`. 
   1. Select **Backend configuration**
     1. From the dropdown, select **Backend services** > **Create a backend service**. 
     1. Complete the form as follows:
@@ -433,7 +440,7 @@ TODO: Find out about **Host Name**. Allow any or restrict?
       * Under **Backends** > **New backend**, select the **Instance group** that corresponds to the first zone of the multi-zone instance group you created. For example: `MY-PCF-http-lb-us-west1-a`.
       * Click **Add backend**, select the **Instance group** that corresponds to the second zone of the multi-zone instance group you created. For example: `MY-PCF-http-lb-us-west1-b`.
       * Click **Add backend**, select the **Instance group** that corresponds to the third zone of the multi-zone instance group you created. For example: `MY-PCF-http-lb-us-west1-c`.
-      * **Cloud CDN**: Select the checkbox to **Enable Cloud CDN**. 
+      * **Cloud CDN**: Ensure Cloud CDN is disabled. 
       * **Health check**: Select the `MY-PCF-cf-public` health check that you created.  
    1. Click **Create**. 
 
@@ -444,28 +451,24 @@ TODO: Find out about **Host Name**. Allow any or restrict?
 1. Select **Frontend configuration**, and add the following:
    * **Name**: `MY-PCF-cf-lb-http`
    * **Protocol**: `HTTP`
-   * **IP address**: `google_compute_global_address.pcf.address`
+   * **IP**: Perform the following steps:
+       1. Select **Create IP address**. 
+       1. Enter a **Name** for the new static IP address and an optional description. For example, `MY-PCF-global-pcf`.
+       1. Click **Reserve**.
    * **Port**: `80`
-   * **Target**: `{google_compute_target_http_proxy.http_lb_proxy.self_link}`
+
+1. If you are using a trusted SSL certificate or already have a self-signed certificate, proceed to step 5. 
+
+1. If you want to use a self-signed certificate generated during [Elastic Runtime network configuration](gcp-er-config.html#networking), skip over the next step of adding the HTTPS frontend configuration until after you generate the certificate in Elastic Runtime. After you generate the certificate, return to step 5 using the following guidelines: 
+   * Copy and paste the generated contents of the **Router SSL Termination Certificate and Private Key** fields from Elastic Runtime into the public certificate and private key fields. 
+   * Since you are using a self-signed certificate, do not enter a value in the **Certificate Chain** field. 
 
 1. Click **Add Frontend IP and port** and add the following:
   * **Name**: `MY-PCF-cf-lb-https`
   * **Protocol**: `HTTPS`
-  * **IP address**: `google_compute_global_address.pcf.address`
+  * **IP address**: Select the `MY-PCF-global-pcf` address you create for the previous **Frontend IP and Port**.
   * **Port**: `443`
-  * **Target**: `google_compute_target_https_proxy.https_lb_proxy.self_link`
-
-1. If you are using a trusted SSL certificate or already have a self-signed certificate, proceed to step 6. 
-
-1. If you want to use a self-signed certificate generated during [Elastic Runtime network configuration](gcp-er-config.html#networking), skip over the next step of adding the HTTPS frontend configuration until after you generate the certificate in Elastic Runtime. After you generate the certificate, return to step 6 using the following guidelines: 
-   * Copy and paste the generated contents of the **Router SSL Termination Certificate and Private Key** fields from Elastic Runtime into the public certificate and private key fields. 
-   * Since you are using a self-signed certificate, do not enter a value in the **Certificate Chain** field. 
-
-1. Click **Add frontend IP and port**, and add the following:
-   * **Protocol**: `HTTPS`
-   * **IP**: Select the static IP address you just created for the previous rule.
-   * **Port**: Leave `443` selected.
-   * **Certificate**: Select **Create a new certificate**. In the next dialog, perform the following steps:
+  * **Certificate**: Select **Create a new certificate**. In the next dialog, perform the following steps:
      * In the **Name** field, enter a name for the certificate.
      <%= image_tag "gcp/lb_frontend_cert.png" %>
      * In the **Public key certificate** field, copy in the contents of your public certificate, or upload your certificate as a .pem file.
@@ -479,177 +482,7 @@ TODO: Find out about **Host Name**. Allow any or restrict?
 
 1. Click **Create**.
 
-
-### Create Google Compute URL Map
-
-```
-resource "google_compute_url_map" "https_lb_url_map" {
-  name            = "${var.prefix}-global-pcf"
-  default_service = "${google_compute_backend_service.ert_http_lb_backend_service.self_link}"
-}
-```
-
-### Create Google Compute target http proxy
-
-```
-resource "google_compute_target_http_proxy" "http_lb_proxy" {
-  name        = "${var.prefix}-http-proxy"
-  description = "Load balancing front end http"
-  url_map     = "${google_compute_url_map.https_lb_url_map.self_link}"
-}
-```
-
-### Create Google Compute target https proxy
-
-```
-resource "google_compute_target_https_proxy" "https_lb_proxy" {
-  name             = "${var.prefix}-https-proxy"
-  description      = "Load balancing front end https"
-  url_map          = "${google_compute_url_map.https_lb_url_map.self_link}"
-  ssl_certificates = ["${google_compute_ssl_certificate.ssl-cert.self_link}"]
-}
-```
-
-### Create Google Compute ssl cert
-
-```
-resource "google_compute_ssl_certificate" "ssl-cert" {
-  name        = "${var.prefix}-lb-cert"
-  description = "user provided ssl private key / ssl certificate pair"
-  certificate = "${var.pcf_ert_ssl_cert}"
-  private_key = "${var.pcf_ert_ssl_key}"
-}
-```
-
-## <a id="create_loadbalancers"></a>(Old) Step 6: Create Load Balancers in GCP ##
-
-You need at least three and as many as four load balancers to operate PCF on GCP, as follows:
-
-  * [HTTP(S) Load Balancer](#http_https_lb): For HTTP(S) load balancing, using TCP port `80` and `8080`.
-  * [SSH Load Balancer](#ssh_lb): For SSH proxy jobs, using TCP port `2222`.
-  * [TCP WebSockets Load Balancer](#tcp_websockets_lb): For WebSockets log tailing, using TCP port `443`.
-  * [TCP Router](#tcprouter_lb): Optionally, for apps that use the TCP routing feature.
-
-The steps required to set up each load balancer are described below.
-
-### <a id='create-http-and-instance-group'></a>Create Instance Groups and the HTTP(S) Load Balancer ###
-
-To configure HTTP(S) load balancing for PCF on GCP you need to follow two steps:
-
-  1. Create one or more [**Instance Group\(s\)**](#instance_group) for load balancer configuration to the GCP **Backend service**. 
-  1. Create an [HTTP(S) Load Balancer](#http_https_lb).
-
-#### <a id="instance_group"></a> Create **Instance Group(s)** ####
-
-You need to create and associate one or more **Instance Group(s)** with the HTTP(S) load balancer you create.
-
-1. From the GCP Console, select **Compute Engine** and click **Instance groups**.
-  <%= image_tag("gcp/create_instance_group.png") %>
-
-1. Click **Create instance group**.
-
-1. In the **Create a new instance group** window, name the instance group in the **Name** field. If you are creating multiple instance groups, make sure each instance group name has a unique name. For example, you might create the following instance groups:
-  * `pcf-instance-group-lb-1a`
-  * `pcf-instance-group-lb-1b`
-  * `pcf-instance-group-lb-1c`
-  <p class="note"><strong>Note</strong>: You need one Google <strong>Instance Group</strong> for each Availability Zone you plan to support. All <strong>Instance Groups</strong> must connect to the Google <strong>Backend Service</strong> to configure your load balancer, described below. For a high availability production installation of PCF, Pivotal recommends using three availability zones.</p>
-
-1. For each individual instance group, choose **Single-zone** in the **Location** section.
-
-1. From the **Zone** drop-down menu, select a zone that matches the **Region** of the [network](#create_network) you created above. Pick a unique zone for each instance group that you create.  For example, if you created the network in the `us-central1` region, you could pick the following zones for your instance groups:
-   * `pcf-instance-group-lb-1a`:`us-central1-a` 
-   * `pcf-instance-group-lb-1b`:`us-central1-b` 
-   * `pcf-instance-group-lb-1c`:`us-central1-c`
-
-1. Under **Group type**, select **Unmanaged instance group.**
-
-1. Under **Network** and **Subnetwork**, select the network and subnet you created in the [Create a GCP Network with Subnet](#create_network) step above.
-  <%= image_tag("gcp/configure_new_instance_group.png") %>
-  <p class="note"><strong>Note</strong>: If <code>opsmgr</code> is your only network, the <b>Network</b> drop-down does not appear because the sole network is automatically selected.</p>
-
-1. Click **Create**.
-
-1. If you are creating multiple instance groups, repeat **substeps 2-7** of this procedure.
-
-#### <a id="http_https_lb"></a> Create the HTTP(S) Load Balancer ####
-
-To create a load balancer for HTTP(S) in GCP:
-
-1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
-
-1. Under **HTTP(S) Load Balancing**, click **Start configuration**.
-  <%= image_tag("gcp/http_lb_configure.png") %>
-
-1. In the **New HTTP(S) load balancer** window, enter `pcf-router` in the **Name** field.
-  <%= image_tag "gcp/http_lb_name.png" %>
-
-1. Click **Backend configuration** to configure the **Backend service**. 
-
-1. In the **Create or select a backend service** drop-down menu, choose **Create a backend service** to open the **Backend service** window.
-
-1. Fill in the name for your **Backend service** in the **Name** field. Leave **Protocol** set to **HTTP**.
-  <%= image_tag "gcp/backend_service_name.png" %>
-1. In the **Backends** section, from the **Instance Group** drop-down menu, choose one of the [Instance Group(s)](#instance_group) you created above, and select it.
-
-1. Add port `80` to the **Port numbers** field for PCF to make API calls.
-  <%= image_tag "gcp/backend_service_config.png" %>
-
-1. If you have created multiple instance groups to support a multiple availability zone PCF deployment, perform the following steps:
-   1. Click **Add backend**.
-   1. Select another instance group from the **Instance Group** drop-down menu. 
-   1. Specify port `80` again if necessary. 
-   1. Repeat until you have selected all the instance groups (three for three availability zones) that you created.
-
-1. From the **Health check** drop-down menu, click to **Create a Health Check** with the following field values:
-   * **Name**: Enter a name, for example `health-check`, or `pcf-public`.
-   * **Description**: 
-   * **Protocol**: `HTTP`
-   * **Port**: `8080`
-   * **Request path**: `/health`
-   * Use the default <strong>Health criteria</strong> field values:
-     * **Check interval**: `5` seconds
-     * **Timeout**: `5` seconds
-     * **Healthy threshold**: `2` consecutive successes
-     * **Unhealthy threshold**: `2` consecutive failures
-  <%= image_tag "gcp/health_check_defaults.png" %>
-   * Click **Save and continue**. 
-   The **Backend configuration** section shows a green check mark.
-
-1. Click **Host and path rules** to populate the default fields and a green check mark.
-
-1. Select **Frontend configuration**, and add the following:
-   * **Protocol**: `HTTP`
-   * **IP**: Perform the following steps:
-       1. Select **Create IP address**. 
-       1. Enter a **Name** for the new static IP address and an optional description. For example, `pcf-router-ip`.
-       1. Under **IP**, make sure this new static IP address is selected.
-       1. Click **Reserve**.
-   * **Port**: `80`
-1. If you are using a trusted SSL certificate or already have a self-signed certificate, proceed to step 15. 
-
-1. If you want to use a self-signed certificate generated during [Elastic Runtime network configuration](gcp-er-config.html#networking), skip over the next step of adding the HTTPS frontend configuration until after you generate the certificate in Elastic Runtime. After you generate the certificate, return to step 15 using the following guidelines: 
-   * Copy and paste the generated contents of the **Router SSL Termination Certificate and Private Key** fields from Elastic Runtime into the public certificate and private key fields. 
-   * Since you are using a self-signed certificate, do not enter a value in the **Certificate Chain** field. 
-
-1. Click **Add frontend IP and port**, and add the following:
-   * **Protocol**: `HTTPS`
-   * **IP**: Select the static IP address you just created for the previous rule.
-   * **Port**: Leave `443` selected.
-   * **Certificate**: Select **Create a new certificate**. In the next dialog, perform the following steps:
-     * In the **Name** field, enter a name for the certificate.
-     <%= image_tag "gcp/lb_frontend_cert.png" %>
-     * In the **Public key certificate** field, copy in the contents of your public certificate, or upload your certificate as a .pem file.
-     * In the **Certificate chain** field, enter or upload your certificate chain in the .pem format. If you are using a self-signed certificate, you do not need to populate this field.
-     * In the **Private key** field, copy in the contents or upload the .pem file of the private key for the certificate.
-1. Review the completed frontend configuration. 
-    <%= image_tag "gcp/lb_frontend_config.png" %>
-
-1. Click **Review and finalize** to verify your configuration.
-  <%= image_tag "gcp/http_lb_finalize.png" %>
-
-1. Click **Create**.
-
-### <a id="tcp_websockets_lb"></a> Create the TCP WebSockets Load Balancer
+## <a id="tcp_websockets_lb"></a> Step 10: Create TCP WebSockets Load Balancer
 
 The load balancer for tailing logs with WebSockets for PCF on GCP operates on TCP port `443`. 
 
@@ -663,19 +496,26 @@ The load balancer for tailing logs with WebSockets for PCF on GCP operates on TC
 1. Click **Continue**. 
   <%= image_tag("gcp/lb_connection_termination.png") %>
 
-1. In the **New TCP load balancer** window, enter `pcf-websockets` in the **Name** field.
+1. In the **New TCP load balancer** window, enter `MY-PCF-wss-logs` in the **Name** field.
 
 1. Click **Backend configuration** to configure the **Backend service**: 
   <%= image_tag "gcp/tcp_websockets_backend.png" %>
-  * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
-  * From the **Health check** drop-down menu, select the [**Health check**](#http_https_lb) that you created above.
+  * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnets](#create_network).
+  * From the **Health check** drop-down menu, create a health check with the following details:
+    * **Name**: `MY-PCF-gorouter`
+    * **Port**: `8080`
+    * **Request path**: `/health`
+    * **Check interval**: `30`
+    * **Timeout**: `5`
+    * **Healthy threshold**: `10`
+    * **Unhealthy threshold**: `2`
   The **Backend configuration** section shows a green check mark.
 
 1. Click **Frontend configuration** to open its configuration window and complete the fields:
  * **Protocol**: `TCP`
  * **IP**: Perform the following steps:
        1. Select **Create IP address**. 
-       1. Enter a **Name** for the new static IP address and an optional description. For example, `pcf-websockets-ip`.
+       1. Enter a **Name** for the new static IP address and an optional description. For example, `MY-PCF-gorouter-wss`.
        1. Click **Reserve**.
  * **Port**: `443` 
    <%= image_tag "gcp/tcp_websockets_frontend.png" %>
@@ -683,7 +523,7 @@ The load balancer for tailing logs with WebSockets for PCF on GCP operates on TC
   <%= image_tag "gcp/websockets_lb_finalize.png" %>
 1. Click **Create**.
 
-### <a id="ssh_lb"></a> Create the SSH Proxy Load Balancer
+## <a id="ssh_lb"></a> Step 11: Create SSH Proxy Load Balancer
 
 1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
 
@@ -697,7 +537,7 @@ The load balancer for tailing logs with WebSockets for PCF on GCP operates on TC
 
 1. Click **Continue**. 
 
-1. In the **New TCP load balancer** window, enter `pcf-ssh` in the **Name** field.
+1. In the **New TCP load balancer** window, enter `MY-PCF-ssh-proxy` in the **Name** field.
   <%= image_tag "gcp/ssl_backend_lb_configuration.png" %>
 
 1. Select **Backend configuration**, and enter the following field values:
@@ -709,14 +549,17 @@ The load balancer for tailing logs with WebSockets for PCF on GCP operates on TC
 
 1. Select **Frontend configuration**, and add the following:
    * **Protocol**: `TCP`
-   * **IP**: Select the IP address that you created in [Create the TCP WebSockets Load Balancer](#tcp_websockets_lb).
+   * **IP**: Perform the following steps:
+       1. Select **Create IP address**. 
+       1. Enter a **Name** for the new static IP address and an optional description. For example, `MY-PCF-ssh-proxy`.
+       1. Click **Reserve**.
    * **Port**: `2222`
 
 1. Optionally, review and finalize your load balancer. 
 
 1. Click **Create**.
 
-### <a id="tcprouter_lb"></a>(Optional) Create the Load Balancer for TCP Router
+## <a id="tcp_lb"></a> Step 12: Create Load Balancer for TCP Router 
 
 <p class="note"><strong>Note</strong>: This step is optional and only required if you enable TCP routing in your deployment.</p>
 
@@ -732,19 +575,26 @@ To create a load balancer for TCP routing in GCP, perform the following steps:
 
 	<%= image_tag("gcp/lb_connection_termination.png") %>
 
-1. On the **New TCP load balancer** screen, enter a unique name for the load balancer in the **Name** field. For example, `pcf-tcp-lb`.
+1. On the **New TCP load balancer** screen, enter a unique name for the load balancer in the **Name** field. For example, `MY-PCF-cf-tcp-lb`.
 
 1. Select **Backend configuration**, and enter the following field values:
    * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
-   * **Health check**: Select the health check for your TCP router. Create a new health check for the TCP router on port `80` in the **Health checks** pane if you do not already have one.
-        * Click **Save and continue**.
+   * From the **Health check** drop-down menu, create a health check with the following details:
+    * **Name**: `MY-PCF-gorouter`
+    * **Port**: `80`
+    * **Request path**: `/health`
+    * **Check interval**: `30`
+    * **Timeout**: `5`
+    * **Healthy threshold**: `10`
+    * **Unhealthy threshold**: `2`
+    * Click **Save and continue**.
  <%= image_tag("gcp/tcp_lb_backend.png") %>
 
 1. Select **Frontend configuration**, and add the frontend IP and port entry as follows:
    * **Protocol**: `TCP`
    * **IP**: Perform the following steps:
        1. Select **Create IP address**. 
-       1. Enter a **Name** for the new static IP address and an optional description. For example, `pcf-tcp-router-ip`.
+       1. Enter a **Name** for the new static IP address and an optional description. For example, `MY-PCF-cf-tcp-lb`.
        1. Click **Reserve**.
    * **Port**: `1024-65535`
 
@@ -753,6 +603,76 @@ To create a load balancer for TCP routing in GCP, perform the following steps:
 1. Click **Review and finalize** to verify your configuration.
 
 1. Click **Create**.
+
+## <a id='cname'></a> Step 13: Add DNS Records for Your Load Balancers ##
+
+In this step you redirect queries for your domain to the IP addresses of your load balancers.
+
+1. Locate the static IP addresses of the load balancers you created in [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html):
+    * An HTTP(S) load balancer named `MY-PCF-global-pcf`
+    * A TCP load balancer for WebSockets named `MY-PCF-wss-logs`
+    * A TCP load balancer named `MY-PCF-ssh-proxy`
+    * A TCP load balancer named `MY-PCF-cf-tcp-lb`
+    <p class="note"><strong>Note</strong>: You can locate the static IP address of each load balancer by clicking its name under <strong>Networks > Load balancing</strong> in the GCP Console.</p>
+
+1. Log in to the DNS registrar that hosts your domain. Examples of DNS registrars include Network Solutions, GoDaddy, and Register.com.
+
+1. Create **A records** with your DNS registrar that map domain names to the public static IP addresses of the load balancers located above:
+  <table border="1" valign="top">
+      <tr>
+      <th>Create and map this record...</th><th>To the IP of this load balancer</th><th>Required</th>
+      </tr>
+      <tr>
+        <td><code>\*.sys.MY-DOMAIN</code><br>
+        Example: <code>\*.sys.example.com</code></td>
+        <td><code>MY-PCF-global-pcf</code></td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td><code>\*.apps.MY-DOMAIN</code><br>
+        Example: <code>\*.apps.example.com</code></td>
+        <td><code>MY-PCF-global-pcf</code></td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td><code>doppler.sys.MY-DOMAIN</code>
+        <br>
+        Example: <code>doppler.sys.example.com</code></td>
+        <td><code>MY-PCF-wss-logs</code></td>
+        <td>Yes</td>
+      </tr>
+            <tr>
+        <td><code>loggregator.sys.MY-DOMAIN</code><br>
+        Example: <code>loggregator.sys.example.com</code></td>
+        <td><code>MY-PCF-wss-logs</code></td>
+        <td>Yes</td>
+      </tr>
+      <tr>
+        <td><code>ssh.sys.MY-DOMAIN</code>
+        <br>
+        Example: <code>ssh.sys.example.com</code></td>
+        <td><code>MY-PCF-ssh-proxy</code></td>
+        <td>Yes, to allow SSH access to apps</td>
+      </tr>
+      <tr>
+        <td><code>tcp.MY-DOMAIN</code>
+        <br>
+        Example: <code>tcp.example.com</code></td>
+        <td><code>MY-PCF-cf-tcp-lb</code></td>
+        <td>No, only set up if you have enabled the TCP routing feature</td>
+      </tr>
+    </table>
+
+1. Save changes within the web interface of your DNS registrar.
+
+1. In a terminal window, run the following `dig` command to confirm that you created your A record successfully:
+
+    <pre class='terminal'>dig xyz.EXAMPLE.COM</pre>
+
+    You should see the A record that you just created:
+    <pre class='terminal'>
+;; ANSWER SECTION:
+xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 
 ## <a id="next"></a> What to Do Next ###
 

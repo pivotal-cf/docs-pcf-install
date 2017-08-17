@@ -31,7 +31,7 @@ After you complete this procedure, follow the instructions in the [Configuring O
 1. Click **Create Image**.
 
 1. Complete the following fields:
-  * **Name**: Enter a name. For example, `om-pcf`.
+  * **Name**: Enter a name. For example, `opsman-pcf-gcp-1-12`.
   * **Encryption**: Leave **Automatic (recommended)** selected.
   * **Source**: Choose **Cloud Storage file**.
   * **Cloud Storage file**: Paste in the Google Cloud Storage filepath you copied from the PDF file in the [previous step](#select-tgz). 
@@ -47,9 +47,9 @@ After you complete this procedure, follow the instructions in the [Configuring O
 1. Click **Create Instance**. 
 
 1. In the **Create an instance form**, complete the following fields:
-  * **Name**: Enter a name, such as `om-pcf-1a`.
+  * **Name**: Enter a name, such as `MY-PCF-ops-manager`.
   * **Zone**: Choose a zone from the region in which you created your network. 
-  * **Machine type**: Choose a machine type from the dropdown list, or click **Customize** to manually configure the vCPU and memory.
+  * **Machine type**: Choose `n1-standard-2`. 
     <p class="note"><strong>Note</strong>: Ops Manager v1.11 requires a Director VM with at least 8&nbsp;GB memory.</p>
   * **Boot disk**: Click **Change**, then perform the following steps:
      * Click **Custom images** if it is not already selected. 
@@ -57,15 +57,13 @@ After you complete this procedure, follow the instructions in the [Configuring O
         <%= image_tag("gcp/boot_image.png") %>
      * Click **Select** to save.
   * Under **Identity and API access**, choose the **Service account** you created when preparing your environment during the step [Set up an IAM Service Account](./gcp-prepare-env.html#iam_account). 
-  * **Allow HTTP traffic**: Select this checkbox. 
-  * **Allow HTTPS traffic**: Select this checkbox. 
-      <%= image_tag("gcp/om_instance_1.png") %>
+  * **Allow HTTP traffic**: Deselect this checkbox. 
+  * **Allow HTTPS traffic**: Deselect this checkbox. 
   * **Networking**: Select the **Networking** tab, and perform the following steps:
      * For **Network** and **Subnetwork**, select the network and subnetwork you created when preparing your environment in the [Create a GCP Network with Subnet](./gcp-prepare-env.html#create_network) section of the _Preparing to Deploy PCF on GCP_ topic. 
-     * For **Network tags**, enter `pcf-opsmanager`. This tag applies the firewall rule you created in [Create Firewall Rules for the Network](gcp-prepare-env.html#firewall_rules) to the Ops Manager VM.
+     * For **Network tags**, enter `MY-PCF-opsman` and `allow-https`. These tags tag apply the firewall rules you created in [Create Firewall Rules for the Network](gcp-prepare-env.html#firewall_rules) to the Ops Manager VM.
      * For **Internal IP**, select `Custom`. Enter `10.0.0.4` an the **Internal IP address**. This internal IP address should be located within the reserved IP range that you will [configure in Ops Manager Director](./gcp-om-config.html#network). Do not use `10.0.0.1`, which is configured for the Gateway.
      * For **External IP**, select **New static IP address...**. In the next form, enter a name for the static IP. For example, `om-public-ip`. Click **Reserve**. In the **External IP** drop-down, select the static IP address you just reserved.
-           <%= image_tag("gcp/instance_networking.png") %>
   * **SSH Keys**: Select the **SSH Keys** tab, and perform the following steps.
       * Generate an SSH key for the `ubuntu` user. Creating the `ubuntu` user allows you to directly access the Ops Manager VM using SSH. For example, on your local machine, open a terminal and type:      
          <pre class="terminal">$ ssh-keygen -t rsa -f ubuntu-key -C ubuntu@local</pre>
@@ -75,7 +73,7 @@ After you complete this procedure, follow the instructions in the [Configuring O
       <%= image_tag("gcp/om-ssh-keys.png") %>
 1. Click **Create** to deploy the new Ops Manager VM. This may take a few moments.
 
-1. Navigate to your DNS provider, and create an entry that points a fully qualified domain name (FQDN) to the `om-public-ip` static IP address of Ops Manager that you created in a previous step. 
+1. Navigate to your DNS provider, and create an entry that points a fully qualified domain name (FQDN) `opsman.MY-DOMAIN` to the `MY-PCF-opsman` static IP address of Ops Manager that you created in a previous step. 
 
    <p class="note"><b>Note</b>: In order to set up Ops Manager authentication correctly, Pivotal recommends using a Fully Qualified Domain Name (FQDN) to access Ops Manager. Using an ephemeral IP address to access Ops Manager can cause authentication errors upon subsequent access.</p>
 

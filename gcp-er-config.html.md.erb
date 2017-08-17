@@ -49,76 +49,7 @@ Before beginning this procedure, ensure that you have successfully completed the
 
 1. Click **Save**.
 
-## <a id='cname'></a> Step 4: Add DNS Records for Your Load Balancers ##
-
-In this step you redirect queries for your domain to the IP addresses of your load balancers.
-
-1. Locate the static IP addresses of the load balancers you created in [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html):
-    * An HTTP(S) load balancer named `pcf-router`
-    * A TCP load balancer for WebSockets named `pcf-websockets`
-    * A TCP load balancer named `pcf-ssh`
-    * A TCP load balancer for the TCP router if you plan on enabling the TCP routing feature
-    <p class="note"><strong>Note</strong>: You can locate the static IP address of each load balancer by clicking its name under <strong>Networks > Load balancing</strong> in the GCP Console.</p>
-
-1. Log in to the DNS registrar that hosts your domain. Examples of DNS registrars include Network Solutions, GoDaddy, and Register.com.
-
-1. Create **A records** with your DNS registrar that map domain names to the public static IP addresses of the load balancers located above:
-  <table border="1" valign="top">
-      <tr>
-        <th>If your DNS entry is:</th><th>Set to the public IP of this load balancer:</th><th>Required</th><th>Example</th>
-      </tr>
-      <tr>
-        <td>\*.YOURSYSTEMDOMAIN</td>
-        <td><code>pcf-router</code></td>
-        <td>Yes</td>
-        <td>\*.system.example.com</td>
-      </tr>
-      <tr>
-        <td>\*.YOURAPPSDOMAIN</td>
-        <td><code>pcf-router</code></td>
-        <td>Yes</td>
-        <td>\*.apps.example.com</td>
-      </tr>
-      <tr>
-        <td>doppler.YOURSYSTEMDOMAIN</td>
-        <td><code>pcf-websockets</code></td>
-        <td>Yes</td>
-        <td>doppler.system.example.com</td>
-      </tr>
-            <tr>
-        <td>loggregator.YOURSYSTEMDOMAIN</td>
-        <td><code>pcf-websockets</code></td>
-        <td>Yes</td>
-        <td>loggregator.system.example.com</td>
-      </tr>
-      <tr>
-        <td>ssh.YOURSYSTEMDOMAIN</td>
-        <td><code>pcf-ssh</code></td>
-        <td>Yes, to allow SSH access to apps</td>
-        <td>ssh.system.example.com</td>
-      </tr>
-      <tr>
-        <td>tcp.YOURDOMAIN</td>
-        <td>IP address of the TCP load balancer for TCP routing</td>
-        <td>No, only set up if you have enabled the TCP routing feature</td>
-        <td>tcp.example.com</td>
-      </tr>
-    </table>
-
-1. Save changes within the web interface of your DNS registrar.
-
-1. In a terminal window, run the following `dig` command to confirm that you created your A record successfully:
-
-    <pre class='terminal'>dig xyz.EXAMPLE.COM</pre>
-
-    You should see the A record that you just created:
-    <pre class='terminal'>
-;; ANSWER SECTION:
-xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
-
-<p class='note'><strong>Note</strong>: You <strong>must</strong> complete this step before proceeding to Cloud Controller configuration. A difficult-to-resolve problem can occur if the wildcard domain is improperly cached before the A record is registered. </p>
-
-## <a id='er-domain-config'></a> Step 5: Configure Domains ##
+## <a id='er-domain-config'></a> Step 4: Configure Domains ##
 
 1. Select **Domains**.
 
@@ -133,31 +64,31 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 
 1. Click **Save**.
 
-## <a id='networking'></a> Step 6: Configure Networking ##
+## <a id='networking'></a> Step 5: Configure Networking ##
 
 <%= partial 'networking-gcp' %>
 
-## <a id='application-containers-config'></a>Step 7: Configure Application Containers ##
+## <a id='application-containers-config'></a>Step 6: Configure Application Containers ##
 
 <%= partial 'application_container_config' %>
 
-## <a id='er-appdevctrl-config'></a>Step 8: Configure Application Developer Controls ##
+## <a id='er-appdevctrl-config'></a>Step 7: Configure Application Developer Controls ##
 
 <%= partial 'application_developer_controls' %>
 
-## <a id='app-security'></a> Step 9: Review Application Security Groups ##
+## <a id='app-security'></a> Step 8: Review Application Security Groups ##
 
 <%= partial 'application_security_group' %>
 
-## <a id='uaa'></a>Step 10: Configure UAA ##
+## <a id='uaa'></a>Step 9: Configure UAA ##
 
 <%= partial 'uaa' %>
 
-## <a id='er-auth-config'></a> Step 11: Configure Authentication and Enterprise SSO ##
+## <a id='er-auth-config'></a> Step 10: Configure Authentication and Enterprise SSO ##
 
 <%= partial 'authsso_config' %>
 
-## <a id='sys-db'></a>Step 12: Configure System Databases ##
+## <a id='sys-db'></a>Step 11: Configure System Databases ##
 
 You can configure Elastic Runtime to use the internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by Elastic Runtime.
 
@@ -173,11 +104,11 @@ Then proceed to [Step 13: (Optional) Configure Internal MySQL](#internal-mysql) 
 
 <%= partial 'ert_database_external' %>
 
-## <a id='internal-mysql'></a> Step 13: (Optional) Configure Internal MySQL ##
+## <a id='internal-mysql'></a> Step 12: (Optional) Configure Internal MySQL ##
 
 <%= partial 'mysql_proxy_config_gcp' %>
 
-## <a id='filestore'></a>Step 14: Configure File Storage ##
+## <a id='filestore'></a>Step 13: Configure File Storage ##
 
 <%= partial 'filestore_config' %>
 
@@ -200,7 +131,7 @@ For additional factors to consider when selecting file storage, see the <a href=
 are also available as file storage options, but Pivotal does not recommend these 
 for a typical PCF on GCP installation. 
 
-## <a id='sys-logging'></a>Step 15: (Optional) Configure System Logging ##
+## <a id='sys-logging'></a>Step 14: (Optional) Configure System Logging ##
 
 If you forward logging messages to an external Reliable Event Logging Protocol (RELP) server, complete the following steps:
 
@@ -217,11 +148,11 @@ If you forward logging messages to an external Reliable Event Logging Protocol (
 1. If you want to include security events in your log stream, select the **Enable Cloud Controller security event logging** checkbox. This logs all API requests, including the endpoint, user, source IP address, and request result, in the Common Event Format (CEF).
 1. Click **Save**.
 
-## <a id='customize-apps-man'></a>Step 16: (Optional) Customize Apps Manager##
+## <a id='customize-apps-man'></a>Step 15: (Optional) Customize Apps Manager##
 
 <%= partial 'custombranding' %>
 
-## <a id='smtp'></a>Step 17: (Optional) Configure Email Notifications ##
+## <a id='smtp'></a>Step 16: (Optional) Configure Email Notifications ##
 
 Elastic Runtime uses SMTP to send invitations and confirmations to Apps Manager
 users.
@@ -242,27 +173,27 @@ end-user self-registration.
 settings using this form, the administrator must create orgs and users using
 the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating and Managing Users with the cf CLI</a> for more information.</p>
 
-## <a id='config-cc'></a>Step 18: Configure Cloud Controller##
+## <a id='config-cc'></a>Step 17: Configure Cloud Controller##
 
 <%= partial 'cloud-controller' %>
 
-## <a id='config-smoke-test'></a>Step 19: Configure Smoke Tests##
+## <a id='config-smoke-test'></a>Step 18: Configure Smoke Tests##
 
 <%= partial 'smoketests' %>
 
-## <a id='advanced-features'></a>Step 20: (Optional) Enable Advanced Features ##
+## <a id='advanced-features'></a>Step 19: (Optional) Enable Advanced Features ##
 
 <%= partial 'advanced-features' %>
 
-## <a id='consul-cc'></a>Step 21: Disable Consul Locks
+## <a id='consul-cc'></a>Step 20: Disable Consul Locks
 
 <%= partial 'consul-locks' %>
 
-## <a id='errands'></a>Step 22: Configure Errands ##
+## <a id='errands'></a>Step 21: Configure Errands ##
 
 <%= partial 'errands' %>
 
-## <a id='config-lb'></a>Step 23: Configure Load Balancers ##
+## <a id='config-lb'></a>Step 22: Configure Load Balancers ##
 
 1. Navigate to the GCP Console and click **Load balancing**.
 
@@ -294,11 +225,11 @@ the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating a
 
 1. Click **Save**.
 
-## <a id='disable-resources'></a>Step 24: (Optional) Scale Down and Disable Resources ##
+## <a id='disable-resources'></a>Step 23: (Optional) Scale Down and Disable Resources ##
 
 <%= partial 'disable_resources' %>
 
-## <a id='stemcell'></a>Step 25: Verify and Download Stemcell Version##
+## <a id='stemcell'></a>Step 24: Verify and Download Stemcell Version##
 
 Verify whether Ops Manager is providing the stemcell version required by Elastic Runtime. If the correct version is already present, you do not need to download a new stemcell.
 
@@ -318,7 +249,7 @@ Verify whether Ops Manager is providing the stemcell version required by Elastic
 
   1. In the **Stemcell** section of the Elastic Runtime tile, click **Import Stemcell** to import the downloaded stemcell <code>.tgz</code> file.
 
-## <a id='complete'></a>Step 26: Complete the Elastic Runtime Installation ##
+## <a id='complete'></a>Step 25: Complete the Elastic Runtime Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.

@@ -157,6 +157,8 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
     1. Click the pencil icon to edit the **Network interface**. 
     1. For **Network**, select `MY-PCF-virt-net`. You created this network in [Step 1: Create a GCP Network with Subnets](#create-net).
     1. For **Subnetwork**, select `MY-PCF-subnet-infrastructure-MY-GCP-REGION`.
+    1. For **Internal IP**, select `Custom`. Enter an IP address (for example, `192.168.101.2`) in the **Internal IP address** field. Specify an internal IP address located within the reserved IP range that you will [configure in Ops Manager Director](./gcp-om-config.html#network). Do not use `192.168.101.1`, which is configured for the **Gateway** property.
+    1. For **External IP**, select `Ephemeral`. 
     1. Set **IP forwarding** to `On`. 
     1. Click **Done**.
 
@@ -169,7 +171,8 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
       <td>
         <b>Name</b>: <code>MY-PCF-nat-gateway-sec</code>.<br>
         <b>Zone</b>: Select the second zone from your region.<br>
-        Example: For region <code>us-west1</code>, select zone <code>us-west1-b</code>.
+        Example: For region <code>us-west1</code>, select zone <code>us-west1-b</code>.<br>
+        <b>Internal IP</b>: Select <code>Custom</code> and enter an IP address (for example, <code>192.168.101.3</code>) in the <b>Internal IP address</b> field. Specify an internal IP address located within the reserved IP range that you will [configure in Ops Manager Director](./gcp-om-config.html#network). Do not use <code>192.168.101.1</code>, which is configured for the <b>Gateway</b> property.
       </td>
     </tr>
     <tr>
@@ -178,6 +181,8 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
         <b>Name</b>: <code>MY-PCF-nat-gateway-ter</code>.<br>
         <b>Zone</b>: Select the third zone from your region.<br>
         Example: For region <code>us-west1</code>, select zone <code>us-west1-c</code>.
+        <br>
+        <b>Internal IP</b>: Select <code>Custom</code> and enter an IP address (for example, <code>192.168.101.4</code>) in the <b>Internal IP address</b> field. Specify an internal IP address located within the reserved IP range that you will [configure in Ops Manager Director](./gcp-om-config.html#network). Do not use <code>192.168.101.1</code>, which is configured for the <b>Gateway</b> property.
       </td>
     </tr>
     </table>
@@ -318,34 +323,8 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
   * **Region**: Select the region you specified when creating networks.
   * **Zone**: `Any`. 
   * **Configure machine type and storage**: Which machine? Memory, storage capacity?
-  * **Authorize Networks**: Add the following networks:
-    <table>
-    <tr>
-    <th>Name</th>
-    <th>Network</th>
-    </tr>
-    <tr>
-    <td>nat-1</td>
-    <td>The CIDR of your <code>MY-PCF-subnet-infrastructure-MY-GCP-REGION</code> subnet</td>
-    </tr>
-    <tr>
-    <td>nat-2</td>
-    <td>The CIDR of your <code>MY-PCF-subnet-ert-MY-GCP-REGION</code> subnet</td>
-    </tr>
-    <tr>
-    <td>nat-3</td>
-    <td>The CIDR of your <code>MY-PCF-subnet-services-MY-GCP-REGION</code> subnet</td>
-    </tr>
-    <tr>
-    <td>opsman</td>
-    <td>The CIDR of your <code>MY-PCF-subnet-services-MY-GCP-REGION</code> subnet</td>
-    </tr>
-    <tr>
-    <td>all</td>
-    <td><code>0.0.0.0/0</code></td>
-    </tr>
-    </table>
-  1. Click **Create**. 
+  * **Authorize Networks**: Add a rule named `all` that allows traffic from `0.0.0.0/0`. 
+1. Click **Create**. 
 
 ### Create Databases
 
@@ -430,19 +409,19 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
 1. Click **CREATE LOAD BALANCER**. 
 1. Under **HTTP(S) Load Balancing**, click the **Start configuration** button.
 1. For the **Name**, enter `MY-PCF-global-pcf`. 
-  1. Select **Backend configuration**
-    1. From the dropdown, select **Backend services** > **Create a backend service**. 
-    1. Complete the form as follows:
-      * **Name**: `MY-PCF-http-lb-backend`. 
-      * **Protocol**: `HTTP`.
-      * **Named port**: `http`.
-      * **Timeout**: `10 seconds`.  
-      * Under **Backends** > **New backend**, select the **Instance group** that corresponds to the first zone of the multi-zone instance group you created. For example: `MY-PCF-http-lb-us-west1-a`.
-      * Click **Add backend**, select the **Instance group** that corresponds to the second zone of the multi-zone instance group you created. For example: `MY-PCF-http-lb-us-west1-b`.
-      * Click **Add backend**, select the **Instance group** that corresponds to the third zone of the multi-zone instance group you created. For example: `MY-PCF-http-lb-us-west1-c`.
-      * **Cloud CDN**: Ensure Cloud CDN is disabled. 
-      * **Health check**: Select the `MY-PCF-cf-public` health check that you created.  
-   1. Click **Create**. 
+1. Select **Backend configuration**
+  1. From the dropdown, select **Backend services** > **Create a backend service**. 
+  1. Complete the form as follows:
+    * **Name**: `MY-PCF-http-lb-backend`. 
+    * **Protocol**: `HTTP`.
+    * **Named port**: `http`.
+    * **Timeout**: `10 seconds`.  
+    * Under **Backends** > **New backend**, select the **Instance group** that corresponds to the first zone of the multi-zone instance group you created. For example: `MY-PCF-http-lb-us-west1-a`.
+    * Click **Add backend**, select the **Instance group** that corresponds to the second zone of the multi-zone instance group you created. For example: `MY-PCF-http-lb-us-west1-b`.
+    * Click **Add backend**, select the **Instance group** that corresponds to the third zone of the multi-zone instance group you created. For example: `MY-PCF-http-lb-us-west1-c`.
+    * **Cloud CDN**: Ensure Cloud CDN is disabled. 
+    * **Health check**: Select the `MY-PCF-cf-public` health check that you created.  
+ 1. Click **Create**. 
 
 ### Configure Frontend
 
@@ -502,13 +481,13 @@ The load balancer for tailing logs with WebSockets for PCF on GCP operates on TC
   <%= image_tag "gcp/tcp_websockets_backend.png" %>
   * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnets](#create_network).
   * From the **Health check** drop-down menu, create a health check with the following details:
-    * **Name**: `MY-PCF-gorouter`
-    * **Port**: `8080`
-    * **Request path**: `/health`
-    * **Check interval**: `30`
-    * **Timeout**: `5`
-    * **Healthy threshold**: `10`
-    * **Unhealthy threshold**: `2`
+      * **Name**: `MY-PCF-gorouter`
+      * **Port**: `8080`
+      * **Request path**: `/health`
+      * **Check interval**: `30`
+      * **Timeout**: `5`
+      * **Healthy threshold**: `10`
+      * **Unhealthy threshold**: `2`
   The **Backend configuration** section shows a green check mark.
 
 1. Click **Frontend configuration** to open its configuration window and complete the fields:
@@ -580,14 +559,14 @@ To create a load balancer for TCP routing in GCP, perform the following steps:
 1. Select **Backend configuration**, and enter the following field values:
    * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
    * From the **Health check** drop-down menu, create a health check with the following details:
-    * **Name**: `MY-PCF-gorouter`
-    * **Port**: `80`
-    * **Request path**: `/health`
-    * **Check interval**: `30`
-    * **Timeout**: `5`
-    * **Healthy threshold**: `10`
-    * **Unhealthy threshold**: `2`
-    * Click **Save and continue**.
+      * **Name**: `MY-PCF-gorouter`
+      * **Port**: `80`
+      * **Request path**: `/health`
+      * **Check interval**: `30`
+      * **Timeout**: `5`
+      * **Healthy threshold**: `10`
+      * **Unhealthy threshold**: `2`
+      * Click **Save and continue**.
  <%= image_tag("gcp/tcp_lb_backend.png") %>
 
 1. Select **Frontend configuration**, and add the frontend IP and port entry as follows:

@@ -63,10 +63,6 @@ Before using BBR, follow the instructions in the [Setting up your system for BBR
 
 ### <a id='encrypt-key'></a>Step 1: Record the Cloud Controller Database Encryption Credentials
 
-You can retrieve the Cloud Controller Database encryption credentials either from the Elastic Runtime tile or by using the Ops Manager API.
-
-#### <a id='ert-ccdb-creds'></a>Retrieve the Credentials from Elastic Runtime
-
 Perform the following steps to retrieve the Cloud Controller Database encryption credentials from the Elastic Runtime tile:
 
 1. Navigate to Ops Manager in a browser and log in to the Ops Manager Installation Dashboard.
@@ -77,38 +73,12 @@ restoring your installation.
 
 	<%= image_tag("ccdb-encrypt-creds.png") %>
 
-#### <a id='api-ccdb-creds'></a>Retrieve the Credentials with the Ops Manager API
 
-Perform the following steps to retrieve the Cloud Controller Database encryption credentials with the Ops Manager API:
-
-1. Perform the procedures in the [Using the Ops Manager API](../ops-man-api.html) topic to authenticate and access the Ops Manager API.
-1. Use the `GET /api/v0/deployed/products` endpoint to retrieve a list of deployed products, replacing `UAA-ACCESS-TOKEN` with the access token recorded in the [Using the Ops Manager API](../ops-man-api.html) topic:
-	<pre class="terminal">$ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products" \ 
-    -X GET \ 
-    -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
-1. In the response to the above request, locate the product with an `installation_name` starting with `cf-` and copy its `guid`.
-1. Run the following `curl` command, replacing `PRODUCT-GUID` with the value of `guid` from the previous step:
-	<pre class="terminal">
-	$ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products/:PRODUCT\_GUID/credentials/.cloud\_controller.db_encryption\_credentials" 
-	\ -X GET 
-	\ -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
-
-	
 ### <a id="retrieve"></a> Step 2: Retrieve BOSH Director Address and Credentials
-
-You can retrieve the IP address of your BOSH Director and the credentials for logging in either from the Ops Manager Director tile or by using the Ops Manager API.
-
-#### <a id='tile-bosh'></a>Retrieve the Information from Ops Manager Director
 
 Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in from the Ops Manager Director tile:
 
 <%= partial 'bosh_target_director_bbr' %>
-
-#### <a id='tile-bosh'></a>Retrieve the Information from the Ops Manager API
-
-Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in from the Ops Manager API:
-
-<%= partial 'bosh_target_director_bbr_api' %>
 
 
 ### <a id='backup-prepare-node'></a> Step 3: Enable Backup Prepare Node
@@ -167,7 +137,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
     You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
     * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 2: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 4: Identify Your Deployment](#identify-deployment) section.
-    * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain. If you are using the Ops Manager VM as your jumpbox, locate the certificate at `/var/tempest/workspaces/default/root_ca_certificate`. 
+    * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain. If you are using the Ops Manager VM as your jumpbox, locate the certificate at `/var/tempest/workspaces/default/root_ca_certificate`.
 
 1. If the pre-backup check succeeds, continue to the [next section](#bbr-backup). If it fails, the deployment you selected may not have the correct backup scripts, or the connection to the BOSH Director may have failed.
 	<br><br>
@@ -411,7 +381,7 @@ If more logging is needed, use the optional `--debug` flag to print the followin
 
 If you need to cancel a backup, perform the following steps:
 
-1. Terminate the BBR process by pressing Ctrl-C and then typing `yes` to confirm. 
+1. Terminate the BBR process by pressing Ctrl-C and then typing `yes` to confirm.
 1. Log in to your BOSH Director with the BOSH CLI by performing the procedures in the [Step 2: Retrieve BOSH Director Address and Credentials](#retrieve) section above.
 1. Perform the following steps for each `cloud_controller` VM in your deployment:
 	1. List the VMs in your deployment:

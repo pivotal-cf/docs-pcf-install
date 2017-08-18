@@ -19,16 +19,16 @@ owner: RelEng
 
 This topic describes the procedure for manually restoring your Pivotal Cloud Foundry (PCF) deployment from a backup. To create a backup, see the [Backing Up Pivotal Cloud Foundry](./backup-pcf.html) topic.
 
-<p class="note"><strong>Note</strong>: You can also use the CF Ops automation utility to perform a restore of your PCF backups. See the <a href="http://www.cfops.io/#the-basics">CF Ops User Guide</a> for more information.</p>
-
 To restore a deployment, you must import installation settings, temporarily stop the Cloud Controller, restore the state of each critical backend component from its backup file, and restart the Cloud Controller. 
 
-To perform these steps, you need the BOSH manifest to locate your critical backend components. BOSH manifests are automatically downloaded to the Ops Manager virtual machine. However, if you are using a separate jumpbox, you must manually download the BOSH deployment manifest.
+To perform these steps, you need the BOSH manifest to locate your critical backend components. BOSH manifests are automatically downloaded to the Ops Manager virtual machine. 
+
+However, if you are using a separate jumpbox, you must manually download the BOSH deployment manifest.
 
 <p class='note'><strong>Note</strong>:
 The procedure described in this topic restores a running PCF deployment to the state captured by backup files. This procedure does not deploy PCF. See the <a href='../../installing/index.html'>Installing PCF Guide</a> for information.</p>
 
-## <a id='import'></a>Import Installation Settings ##
+## <a id='import'></a>Step 1: Import Installation Settings ##
 
 <p class='note'><strong>Note</strong>: Pivotal recommends that you export your installation settings before importing from a backup. See the <a href='./backup-pcf.html#export'>Export Installation Settings</a> section of the <i>Backing Up Pivotal Cloud Foundry</i> topic for more information.</p>
 
@@ -67,7 +67,7 @@ Follow the steps below to import installation settings.
 
 1. Click **Apply Changes** to redeploy.
 
-## <a id='restore_bosh'></a>Restore BOSH Using Ops Manager ##
+## <a id='restore_bosh'></a>Step 2: Restore BOSH Using Ops Manager ##
 
 Follow the steps below to restore BOSH using Ops Manager.
 
@@ -75,10 +75,7 @@ Follow the steps below to restore BOSH using Ops Manager.
 
 1. Make a change to your configuration to trigger a new deployment. For example, you can adjust the number of NTP servers in your deployment. Choose a change in configuration that suits your specific deployment.
 
-1. Follow the instructions in the [SSH into Ops Manager](../../customizing/trouble-advanced.html#ssh) topic. The following example assumes an Amazon Web Services deployment:
-  <pre class='terminal'>
-  $ ssh -i ops_mgr.pem ubuntu@OPS-MGR-IP
-  </pre>
+1. SSH into the Ops Manager VM by following the instructions for your IaaS in the [SSH into Ops Manager](../../customizing/trouble-advanced.html#ssh) topic. 
 
 1. Delete the `bosh-deployments.yml` file. Deleting the `bosh-deployments.yml` file causes Ops Manager to treat the deploy as a new deployment, recreating missing Virtual Machines (VMs), including BOSH. The new deployment ignores existing VMs such as your Pivotal Cloud Foundry deployment.
   <pre class='terminal'>
@@ -93,13 +90,85 @@ Follow the steps below to restore BOSH using Ops Manager.
 
 1. Return to the **Product Installation Dashboard** and click **Apply Changes**.
 
-## <a id="bosh-target-director"></a> Target the BOSH Director
+## <a id="download_bosh_manifest"></a>Step 3: Download the BOSH Manifest
+
+To download the BOSH manifest for your deployment, use the BOSH CLI (either v1 or v2) or access the OpsMan API.
+
+### Using BOSH CLI v1
+
+First, identify and target the BOSH Director by performing the following steps:
+
 <%= partial 'bosh_target_director_manual' %>
 
-## <a id="download-bosh-manifest"></a> Download BOSH Manifest
+Next, download the BOSH manifest for the product by performing the following steps:
+
 <%= partial 'download_bosh_manifest' %>
 
-## <a id='restore-databases'></a>Restore Critical Backend Components##
+### Using BOSH CLI v2
+
+First, target the BOSH Director by performing the following steps:
+
+<%= partial 'bosh_target_director_bbr' %>
+
+Next, identify the deployment and download the BOSH manifest for the product by performing the following steps:
+
+1. After logging in to your BOSH Director, run the following command to identify the name of 
+the BOSH deployment that contains PCF:
+    <pre class="terminal">
+    $ bosh -e DIRECTOR\_IP \
+    --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate deployments
+
+    Name                     Release(s)
+    cf-example               push-apps-manager-release/661.1.24
+                             cf-backup-and-restore/0.0.1
+                             binary-buildpack/1.0.11
+                             capi/1.28.0
+                             cf-autoscaling/91
+                             cf-mysql/35
+                             ...
+    </pre>
+    In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
+
+1. Run the following command to download the BOSH manifest and replace DEPLOYMENT-NAME with the deployment name you retrieved in the prevoius step:
+
+    <pre class="terminal">
+    $ bosh -e DIRECTOR_IP -d DEPLOYMENT-NAME manifest > /tmp/cf.yml
+    </pre>
+
+1. Place the .yml file in a secure location.
+
+### Using the Ops Manager API
+
+First, identify and target the BOSH Director by performing the following steps:
+
+1. Install the [BOSH v2 CLI](https://bosh.io/docs/cli-v2.html#install) on a machine outside of your PCF deployment.
+1. Perform the procedures in the [Using the Ops Manager API](../ops-man-api.html) topic to authenticate and access the Ops Manager API.
+1. Use the `GET /api/v0/deployed/products` endpoint to retrieve a list of deployed products, replacing `UAA-ACCESS-TOKEN` with the access token recorded in the [Using the Ops Manager API](../ops-man-api.html) topic:
+  <pre class="terminal">$ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products" \ 
+    -X GET \ 
+    -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
+1. In the response to the above request, locate the product with an `installation_name` starting with `cf-` and copy its `guid`.
+1. Run the following `curl` command, replacing `PRODUCT-GUID` with the value of `guid` from the previous step:
+    <pre class="terminal">
+    $ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products/PRODUCT-GUID/manifest" \ 
+    -X GET \
+    -H "Authorization: Bearer UAA-ACCESS-TOKEN" > /tmp/cf.yml</pre>
+
+1. Place the .yml file in a secure location.
+
+## <a id='stop-cc'></a>Step 4: Stop Cloud Controller###
+
+To stop the Cloud Controller, use the BOSH CLI (either v1 or v2).
+
+### Using BOSH CLI v1
+
+<%= partial 'stopping_cc' %>
+
+### Using BOSH CLI v2
+
+<%= partial 'stopping_cc_boshv2' %>
+
+## <a id='restore-databases'></a>Step 5: Restore Critical Backend Components##
 
 Your Elastic Runtime deployment contains several critical data stores that must be present for a complete restore. This section describes the procedure for restoring the databases and servers associated with your PCF installation.
 
@@ -109,98 +178,6 @@ You must restore each of the following:
 * UAA Database
 * WebDAV Server
 * Pivotal MySQL Server
-
-<p class="note"><strong>Note</strong>: If you are running PostgreSQL and are on the default internal databases, follow the instructions below. If you are running your databases or filestores externally, disregard instructions for restoring the Cloud Controller and UAA Databases. </p>
-
-### <a id='stop-cc'></a>Stop Cloud Controller###
-
-<%= partial 'stopping_cc' %>
-
-### <a id='restore-ccdb'></a>Restore the Cloud Controller Database
-
-<p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
-
-Use the Cloud Controller Database (CCDB) password and IP address to restore the Cloud Controller Database by following the steps detailed below. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager **Installation Dashboard**, select **Elastic Runtime** and click **Credentials>Link to Credential**.
-
-1. Use `scp` to send the Cloud Controller Database backup file to the Cloud Controller Database VM.
-<pre class='terminal'>
-$ scp ccdb.sql vcap@YOUR-CCDB-VM-IP-ADDRESS:~/.
-</pre>
-
-1. SSH into the Cloud Controller Database VM.
-<pre class='terminal'>
-$ ssh vcap@YOUR-CCDB-VM-IP
-</pre>
-
-1. Log in to the psql client
-<pre class='terminal'>
-$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 ccdb
-</pre>
-
-1. Drop the database schema and create a new one to replace it.
-<pre class='terminal'>
-ccdb=# drop schema public cascade;
-ccdb=# create schema public;
-</pre>
-
-1. Restore the database from the backup file.
-<pre class='terminal'>
-$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 ccdb < ~/ccdb.sql
-</pre>
-
-### <a id='restore-uaa'></a>Restore UAA Database
-
- <p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
-
-#### Drop the UAA Database tables
-
-1. Find your UAA Database VM ID. To view all VM IDs, run `bosh vms` from a command line:
-<pre class='terminal'>$ bosh vms</pre>
-
-1. SSH into the UAA Database VM using the vcap user and password. If you do not have this information recorded, find it in the Ops Manager **Installation Dashboard**. Click the **Elastic Runtime** tile and select **Credentials>Link to Credential**.
-<pre class='terminal'>$ ssh vcap@YOUR-UAADB-VM-IP-ADDRESS</pre>
-
-1. Run `find /var/vcap | grep 'bin/psql'` to find the locally installed psql client on the UAA Database VM.
-<pre class='terminal'>
-$ <span>vcap</span>@198.51.100.101:~# find /var/vcap | grep 'bin/psql'
-/var/vcap/data/packages/postgres/5.1/bin/psql
-</pre>
-
-1. Log in to the psql client:
-<pre class='terminal'>
-$ <span>vcap</span>@198.51.100.101:~# /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 uaa
-</pre>
-
-1. Run the following commands to drop the tables:
-<pre class='terminal'>
-drop schema public cascade;
-create schema public;
-\q
-</pre>
-
-1. Exit the UAA Database VM.
-<pre class='terminal'>$ exit</pre>
-
-#### Restore the UAA Database from its backup state
-
-<p class="note"><strong>Note</strong>: Follow these instructions only if you are using a PostgreSQL database.</p>
-
-1. Use the UAA Database password and IP address to restore the UAA Database by running the following commands. You can find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager **Installation Dashboard**, select **Elastic Runtime** and click **Credentials>Link to Credential**.
-
-1. Use `scp` to copy the database backup file to the UAA Database VM.
-<pre class='terminal'>
-$ scp uaa.sql vcap@YOUR-UAADB-VM-IP-ADDRESS:~/.
-</pre>
-
-1. SSH into the UAA Database VM.
-<pre class='terminal'>
-$ ssh vcap@YOUR-UAADB-VM-IP-ADDRESS
-</pre>
-
-1. Restore the database from the backup file.
-<pre class='terminal'>
-$ /var/vcap/data/packages/postgres/5.1/bin/psql -U vcap -p 2544 uaa < ~/uaa.sql
-</pre>
 
 ### <a id='restore-webdav'></a>Restore WebDAV
 Use the File Storage password and IP address to restore the WebDAV server by following the steps detailed below. Find the IP address in your BOSH deployment manifest. To find your password in the Ops Manager **Installation Dashboard**, select **Elastic Runtime** and click **Credentials>Link to Credential**.
@@ -254,7 +231,7 @@ There are two ways to restore the MySQL Server:
 * [Automatic backup](#automatic-mysql): If you configured automatic backups in your ERT configuration, follow the instructions below for restoring from an automatic backup
 * [Manual restore](#manual-mysql): If you performed a [manual backup](backup-pcf.html#manual-mysql) of your MySQL server, follow the instructions below for restoring from a manual backup.
 
-#### <a id='automatic-mysql'></a>Restore from an Automatic Backup
+#### <a id='automatic-mysql'></a>Restore MySQL from an Automatic Backup
 
 If you configured automatic backups, perform the following steps to restore your MySQL server:
 
@@ -295,7 +272,7 @@ If you configured automatic backups, perform the following steps to restore your
     1. Click **Save**.
     1. Return to the Ops Manager Installation Dashboard and click **Apply Changes**.
 
-#### <a id='manual-mysql'></a>Restore from a Manual Backup
+#### <a id='manual-mysql'></a>Restore MySQL from a Manual Backup
 
 If you performed a manual backup, perform the following steps to restore your MySQL server:
 
@@ -330,5 +307,14 @@ If you performed a manual backup, perform the following steps to restore your My
   mysql > flush privileges;
   </pre>
 
-### <a id='cc-start-2'></a>Start Cloud Controller ###
+## <a id='cc-start-2'></a>Step 6: Start Cloud Controller ###
+
+To start the Cloud Controller, use the BOSH CLI (either v1 or v2).
+
+### Using BOSH CLI v1
+
 <%= partial 'starting_cc' %>
+
+### Using BOSH CLI v2
+
+<%= partial 'starting_cc_boshv2' %>

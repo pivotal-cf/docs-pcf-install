@@ -1,0 +1,38 @@
+ Under **Configure the CF Router support for the X-Forwarded-Client-Cert header**, configure how the Gorouter handles `x-forwarded-client-cert` (XFCC) HTTP headers. 
+    <%= image_tag 'networking_xforwarded-client-cert-xfcc.png' %>
+     The following table describes which option to choose based on your deployment layout. 
+    <table class="nice">
+    <tr>
+      <th>If your deployment terminates SSL/TLS:</th>
+      <th>Then select:</th>
+    </tr> 
+    <tr> 
+      <td>Terminates SSL/TLS at the Gorouter only
+      </td>
+       <td>Strip the XFCC header when present and set it to the client certificate from the mTLS handshake
+      </td>
+    </tr>
+    <tr>
+      <td>Terminates SSL/TLS at both the load balancer/HAProxy and the Gorouter **and uses** HAProxy
+      </td>
+       <td>Always forward the XFCC header in the request, regardless of whether the client connection is mTLS (default)
+      </td>
+    </tr>
+    <tr>
+       <td>Terminates SSL/TLS at both the load balancer and the Gorouter **and does not** use HAProxy
+      </td>
+      <td>Any of the following options:<ul>
+      <li>Always forward the XFCC header in the request, regardless of the whether the client connection is mTLS, or</li>
+      <li>Forward the XFCC header received from the client only when the client connection is mTLS, or </li>
+      <li>Strip the XFCC header when present and set it to the client certificate from the mTLS handshake
+      </ul></td>
+    </tr>
+    <tr>
+      <td>Terminates SSL/TLS at the load balancer or HAProxy only
+      </td>
+      <td>Always forward the XFCC header in the request, regardless of the whether the client connection is mTLS (default)
+      </td>
+    </tr>
+    </table>
+    <br/>
+    For more information on working with applications that require mTLS ,see [Forward Client Certificate to Applications](../concepts/http-routing.html#forward-client-cert). For more information on SSL/TLS termination in Cloud Foundry, see [Security Traffic into Cloud Foundry](../adminguide/securing-traffic.html).

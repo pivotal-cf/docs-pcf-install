@@ -36,7 +36,7 @@ If you need to recreate your IaaS resources, prepare your environment for PCF by
 <p class="note"><strong>Note</strong>: The instructions for installing PCF on Amazon Web Services (AWS) and OpenStack combine the procedures for preparing your environment and deploying Ops Manager into a single topic. The instructions for the other supported IaaSes split these procedures into two separate topics.</p>
 
 If you recreate your IaaS resources, you must also add those resources to Ops Manager by performing the procedures in
-the [(Optional) Step 11: Configure Ops Manager for New Resources](#config-new-resources) section.
+the [(Optional) Step 3: Configure Ops Manager for New Resources](#config-new-resources) section.
 
 ## <a id='deploy-import'></a>Step 2: Deploy Ops Manager and Import Installation Settings ##
 
@@ -56,7 +56,7 @@ the [(Optional) Step 11: Configure Ops Manager for New Resources](#config-new-re
 
 1. In the import panel, perform the following tasks:
   * Enter your **Decryption Passphrase**.
-  * Click **Choose File** and browse to the installation zip file that you exported in the <a href='./backup-pcf-bbr.html#export'>Step 3: Export Installation Settings</a> section of the <i>Backing Up Pivotal Cloud Foundry with BBR</i> topic.
+  * Click **Choose File** and browse to the installation zip file that you exported in the <a href='./backup-pcf-bbr.html#export'>Step 6: Export Installation Settings</a> section of the <i>Backing Up Pivotal Cloud Foundry with BBR</i> topic.
 
     <%= image_tag("../images/upgrading/decryption_passphrase.png") %>
 
@@ -100,7 +100,7 @@ In the [Step 9: Back Up Your Deployment](./backup-pcf-bbr.html#bbr-backup) secti
 For instance, you could SCP the backup artifact to your jumpbox:
   <pre class="terminal">$ scp LOCAL\_PATH\_TO\_BACKUP\_ARTIFACT JUMPBOX\_USER/JUMPBOX\_ADDRESS</pre>
 
-## <a id="retrieve"></a> Step 6: Retrieve BOSH Director Address and Credentials
+## <a id="retrieve"></a> Step 5: Retrieve BOSH Director Address and Credentials
 
 Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in from the Ops Manager Director tile:
 
@@ -141,7 +141,7 @@ Perform the following steps to retrieve the IP address of your BOSH Director and
 
 <p class="note"><strong>Note</strong>: The BBR restore command can take a long time to complete. Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
 
-If the commands completes successfully, continue to [Step 8: Remove Stale Cloud IDs for All Deployments](#bosh-cck).
+If the commands completes successfully, continue to [Step 9: Remove Stale Cloud IDs for All Deployments](#bosh-cck).
 
 If the command fails, do the following:
 
@@ -180,7 +180,7 @@ $ bosh -e DIRECTOR_IP -d DEPLOYMENT_NAME -n cck \
   --resolution delete_vm_reference
 </pre>
 
-This reconciles the BOSH Director's internal state with the state in the IaaS. You can use the list of deployments returned in [Step 7: Identify Your Deployment](#identify-deployment).
+This reconciles the BOSH Director's internal state with the state in the IaaS. You can use the list of deployments returned in [Step 8: Identify Your Deployment](#identify-deployment).
 
 If the <code>bosh cck</code> command does not successfully delete disk references and you see a message similar to the following, perform the additional procedures in the <a href="#removing-disks">Remove Unused Disks</a> section below.
 <pre class="terminal">
@@ -218,7 +218,7 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
   </pre>
 1. From the Ops Manager Installation Dashboard, navigate to **Pivotal Elastic Runtime > Resource Config**.
 1. Ensure the number of instances for MySQL Server is set to `1`.
-  <p class="note warning"><strong>Note</strong>: Restore will fail if there is not exactly one MySQL Server instance deployed.</p>
+  <p class="note warning"><strong>Warning</strong>: Restore will fail if there is not exactly one MySQL Server instance deployed.</p>
 1. Return to the Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
 
 ## <a id='restore-ert'></a> Step 11: Restore Elastic Runtime
@@ -283,8 +283,6 @@ $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
 
 1. If desired, scale the MySQL Server job back up to its previous number of instances by navigating to the **Resource Config** section of the Elastic Runtime tile. After scaling the job, return to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy.
 
-1. Validate your restored PCF by performing the steps in the [Step 11: (Optional) Validate Your Backup](backup-pcf-bbr.html#validate-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em>.
-
 ##<a id='odb'></a> (Optional) Step 12: Restore On-Demand Service Instances
 
 <p class="note"><strong>Note</strong>: These procedures restore the on-demand service instances but do not restore service instance data.</p>
@@ -326,9 +324,14 @@ If you have on-demand service instances provisioned by an on-demand service brok
   1. Navigate to `https://YOUR-OPS-MAN-FQDN/api/v0/staged/products` in a browser to obtain the product GUID of your tile.
   1. Navigate to `https://YOUR-OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/manifest` to obtain your product's staged manifest.
   1. Copy the manifest into a file on your local machine called `manifest.json`.
+  1. Run the following command to find the name of the deployment's on-demand broker instance group:
+    <pre class="terminal">
+    $ cat manifest.json | jq '(.instance_groups[].name )' | grep on-demand-broker | grep -v -E "register|smoke"
+    > redis-on-demand-broker
+    </pre>
   1. Run the following command to extract the BOSH credentials:
     <pre class="terminal">
-    $ cat manifest.json | jq '(.manifest.instance_groups[] |
+    $ cat manifest.json | jq '(.instance_groups[] |
      select(.name == "redis-on-demand-broker").jobs[] |
      select(.name == "broker").properties.bosh.authentication.uaa )'
     </pre>
@@ -366,7 +369,7 @@ If `bosh cck` does not clean up all disk references, you must manually delete th
 To delete the disks, perform one of the following procedures:
 
 * Use the BOSH CLI to delete the disks by performing the following steps:
-  1. Target the redeployed BOSH Director using the BOSH CLI by performing the procedures in [Step 4: Retrieve BOSH Director Address and Credentials](#retrieve).
+  1. Target the redeployed BOSH Director using the BOSH CLI by performing the procedures in [Step 5: Retrieve BOSH Director Address and Credentials](#retrieve).
   1. List the deployments by running the following command:
     <pre class="terminal">
     $ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate deployments
@@ -380,4 +383,4 @@ To delete the disks, perform one of the following procedures:
   $ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate instances
   </pre>
 
-Once the disks are deleted, continue with [Step 8: Remove Stale Cloud IDs for All Deployments](#bosh-cck).
+Once the disks are deleted, continue with [Step 9: Remove Stale Cloud IDs for All Deployments](#bosh-cck).

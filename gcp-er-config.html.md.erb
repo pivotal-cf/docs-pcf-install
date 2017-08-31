@@ -135,7 +135,67 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 
 ## <a id='networking'></a> Step 6: Configure Networking ##
 
-<%= partial 'networking-gcp' %>
+1. Select **Networking**.
+
+1. Leave the **Router IPs**, **SSH Proxy IPs**, **HAProxy IPs**, and **TCP Router IPs** fields blank. You do not need to complete these fields when deploying PCF to GCP. 
+   <p class="note"><strong>Note</strong>: You specify load balancers in the **Resource Config** section of Elastic Runtime later on in the installation process. See the <a href="#config-lb">Configure Load Balancers</a> section of this topic for more information.</p>
+
+1. <%= partial 'haproxy_router_cert_config' %>
+1. <%= partial 'min_tls_version' %>
+1. <%= partial 'haproxy_router_tls_forward' %>
+1. <%= partial 'tls_cipher_suites_router' %>
+1. <%= partial 'tls_cipher_suites_haproxy' %>
+1. <%= partial 'tls_cipher_suites_doppler' %>
+1. <%= partial 'tls_cipher_suites_metron' %> 
+1. <%= partial 'ssl_verification' %>
+1. <%= partial 'http_disable' %>
+1. <%= partial 'haproxy_request_max_buffer' %>
+1. <%= partial 'insecure_cookies' %> 
+1. <%= partial 'zipkin_enable' %>
+1. <%= partial 'xforwarded_client_cert_xfcc' %>
+1. <%= partial 'route_services' %>
+1. <%= partial 'max_connections_backend' %> 
+1. The **Loggregator Port** defaults to `443` if left blank. Enter a new value to override the default.
+1. <%= partial 'app_subnet_field' %>
+1. <%= partial 'app_mtu' %>
+
+    <%= image_tag 'images/ert_log_port_mtu.png' %>
+
+1. <%= partial 'router_timeout_backend' %>  
+1. <%= partial 'lb_unhealthy_threshold' %>
+1. <%= partial 'lb_healthy_threshold' %>
+
+    <%= image_tag 'images/router_lb_thresholds.png' %>
+
+1. Enter a value for **Router Max Idle Keepalive Connections**. See [Considerations for Configuring max\_idle\_connections](../adminguide/routing-keepalive.html#considerations).
+
+    <%= image_tag 'images/keepalive.png' %>
+
+1. <%= partial 'http_headers_to_log' %>
+    ![Http Headers to Log](images/headers_to_log.png)
+
+1. <%= partial 'tcp_routing_enable' %>
+   1. For GCP, you also need to specify the name of a GCP TCP load balancer in the **LOAD BALANCER** column of TCP Router job of the **Resource Config** screen. You configure this later on in Elastic Runtime. See <a href="#configure-lb">Configure Load Balancers</a> section of this topic.</p>
+
+1. <%= partial 'tcp_routing_disable' %>
+
+1. <%= partial 'c2c-overlay' %>
+
+1. <%= partial 'c2c-vxlan' %>
+
+1. By default, the Elastic Runtime routers handle traffic for applications deployed to an isolation segment created by the PCF Isolation Segment tile. To configure the Elastic Runtime routers to reject requests for applications within isolation segments, select the **Routers reject requests for Isolation Segments** checkbox.
+  <%= image_tag 'isolate-network.png' %>
+  Do not enable this option without deploying routers for each isolation segment. See the the following topics for more information:
+  * [Installing PCF Isolation Segment](../opsguide/installing-pcf-is.html)
+  * [Sharding Routers for Isolation Segments](../adminguide/routing-is.html#sharding-routers-isolation-segment).
+
+1. <%= partial 'protected_domains' %>
+
+1. <%= partial 'log-app-traffic-enable' %>
+
+    <%= image_tag 'images/log-app-traffic-enable.png' %>
+
+1. Click **Save**.
 
 ## <a id='application-containers-config'></a>Step 7: Configure Application Containers ##
 
@@ -254,15 +314,11 @@ the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating a
 
 <%= partial 'advanced-features' %>
 
-## <a id='consul-cc'></a>Step 21: Disable Consul Locks
-
-<%= partial 'consul-locks' %>
-
-## <a id='errands'></a>Step 22: Configure Errands ##
+## <a id='errands'></a>Step 21: Configure Errands ##
 
 <%= partial 'errands' %>
 
-## <a id='config-lb'></a>Step 23: Configure Load Balancers ##
+## <a id='config-lb'></a>Step 22: Configure Load Balancers ##
 
 1. Navigate to the GCP Console and click **Load balancing**.
 
@@ -294,11 +350,11 @@ the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating a
 
 1. Click **Save**.
 
-## <a id='disable-resources'></a>Step 24: (Optional) Scale Down and Disable Resources ##
+## <a id='disable-resources'></a>Step 23: (Optional) Scale Down and Disable Resources ##
 
 <%= partial 'disable_resources' %>
 
-## <a id='stemcell'></a>Step 25: Verify and Download Stemcell Version##
+## <a id='stemcell'></a>Step 24: Verify and Download Stemcell Version##
 
 Verify whether Ops Manager is providing the stemcell version required by Elastic Runtime. If the correct version is already present, you do not need to download a new stemcell.
 
@@ -318,7 +374,7 @@ Verify whether Ops Manager is providing the stemcell version required by Elastic
 
   1. In the **Stemcell** section of the Elastic Runtime tile, click **Import Stemcell** to import the downloaded stemcell <code>.tgz</code> file.
 
-## <a id='complete'></a>Step 26: Complete the Elastic Runtime Installation ##
+## <a id='complete'></a>Step 25: Complete the Elastic Runtime Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.

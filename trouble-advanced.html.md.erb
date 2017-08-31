@@ -5,28 +5,21 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-To perform advanced troubleshooting, you must log in to the BOSH Director. 
+This topic describes using the BOSH CLI to help diagnose and resolve issues with your [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) deployment. Before using the information and techniques in this topic, you might want to review the [Pivotal Cloud Foundry Troubleshooting Guide](./troubleshooting.html).
+
+To follow the step in this topic, you must log in to the BOSH Director. The BOSH Director runs on the virtual machine (VM) that Ops Manager deploys on the first install of the Ops Manager Director tile.
 
 After authenticating into the BOSH Director, you can run specific commands using the BOSH Command Line Interface (BOSH CLI). BOSH Director diagnostic commands have access to information about your entire [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) installation.
 
-The BOSH Director runs on the virtual machine (VM) that Ops Manager deploys on the first install of the Ops Manager Director tile.
+<p class="note"><strong>Note</strong>: Before running any BOSH CLI commands, verify that no BOSH Director tasks are running on the Ops Manager VM. See the <em>Tasks</em> section of <a href="https://bosh.io/docs/cli-v2#task-mgmt">BOSH CLI commands</a> for more information.</p>
 
-BOSH Director diagnostic commands have access to information about your entire
-[Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf)
-(PCF) installation.
+## <a id='about'></a>BOSH CLI v1 and BOSH CLI v2 ##
 
-<p class="note"><strong>Note</strong>: For more troubleshooting information, refer to the <a href="./troubleshooting.html">Troubleshooting Guide</a>.</p>
+The BOSH CLI is available in two major versions, v1 and v2. You can use either version of the BOSH CLI, but Pivotal recommends that you use the BOSH CLI v2 because v1 will be deprecated. BOSH CLI v2 is installed on Ops Manager as `/usr/local/bin/bosh2`.
 
-<p class="note"><strong>Note</strong>: Verify that no BOSH Director tasks are running on the Ops Manager VM before running any commands.
-See the <i>Tasks</i> section of the <a href="https://bosh.io/docs/cli-v2#task-mgmt">BOSH CLI commands</a> for more information.</p>
+Ops Manager includes both BOSH CLI versions for backwards compatibility purposes. Any manifests that are generated using BOSH CLI v2 cannot be deployed with BOSH CLI v1.
 
-## <a id='about'></a>About the BOSH CLI ##
-
-The BOSH CLI is available in two major versions, v1 and v2. You can use either BOSH CLI, but Pivotal recommends that you use the BOSH CLI v2 since v1 will be deprecated. BOSH CLI v2 is installed on Ops Manager as `/usr/local/bin/bosh2`.
-
-Ops Manager includes both versions for backwards compatibility purposes. Any manifests that have been generated using BOSH v2 cannot be deployed with the BOSH v1 CLI.
-
-This topic provides examples of using each version of the BOSH CLI.
+This topic provides examples using both versions of the BOSH CLI.
 
 ## <a id='gather'></a>Gather Credential and IP Address Information ##
 
@@ -43,7 +36,7 @@ address of the VM where the BOSH Director runs.
 
 1. Select the **Credentials** tab.
 
-1. Click **Link to Credential** to view and record the **Director Credentials**.
+1. Click **Link to Credential** to view the **Director Credentials**. Record these credentials.
 
     <%= image_tag("bosh-creds.png") %>
 
@@ -59,14 +52,11 @@ and VM credentials for that job VM.
 
 ## <a id='ssh'></a>SSH into Ops Manager ##
 
-Use SSH to connect to the Ops Manager web application VM.
-
-Follow the instructions in one of the sections below to SSH into the Ops Manager VM.
+Use SSH to connect to the Ops Manager web application VM. Follow the instructions in one of the sections below to SSH into the Ops Manager VM.
 
 **vSphere:**
 
-You need the credentials used to import the PCF .ova or .ovf file into
-your virtualization system.
+To SSH into the Ops Manager VM in vSphere, you need the credentials used to import the PCF .ova or .ovf file into your virtualization system.
 
 1. From a command line, run `ssh ubuntu@OPS-MANAGER-FQDN` to SSH into the Ops Manager VM. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager.
 
@@ -80,9 +70,11 @@ into vCenter. For example:
 
 **AWS, Azure, and OpenStack:**
 
+To SSH into the Ops Manager VM in AWS, Azure, and OpenStack, follow these instructions:
+
 1. Locate the Ops Manager FQDN on the AWS **EC2 instances** page or the OpenStack **Access & Security** page.
 
-1. Run `chmod 600 ops_mgr.pem` to change the permissions on the `.pem` file to be more restrictive:
+1. Run `chmod 600 ops_mgr.pem` to change the permissions on the `.pem` file to be more restrictive. For example:
 
 	<pre class="terminal">
 	$ chmod 600 ops_mgr.pem
@@ -96,7 +88,9 @@ into vCenter. For example:
 
 **GCP:**
 
-1. Confirm that you have installed the gcloud CLI. If you do not have the gcloud CLI, see [the Google Cloud Platform documentation](https://cloud.google.com/sdk/gcloud/#downloading_gcloud).
+To SSH into the Ops Manager VM in GCP, follow these instructions:
+
+1. Confirm that you have installed the gcloud CLI. See the [Google Cloud Platform documentation](https://cloud.google.com/sdk/gcloud/#downloading_gcloud) for more information.
 
 1. Run `gcloud config set project MY-PROJECT` to configure your Google Cloud Platform project. For example:
     <pre class="terminal">
@@ -117,9 +111,11 @@ into vCenter. For example:
 
 ## <a id='log-in'></a>Log in to the BOSH Director
 
-Depending on the BOSH CLI version you are using, follow the procedure for [BOSH CLI v1](#bosh1-access) or [BOSH CLI v2](#bosh2-access).
+Depending on the BOSH CLI version you use, follow the procedure for [BOSH CLI v1](#bosh1-access) or [BOSH CLI v2](#bosh2-access).
 
 ### <a id='bosh1-access'></a>BOSH CLI v1
+
+Follow the steps below to log in to the BOSH Director with BOSH CLI v1.
 
 #### <a id='bosh-target'></a>Target the BOSH Director
 
@@ -137,19 +133,19 @@ Depending on the BOSH CLI version you are using, follow the procedure for [BOSH 
 
 #### <a id='uaa-bosh1'></a>Log in to the BOSH Director with UAA 
 
-1. Retrieve the Director password from the **Ops Manager Director > Credentials** tab. Alternatively, launch a browser and visit the following URL to obtain the password:
+1. Retrieve the Director password from the **Ops Manager Director > Credentials** tab. Alternatively, launch a browser and visit the following URL to obtain the password. Replace `OPSMANAGER-FQDN` with the Ops Manager FQDN.
 
     ```
-    https://{OPSMANAGER-FQDN}/api/v0/deployed/director/credentials/director_credentials
+    https://OPSMANAGER-FQDN/api/v0/deployed/director/credentials/director_credentials
     ```
 
-1. Log in using the BOSH Director credentials:
+1. Run `bosh --ca-cert /var/tempest/workspaces/default/root_ca_certificate target DIRECTOR-IP-ADDRESS` to log in using the BOSH Director credentials. Replace `DIRECTOR-IP-ADDRESS` with the IP address of the BOSH Director. For example:
 
     <pre class='terminal'>
-    $ bosh --ca-cert /var/tempest/workspaces/default/root_ca_certificate target DIRECTOR-IP-ADDRESS
+    $ bosh --ca-cert /var/tempest/workspaces/default/root_ca_certificate target 10.0.0.3
     Target set to 'DIRECTOR_UUID'
     Email: director
-    Enter password: (DIRECTOR_CREDENTIAL)
+    Enter password: ***********
     Logged in as 'director'
     </pre>
 
@@ -192,6 +188,8 @@ Depending on the BOSH CLI version you are using, follow the procedure for [BOSH 
     </pre>
 
 ### <a id='bosh2-access'></a>BOSH CLI v2
+
+Follow the steps below to log in to the BOSH Director with BOSH CLI v2.
 
 #### <a id='bosh-alias'></a>Create a Local BOSH Director Alias
 
@@ -286,7 +284,7 @@ troubleshoot.
       </tr>
     </table>
 
-    <p class="note"><strong>Note</strong>: Where there is more than one installation of the same product, record the release number shown on the product tile in Operations Manager. Then, from the YAML files for that product, find the deployment that specifies the same release version as the product tile.</p>
+    <p class="note"><strong>Note</strong>: Where more than one installation of the same product exists, record the release number shown on the product tile in Ops Manager. Then, from the YAML files for that product, find the deployment that specifies the same release version as the product tile.</p>
 
 1. Depending on the version of the BOSH CLI you are using, continue to either the [BOSH CLI v1](#product-bosh1) or [BOSH CLI v2](#product-bosh2) instructions.
 

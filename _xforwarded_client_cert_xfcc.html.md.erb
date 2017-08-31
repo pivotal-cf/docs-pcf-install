@@ -1,0 +1,39 @@
+ Under **Configure the CF Router support for the X-Forwarded-Client-Cert header**, configure how the Gorouter handles `x-forwarded-client-cert` (XFCC) HTTP headers. 
+    <%= image_tag 'networking_xforwarded-client-cert-xfcc.png' %>
+     The following table indicates which option to choose based on your deployment layout. 
+    <table class="nice">
+    <tr>
+      <th>If your deployment is configured as follows:</th>
+      <th>Then select the following option:</th>
+    </tr> 
+    <tr>
+      <td><ul><li>Load balancer is terminating TLS, and 
+      <li>Load balancer is configured to put the client certificate from a mutual authentication TLS handshake into the X-Forwarded-Client-Cert HTTP header, and
+      <li>Requests to Gorouter are unencrypted (whether or not HAProxy is present.)
+      </li>
+      </ul>
+      </td>
+       <td>Always forward the XFCC header in the request, regardless of whether the client connection is mTLS (default).
+      </td>
+    </tr>
+    <tr>
+      <td><ul><li>Load balancer is terminating TLS, and 
+      <li>Load balancer is configured to put the client certificate from a mutual authentication TLS handshake into the X-Forwarded-Client-Cert HTTP header, and
+      <li>Requests to Gorouter are encrypted (whether or not HAProxy is present.)
+      </li>
+      </ul>
+      </td>
+      <td>Forward the XFCC header received from the client only when the client connection is mTLS.</td>
+    </tr>
+    <tr>
+      <td><ul><li>Load balancer is not terminating TLS (configured as pass through), and 
+      <li>Gorouter is terminating TLS
+      </li>
+      </ul>
+      </td>
+       <td>Strip the XFCC header when present and set it to the client certificate from the mTLS handshake.
+      </td>
+    </tr>
+    </table>
+    <br/>
+   For a description of the behavior of each configuration option, see <a href="../concepts/http-routing.html#forward-client-cert">Forward Client Certificate to Applications</a>.

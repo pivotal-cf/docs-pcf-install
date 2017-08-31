@@ -1,0 +1,59 @@
+---
+title: Setting up your system for BBR
+owner: RelEng
+---
+
+<strong><%= modified_date %></strong>
+
+<% $this_topic = 'system-setup-bbr' %>
+
+BBR commands are typically run from a Jumpbox. This page describes how you should set up your Jumpbox to run BBR commands.
+
+## <a id='jumpbox'></a>Step 1: Set Up Your Jumpbox
+
+Set up your jumpbox with the following settings:
+
+* The jumpbox must have sufficient space for the backup. A PCF backup will be at least 1.5 GB in size.
+* BBR connects to the VMs at their private IP address, so the jumpbox needs to be in the same network as the deployed VMs. BBR does not support SSH gateways.
+* BBR copies the backed-up data from the VMs to the jumpbox, so ensure you have minimal network latency between them to reduce transfer times.
+
+Consult the following table for more information about the network access permissions required by BBR.
+
+<table>
+<tr>
+<th>VM</th>
+<th>Default Port</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>BOSH Director</td>
+<td>25555</td>
+<td>BBR interacts with the BOSH Director API.</td>
+</tr>
+<tr>
+<td>Deployed Instances</td>
+<td>22</td>
+<td>BBR uses SSH to orchestrate the backup on the instances.</td>
+</tr>
+<tr>
+<td>BOSH Director UAA</td>
+<td>8443</td>
+<td>BBR interacts with the UAA API for authentication, if necessary.</td>
+</tr>
+</table>
+
+## <a id='scp'></a>Step 2: Transfer BBR to Your Jumpbox
+
+Perform the following steps to transfer BBR to your jumpbox:
+
+1. Download the [latest BBR release](https://network.pivotal.io/products/p-bosh-backup-and-restore).
+1. Change the permissions of `bbr` in order to make it executable:
+	<pre class="terminal">$ chmod a+x bbr</pre>
+1. SCP the binary to your jumpbox:
+	<pre class="terminal">$ scp LOCAL\_PATH\_TO\_BBR/bbr JUMPBOX\_USER/JUMPBOX\_ADDRESS</pre>
+	If your jumpbox has access to the internet, you can also SSH into your jumpbox and use `wget`:
+	<pre class="terminal">
+	$ ssh JUMPBOX\_USER/JUMPBOX\_ADDRESS -i YOUR\_CERTIFICATE.pem
+	$ wget BBR\_RELEASE\_URL
+	$ chmod a+x bbr
+	</pre>

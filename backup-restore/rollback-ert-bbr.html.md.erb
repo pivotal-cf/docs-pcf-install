@@ -21,7 +21,7 @@ To view the BBR release notes, see the <a href="https://docs.pivotal.io/bbr/bbr-
 
 The procedures described in this topic prepare your environment for PCF, deploy Ops Manager, import your installation settings, and use BBR to restore your PCF components.
 
-<p class="note warning"><strong>Warning</strong>: Only follow the procedure on this page if you are recovering from a catastrophically failed ERT upgrade. These instructions will incur downtime and are desctructive.</p>
+<p class="note warning"><strong>Warning</strong>: Only follow the procedure on this page if you are recovering from a catastrophically failed ERT upgrade. These procedures will incur downtime and are destructive.</p>
 
 <p class="note"><strong>Note</strong>: BBR is a feature in PCF v1.11. You can only use BBR to back up PCF v1.11 and later. To restore earlier versions of PCF, perform the <a href="restore-pcf.html">manual procedures</a>.</p>
 
@@ -35,11 +35,11 @@ The procedures described in this topic prepare your environment for PCF, deploy 
 
 ## <a id='deploy-import'></a>Step 2: Redeploy Ops Manager and Import Installation Settings ##
 
-1. Destroy your Ops Manager VM.
+1. Log in to your IaaS console and destroy your Ops Manager VM.
 
 1. Perform the procedures for your IaaS to re-deploy Ops Manager:
   * If you configured AWS manually: [Step 12](../pcf-aws-manual-config.html#pcfaws-om-ami) through [Step 19](../pcf-aws-manual-config.html#pcfaws-mysql-rds) of the <em>Manually Configuring AWS for PCF</em> topic.
-  * If you used the CloudFormation template install PCF on AWS: [Launching an Ops Manager Director Instance on AWS](../cloudform-om-deploy.html)
+  * If you used the CloudFormation template to install PCF on AWS: [Launching an Ops Manager Director Instance on AWS](../cloudform-om-deploy.html)
   * [Launching an Ops Manager Director Instance on Azure](../azure-arm-template.html)
   * [Launching an Ops Manager Director Instance on GCP](../gcp-om-deploy.html)
   * [Step 3](../openstack-setup.html#create-om-image) through [Step 7](../openstack-setup.html#dns-entry) of the <em>Provisioning the OpenStack Infrastructure</em> topic.
@@ -51,9 +51,9 @@ The procedures described in this topic prepare your environment for PCF, deploy 
 
     <%= image_tag("../images/upgrading/welcome.png") %>
 
-1. In the import panel, perform the following tasks:
+1. In the import panel, perform the following steps:
   * Enter your **Decryption Passphrase**.
-  * Click **Choose File** and browse to the installation zip file that you exported in the <a href='./backup-pcf-bbr.html#export'>Step 3: Export Installation Settings</a> section of the <i>Backing Up Pivotal Cloud Foundry with BBR</i> topic.
+  * Click **Choose File** and browse to the installation zip file that you exported in the <a href='./backup-pcf-bbr.html#export'>Step 7: Export Installation Settings</a> section of the <i>Backing Up Pivotal Cloud Foundry with BBR</i> topic.
 
     <%= image_tag("../images/upgrading/decryption_passphrase.png") %>
 
@@ -71,11 +71,11 @@ The procedures described in this topic prepare your environment for PCF, deploy 
 
 Perform the steps in the [Applying Changes to Ops Manager Director](../deploy-ops-man-director.html) topic to use the Ops Manager API to only deploy the BOSH Director.
 
-<p class="note"><strong>Note</strong>: This step will not perform a re-deploy as the BOSH Director still exists. It is only required to recreate the <code>root_ca_certificate</code> file on the Ops Manager VM after it is restored.</p>
+<p class="note"><strong>Note</strong>: This procedure will not perform a redeploy because the BOSH Director still exists. It is only required to recreate the <code>root_ca_certificate</code> file on the Ops Manager VM after it is restored.</p>
 
 ## <a id="artifacts-jumpbox"></a> Step 4: Transfer Artifacts to Jumpbox
 
-In the [Step 9: Back Up Your Deployment](./backup-pcf-bbr.html#bbr-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic, you moved the TAR and metadata files of the backup artifact off your jumpbox to your preferred storage space. Now you must transfer those files back to your jumpbox.
+In the [Step 9: Back Up Your Elastic Runtime Deployment](./backup-pcf-bbr.html#bbr-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic, you moved the TAR and metadata files of the backup artifact off your jumpbox to your preferred storage space. Now you must transfer those files back to your jumpbox.
 
 For instance, you could SCP the backup artifact to your jumpbox:
   <pre class="terminal">$ scp LOCAL\_PATH\_TO\_BACKUP\_ARTIFACT JUMPBOX\_USER/JUMPBOX\_ADDRESS</pre>
@@ -85,14 +85,13 @@ For instance, you could SCP the backup artifact to your jumpbox:
 1. From the Installation Dashboard in Ops Manager, select **Ops Manager Director > Status** and record the IP address listed for the Director.
 You access the BOSH Director using this IP address.
   <img src="../images/director-ip.png"><br><br>
-1. Click **Credentials** and record the Director credentials, and the Bbr Ssh Credentials (including the private key).
+1. Click **Credentials**, and record the **Director Credentials** and the **Bbr Ssh Credentials**, including the private key beginning with `"-----BEGIN RSA PRIVATE KEY-----"`.
   <img src="../images/director-creds.png">
 
 ## <a id='restore-bosh'></a> Step 6: Restore the BOSH Director
 
-1. Copy the value for the Bbr Ssh Credentials `private_key_pem`, beginning with `"-----BEGIN RSA PRIVATE KEY-----"`. (This private key was obtained in <a href="#retrieve">Step 5</a>)
 1. SSH into your jumpbox.
-1. Run the following command to reformat the key and save it to a file called `PRIVATE_KEY` in the current directory, pasting in the contents of your private key for `YOUR_PRIVATE_KEY`:
+1. Run the following command to reformat the private key you retrieved in [Step 5: Retrieve BOSH Director](#retrieve) and save it to a file called `PRIVATE_KEY` in the current directory, pasting in the contents of your private key for `YOUR_PRIVATE_KEY`:
   <pre class="terminal">
   $ printf -- "YOUR\_PRIVATE\_KEY" > PRIVATE_KEY
   </pre>
@@ -125,7 +124,7 @@ If the command fails, do the following:
 
 ## <a id='identify-deployment'></a> Step 7: Identify Your Deployment
 
-After logging in to your BOSH Director (Using Director credentials found in <a href="#retrieve">Step 5</a>), run `bosh deployments` to identify the name of the BOSH deployment that contains PCF:
+After logging in to your BOSH Director with the credentials retrieved in <a href="#retrieve">Step 5: Retrieve BOSH Director Address and Credentials</a>, run `bosh deployments` to identify the name of the BOSH deployment that contains PCF:
 
 <pre class='terminal'>
 $ bosh -e DIRECTOR_IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate deployments
@@ -208,6 +207,7 @@ $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
 </pre>
 
     Replace the placeholder values as follows:
+    <br><br>
     * `BOSH_CLIENT`, `BOSH_PASSWORD`: Use the BOSH UAA user provided in  **Pivotal Ops Manager > Credentials > Uaa Bbr Client Credentials**.
     <br><br>
        You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
@@ -255,51 +255,7 @@ $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
 
 1. (Optional) Scale the MySQL Server job back up to its previous number of instances by navigating to the **Resource Config** section of the Elastic Runtime tile. After scaling the job, return to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy.
 
-1. Validate your restored PCF by performing the steps in the [Step 11: (Optional) Validate Your Backup](backup-pcf-bbr.html#validate-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em>.
-
-## <a id="troubleshooting"></a> Troubleshooting
-
-This section lists common troubleshooting scenarios and their solutions.
-
-### Symptom
-
-While running the BBR restore command, restoring the job `mysql-restore` fails with:
-
-<pre class="terminal">
-1 error occurred:
-
-* restore script for job mysql-restore failed on mysql/0.
-...
-Monit start failed: Timed out waiting for monit: 2m0s
-</pre>
-
-### Explanation
-
-This happens when `mariadb` fails to start within the timeout period. It will end up in an "Execution Failed" state and `monit` will never try to start it again.
-
-###  Solution
-
-To validate that `mariadb` is in an "Execution Failed" state, perform the following steps:
-
-  1. List the VMs in your deployment:
-    <pre class="terminal">$ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate \
-    -d DEPLOYMENT\_NAME \
-    ssh</pre>
-  1. Select the `mysql` VM to SSH into.
-  1. From the `mysql` VM, run the following command to check that the `mariadb` process is running:
-    <pre class="terminal">
-    $ ps aux | grep mariadb
-    </pre>
-  1. Run the following command to check that `monit` reports `mariadb_ctrl` is not running:
-    <pre class="terminal">$ sudo monit summary</pre>
-  1. After validating that `mariadb` is in an "Execution Failed" state, run the following command from the `mysql` VM to disable monitoring:
-    <pre class="terminal">$ monit unmonitor</pre>
-  1. Run the following command to enable monitoring:
-    <pre class="terminal">$ monit monitor</pre>
-  1. After a few minutes, run the following command:
-    <pre class="terminal">$ monit summary</pre>
-    The command should report that all the processes are running.
-  1. Re-attempt the restore with BBR.
+1. Validate your restored PCF by performing the steps in the [Step 10: (Optional) Validate Your Backup](backup-pcf-bbr.html#validate-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em>.
 
 ## <a id='removing-disks'></a> Remove Unused Disks
 

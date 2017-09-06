@@ -13,6 +13,10 @@ owner: RelEng
 .note.warning:before {
   color: #f99;
 }
+.note.validation {
+  background-color: #dce7c4;
+  border-color: #cedeac;
+}
 </style>
 
 This topic describes the procedure for restoring your critical backend PCF components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments. To perform the procedures in this topic, you must have backed up Pivotal Cloud Foundry (PCF) by following the steps in the [Backing Up Pivotal Cloud Foundry with BBR](backup-pcf-bbr.html) topic.
@@ -27,24 +31,26 @@ The procedures described in this topic prepare your environment for PCF, deploy 
 
 <p class="note"><strong>Note</strong>: BBR is a feature in PCF v1.11. You can only use BBR to back up PCF v1.11 and later. To restore earlier versions of PCF, perform the <a href="restore-pcf.html">manual procedures</a>.</p>
 
+<p class="note validation"><strong>Validation</strong>: If you are restoring in order to validate a backup, look for these green notes throughout the document.</p>
+
 ## <a id="compatibility"></a> Compatibility of Restore
 
-This section describes the restrictions for a backup artifact to be restorable to another environment. 
-This section is for guidance only, and Pivotal highly recommends that operators validate their backups by 
-using the backup artifacts in a restore. 
+This section describes the restrictions for a backup artifact to be restorable to another environment.
+This section is for guidance only, and Pivotal highly recommends that operators validate their backups by
+using the backup artifacts in a restore.
 
 Consult the following restrictions for a backup artifact to be restorable:
 
-+ **Topology**: BBR requires the BOSH topology of a deployment to be the same in the restore environment as it was in the backup environment. 
-+ **Naming of instance groups and jobs**: For any deployment that implements the backup and restore scripts, the instance groups and jobs must have the same names. 
-+ **Number of instance groups and jobs**: For instance groups and jobs that have backup and restore scripts, there must be the same number of instances. 
-+ **Limited validation**: BBR puts the backed-up data into the corresponding instance groups and jobs in the restored environment, 
-    but can’t validate the restore beyond that. 
-    For example, if the MySQL encryption key is different in the restore environment, 
-    the BBR restore might succeed although the restored MySQL database is unusable. 
++ **Topology**: BBR requires the BOSH topology of a deployment to be the same in the restore environment as it was in the backup environment.
++ **Naming of instance groups and jobs**: For any deployment that implements the backup and restore scripts, the instance groups and jobs must have the same names.
++ **Number of instance groups and jobs**: For instance groups and jobs that have backup and restore scripts, there must be the same number of instances.
++ **Limited validation**: BBR puts the backed-up data into the corresponding instance groups and jobs in the restored environment,
+    but can’t validate the restore beyond that.
+    For example, if the MySQL encryption key is different in the restore environment,
+    the BBR restore might succeed although the restored MySQL database is unusable.
 
-<p class="note"><strong>Note</strong>: A change in VM size or underlying hardware should not affect BBR’s ability to restore data, 
-as long as there is adequate storage space to restore the data. </p> 
+<p class="note"><strong>Note</strong>: A change in VM size or underlying hardware should not affect BBR’s ability to restore data,
+as long as there is adequate storage space to restore the data. </p>
 
 ## <a id='prepare-env'></a>(Optional) Step 1: Prepare Your Environment
 
@@ -241,8 +247,13 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
 1. Ensure the number of instances for MySQL Server is set to `1`.
   <p class="note warning"><strong>Warning</strong>: Restore will fail if there is not exactly one MySQL Server instance deployed.</p>
 1. Return to the Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
+  <p class="note validation"><strong>Validation</strong>: If your ERT uses an external blobstore, ensure that the ERT tile is configured to use a different blobstore before clicking "Apply Changes", otherwise it will attempt to connect to the blobstore the existing ERT is using.</p>
+  <p class="note validation"><strong>Validation</strong>: Make sure your **System Domain** and **Apps Domain** under **Pivotal Elastic Runtime > Domains** are updated to refer to the validation environment.
+  </p>
 
 ## <a id='restore-ert'></a> Step 11: Restore Elastic Runtime
+
+<p class="note validation"><strong>Validation</strong>: If your apps must not be running after a restore (e.g. if they would alter state in a shared datastore), run <code>bosh stop</code> on each <code>diego_cell</code> VM in the deployment.</p>
 
 1. Run the BBR restore command from your jumpbox to restore Elastic Runtime:
 <pre class="terminal">
@@ -265,6 +276,10 @@ $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 8: Identify Your Deployment](#identify-deployment) section.
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
     * `PATH_TO_ERT_BACKUP`: This is the path to the Elastic Runtime backup you want to restore.
+
+    <p class="note validation">
+      <strong>Validation</strong>: If you ran <code>bosh stop</code> on each <code>diego_cell</code> before running <code>bbr restore</code>, you can now run <code>cf stop</code> on all apps and then run <code>bosh start</code> on each <code>diego_cell</code>. After this, all apps will be deployed in a stopped state.
+    </p>
 
 1. Perform the following steps after restoring Elastic Runtime:
   1. Retrieve the MySQL admin password by following one of the procedures below:

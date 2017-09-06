@@ -1,38 +1,39 @@
  Under **Configure the CF Router support for the X-Forwarded-Client-Cert header**, configure how the Gorouter handles `x-forwarded-client-cert` (XFCC) HTTP headers. 
     <%= image_tag 'networking_xforwarded-client-cert-xfcc.png' %>
-     The following table describes which option to choose based on your deployment layout. 
+     The following table indicates which option to choose based on your deployment layout. 
     <table class="nice">
     <tr>
-      <th>If your deployment terminates SSL/TLS as follows:</th>
-      <th>Then select:</th>
+      <th>If your deployment is configured as follows:</th>
+      <th>Then select the following option:</th>
     </tr> 
-    <tr> 
-      <td>Terminates SSL/TLS at the Gorouter only
+    <tr>
+      <td><ul><li>Load balancer is terminating TLS, and 
+      <li>Load balancer is configured to put the client certificate from a mutual authentication TLS handshake into the X-Forwarded-Client-Cert HTTP header, and
+      <li>Requests to Gorouter are unencrypted (whether or not HAProxy is present.)
+      </li>
+      </ul>
       </td>
-       <td>Strip the XFCC header when present and set it to the client certificate from the mTLS handshake
+       <td>Always forward the XFCC header in the request, regardless of whether the client connection is mTLS (default).
       </td>
     </tr>
     <tr>
-      <td>Terminates SSL/TLS at both the load balancer/HAProxy and the Gorouter **and uses** HAProxy
+      <td><ul><li>Load balancer is terminating TLS, and 
+      <li>Load balancer is configured to put the client certificate from a mutual authentication TLS handshake into the X-Forwarded-Client-Cert HTTP header, and
+      <li>Requests to Gorouter are encrypted (whether or not HAProxy is present.)
+      </li>
+      </ul>
       </td>
-       <td>Always forward the XFCC header in the request, regardless of whether the client connection is mTLS (default)
-      </td>
+      <td>Forward the XFCC header received from the client only when the client connection is mTLS.</td>
     </tr>
     <tr>
-       <td>Terminates SSL/TLS at both the load balancer and the Gorouter **and does not** use HAProxy
+      <td><ul><li>Load balancer is not terminating TLS (configured as pass through), and 
+      <li>Gorouter is terminating TLS
+      </li>
+      </ul>
       </td>
-      <td>Any of the following options:<ul>
-      <li>Always forward the XFCC header in the request, regardless of the whether the client connection is mTLS, or</li>
-      <li>Forward the XFCC header received from the client only when the client connection is mTLS, or </li>
-      <li>Strip the XFCC header when present and set it to the client certificate from the mTLS handshake
-      </ul></td>
-    </tr>
-    <tr>
-      <td>Terminates SSL/TLS at the load balancer or HAProxy only
-      </td>
-      <td>Always forward the XFCC header in the request, regardless of the whether the client connection is mTLS (default)
+       <td>Strip the XFCC header when present and set it to the client certificate from the mTLS handshake.
       </td>
     </tr>
     </table>
     <br/>
-    For more information about working with applications that require mTLS, see [Forward Client Certificate to Applications](../concepts/http-routing.html#forward-client-cert). For more information about SSL/TLS termination in Cloud Foundry, see [Security Traffic into Cloud Foundry](../adminguide/securing-traffic.html).
+   For a description of the behavior of each configuration option, see <a href="../concepts/http-routing.html#forward-client-cert">Forward Client Certificate to Applications</a>.

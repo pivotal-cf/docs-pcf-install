@@ -27,7 +27,7 @@ The procedures described in this topic prepare your environment for PCF, deploy 
 
 <p class="note"><strong>Note</strong>: BBR is a feature in PCF v1.11. You can only use BBR to back up PCF v1.11 and later. To restore earlier versions of PCF, perform the <a href="restore-pcf.html">manual procedures</a>.</p>
 
-<p class="note validation"><strong>Note</strong>: If you are restoring in order to validate a backup, look for notes marked <strong>Validation</strong> throughout the document.</p>
+<p class="note validation"><strong>Note</strong>: If you are restoring in order to validate a backup, look for notes marked <strong>Validation</strong> throughout the topic.</p>
 
 ## <a id="compatibility"></a> Compatibility of Restore
 
@@ -83,7 +83,7 @@ If you recreate your IaaS resources, you must also add those resources to Ops Ma
 
     <p class="note"><strong>Note</strong>:
       Some browsers do not provide feedback on the status of the import process,
-      and may appear to hang. The import process will take at least 10 minutes, and will be longer the more tiles that were present on the backed up Ops Manager.</p>
+      and may appear to hang. The import process takes at least 10 minutes, and takes longer the more tiles that were present on the backed-up Ops Manager.</p>
 
 1. A **Successfully imported installation** message appears upon completion.
 
@@ -111,7 +111,7 @@ If you recreated IaaS resources such as networks and load balancers by following
   </pre>
 1. Navigate to `YOUR-OPS-MAN-FQDN` in a browser and log into Ops Manager.
 1. For each tile that requires one, upload the required stemcell.
-<p class="note warning"><strong>Warning</strong>: Do not click "Apply Changes" at this point.</p>
+<p class="note warning"><strong>Warning</strong>: Do not click <strong>Apply Changes</strong> at this point.</p>
 1. Perform the steps in the [Applying Changes to Ops Manager Director](../deploy-ops-man-director.html) topic to use the Ops Manager API to only deploy the Ops Manager Director.
 <p class="note"><strong>Validation</strong>: If your BOSH Director has an external hostname, you should change it in **Ops Manager Director > Director Config > Directory Hostname** to ensure it does not conflict with the hostname of the backed up Director.</p>
 
@@ -161,7 +161,7 @@ Perform the following steps to retrieve the IP address of your BOSH Director and
   * `PRIVATE_KEY`: This is the path to the private key file you created above.
   * `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this will be a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, it will be the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 5: Retrieve BOSH Director Address and Credentials](#retrieve) section.
 
-<p class="note"><strong>Note</strong>: The BBR director restore command can take a long time to complete - at least 15 minutes. Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
+<p class="note"><strong>Note</strong>: The BBR BOSH Director restore command can take at least 15 minutes to complete. Pivotal recommends that you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
 
 If the commands completes successfully, continue to [Step 8: Identify Your Deployment](#identify-deployment).
 
@@ -238,18 +238,18 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
       upload-stemcell \
       --fix PATH\_TO\_STEMCELL
   </pre>
-1. If you have any other tiles installed, ensure you upload their stemcells (if different from the ERT stemcell) to the BOSH Director with `bosh upload-stemcell --fix` as above.
+1. If you have any other tiles installed, ensure you upload their stemcells if they are different from the Elastic Runtime stemcell. Upload stemcells to the BOSH Director with `bosh upload-stemcell --fix PATH_TO_STEMCELL`, as in the command above.
 1. From the Ops Manager Installation Dashboard, navigate to **Pivotal Elastic Runtime > Resource Config**.
 1. Ensure the number of instances for MySQL Server is set to `1`.
   <p class="note warning"><strong>Warning</strong>: Restore will fail if there is not exactly one MySQL Server instance deployed.</p>
 1. Return to the Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
-  <p class="note validation"><strong>Validation</strong>: If your ERT uses an external blobstore, ensure that the ERT tile is configured to use a different blobstore before clicking "Apply Changes", otherwise it will attempt to connect to the blobstore the existing ERT is using.</p>
-  <p class="note validation"><strong>Validation</strong>: Make sure your **System Domain** and **Apps Domain** under **Pivotal Elastic Runtime > Domains** are updated to refer to the validation environment.
+  <p class="note validation"><strong>Validation</strong>: If your Elastic Runtime uses an external blobstore, ensure that the Elastic Runtime tile is configured to use a different blobstore before clicking <strong>Apply Changes</strong>. Otherwise it will attempt to connect to the blobstore that the existing Elastic Runtime is using.</p>
+  <p class="note validation"><strong>Validation</strong>: Ensure your **System Domain** and **Apps Domain** under **Pivotal Elastic Runtime > Domains** are updated to refer to the validation environment.
   </p>
 
 ## <a id='restore-ert'></a> Step 11: Restore Elastic Runtime
 
-<p class="note validation"><strong>Validation</strong>: If your apps must not be running after a restore (e.g. if they would alter state in a shared datastore), run <code>bosh stop</code> on each <code>diego_cell</code> VM in the deployment.</p>
+<p class="note validation"><strong>Validation</strong>: If your apps must not be running after a restore run <code>bosh stop</code> on each <code>diego_cell</code> VM in the deployment.</p>
 
 1. Run the BBR restore command from your jumpbox to restore Elastic Runtime:
 <pre class="terminal">

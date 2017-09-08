@@ -334,6 +334,7 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     --name opsman-disk \
     --source https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image.vhd \
     --location $LOCATION --size-gb 120
+    --sku Standard_LRS
     </pre>
     <br>
     If you are using Azure China, Azure Government Cloud, or Azure Germany, replace `blob.core.windows.net` with the following:
@@ -342,24 +343,15 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     * For Azure Government Cloud, use `blob.core.usgovcloudapi.net`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-government/documentation-government-services-storage) for more information.
     * For Azure Germany, use `blob.core.cloudapi.de`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/germany/germany-developer-guide) for more information.
 
-1. Create an Azure Image from the Ops Manager virtual disk image downloaded in the previous step.
-    <pre class="terminal">
-    $ az image create --resource-group $RESOURCE_GROUP \
-    --name opsman-img \
-    --source opsman-disk \
-    --location $LOCATION \
-    --os-type Linux
-    </pre>
-
 1. Create your Ops Manager VM, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file.
     <pre class="terminal">
-     $ az vm create --name ops-manager --resource-group $RESOURCE\_GROUP \
-     --location $LOCATION \
+     $ az vm create --name ops-manager --resource-group $RESOURCE_GROUP \
+     --location $LOCATION --os-type linux \
      --nics ops-manager-nic \
+     --attach-os-disk opsman-disk \
      --admin-username ubuntu \
-     --size Standard\_DS2\_v2 \
-     --ssh-key-value PATH-TO-PUBLIC-KEY \
-     --image opsman-img
+     --size Standard_DS2_v2 \
+     --ssh-key-value PATH-TO-PUBLIC-KEY
     </pre> 
 
 ##<a id='post-deploy'></a> Step 6: Complete Ops Manager Director Configuration

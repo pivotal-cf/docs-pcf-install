@@ -105,6 +105,8 @@ To SSH into the Ops Manager VM in GCP, follow these instructions:
 
 Follow the steps below to log in to the BOSH Director.
 
+<p class="note"><strong>Note</strong>: The procedures in this topic use <a href="https://bosh.io/docs/cli-v2-diff.html">BOSH CLI v2</a>. The BOSH Director VM includes both BOSH CLI versions, but some BOSH CLI v1 commands are incompatible with PCF 1.12 deployments. Run the BOSH commands in this topic using <code>bosh2</code>.</p>
+
 ### <a id='bosh-alias'></a>Create a Local BOSH Director Alias
 
 1. Run the following command to create a local alias for the BOSH Director using the BOSH CLI: `bosh2 alias-env MY-ENV -e DIRECTOR-IP-ADDRESS --ca-cert /var/tempest/workspaces/default/root_ca_certificate`
@@ -167,56 +169,32 @@ When you import and install a product using Ops Manager, you deploy an instance
 of the product described by a YAML file. Examples of available products include
 Elastic Runtime, MySQL, or any other service that you imported and installed.
 
-Perform the following steps to select a product deployment to troubleshoot:
+Identify the YAML file that describes the deployment you want to troubleshoot by its filename.
+For example, to identify Elastic Runtime deployments, run the following command:
 
-1. Identify the YAML file that describes the deployment you want to
-troubleshoot.
+<pre class="terminal">$ find /var/tempest/workspaces/default/deployments -name cf-*.yml</pre>
 
-    You identify the YAML file that describes a deployment by its filename.
-    For example, to identify Elastic Runtime deployments, run the following
-    command:
+The table below shows the naming conventions for deployment files.
 
-    `find /var/tempest/workspaces/default/deployments -name cf-*.yml`
+<table border="1" class="nice" >
+  <tr>
+    <th>Product</th><th>Deployment Filename Convention</th>
+  </tr>
+  <tr>
+    <td>Elastic Runtime</td>
+    <td>cf-&lt;20-character_random_string&gt;.yml</td>
+  </tr>
+  <tr>
+    <td>MySQL Dev</td>
+    <td>cf_services-&lt;20-character_random_string&gt;.yml</td>
+  </tr>
+  <tr>
+    <td>Other</td>
+    <td>&lt;20-character_random_string&gt;.yml</td>
+  </tr>
+</table>
 
-    The table below shows the naming conventions for deployment files.
-
-    <table border="1" class="nice" >
-      <tr>
-        <th>Product</th><th>Deployment Filename Convention</th>
-      </tr>
-      <tr>
-        <td>Elastic Runtime</td>
-        <td>cf-&lt;20-character_random_string&gt;.yml</td>
-      </tr>
-      <tr>
-        <td>MySQL Dev</td>
-        <td>cf_services-&lt;20-character_random_string&gt;.yml</td>
-      </tr>
-      <tr>
-        <td>Other</td>
-        <td>&lt;20-character_random_string&gt;.yml</td>
-      </tr>
-    </table>
-
-    <p class="note"><strong>Note</strong>: Where more than one installation of the same product exists, record the release number shown on the product tile in Ops Manager. Then, from the YAML files for that product, find the deployment that specifies the same release version as the product tile.</p>
-
-1. Run `bosh2 -e MY-ENV environment`, replacing `MY-ENV` with the alias you set for the BOSH Director. For example:
-    <pre class="terminal">$ bosh2 -e gcp environment</pre>
-    The output of the command includes the BOSH Director UUID. Record the UUID value.
-
-1. Open the `DEPLOYMENT-FILENAME.yml` file in a text editor and compare the
-`director_uuids` value in this file with the UUID value that you recorded.
-If the values do not match, replace the `director_uuids` value with the UUID value that you recorded before continuing to the next step.
-
-1. Run `bosh2 -e MY-ENV -d MY-DEPLOYMENT deploy DEPLOYMENT-FILENAME.yml` to reset the file for your deployment. Replace the placeholder text as follows:
-    * `MY-ENV`: Enter the alias you set for the BOSH Director.
-    * `MY-DEPLOYMENT`: Enter the name of the deployment you are troubleshooting.
-    * `DEPLOYMENT-FILENAME`: Enter the manifest file for the deployment you are troubleshooting.
-
-    For example:
-    <pre class='terminal'>
-    $ bosh2 -e gcp -d cf deploy /var/tempest/workspaces/default/deployments/cf-cca1234abcd.yml
-    </pre>
+<p class="note"><strong>Note</strong>: Where more than one installation of the same product exists, record the release number shown on the product tile in Ops Manager. Then, from the YAML files for that product, find the deployment that specifies the same release version as the product tile.</p>
 
 ## <a id='cli'></a>Use the BOSH CLI for Troubleshooting
 

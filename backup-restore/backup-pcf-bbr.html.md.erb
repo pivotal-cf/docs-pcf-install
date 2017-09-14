@@ -216,47 +216,42 @@ You can also retrieve the credentials using the Ops Manager API with a GET reque
 
 ### <a id='bbr-backup'></a> Step 9: Back Up Your Elastic Runtime Deployment
 
-Run the BBR backup command from your jumpbox to back up your Elastic Runtime deployment:
-<pre class="terminal">
-$ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
-  nohup bbr deployment \
-  --target BOSH\_DIRECTOR\_IP \
-  --username BOSH\_CLIENT \
-  --deployment DEPLOYMENT\_NAME \
-  --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
-  backup</pre>
+1.  If you are using an external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup could potentially be slightly inconsistent with your Elastic Runtime backup. 
 
-Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
+1. Run the BBR backup command from your jumpbox to back up your Elastic Runtime deployment:
+  <pre class="terminal">
+  $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
+    nohup bbr deployment \
+    --target BOSH\_DIRECTOR\_IP \
+    --username BOSH\_CLIENT \
+    --deployment DEPLOYMENT\_NAME \
+    --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
+    backup</pre>
+    * Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
+    * Use the optional `--with-manifest` flag to ensure that BBR downloads your current deployment manifest when backing up. These manifests are included in the Ops Manager export, but are useful for reference. For example:
+      <pre class="terminal">
+      $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
+        nohup bbr deployment \
+        --target BOSH\_DIRECTOR\_IP \
+        --username BOSH\_CLIENT \
+        --deployment DEPLOYMENT\_NAME \
+        --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
+        backup --with-manifest</pre>
 
-Use the optional `--with-manifest` flag to ensure that BBR downloads your current deployment manifest when backing up. These manifests are included in the Ops Manager export, but are useful for reference. For example:
-<pre class="terminal">
-$ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
-  nohup bbr deployment \
-  --target BOSH\_DIRECTOR\_IP \
-  --username BOSH\_CLIENT \
-  --deployment DEPLOYMENT\_NAME \
-  --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
-  backup --with-manifest</pre>
+    <p class="note"><strong>Note</strong>: Backing up Elastic Runtime takes at least 10 minutes, and can take considerably longer with larger blobstores or slow network connections. The backup also incurs around 10 minutes of Cloud Controller downtime, during which users will be unable to push, scale, or delete apps. Your apps will not be affected.</p>
 
+    <p class="note"><strong>Note</strong>: Because the BBR backup command can take a long time to complete, Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
 
-<p class="note"><strong>External Blobstores</strong>: If you are using an external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup could potentially be slightly inconsistent with your ERT backup. </p>
+1. If the commands completes successfully, do the following:
+  1. Move the backup artifact off the jumpbox to your preferred storage space. The backup created by BBR consists of a folder with the backup artifacts and metadata files. However, Pivotal recommends compressing and encrypting the files.
+  1. Make redundant copies of your backup and store them in multiple locations in order to minimize the risk of losing your backups in the event of a disaster.
+  1. Attempt a test restore on every backup in order to validate it by performing the procedures in the [Step 10: Validate Your Backup](#validate-backup) section below.
 
-<p class="note"><strong>Note</strong>: Backing up Elastic Runtime takes at least 10 minutes, and can take considerably longer with larger blobstores or slow network connections. The backup also incurs around 10 minutes of Cloud Controller downtime, during which users will be unable to push, scale, or delete apps. Your apps will not be affected.</p>
-
-<p class="note"><strong>Note</strong>: Because the BBR backup command can take a long time to complete, Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
-
-If the commands completes successfully, do the following:
-
-1. Move the backup artifact off the jumpbox to your preferred storage space. The backup created by BBR consists of a folder with the backup artifacts and metadata files. However, Pivotal recommends compressing and encrypting the files.
-1. Make redundant copies of your backup and store them in multiple locations in order to minimize the risk of losing your backups in the event of a disaster.
-1. Attempt a test restore on every backup in order to validate it by performing the procedures in the [Step 10: Validate Your Backup](#validate-backup) section below.
-
-If the command fails, do the following:
-
-1. Ensure all the parameters in the command are set.
-1. Ensure the BOSH Director credentials are valid.
-1. Ensure the specified deployment exists.
-1. Consult the [Exit Codes](#exit-codes) section below.
+1. If the command fails, do the following:
+  1. Ensure all the parameters in the command are set.
+  1. Ensure the BOSH Director credentials are valid.
+  1. Ensure the specified deployment exists.
+  1. Consult the [Exit Codes](#exit-codes) section below.
 
 ### <a id='validate-backup'></a> Step 10: (Optional) Validate Your Backup
 

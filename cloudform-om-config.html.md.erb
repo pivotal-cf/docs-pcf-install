@@ -10,9 +10,6 @@ This topic describes how to configure the Ops Manager Director after deploying t
 Web Services (AWS).
 Use this topic when [Installing Pivotal Cloud Foundry Using AWS CloudFormation](./cloudform-install.html).
 
-Before beginning this procedure, ensure that you have successfully completed all
-steps in the [Deploying the CloudFormation Template for PCF on AWS](./cloudform-template.html) and the [Launching an Ops Manager Director Instance on AWS CloudFormation](./cloudform-om-deploy.html) topics.
-After you complete this procedure, follow the instructions in the [Deploying Elastic Runtime on AWS CloudFormation](./cloudform-er-config.html) topic.
 
 <p class="note"><strong>Note</strong>: You can also perform the procedures in this topic using the Ops Manager API. For more information, see the <a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
 
@@ -24,7 +21,7 @@ After you complete this procedure, follow the instructions in the [Deploying Ela
 
 <p class="note"><strong>Note</strong>: For security, Ops Manager 1.7 and later require that you log in using a fully qualified domain name.</a></p> 
 
-1. In a web browser, navigate to the fully qualified domain you created in the [Create a DNS Entry](./cloudform-om-deploy.html#create-dns) step of [Launching an Ops Manager Director Instance on AWS](./cloudform-om-deploy.html).
+1. In a web browser, navigate to the fully qualified domain you created in _Configuring DNS for PCF on AWS_.
 
 1. When Ops Manager starts for the first time, you must choose one of the following:
     * [Use an Identity Provider](#idp): If you use an Identity Provider, an external identity server maintains your user database.
@@ -72,7 +69,7 @@ After you complete this procedure, follow the instructions in the [Deploying Ela
 1. Complete the remainder of the **AWS Management Console Config** page with the following information.
     * **VPC ID**: Use the value of **PcfVpc** from your **Outputs** tab.
     * **Security Group ID**: Open the AWS EC2 Dashboard and click **Security
-      Groups**. Select the security group with the **Description** `PCF VMs
+      Groups**. Select the security group with the **Description** `VMs
       Security Group`. Copy the **Group ID** of this group into the Ops Manager 
       **Security Group ID** field.
     * **Key Pair Name**: Use the name of your pre-existing AWS key pair.
@@ -96,12 +93,8 @@ After you complete this procedure, follow the instructions in the [Deploying Ela
 
 	<%= image_tag("images/cloudform/director_aws.png") %>
 
-1. In the **NTP Servers (comma delimited)** field, enter at least two of the 
-following NTP servers, separated by a comma:
-    * `0.amazon.pool.ntp.org`
-    * `1.amazon.pool.ntp.org`
-    * `2.amazon.pool.ntp.org`
-    * `3.amazon.pool.ntp.org`
+1. Enter at least two of the following NTP servers in the **NTP Servers (comma
+delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.ntp.org,2.amazon.pool.ntp.org,3.amazon.pool.ntp.org`
 
 1. (Optional) Enter your **JMX Provider IP Address** if you are [Using JMX Bridge](./../customizing/use-metrics.html).
 
@@ -153,13 +146,7 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
     <p class="note"><strong>Note</strong>: For more information about AWS S3 Signatures, see the AWS <a href="http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html">Authenticating Requests</a> documentation.</p>
 
 
-1. For **Database Location**, select **External MySQL Database**. Complete the following fields with information from the **Outputs** tab in the AWS Console.
-    <%= image_tag("images/director_database.png") %>
-    * **Host**: Use the value of **PcfRdsAddress**.
-    * **Port**: Use the value of **PcfRdsPort**.
-    * **Username**: Use the value of **PcfRdsUsername**.
-    * **Password**: Use the value of **PcfRdsPassword**.
-    * **Database**: Use the value of **PcfRdsDBName**.
+1. For **Database Location**, select **Internal**. 
 
 1. (Optional) **Director Workers** sets the number of workers available to execute Director tasks. This field defaults to `5`.
 
@@ -173,53 +160,149 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
 
 ## <a id='az'></a>Step 5: Create Availability Zones Page ##
 
-<p class="note"><b>Note</b>: Pivotal recommends at least three Availability Zones for a highly available installation of Elastic Runtime.</p>
-
 1. Select **Create Availability Zones**.
 
     <%= image_tag("cloudform/create-az.png") %>
 
-1. Use the following steps to create one or more Availability Zones for your applications to use:
-    * Click **Add**.
-    * For **Amazon Availability Zone**, enter the value of **PcfPrivateSubnetAvailabilityZone** from the **Outputs** tab in the AWS Console. 
-    * **(Optional)** If you are using a second **Amazon Availability Zone**, click **Add**. Enter the value of **PcfPrivateSubnet2AvailabilityZone** from the **Outputs** tab in the AWS Console.
-    * Click **Save**.
+1. Use the following steps to create three Availability Zones for your apps to use:
+    1. Click **Add** three times.
+    1. For **Amazon Availability Zone**, enter the values corresponding to these keys from the **Outputs** tab in the AWS Console. 
+        * **PcfManagementSubnetAZ1AvailabilityZone**
+        * **PcfManagementSubnetAZ2AvailabilityZone**
+        * **PcfManagementSubnetAZ3AvailabilityZone**
+    1. Click **Save**. 
 
-## <a id='network'></a>Step 6: Create Networks Page ##
+
+## <a id='om-networks'></a>Step 6: Create Networks Page ##
 
 1. Select **Create Networks**.
-
-    <%= image_tag("cloudform/create-networks.png") %>
-
-1. Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
-1. Use the following steps to create one or more Ops Manager networks:
-    * Click **Add Network**.
-    * Enter a unique **Name** for the network.
-    * If you want to dynamically provision VMs in this network for use with on-demand services, select the **Service Networks** checkbox. When the checkbox is selected, Ops Manager does not provision VMs within the specified CIDR range.
-    * Click **Add Subnet** to create one or more subnets for the network.
-    * In the **VPC Subnet ID** field, use the value of **PcfPrivateSubnetId** from the **Outputs** tab in the AWS Console. 
-    * For **CIDR**, enter `10.0.16.0/20`. Ops Manager deploy VMs to this CIDR block. 
-    * For **Reserved IP Ranges**, enter `10.0.16.1-10.0.16.9`. Ops Manager avoids deploying VMs to any IP address in this range. 
-    * Enter `10.0.0.2` for **DNS** and `10.0.16.1` for **Gateway**.
-    * Select which **Availability Zones** to use with the network.
-    * **(Optional)** If you are using a second subnet, click **Add Subnet**. In the **VPC Subnet ID** field, use the value of **PcfPrivateSubnet2Id**. Enter the rest of the fields using the information provided above. 
-
-    <p class="note"><strong>Note</strong>: If you are using multiple Availability Zones, you must add a new network with at least one subnet for each Availability Zone.</p>
+<%= image_tag("cloudform/create-networks.png") %>
+1. (Optional) Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
+1. Perform the following steps to add the network configuration you created for your VPC in the [Step 4: Create a VPC](pcf-aws-manual-config.html#pcfaws-vpc) section of the <em>Manually Configuring PCF for AWS</em> topic:
+    1. Click **Add Network**.
+    1. For **Name**, enter `pcf-management-network`.
+    1. Create a subnet for each availability zone by clicking **Add Subnet**. Refer to the table below for the information required to create all three subnets:
+         <table>
+         <tr>
+           <th>VPC Subnet ID</th>
+           <th>CIDR</th>
+           <th>Reserved IP Ranges</th>
+           <th>DNS</th>
+           <th>Gateway</th>
+           <th>Availability Zones</th>
+         </tr>
+         <tr>
+           <td>The value of `PcfManagementSubnetAZ1` from the AWS outputs tab.</td>
+           <td>`10.0.16.0/28`</td>
+           <td>`10.0.16.0-10.0.16.4`</td>
+           <td>`169.254.169.253`</td>
+           <td>`10.0.16.1`</td>
+           <td>The value of `PcfManagementSubnetAZ1AvailabilityZone` from the AWS outputs tab. </td>
+         </tr>
+         <tr>
+           <td>The value of `PcfManagementSubnetAZ2` from the AWS outputs tab.</td>
+           <td>`10.0.16.16/28`</td>
+           <td>`10.0.16.16-10.0.16.20`</td>
+           <td>`169.254.169.253`</td>
+           <td>`10.0.16.17`</td>
+           <td>The value of `PcfManagementSubnetAZ2AvailabilityZone` from the AWS outputs tab.</td>
+         </tr>
+         <tr>
+           <td>The value of `PcfManagementSubnetAZ3` from the AWS outputs tab</td>
+           <td>`10.0.16.32/28`</td>
+           <td>`10.0.16.32-10.0.16.36`</td>
+           <td>`169.254.169.253`</td>
+           <td>`10.0.16.33`</td>
+           <td>The value of `PcfManagementSubnetAZ3AvailabilityZone` from the AWS outputs tab.</td>
+         </tr>
+         </table>
+    <br><br>
+    1. Click **Add Network**.
+    1. For **Name**, enter `pcf-ert-network`.
+    1. Create a subnet for each availability zone by clicking **Add Subnet**. Refer to the table below for the information required to create all three subnets:
+         <table>
+          <tr>
+          <th>VPC Subnet ID</th>
+           <th>CIDR</th>
+           <th>Reserved IP Ranges</th>
+           <th>DNS</th>
+           <th>Gateway</th>
+           <th>Availability Zones</th>
+         </tr>
+         <tr>
+           <td>The value of `PcfERTSubnetAZ1` from the AWS outputs tab.</td>
+           <td>`10.0.4.0/24`</td>
+           <td>`10.0.4.0-10.0.4.4`</td>
+           <td>`169.254.169.253`</td>
+           <td>`10.0.4.1`</td>
+           <td>The value of `PcfERTSubnetAZ1AvailabilityZone` from the AWS outputs tab.</td>
+         </tr>
+         <tr>
+           <td>The value of `PcfERTSubnetAZ2` from the AWS outputs tab.</td>
+           <td>`10.0.5.0/24`</td>
+           <td>`10.0.5.0-10.0.5.4`</td>
+           <td>`169.254.169.253`</td>
+           <td>`10.0.5.1`</td>
+           <td>The value of `PcfERTSubnetAZ2AvailabilityZone` from the AWS outputs tab.</td>
+         </tr>
+         <tr>
+           <td>The value of `PcfERTSubnetAZ3` from the AWS outputs tab.</td>
+           <td>`10.0.6.0/24`</td>
+           <td>`10.0.6.0-10.0.6.4`</td>
+           <td>`169.254.169.253`</td>
+           <td>`10.0.6.1`</td>
+           <td>The value of `PcfERTSubnetAZ3AvailabilityZone` from the AWS outputs tab.</td>
+         </tr>
+         </table>
+    <br><br>
+    1. Click **Add Network**.
+    1. Check the **Service Network** box. This allows you to dynamically provision VMs in this network for use with on-demand services. Ops Manager does not provision VMs within the specified CIDR range.
+    1. Enter `pcf-services-network` in **Name** field.
+    1. Create a subnet for each availability zone by clicking **Add Subnet**. Refer to the table below for the information required to create all three subnets:
+          <table>
+           <tr>
+             <th>VPC Subnet ID</th>
+             <th>CIDR</th>
+             <th>Reserved IP Ranges</th>
+             <th>DNS</th>
+             <th>Gateway</th>
+             <th>Availability Zones</th>
+           </tr>
+           <tr>
+             <td>The value of `PcfServicesSubnetAZ1` from the AWS outputs tab.</td>
+             <td>`10.0.8.0/24`</td>
+             <td>`10.0.8.0-10.0.8.3`</td>
+             <td>`169.254.169.253`</td>
+             <td>`10.0.8.1`</td>
+             <td>The value of `PcfServicesSubnetAZ1AvailabilityZone` from the AWS outputs tab.</td>
+           </tr>
+           <tr>
+             <td>The value of `PcfServicesSubnetAZ2` from the AWS outputs tab.</td>
+             <td>`10.0.9.0/24`</td>
+             <td>`10.0.9.0-10.0.9.3`</td>
+             <td>`169.254.169.253`</td>
+             <td>`10.0.9.1`</td>
+             <td>The value of `PcfServicesSubnetAZ2AvailabilityZone` from the AWS outputs tab.</td>
+           </tr>
+           <tr>
+             <td>The value of `PcfServicesSubnetAZ3` from the AWS outputs tab.</td>
+             <td>`10.0.10.0/24`</td>
+             <td>`10.0.10.0-10.0.10.3`</td>
+             <td>`169.254.169.253`</td>
+             <td>`10.0.10.1`</td>
+             <td>The value of `PcfServicesSubnetAZ3AvailabilityZone` from the AWS outputs tab.</td>
+           </tr>
+           </table>
 
 1. Click **Save**.
 
-1. If the following ICMP error message appears, you can ignore the warning. Dismiss the warning, and move on to the next step.
-
-    <%= image_tag("cloudform/config-error.png") %>
 
 ## <a id="assign-azs"></a>Step 7: Assign AZs and Networks Page##
 
 1. Select **Assign AZs and Networks**.
-    
-    <%= image_tag("images/assign-az.png") %>
 
 1. Use the drop-down menu to select a **Singleton Availability Zone**. The Ops Manager Director installs in this Availability Zone.
-1. Use the drop-down menu to select a **Network** for your Ops Manager Director.
+1. Use the drop-down menu to select `pcf-management-network` for your Ops Manager Director.
 1. Click **Save**.
 
 ## <a id='security'></a>Step 8: Security Page ##

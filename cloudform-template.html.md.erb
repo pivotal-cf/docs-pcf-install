@@ -7,31 +7,18 @@ owner: Ops Manager
 
 This topic describes how to deploy the CloudFormation template for [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Amazon Web Services (AWS).
 
-An AWS CloudFormation template describes a set of AWS resources and properties.
-Follow the instructions below to use a CloudFormation template to create the
-infrastructure that you need to deploy PCF to AWS.
+An AWS CloudFormation template describes a set of AWS resources and properties. The template used in this topic is designed to output the resources necessary for three availability zones (AZ), with an Ops Manager, Elastic Runtime, and services subnet in each AZ. The Elastic Load Balancer will be attached to the public subnet the AZs to balance traffic.
 
-The template is designed to output the resources necessary for two availability zones (AZ), with a private and public subnet designated for each AZ. The Elastic Load Balancer will be attached to the public subnet of both AZs to balance traffic across both environments. Three AZs is actually recommended as the desired number of AZs for a highly available deployment of PCF, however many AWS regions only have two AZs available.
+## <a id='prereq'></a> Prerequisites
 
-<p class="note"><strong>Note</strong>: The CloudFormation template for Elastic Runtime includes a reference to another CloudFormation template for Ops Manager. For more information about how IaaS user roles are configured for each template, refer to the <a href="iaas-user-roles.html">Pivotal Cloud Foundry IaaS User Role Guidelines</a> topic.</p>
+The procedure in this topic requires the following: 
 
-### Prerequisite: Select a Region
+* **An AWS Region with at least 3 availability zones**: Before following the procedure below, confirm that you have selected the correct region within your AWS account. All of the AWS resources for your deployment must exist within a single region. See the <a href='http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-regions-availability-zones'>Amazon documentation on regions and availability zones</a> for help selecting the correct region for your deployment.
+  <p class="note"><strong>Note</strong>: To deploy PCF to AWS GovCloud (US), select the <code>us-gov-west-1</code> region.</p>
+* **An AWS SSH keypair**: You must provide an AWS SSH keypair name as a parameter for the CloudFormation template. If you do not have a pre-existing key pair, create one in [AWS](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair). Save the resulting private key file in a secure location.
+* **A registered wildcard domain**: You must enter a wildcard domain as the `Common name` when creating your SSL certificate.  
 
-Before following the procedure below, confirm that you have selected the correct region within your AWS account. All of the AWS resources for your deployment must exist within a single region. See the <a href='http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-regions-availability-zones'>Amazon documentation on regions and availability zones</a> for help selecting the correct region for your deployment.
-
-To deploy PCF to AWS GovCloud (US), select the <code>us-gov-west-1</code> region.
-
-## <a id='download-template'></a>Step 1: Download the PCF CloudFormation Template ##
-
-1. Sign in to [Pivotal Network](https://network.pivotal.io/).
-
-1. Select <b>Elastic Runtime</b>. From the <b>Releases</b> drop-down menu, select the release that you wish to install.
-
-1. Download the **PCF CloudFormation for AWS Setup**.
-
-1. Save the file as `pcf.json`.
-
-## <a id='upload-cert'></a>Step 2: Upload an SSL Certificate to AWS ##
+## <a id='upload-cert'></a>Step 1: Upload an SSL Certificate to AWS ##
 
 You can add an SSL Certificate using two methods:
 
@@ -45,9 +32,9 @@ The [AWS CLI](https://aws.amazon.com/cli/) must be installed on your machine and
 1. Obtain or create an SSL server certificate. For more information, see the [AWS documentation on SSL certificates](http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/ssl-server-cert.html). When you create a certificate signing request (CSR) in the "Create a Server Certificate" instructions, you must use your wildcard domain as the Common Name input.
 
 1. Add the following additional domains and wildcards using the OpenSSL SAN (subjectAltName) extension: 
-  * `*.system.example.com`
-  * `*.login.system.example.com`
-  * `*.uaa.system.example.com`
+  * `*.sys.example.com`
+  * `*.login.sys.example.com`
+  * `*.uaa.sys.example.com`
   * `*.apps.example.com`
   <p class='note'><strong>Note</strong>: If you use a self-signed certificate or select the "Generate Self-Signed RSA Certificate" option during the <a href="./../customizing/cloudform-er-config.html#security-config">Deploying Elastic Runtime on AWS</a> installation process, you can ignore the step above. However, make sure you upload the self-signed certificate to AWS and attach the certificate to the listeners on the AWS Elastic Load Balancer. Pivotal recommends only using a self-signed certificate for testing and development.</p>
 
@@ -88,9 +75,9 @@ $ aws iam upload-server-certificate \
 
 1. Under **Add domain names**, enter the following wildcard subdomains to the certificate, based on your domain (example: example.com). Click **Add another name to this certificate** until you have entered them all:
   * `*.example.com`
-  * `*.system.example.com`
-  * `*.login.system.example.com`
-  * `*.uaa.system.example.com`
+  * `*.sys.example.com`
+  * `*.login.sys.example.com`
+  * `*.uaa.sys.example.com`
   * `*.apps.example.com`
 
 1. Click **Review and Request** to review, and **Confirm and Request** to confirm.
@@ -100,6 +87,16 @@ $ aws iam upload-server-certificate \
 1. From the approval page, click **I Approve**.
 
 1. Record the SSL Certificate Amazon Resource Name (ARN) shown on the confirmation page to use when [configuring](#create-stack) your AWS resource stack. Alternatively, you can retrieve certificate metadata later by selecting the certificate listing in Certificate Manager and recording values in the **Details** pane that appears underneath.
+
+## <a id='download-template'></a>Step 2: Download the PCF CloudFormation Template ##
+
+1. Sign in to [Pivotal Network](https://network.pivotal.io/).
+
+1. Select <b>Elastic Runtime</b>. From the <b>Releases</b> drop-down menu, select the release that you wish to install.
+
+1. Download the **PCF CloudFormation for AWS Setup**.
+
+1. Save the file as `pcf-cloudformation.json`.
 
 ## <a id='create-stack'></a>Step 3: Create a Resource Stack Using the CloudFormation Template ##
 
@@ -118,29 +115,25 @@ $ aws iam upload-server-certificate \
 
     <%= image_tag("cloudform/uploadtemplate.png") %>
 
-1. Click **Browse**. Browse to and select the `pcf.json`, the **Pivotal Cloud Foundry CloudFormation script for AWS** file that you downloaded. Click **Next**.
+1. Click **Browse**. Browse to and select the `pcf-cloudformation.json`, the **Pivotal Cloud Foundry CloudFormation script for AWS** file that you downloaded. Click **Next**.
 
 1. On the next screen, name the stack `pcf-stack`.
 
 1. <a id='parameters'></a>In the **Specify Parameters** page, complete the
 following fields:
-
-	<%= image_tag("cloudform/new_stack_params.png") %>
-    * **01NATKeyPair**: Use the drop-down menu to select the name of your pre-existing AWS key pair. If you do not have a pre-existing key pair, create one in [AWS](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-keypair.html) and return to this step.
-    * **02NATInstanceType**: Do not change this value.
-    * **03OpsManagerIngress**: Do not change this value.
-      <p class="note"><strong>Note</strong>: The first parameter name begins with `03`.</p>
-    * **04RdsDBName**: Do not change this value.
-    * **05RdsUserName**: Enter a username for the RDS database.
-      <p class='note'><strong>Note</strong>: Do not enter the username
-        <code>rdsadmin</code>. AWS reserves the <code>rdsadmin</code> user
-        account for internal database instance management.
-      </p>
-    * **06RdsPassword**: Enter a password for the RDS database.
-    * **07SSLCertificateARN**: Enter your uploaded SSL Certificate ARN.
-    * **08OpsManagerTemplate**: The default template link provided here works. Otherwise you can enter your own S3 bucket location of the Ops Manager CloudFormation script.
-    * **09ElbPrefix**: Prefix for the generated names of the ELBs. Any string you specify in this field will be prefixed to `-pcf-elb` to form the name of your ELBs. Leave empty to use the default prefix of <code>AWS::StackName</code>.
-    * **10AllowHttpOnElb**: Set this to `true` to listen for HTTP traffic on port `80`. This is the default. Set it to `false` to only listen for traffic on ports `443` and `4443`.
+    * **AvailabilityZone1**: Enter the first availability zone in your region. 
+    * **AvailabilityZone2**: Enter the second availability zone in your region.
+    * **AvailabilityZone3**: Enter the third availability zone in your region.
+    * **EnvironmentID**: Enter a prefix by which you can identify the resources for this PCF deployment. 
+    * **ERTCertificateARN**: Enter your uploaded SSL Certificate ARN to use for Elastic Runtime.
+    * **IsoCertificateARN**: Enter your uploaded SSL Certificate ARN to use for PCF Isolation Segment.
+    * **OpsManAMI**: Enter the **AMI ID** for your region. You can find this in the `Pivotal Cloud Foundry Ops Manager for AWS` PDF file available with the Ops Manager release on [Pivotal Network](https://network.pivotal.io). 
+    * **OpsManIngressCidr**: If you want to limit which range of IPs can reach Ops Manager, enter a CIDR range in this field. Otherwise, leave `0.0.0.0/0`. 
+    * **OpsManSSHKeyPairName**: Use the drop-down menu to select the name of your pre-existing AWS key pair. 
+    * If you want to use Amazon RDS for the Elastic Runtime databases, complete the following fields:
+      * **RDSDBName**: Do not change this value.
+      * **RDSPassword**: Enter a password for the RDS database.
+      * **RDSUsername**: Enter a username for the RDS database.
 
 1. Click **Next**.
 
@@ -161,7 +154,7 @@ When the installation process successfully completes, AWS displays **CREATE_COMP
 After completing this procedure, complete all of the steps in the following
 topics:
 
-* [Launching an Ops Manager Director Instance on AWS](./cloudform-om-deploy.html)
+* [Configure DNS for PCF on AWS](./cloudform-dns-config.html)
 * [Configuring Ops Manager Director for AWS](./cloudform-om-config.html)
 * [Deploying Elastic Runtime on AWS](./cloudform-er-config.html)
 

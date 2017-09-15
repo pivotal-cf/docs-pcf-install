@@ -218,9 +218,18 @@ $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
 
 1. Perform the following steps after restoring Elastic Runtime:
   1. Retrieve the MySQL VM credentials by navigating to the **Elastic Runtime** tile and clicking the **Credentials** tab.
-  1. Retrieve the MySQL admin credentials of your MySQL server by following the steps below:
-      1. Run `GET /api/v0/deployed/products/ERT-DEP/credentials/mysql_admin_credentials`. Replace `ERT-DEP` with your Elastic Runtime deployment ID, which begins with `cf-`. For more information, see the _Access the API_ section of the [**Using the Ops Manager API**](http://docs.pivotal.io/pivotalcf/customizing/ops-man-api.html#access-api) topic.
-      1. Record the values for `identity` and `password`.
+  1. Retrieve the MySQL admin password from CredHub using the Ops Manager API:
+          1. Perform the procedures in the [Using the Ops Manager API](../ops-man-api.html) topic to authenticate and access the Ops Manager API.
+          1. Use the `GET /api/v0/deployed/products` endpoint to retrieve a list of deployed products, replacing `UAA-ACCESS-TOKEN` with the access token recorded in the previous step:
+              <pre class="terminal">$ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products" \
+                -X GET \
+                -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
+          1. In the response to the above request, locate the product with an `installation_name` starting with `cf-` and copy its `guid`.
+          1. Run the following `curl` command, replacing `PRODUCT-GUID` with the value of `guid` from the previous step:
+              <pre class="terminal">$ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products/PRODUCT-GUID/variables?name=mysql-admin-credentials" \
+                -X GET \
+                -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
+          1. Retrieve the MySQL admin password from the response to the above request.
   1. List the VMs in your deployment:
     <pre class="terminal">$ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate \
     -d DEPLOYMENT\_NAME \

@@ -97,7 +97,43 @@ Perform the following steps to retrieve the IP address of your BOSH Director and
 
 <%= partial 'bosh_target_director_bbr' %>
 
-### <a id='backup-prepare-node'></a> Step 4: Enable Backup Prepare Node
+### <a id='check-director'></a> Step 4: Check your BOSH Director
+
+Perform the following steps to back up your BOSH Director:
+
+1. Navigate to the Ops Manager Installation Dashboard.
+1. Click the Ops Manager tile.
+1. Click the **Credentials** tab.
+1. Locate **Bbr Ssh Credentials** and click **Link to Credential** next to it.
+<br><br>
+You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/bbr_ssh_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.
+
+1. Copy the value for `private_key_pem`, beginning with `"-----BEGIN RSA PRIVATE KEY-----"`.
+1. SSH into your jumpbox:
+	<pre class="terminal">
+	$ ssh JUMPBOX\_USER/JUMPBOX\_ADDRESS -i YOUR\_CERTIFICATE.pem
+	</pre>
+1. Run the following command to reformat the key and save it to a file called `PRIVATE_KEY` in the current directory, pasting in the contents of your private key for `YOUR_PRIVATE_KEY`:
+  <pre class="terminal">
+  $ printf -- "YOUR\_PRIVATE\_KEY" > PRIVATE_KEY
+  </pre>
+1. Run the BBR pre-backup-check command from your Jumpbox:
+	<pre class="terminal">
+	$ bbr director \
+	  --private-key-path PRIVATE\_KEY \
+	  --username bbr \
+	  --host HOST \
+	  pre-backup-check
+	</pre>
+
+	Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
+	<br><br>
+	Replace the placeholder values as follows:
+	* `PRIVATE_KEY`: This is the path to the private key file you created above.
+	* `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+1. If the pre-backup check succeeds, continue to the [next section](#backup-prepare-node). If it fails, the Director may not have the correct backup scripts, or the connection to the BOSH Director may have failed.
+
+### <a id='backup-prepare-node'></a> Step 5: Enable Backup Prepare Node
 
 BBR requires the MySQL backup prepare node to be present in order to successfully back up ERT. Currently, the only way to ensure the presence of this node is to enable automated MySQL backups. If you already have these enabled, you may skip this section. Future versions of Elastic Runtime will include an option to deploy the backup prepare node without enabling automatic MySQL backups.
 
@@ -109,7 +145,7 @@ Perform the following steps to enable the backup prepare node:
 	<%= image_tag("backup-prepare-node.png") %>
 1. Navigate back to the Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
 
-### <a id='identify-deployment'></a> Step 5: Identify Your Deployment
+### <a id='identify-deployment'></a> Step 6: Identify Your Deployment
 
 After logging in to your BOSH Director, run the following command to identify the name of the BOSH deployment that contains PCF:
 
@@ -128,15 +164,11 @@ cf-example               push-apps-manager-release/661.1.24
 
 In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
 
-### <a id='check'></a> Step 6: Check Your Deployment
+### <a id='check'></a> Step 7: Check Your Deployment
 
 Perform the following steps to check that your BOSH Director is reachable and has a deployment that can be backed up:
 
-1. SSH into your jumpbox:
-	<pre class="terminal">
-	$ ssh JUMPBOX\_USER/JUMPBOX\_ADDRESS -i YOUR\_CERTIFICATE.pem
-	</pre>
-1. Run the BBR pre-backup check:
+1. From your jumpbox, run the BBR pre-backup check:
 	<pre class="terminal">
   $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
       bbr deployment \
@@ -152,7 +184,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
     * `BOSH_CLIENT`, `BOSH_PASSWORD`: From the Ops Manager Installation Dashboard, click **Ops Manager Director**, navigate to the **Credentials** tab, and click **Uaa Bbr Client Credentials** to retrieve the BOSH UAA credentials.<br><br>
     You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
     * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
-    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 5: Identify Your Deployment](#identify-deployment) section.
+    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 6: Identify Your Deployment](#identify-deployment) section.
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain. If you are using the Ops Manager VM as your jumpbox, locate the certificate at `/var/tempest/workspaces/default/root_ca_certificate`.
 
 1. If the pre-backup check succeeds, continue to the [next section](#procedure). If it fails, the deployment you selected may not have the correct backup scripts, or the connection to the BOSH Director may have failed.
@@ -162,11 +194,11 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 		1 error occurred:
 
 		* The mysql restore script expects a backup script which produces mysql-artifact artifact which is not present in the deployment.
-	Follow the instructions in the [Step 4: Enable Backup Prepare Node](#backup-prepare-node) section and retry.
+	Follow the instructions in the [Step 5: Enable Backup Prepare Node](#backup-prepare-node) section and retry.
 
 ## <a id='procedure'></a>Create Your Backup
 
-### <a id='export'></a>Step 7: Export Installation Settings
+### <a id='export'></a>Step 8: Export Installation Settings
 
 Pivotal recommends that you back up your installation settings by exporting
 frequently. This option is only available after you have deployed at least one time.
@@ -182,43 +214,29 @@ From the **Installation Dashboard** in the Ops Manager interface, click your use
 
 <%= image_tag("settings.png") %>
 
-### <a id='bbr-backup-director'></a> Step 8: Back Up Your BOSH Director
+### <a id='bbr-backup-director'></a> Step 9: Back Up Your BOSH Director
 
-Perform the following steps to back up your BOSH Director:
+Run the BBR backup command from your jumpbox to back up your BOSH Director:
+<pre class="terminal">
+$ bbr director \
+  --private-key-path PRIVATE\_KEY \
+  --username bbr \
+  --host HOST \
+  backup
+</pre>
 
-1. Navigate to the Ops Manager Installation Dashboard.
-1. Click the Ops Manager tile.
-1. Click the **Credentials** tab.
-1. Locate **Bbr Ssh Credentials** and click **Link to Credential** next to it.
+Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
 <br><br>
-You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/bbr_ssh_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.
+Replace the placeholder values as follows:
 
-1. Copy the value for `private_key_pem`, beginning with `"-----BEGIN RSA PRIVATE KEY-----"`.
-1. SSH into your jumpbox.
-1. Run the following command to reformat the key and save it to a file called `PRIVATE_KEY` in the current directory, pasting in the contents of your private key for `YOUR_PRIVATE_KEY`:
-  <pre class="terminal">
-  $ printf -- "YOUR\_PRIVATE\_KEY" > PRIVATE_KEY
-  </pre>
-1. Run the BBR backup command from your jumpbox to back up your BOSH Director:
-	<pre class="terminal">
-	$ bbr director \
-	  --private-key-path PRIVATE\_KEY \
-	  --username bbr \
-	  --host HOST \
-	  backup
-	</pre>
+* `PRIVATE_KEY`: This is the path to the private key file you created in [Step 4: Check your BOSH Director](#check-director).
+* `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
 
-	Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
-	<br><br>
-	Replace the placeholder values as follows:
-	* `PRIVATE_KEY`: This is the path to the private key file you created above.
-	* `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+<p class="note"><strong>Note</strong>: The BOSH Director backup takes at least 20 minutes.</note> </p>
 
-	<p class="note"><strong>Note</strong>: The BOSH Director backup takes at least 20 minutes.</note>
+### <a id='bbr-backup'></a> Step 10: Back Up Your Elastic Runtime Deployment
 
-### <a id='bbr-backup'></a> Step 9: Back Up Your Elastic Runtime Deployment
-
-1.  If you are using an external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup may be slightly inconsistent with your Elastic Runtime backup depending on the duration of time between performing the backups. 
+1.  If you are using an external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup may be slightly inconsistent with your Elastic Runtime backup depending on the duration of time between performing the backups.
 
 1. Run the BBR backup command from your jumpbox to back up your Elastic Runtime deployment:
   <pre class="terminal">
@@ -247,7 +265,7 @@ You can also retrieve the credentials using the Ops Manager API with a GET reque
 1. If the commands completes successfully, do the following:
   1. Move the backup artifact off the jumpbox to your preferred storage space. The backup created by BBR consists of a folder with the backup artifacts and metadata files. However, Pivotal recommends compressing and encrypting the files.
   1. Make redundant copies of your backup and store them in multiple locations in order to minimize the risk of losing your backups in the event of a disaster.
-  1. Attempt a test restore on every backup in order to validate it by performing the procedures in the [Step 10: Validate Your Backup](#validate-backup) section below.
+  1. Attempt a test restore on every backup in order to validate it by performing the procedures in the [Step 11: Validate Your Backup](#validate-backup) section below.
 
 1. If the command fails, do the following:
   1. Ensure all the parameters in the command are set.
@@ -255,7 +273,7 @@ You can also retrieve the credentials using the Ops Manager API with a GET reque
   1. Ensure the specified deployment exists.
   1. Consult the [Exit Codes](#exit-codes) section below.
 
-### <a id='validate-backup'></a> Step 10: (Optional) Validate Your Backup
+### <a id='validate-backup'></a> Step 11: (Optional) Validate Your Backup
 
 <p class="note warning"><strong>Warning</strong>: When validating your backup, the VMs and disks from the backed-up BOSH Director should not be visible to the new BOSH Director. As a result, Pivotal recommends that you deploy the new BOSH Director to a different IaaS network and account than the VMs and disks of the backed-up BOSH Director.</p>
 
@@ -265,7 +283,7 @@ After backing up PCF, you may want to validate your backup by restoring it to a 
 
 Perform the following steps to spin up a second environment that matches the original in order to test a restore:
 
-1. Export your Ops Manager installation by performing the steps in the [Step 7: Export Installation Settings](#export) section.
+1. Export your Ops Manager installation by performing the steps in the [Step 8: Export Installation Settings](#export) section.
 1. Create a new Ops Manager VM in a different network to the original. Ensure that the Ops Manager VM has enough persistent disk to accommodate the files exported in the previous step. Consult the topic specific to your IaaS:<br><br>
   * [Installing PCF on AWS using CloudFormation](../cloudform-install.html)
 	* [Manually Configuring AWS for PCF](../pcf-aws-manual-config.html)
@@ -356,4 +374,4 @@ If you need to cancel a backup, perform the following steps:
 	1. Select the VM you want to SSH into.
 	1. Run the following command from the VM:
 		<pre class="terminal">$ sudo /var/vcap/jobs/cloud-controller-backup/bin/bbr/post-backup-unlock</pre>
-1. Run the BBR pre-backup check from your jumpbox by following the steps in the [Step 6: Check Your Deployment](#check) section above. If the command reports that it cannot back up the deployment, SSH onto each VM mentioned in the error using the BOSH CLI and remove the `/var/vcap/store/bbr-backup` directory if present.
+1. Run the BBR pre-backup check from your jumpbox by following the steps in the [Step 7: Check Your Deployment](#check) section above. If the command reports that it cannot back up the deployment, SSH onto each VM mentioned in the error using the BOSH CLI and remove the `/var/vcap/store/bbr-backup` directory if present.

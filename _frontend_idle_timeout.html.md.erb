@@ -1,4 +1,4 @@
-(Optional) **Frontend Idle Timeout for Gorouter and HAproxy**: Use this field to help prevent connections to your load balancer from being closed prematurely. The value you enter sets the duration in seconds to maintain an open connection with a client that supports keep-alive. See the following table:
+(Optional) **Frontend Idle Timeout for Gorouter and HAProxy**: Use this field to help prevent connections from your load balancer to Gorouter or HAProxy from being closed prematurely. The value you enter sets the duration in seconds to maintain an idle open connection from a load balancer that supports keep-alive. In general, set the value higher than your load balancer's backend idle timeout to avoid the race condition where the load balancer sends a request before it discovers that Gorouter/HAProxy has closed the connection. See the following table for specific guidance and exceptions to this rule:
 	<table>
 		<tr>
 			<th>IaaS</th>
@@ -10,7 +10,7 @@
 		</tr>
 		<tr>
 			<td>Azure</td>
-			<td>By default, Azure load balancer times out at 240 seconds without sending a TCP RST to clients, so Pivotal Recommends a value lower than <code>240</code> to force it to send the TCP RST.</td>
+			<td>By default, Azure load balancer times out at 240 seconds without sending a TCP RST to clients, so as an exception, Pivotal recommends a value lower than <code>240</code> to force it to send the TCP RST.</td>
 		</tr>
 		<tr>
 			<td>GCP</td>
@@ -18,6 +18,6 @@
 		</tr>
 		<tr>
 			<td>Other</td>
-			<td>The timeout must be greater than that of the load balancer.</td>
+			<td>Set the timeout value to be greater than that of the load balancer's backend idle timeout.</td>
 		</tr>
 	</table>

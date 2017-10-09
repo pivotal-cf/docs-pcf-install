@@ -8,7 +8,9 @@ owner: Ops Manager
 
 This guide describes the preparation steps required to install Pivotal Cloud Foundry (PCF) on Google Cloud Platform (GCP).
 
-In addition to fulfilling the prerequisites listed in the [Installing Pivotal Cloud Foundry on GCP](./gcp.html) topic, you must create resources in GCP such as a new network, firewall rules, load balancers, and a service account before deploying PCF. Follow these procedures to prepare your GCP environment. You may also find it helpful to review different deployment options in the [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html).
+In addition to fulfilling the prerequisites listed in the [Installing Pivotal Cloud Foundry on GCP](./gcp.html) topic, you must create resources in GCP such as a new network, firewall rules, load balancers, and a service account before deploying PCF. Follow these procedures to prepare your GCP environment. 
+
+You may also find it helpful to review different deployment options in the [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html).
 
 ## <a id="iam_account"></a>Step 1: Set up an IAM Service Account ##
 
@@ -127,7 +129,9 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
 
 ## <a id="create_nat"></a>Step 4: Create NAT Instances ##
 
-Use a NAT instance when you want to expose only a minimal number of public IP addresses. For more information, see the [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html).
+Use NAT instances when you want to expose only a minimal number of public IP addresses. 
+
+For more information, see the [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html#common_network).
 
 1. In the console, navigate to **Compute Engine** > **VM instances**. 
   ![Compute Instance](gcp/gcp-vm-instances.png)
@@ -159,7 +163,7 @@ Use a NAT instance when you want to expose only a minimal number of public IP ad
     1. Click the pencil icon to edit the **Network interface**. 
     1. For **Network**, select `MY-PCF-virt-net`. You created this network in [Step 1: Create a GCP Network with Subnets](#create-net).
     1. For **Subnetwork**, select `MY-PCF-subnet-infrastructure-MY-GCP-REGION`.
-    1. For **Primary Internal IP**, select `Custom`. Enter an IP address (for example, `192.168.101.2`) in the **Internal IP address** field. Specify an internal IP address located within the reserved IP range that you will [configure in Ops Manager Director](./gcp-om-config.html#network). Do not use the **Gateway** IP, for example `192.168.101.1`.
+    1. For **Primary internal IP**, select `Ephemeral (Custom)`. Enter an IP address (for example, `192.168.101.2`) in the **Custom ephemeral IP address** field. Specify an internal IP address located within the reserved IP range that you will [configure in Ops Manager Director](./gcp-om-config.html#network). Do not use the **Gateway** IP, for example `192.168.101.1`.
     1. For **External IP**, select `Ephemeral`. 
     1. Set **IP forwarding** to `On`. 
     1. Click **Done**.
@@ -346,7 +350,7 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
   * `routing`
   * `silk`
   * `uaa`
-1. Select the **Access Control** tab. 
+1. Select the **USERS** tab. 
 1. Use the **Create user account** button to create a unique username and password for each database you created above. For **Host name**, select **Allow any host**. You must create a total of 13 user accounts. 
 
 ## <a id="buckets"></a>Step 7: Create Storage Buckets ##
@@ -407,7 +411,7 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
 
 ### Configure Backend
 
-1. Navigate to **Network Services** > **Load Balancing**. 
+1. Navigate to **Network services** > **Load balancing**. 
 1. Click **CREATE LOAD BALANCER**. 
 1. Under **HTTP(S) Load Balancing**, click the **Start configuration** button.
 1. For the **Name**, enter `MY-PCF-global-pcf`. 
@@ -467,15 +471,18 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
 
 The load balancer for tailing logs with WebSockets for PCF on GCP operates on TCP port `443`. 
 
-1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
+1. From the GCP Console, select **Network services > Load balancing > Create load balancer**.
 
 1. Under **TCP Load Balancing**, click **Start configuration**.
   <%= image_tag("gcp/create_new_lb.png") %>
 
-1. Under **Internet facing or internal only**, select **From Internet to my VMs**. Under **Connection termination**, select **No (TCP)**. 
+1. In the Createa a load balancer configuration screen, make the following selections:
+  * Under **Internet facing or internal only**, select **From Internet to my VMs**. 
+  * Under **Multiple regions or single region**, select **Single region only**.
+  * Under **Connection termination**, select **No (TCP)**. 
+    <%= image_tag("gcp/lb_connection_termination.png") %>
 
 1. Click **Continue**. 
-  <%= image_tag("gcp/lb_connection_termination.png") %>
 
 1. In the **New TCP load balancer** window, enter `MY-PCF-wss-logs` in the **Name** field.
 
@@ -506,7 +513,7 @@ The load balancer for tailing logs with WebSockets for PCF on GCP operates on TC
 
 ## <a id="ssh_lb"></a> Step 10: Create SSH Proxy Load Balancer
 
-1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
+1. From the GCP Console, select **Network servicess > Load balancing > Create load balancer**.
 
 1. Under **TCP Load Balancing**, click **Start configuration**.
   <%= image_tag("gcp/lb-configure.png") %>
@@ -546,7 +553,7 @@ The load balancer for tailing logs with WebSockets for PCF on GCP operates on TC
 
 To create a load balancer for TCP routing in GCP, perform the following steps:
 
-1. From the GCP Console, select **Networking > Load Balancing > Create load balancer**.
+1. From the GCP Console, select **Network services > Load balancing > Create load balancer**.
 
 1. Under **TCP Load Balancing**, click **Start configuration**.
 
@@ -561,7 +568,7 @@ To create a load balancer for TCP routing in GCP, perform the following steps:
 1. Select **Backend configuration**, and enter the following field values:
    * **Region**: Select the region you used to create the network in [Create a GCP Network with Subnet](#create_network).
    * From the **Health check** drop-down menu, create a health check with the following details:
-      * **Name**: `MY-PCF-gorouter`
+      * **Name**: `MY-PCF-tcp-lb`
       * **Port**: `80`
       * **Request path**: `/health`
       * **Check interval**: `30`
@@ -594,7 +601,7 @@ In this step you redirect queries for your domain to the IP addresses of your lo
     * A TCP load balancer for WebSockets named `MY-PCF-wss-logs`
     * A TCP load balancer named `MY-PCF-ssh-proxy`
     * A TCP load balancer named `MY-PCF-cf-tcp-lb`
-    <p class="note"><strong>Note</strong>: You can locate the static IP address of each load balancer by clicking its name under <strong>Networks > Load balancing</strong> in the GCP Console.</p>
+    <p class="note"><strong>Note</strong>: You can locate the static IP address of each load balancer by clicking its name under <strong>Network services > Load balancing</strong> in the GCP Console.</p>
 
 1. Log in to the DNS registrar that hosts your domain. Examples of DNS registrars include Network Solutions, GoDaddy, and Register.com.
 

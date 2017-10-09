@@ -46,28 +46,13 @@ For information about the number of instances required to run a minimal, non-HA 
 
 ### <a id='permissions'></a> vSphere Service Account Requirements
 
-Ops Manager requires read/write permissions to the datacenter level of the [vSphere Inventory Hierarchy](http://pubs.vmware.com/vsphere-4-esx-vcenter/index.jsp?topic=/com.vmware.vsphere.dcadmin.doc_41/vsp_dc_admin_guide/managing_users_groups_roles_and_permissions/c_hierarchical_inheritance_of_permissions.html) to successfully install. Pivotal recommends using the default [VMware Administrator System Role](http://pubs.vmware.com/vsphere-51/index.jsp#com.vmware.wssdk.pg.doc/PG_Authenticate_Authorize.8.6.html#1110514) to achieve the appropriate permission level, or a custom role that has all privileges for all objects in the datacenter, including propagating privileges to children. 
+Ops Manager requires read/write permissions to the datacenter level of the [vSphere Inventory Hierarchy](http://pubs.vmware.com/vsphere-4-esx-vcenter/index.jsp?topic=/com.vmware.vsphere.dcadmin.doc_41/vsp_dc_admin_guide/managing_users_groups_roles_and_permissions/c_hierarchical_inheritance_of_permissions.html) to successfully install. Pivotal recommends defining a custom role for the service account that has all privileges for all objects in the datacenter, including propagating privileges to children.
 
-For a complete list of required vSphere privileges, see the [BOSH documentation](https://github.com/cloudfoundry-incubator/bosh-vsphere-cpi-release/blob/master/docs/required_vcenter_privileges.md). 
+For a complete list of the minimum required vSphere privileges, see the [vSphere Service Account Requirements](./vsphere-service-account.html) topic.  
 
-For more information on why BOSH and Ops Manager require certain permissions, see [Explanation of Required Permissions](#perms_explanation). Since Ops Manager passes all required credentials through to BOSH, you only need one service account with the required vSphere privileges to complete the installation. Setting up separate service accounts for Ops Manager and BOSH is not necessary or recommended.
+Since Ops Manager passes all required credentials through to BOSH, you only need one service account with the required vSphere privileges to complete the installation. Setting up separate service accounts for Ops Manager and BOSH is not necessary or recommended.
 
-#### <a id="perms_explanation"></a> Explanation of Required Permissions
-
-Ops Manager requires a service account with the following vSphere permissions due to the listed reasons:
-
-| **vCenter&nbsp;Privilege** | **Purpose** |
-|--------------------|-----------------------|
-| `Global.ManageCustomAttributes` | Ops Manager assigns custom attributes to the VMs it deploys to identify BOSH releases and job index information on each VM. vCenter APIs require root access to manage these custom attributes. |
-| `Datacenter.Folder.*` | Ops Manager creates a folder for VMs, stemcells, and persistent disks during installation. The folder contents change frequently as Ops Manager applies changes. |
-| `Host.Inventory.EditCluster` | This setting allows BOSH to manage rules for Distributed Resource Scheduler (DRS) and VM affinity. BOSH requires this setting, but Ops Manager does not use this feature. See the [BOSH Documentation](https://bosh.io/docs/vm-anti-affinity.html#vsphere) for more information. |
-| `InventoryService.Tagging.*` | This setting allows BOSH to manage rules for Distributed Resource Scheduler (DRS) and VM affinity. BOSH requires this setting, but Ops Manager does not use this feature. See the [BOSH Documentation](https://bosh.io/docs/vm-anti-affinity.html#vsphere) for more information. |
-| `Resource.*Migrate` | When using `vAppImport` to clone a VM, BOSH requires the `Resource.ColdMigrate` privilege to create a new, powered-off VM based on a given stemcell. BOSH migrates the VM to the destination datastore, where Ops Manager deploys the VM and powers it on. |
-| `VirtualMachine.State.*Snapshot` | Before Ops Manager deploys a new VM, it uses a snapshot to clone the stemcell image to the destination. |
-| `VirtualMachine.Provisioning.ModifyCustSpecs` | When cloning a stemcell, BOSH sets custom specifications, such as hostnames and network configurations, based on the stemcell operating system. |
-| `Provisioning.AllowVirtualMachineDownload` | The VM download privilege allows BOSH to modify files within a VM, including links between VMs and persistent disks. When vMotion migrates disks in vSphere, BOSH uses these links to maintain the connections between VMs and their persistent disks. |
-
-<p class="note"><strong>Note</strong>: vSphere supports defining the above permissions at the global level only.</p>
+<p class="note"><strong>Note</strong>: You can also apply the default <a href="http://pubs.vmware.com/vsphere-51/index.jsp#com.vmware.wssdk.pg.doc/PG_Authenticate_Authorize.8.6.html#1110514">VMware Administrator System Role</a> to the service account to achieve the appropriate permission level.</p>
 
 ## <a id='install-om'></a>Step 1: Install Ops Manager ##
 

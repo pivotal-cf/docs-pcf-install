@@ -24,21 +24,60 @@ If you configured your Ops Manager for Internal Authentication, perform the foll
 
 You need the credentials used to import the PCF .ova or .ovf file into your virtualization system.
 
-1. SSH into the Ops Manager VM, entering the password that you set during the .ova deployment into vSphere:
+1. From a command line, run `ssh ubuntu@OPS-MANAGER-FQDN` to SSH into the Ops Manager VM. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager.
+
+1. When prompted, enter the password that you set during the .ova deployment
+into vCenter. For example:
+
+    <pre class='terminal'>
+    $ ssh ubuntu@my-opsmanager-fqdn.example.com
+    Password: ***********
+    </pre>
+1. Proceed to [Authenticate into Ops Manager](#opsman_login).
+
+####<a id='aws'></a> AWS, Azure, and OpenStack
+
+1. Locate the Ops Manager FQDN on the AWS **EC2 instances** page, Azure **Virtual machines** page, or the OpenStack **Access & Security** page.
+
+1. Run `chmod 600 ops_mgr.pem` to change the permissions on the `.pem` file to be more restrictive:
 
 	<pre class="terminal">
-	$ ssh ubuntu@OPS-MANAGER-FQDN
-	Password: ******************
+	$ chmod 600 ops_mgr.pem
 	</pre>
 
-####<a id='aws'></a> AWS, GCP, Azure, and OpenStack:
+1. Run `ssh -i ops_mgr.pem ubuntu@OPS-MANAGER-FQDN` to SSH into the Ops Manager VM. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager. For example:
 
-1. SSH into the Ops Manager VM:
-	<pre class="terminal">$ ssh -i opsman ubuntu@OPS-MAN-FQDN</pre> 
+	<pre class="terminal">
+	$ ssh -i ops_mgr.pem ubuntu@my-opsmanager-fqdn.example.com
+	</pre>
+1. Proceed to [Authenticate into Ops Manager](#opsman_login).
 
-	If the private key that you generated when deploying your Ops Manager Director instance is not named `opsman`, provide the correct filename instead.
+####<a id='gcp'></a> GCP
 
-1. From the Ops Manager VM, use the UAAC to target your Ops Manager UAA server:
+1. Confirm that you have installed the gcloud CLI. If you do not have the gcloud CLI, see [the Google Cloud Platform documentation](https://cloud.google.com/sdk/gcloud/#downloading_gcloud).
+
+1. Run `gcloud config set project MY-PROJECT` to configure your Google Cloud Platform project. For example:
+    <pre class="terminal">
+    $ gcloud config set project gcp
+    </pre>
+
+1. Run `gcloud auth login MY-GCP-ACCOUNT`. For example:
+    <pre class="terminal">
+    $ gcloud auth login user<span>@</span>example.com
+    </pre>
+
+1. Run `gcloud compute ssh MY-INSTANCE --zone MY-ZONE`. For example:
+    <pre class="terminal">
+    $ gcloud compute ssh om-pcf-1a --zone us-central1-b
+    </pre>
+
+1. Run `sudo su - ubuntu` to switch to the `ubuntu` user.
+
+1. Proceed to [Authenticate into Ops Manager](#opsman_login).
+
+####<a id='opsman_login'></a> Authenticate into Ops Manager
+
+1. After successfully SSHing into the Ops Manager VM, use the UAAC to target your Ops Manager UAA server:
 	<pre class="terminal">$ uaac target http<span>s:</span>//OPS-MAN-FQDN/uaa</pre>
 
 1. Retrieve your token to authenticate:

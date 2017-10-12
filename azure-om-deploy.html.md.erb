@@ -24,7 +24,7 @@ Before you perform the procedures in this topic, you must have completed the pro
     <p class="note"><strong>Note</strong>: If you are on a Windows machine, you can use <code>set</code> instead of <code>export</code>.</p>
 1. Export your location. For example, `westus`.
     <pre class="terminal">
-    $ export LOCATION="YOUR-LOCATION"
+    $ export LOCATION=westus
     </pre>
     <p class="note"><strong>Note</strong>: For a list of available locations, run <code>az account list-locations</code>.</p>
 1. Create a network security group named `pcf-nsg`.
@@ -81,7 +81,6 @@ Before you perform the procedures in this topic, you must have completed the pro
     --resource-group $RESOURCE_GROUP \
     --address-prefix 10.0.0.0/20
     </pre>
-    <p class="note"><strong>Note</strong>: To use the <a href="http://docs.pivotal.io/p-identity/index.html">Single Sign-On for PCF</a> service, you must configure a network that contains only one subnet.</p>
 
 ##<a id='storage'></a> Step 2: Create BOSH and Deployment Storage Accounts
 
@@ -91,14 +90,15 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     <pre class="terminal">
     $ export STORAGE_NAME="YOUR-BOSH-STORAGE-ACCOUNT-NAME"
     </pre>
-1. Create a standard storage account for BOSH with the following command. This account will be used for BOSH book-keeping and running the Ops Manager VM itself, but does not have to be used for running any other VMs.
+1. Create a Standard storage account for BOSH with the following command. This account will be used for BOSH bookkeeping and running the Ops Manager VM itself, but does not have to be used for running any other VMs.
     <pre class="terminal">
     $ az storage account create --name $STORAGE\_NAME \
     --resource-group $RESOURCE\_GROUP \
-    --sku Standard_LRS --kind Storage \
+    --sku Standard\_LRS --kind Storage \
     --location $LOCATION
     </pre>
-    If the command fails, ensure you have followed the rules for naming your storage account. Re-export a new storage account name if necessary.
+    <p class="note"><strong>Note</strong>: <code>Standard\_LRS</code> refers to a Standard Azure storage account. The BOSH Director requires table storage to store stemcell information. Azure Premium storage does not support table storage and cannot be used for the BOSH storage account.</p>
+    If the command fails, ensure you have followed the rules for naming your storage account. Export another new storage account name if necessary.
 1. Configure the Azure CLI to use the BOSH storage account as its default.
     1. Retrieve the connection string for the account.
     <pre class="terminal">
@@ -259,16 +259,17 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     <pre class="terminal">$ export OPS\_MAN\_IMAGE\_URL="YOUR-OPS-MAN-IMAGE-URL"</pre>
 
 1. Copy the Ops Manager image into your storage account.
+    <p class="note"><strong>Note</strong>: For compatibility when upgrading to future versions of Ops Manager, choose a unique name for the image that includes the Ops Manager version number. For example, replace <code>image-1.12.x</code> in the following example to <code>image-1.12.1</code>.</p>
     <pre class="terminal">
     $ az storage blob copy start --source-uri $OPS\_MAN\_IMAGE\_URL \
     --connection-string $AZURE\_STORAGE\_CONNECTION\_STRING \
     --destination-container opsmanager \
-    --destination-blob image.vhd 
+    --destination-blob image-1.12.x.vhd
     </pre>
 
 1. Copying the image may take several minutes. Run the following command and examine the output under `"copy"`:
     <pre class="terminal">
-    $ az storage blob show --name image.vhd \
+    $ az storage blob show --name image-1.12.x.vhd \
     --container-name opsmanager \
     --account-name $STORAGE_NAME
     ...
@@ -318,7 +319,7 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     --private-ip-address 10.0.0.5 \
     --public-ip-address ops-manager-ip \
     --resource-group $RESOURCE_GROUP \
-    --name ops-manager-nic --location $LOCATION
+    --name opsman-nic --location $LOCATION
     </pre>
 
 1. Create a keypair on your local machine with the username `ubuntu`. For example, enter the following command:
@@ -328,12 +329,13 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
    <br>
    When prompted for a passphrase, press the `enter` key to provide an empty passphrase.
 
-1. Create a managed disk from the Ops Manager image:
+1. Create a managed image from the Ops Manager VHD file:
     <pre class="terminal">
-    $ az disk create --resource-group $RESOURCE_GROUP \
-    --name opsman-disk \
-    --source https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image.vhd \
-    --location $LOCATION --size-gb 120
+    $ az image create --resource-group $RESOURCE\_GROUP \
+    --name opsman-image-1.12.x \
+    --source https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image-1.12.x.vhd \
+    --location $LOCATION \
+    --os-type Linux
     </pre>
     <br>
     If you are using Azure China, Azure Government Cloud, or Azure Germany, replace `blob.core.windows.net` with the following:
@@ -344,14 +346,32 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
 
 1. Create your Ops Manager VM, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file.
     <pre class="terminal">
-     $ az vm create --name ops-manager --resource-group $RESOURCE\_GROUP \
-     --location $LOCATION --os-type linux \
-     --nics ops-manager-nic \
-     --attach-os-disk opsman-disk \
+     $ az vm create --name opsman-1.12.x --resource-group $RESOURCE\_GROUP \
+     --location $LOCATION \
+     --nics opsman-nic \
+     --image opsman-image-1.12.x \
+     --os-disk-name opsman-1.12.x-osdisk \
      --admin-username ubuntu \
-     --size Standard\_DS2\_v2 \
+     --size Standard\_DS2_v2 \
+     --storage-sku Standard\_LRS \
      --ssh-key-value PATH-TO-PUBLIC-KEY
     </pre> 
+
+1. If you plan to install more than one tile in this Ops Manager installation, perform the following steps to increase the size of the Ops Manager VM disk. You can repeat this process and increase the disk again at a later time if necessary.
+    1. Run the following command to stop the VM and detach the disk:
+    <pre class="terminal">
+    $ az vm deallocate --name opsman-1.12.x \
+    --resource-group $RESOURCE\_GROUP
+    </pre>
+    1. Run the following command to resize the disk to 128&nbsp;GB:
+    <pre class="terminal">
+    $ az disk update --size-gb 128 --name opsman-1.12.x-osdisk \
+    --resource-group $RESOURCE\_GROUP
+    </pre>
+    1. Run the following command to start the VM:
+    <pre class="terminal">
+    $ az vm start --name opsman-1.12.x --resource-group $RESOURCE\_GROUP
+    </pre>
 
 ##<a id='post-deploy'></a> Step 6: Complete Ops Manager Director Configuration
 

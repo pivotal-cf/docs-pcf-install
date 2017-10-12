@@ -129,7 +129,7 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     * **Location**: The location to install the Ops Manager VM. For example, `westus`.
     * **Environment**: Tag template-created resources for assisting with resource management.
 
-##<a id='deploy'></a> Step 4: Deploy the ARM Template and Deployment Storage Accounts
+##<a id='deploy'></a> Step 4: Deploy the ARM Template
 
 1. Deploy the template:
     <pre class="terminal">
@@ -137,52 +137,6 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     --parameters azure-deploy-parameters.json \
     --resource-group $RESOURCE_GROUP --name cfdeploy
     </pre>
-1. When the command finishes, examine the output for the following values:
-    * `opsMan-FQDN`
-        <pre class="terminal">
-          "opsMan-FQDN": {
-            "type": "String",
-            "value": "pcf-opsman-efecrvhdf7w7g.westus.cloudapp.azure.com"
-          }
-        </pre>
-    * `extra Storage Account Prefix`
-        <pre class="terminal">
-        "extra Storage Account Prefix": {
-          "type": "String",
-          "value": "xtrastrgefecrvhdf7w7g"
-          },
-        </pre>
-1. The template creates five new Premium deployment storage accounts. The names of the deployment storage accounts are the value of `extra Storage Account Prefix` appended with `1`, `2`, `3`, `4`, and `5`. In the example above, the names of the five deployment storage accounts are the following:
-    * `xtrastrgefecrvhdf7w7g1`
-    * `xtrastrgefecrvhdf7w7g2`
-    * `xtrastrgefecrvhdf7w7g3`
-    * `xtrastrgefecrvhdf7w7g4`
-    * `xtrastrgefecrvhdf7w7g5`
-    <br/><br/>
-   <p class="note"><strong>Note</strong>: The five Premium storage accounts created by the template provide a reasonable amount of initial storage capacity. Pivotal recommends creating one Standard storage account for every 30 VMs, or one Premium storage account for every 150 VMs. You can increase the number of storage accounts later by provisioning more with the Azure CLI and following the naming sequence listed above.</p>
-   <br/>
-   For each of the five new deployment storage accounts, perform the following steps:<br/>
-        1. Retrieve the connection string for your storage account, replacing `YOUR-DEPLOYMENT-STORAGE-ACCOUNT-NAME` with the name of the storage account. For example, `xtrastrgefecrvhdf7w7g1`.
-        <pre class="terminal">
-        $ az storage account show-connection-string \
-        --name YOUR-DEPLOYMENT-STORAGE-ACCOUNT-NAME --resource-group $RESOURCE_GROUP
-        </pre>
-        The command returns output similar to the following:
-        <pre class="terminal">
-        {
-          "connectionString": "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=xtrastrgefecrvhdf7w7g1;AccountKey=e7R178h5teLtnkWLPxesFkAKLRO7oC7dlfujsW0PYV6vUhnJZSutCvVhla9u4xwtOV7liVZNAN6oJyoutO32fQ=="
-        }
-        </pre>
-        1. Record the full value of `connectionstring` from the output above, starting with and including `DefaultEndpointsProtocol=`.
-        1. Export the connection string, choosing a unique name for `CONNECTION_STRING_N`. For example, `CONNECTION_STRING_2`.
-        <pre class="terminal">$ export CONNECTION\_STRING\_N="YOUR-CONNECTION-STRING"</pre> 
-        1. Create a container for BOSH:
-        <pre class="terminal">$ az storage container create --name bosh \
-        --connection-string $CONNECTION\_STRING\_N</pre>
-        1. Create a container for the stemcell:
-        <pre class="terminal">$ az storage container create --name stemcell \
-        --connection-string $CONNECTION\_STRING\_N</pre>
-        </pre>
 
 1. Create a network security group named `pcf-nsg`.
     <pre class="terminal">

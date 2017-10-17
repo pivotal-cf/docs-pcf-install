@@ -14,7 +14,6 @@ After you complete the procedures in this topic, follow the instructions in the 
 
 <p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p> 
 
-
 ##<a id='network'></a> Step 1: Create Network Resources
 
 1. Navigate to the Azure portal, click **Resource groups**, and click **Add** to create a new resource group for your PCF deployment. 
@@ -262,18 +261,18 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     <pre class="terminal">$ export OPS\_MAN\_IMAGE\_URL="YOUR-OPS-MAN-IMAGE-URL"</pre>
 
 1. Download the Ops Manager image to your local machine. The image size is 5&nbsp;GB. The upload completes faster if you run this command from a system close to Azure Stack.
-    <p class="note"><strong>Note</strong>: For compatibility when upgrading to future versions of Ops Manager, choose a unique name for the image that includes the Ops Manager version number. For example, replace <code>image-1.12.x</code> in the following example to <code>image-1.12.1</code>.</p>
+    <p class="note"><strong>Note</strong>: For compatibility when upgrading to future versions of Ops Manager, choose a unique name for the image that includes the Ops Manager version number. For example, replace <code>opsman-image-2.0.x</code> in the following example to <code>opsman-image-2.0.1</code>.</p>
     <pre class="terminal">
-    $ wget $OPS\_MAN\_IMAGE\_URL -O image-1.12.x.vhd
+    $ wget $OPS\_MAN\_IMAGE\_URL -O opsman-image-2.0.x.vhd
     </pre>
 
-1. Run the following command to upload the image to the Azure Stack storage account:
+1. Upload the image to the Azure Stack storage account.
     <pre class="terminal">
-    $ az storage blob upload --name image-1.12.x.vhd \
+    $ az storage blob upload --name opsman-image-2.0.x.vhd \
     --connection-string $AZURE_STORAGE\_CONNECTION\_STRING \
     --container-name opsmanager \
     --type page \
-    --file image-1.12.x.vhd
+    --file opsman-image-2.0.x.vhd
     </pre>
 
 1. Create a public IP address named `ops-manager-ip`.
@@ -321,43 +320,30 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
    <br>
    When prompted for a passphrase, press the `enter` key to provide an empty passphrase.
 
-1. Create a managed image from the Ops Manager VHD file:
+1. Create an image from the Ops Manager VHD file.
     <pre class="terminal">
     $ az image create --resource-group $RESOURCE\_GROUP \
-    --name opsman-image-1.12.x \
-    --source https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image-1.12.x.vhd \
+    --name opsman-image-2.0.x \
+    --source https<span>:</span>//my-azure-stack.com/opsmanager/opsman-image-2.0.x.vhd \
     --location $LOCATION \
     --os-type Linux
     </pre>
+    Replace `my-azure-stack.com` with the URL of your Azure Stack instance. Find the complete source URL in the Azure Stack UI by viewing the **Blob properties** of the Ops Manager image you created earlier in this procedure.
 
 1. Create your Ops Manager VM, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file.
     <pre class="terminal">
-     $ az vm create --name opsman-1.12.x --resource-group $RESOURCE\_GROUP \
+     $ az vm create --name opsman-2.0.x --resource-group $RESOURCE\_GROUP \
      --location $LOCATION \
      --nics opsman-nic \
-     --image opsman-image-1.12.x \
-     --os-disk-name opsman-1.12.x-osdisk \
+     --image opsman-image-2.0.x \
+     --os-disk-name opsman-2.0.x-osdisk \
+     --os-disk-size-gb 128 \
      --admin-username ubuntu \
-     --size Standard\_DS2_v2 \
      --storage-sku Standard\_LRS \
      --ssh-key-value PATH-TO-PUBLIC-KEY
-    </pre> 
+    </pre>
 
-1. If you plan to install more than one tile in this Ops Manager installation, perform the following steps to increase the size of the Ops Manager VM disk. You can repeat this process and increase the disk again at a later time if necessary.
-    1. Run the following command to stop the VM and detach the disk:
-    <pre class="terminal">
-    $ az vm deallocate --name opsman-1.12.x \
-    --resource-group $RESOURCE\_GROUP
-    </pre>
-    1. Run the following command to resize the disk to 128&nbsp;GB:
-    <pre class="terminal">
-    $ az disk update --size-gb 128 --name opsman-1.12.x-osdisk \
-    --resource-group $RESOURCE\_GROUP
-    </pre>
-    1. Run the following command to start the VM:
-    <pre class="terminal">
-    $ az vm start --name opsman-1.12.x --resource-group $RESOURCE\_GROUP
-    </pre>
+1. If you plan to install more than one tile in this Ops Manager installation, increase the size of the Ops Manager VM disk using the Azure Stack UI.
 
 ##<a id='post-deploy'></a> Step 6: Complete Ops Manager Director Configuration
 

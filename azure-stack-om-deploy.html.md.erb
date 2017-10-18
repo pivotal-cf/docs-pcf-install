@@ -320,28 +320,22 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
    <br>
    When prompted for a passphrase, press the `enter` key to provide an empty passphrase.
 
-1. Create an image from the Ops Manager VHD file.
-    <pre class="terminal">
-    $ az image create --resource-group $RESOURCE\_GROUP \
-    --name opsman-image-2.0.x \
-    --source https<span>:</span>//my-azure-stack.com/opsmanager/opsman-image-2.0.x.vhd \
-    --location $LOCATION \
-    --os-type Linux
-    </pre>
-    Replace `my-azure-stack.com` with the URL of your Azure Stack instance. Find the complete source URL in the Azure Stack UI by viewing the **Blob properties** of the Ops Manager image you created earlier in this procedure.
-
 1. Create your Ops Manager VM, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file.
     <pre class="terminal">
      $ az vm create --name opsman-2.0.x --resource-group $RESOURCE\_GROUP \
      --location $LOCATION \
      --nics opsman-nic \
-     --image opsman-image-2.0.x \
+     --image https<span>:</span>//$STORAGE_NAME.my-azure-stack.com/opsmanager/opsman-image-2.0.x.vhd \
      --os-disk-name opsman-2.0.x-osdisk \
      --os-disk-size-gb 128 \
+     --os-type Linux \
+     --use-unmanaged-disk \
+     --storage-account $STORAGE_NAME \
+     --storage-container-name opsmanager \
      --admin-username ubuntu \
-     --storage-sku Standard\_LRS \
      --ssh-key-value PATH-TO-PUBLIC-KEY
     </pre>
+    Replace `my-azure-stack.com` with the URL of your Azure Stack instance. Find the complete source URL in the Azure Stack UI by viewing the **Blob properties** of the Ops Manager image you created earlier in this procedure.
 
 1. If you plan to install more than one tile in this Ops Manager installation, increase the size of the Ops Manager VM disk using the Azure Stack UI.
 

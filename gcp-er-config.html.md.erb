@@ -37,15 +37,13 @@ Before beginning this procedure, ensure that you have successfully completed the
 
 1. Select **Assign AZ and Networks**. These are the Availability Zones that you [create](./gcp-om-config.html#az) when configuring Ops Manager Director.
 
-1. Select an Availability Zone under **Place singleton jobs**. Ops Manager runs any job with a single instance in this Availability Zone.
+1. Select an the first Availability Zone under **Place singleton jobs**. Ops Manager runs any job with a single instance in this Availability Zone.
 
-1. Select one or more Availability Zones under **Balance other jobs**. Ops Manager balances instances of jobs with more than one instance across the Availability Zones that you specify.
+1. Select all Availability Zones under **Balance other jobs**. Ops Manager balances instances of jobs with more than one instance across the Availability Zones that you specify.
 
     <p class="note"><strong>Note</strong>: For production deployments, Pivotal recommends at least three Availability Zones for a highly available installation of Elastic Runtime.</p>
 
-1. From the **Network** drop-down box, choose the network on which you want to run Elastic Runtime.
-	
-    <%= image_tag("images/er-az.png") %>
+1. From the **Network** drop-down box, choose the `ert` network you created when [configuring Ops Manager Director](./gcp-om-config.html#network).
 
 1. Click **Save**.
 
@@ -54,10 +52,10 @@ Before beginning this procedure, ensure that you have successfully completed the
 In this step you redirect queries for your domain to the IP addresses of your load balancers.
 
 1. Locate the static IP addresses of the load balancers you created in [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html):
-    * An HTTP(S) load balancer named `pcf-router`
-    * A TCP load balancer for WebSockets named `pcf-websockets`
-    * A TCP load balancer named `pcf-ssh`
-    * A TCP load balancer for the TCP router if you plan on enabling the TCP routing feature
+    * An HTTP(S) load balancer named `MY-PCF-global-pcf`
+    * A TCP load balancer for WebSockets named `MY-PCF-wss-logs`
+    * A TCP load balancer for SSH access to applications named `MY-PCF-ssh-proxy`
+    * A TCP load balancer for the TCP router named `MY-PCF-cf-tcp-lb` if you plan on enabling the TCP routing feature
     <p class="note"><strong>Note</strong>: You can locate the static IP address of each load balancer by clicking its name under <strong>Networks > Load balancing</strong> in the GCP Console.</p>
 
 1. Log in to the DNS registrar that hosts your domain. Examples of DNS registrars include Network Solutions, GoDaddy, and Register.com.
@@ -69,37 +67,37 @@ In this step you redirect queries for your domain to the IP addresses of your lo
       </tr>
       <tr>
         <td>\*.YOURSYSTEMDOMAIN</td>
-        <td><code>pcf-router</code></td>
+        <td><code>MY-PCF-global-pcf</code></td>
         <td>Yes</td>
         <td>\*.system.example.com</td>
       </tr>
       <tr>
         <td>\*.YOURAPPSDOMAIN</td>
-        <td><code>pcf-router</code></td>
+        <td><code>MY-PCF-global-pcf</code></td>
         <td>Yes</td>
         <td>\*.apps.example.com</td>
       </tr>
       <tr>
         <td>doppler.YOURSYSTEMDOMAIN</td>
-        <td><code>pcf-websockets</code></td>
+        <td><code>MY-PCF-wss-logs</code></td>
         <td>Yes</td>
         <td>doppler.system.example.com</td>
       </tr>
             <tr>
         <td>loggregator.YOURSYSTEMDOMAIN</td>
-        <td><code>pcf-websockets</code></td>
+        <td><code>MY-PCF-wss-logs</code></td>
         <td>Yes</td>
         <td>loggregator.system.example.com</td>
       </tr>
       <tr>
         <td>ssh.YOURSYSTEMDOMAIN</td>
-        <td><code>pcf-ssh</code></td>
+        <td><code>MY-PCF-ssh-proxy</code></td>
         <td>Yes, to allow SSH access to apps</td>
         <td>ssh.system.example.com</td>
       </tr>
       <tr>
         <td>tcp.YOURDOMAIN</td>
-        <td>IP address of the TCP load balancer for TCP routing</td>
+        <td><code>MY-PCF-cf-tcp-lb</code></td>
         <td>No, only set up if you have enabled the TCP routing feature</td>
         <td>tcp.example.com</td>
       </tr>
@@ -124,7 +122,7 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 
     <%= image_tag("domains.png") %>
 
-1. Enter the system and application domains.
+1. Enter the system and application domains that you created when [preparing your GCP environment](./gcp-prepare-env.html#cname).
     * The **System Domain** defines your target when you push apps to Elastic
       Runtime.
     * The **Apps Domain** defines where Elastic Runtime serves your apps.
@@ -208,6 +206,8 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 
 You can configure Elastic Runtime to use the internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by Elastic Runtime.
 
+<p class="note"><strong>Note</strong>: For GCP installations, Pivotal recommends selecting <strong>External</strong> and using Google CloudSQL.</p>
+
 <p class="note"><strong>Note</strong>: If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data first before changing the configuration. Contact Pivotal Support for help. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information.</p>
 
 ###<a id='internal-db'></a> Internal Database Configuration
@@ -218,7 +218,25 @@ Then proceed to [Step 13: (Optional) Configure Internal MySQL](#internal-mysql) 
 
 ###<a id='create-dbs'></a> External Database Configuration
 
-<%= partial 'ert_database_external' %>
+Pivotal recommends using an external database for high availability reasons. On GCP, you can use Google Cloud SQL and use the automated backup and high availability replica features.
+
+<p class="note"><strong>Note</strong>: To configure an external database for UAA, see the <i>External Database Configuration</i> section of <a href="#uaa">Configure UAA</a>.</p>
+
+<p class="note warning">
+<strong>Warning</strong>: Protect whichever database you use in your deployment with a password.</p>
+
+To specify your Elastic Runtime databases, perform the following steps:
+
+1. Select the **External Databases** option.
+
+1. In the **Hostname** field, enter the IP address of the Google Cloud SQL instance that you created in [Step 6: Create Database Instance and Databases](./gcp-prepare-env.html#dbs) of the _Preparing to Deploy PCF on GCP_ topic. You can obtain this address from the Instances dashboard of the **SQL** configuration page in the GCP Console.
+
+1. In the **TCP Port** field, enter `3306`.
+
+1. Each component that requires a relational database has two corresponding fields: one for the database username and one for the database password. For each set of fields, specify the username that can access this specific database on the database server and a password for the provided username. You created these users in [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html#dbs).
+  <%= image_tag("gcp/gcp-external-db.png") %>
+
+1. Click **Save**.
 
 ## <a id='internal-mysql'></a> Step 13: (Optional) Configure Internal MySQL ##
 
@@ -311,29 +329,29 @@ the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating a
 
     <%= image_tag('gcp/config-lb.png') %>
 
-    You should see the SSH load balancer, the HTTP(S) load balancer, the TCP WebSockets load balancer, and optionally, the TCP router that you created in the [Create Load Balancers in GCP](gcp-prepare-env.html#create_loadbalancers) section of the _Preparing to Deploy PCF on GCP_ topic. 
+    You should see the SSH load balancer, the HTTP(S) load balancer, the TCP WebSockets load balancer, and the TCP router that you created in the _Preparing to Deploy PCF on GCP_ topic. 
 
-1. Record the name of your SSH load balancer and your TCP WebSockets load balancer. For example, `pcf-ssh` and `pcf-websockets`.
+1. Record the name of your SSH load balancer and your TCP WebSockets load balancer, `MY-PCF-wss-logs` and `MY-PCF-ssh-proxy`.
 
-1. Click your HTTP(S) load balancer. For example, `pcf-router`. 
+1. Click your HTTP(S) load balancer, `MY-PCF-global-pcf`. 
     <%= image_tag('gcp/pcf-router.png') %>
 
-1. Under **Backend services**, record the name of the backend service of the HTTP(S) load balancer. For example, `pcf-backend`.
+1. Under **Backend services**, record the name of the backend service of the HTTP(S) load balancer, `MY-PCF-http-lb-backend`.
 
 1. In the **Elastic Runtime** tile, click **Resource Config**.
 
     <%= image_tag("gcp/resource_config.png") %>
 
-1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-delimited list consisting of the name of your TCP WebSockets load balancer and the name of your HTTP(S) load balancer backend with the protocol prepended. For example, `tcp:pcf-websockets,http:pcf-backend`.
+1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-delimited list consisting of the name of your TCP WebSockets load balancer and the name of your HTTP(S) load balancer backend with the protocol prepended. For example, `tcp:MY-PCF-wss-logs,http:MY-PCF-http-lb-backend`.
 
     <p class="note"><strong>Note</strong>: Do not add a space between key/value pairs in the <code>LOAD BALANCER</code> field or it will fail.</p>
     <p class="note"><strong>Note</strong>: If you are using HAProxy in your deployment, then enter the above load balancer values in the <code>LOAD BALANCERS</code> field of the <b>HAPRoxy</b> row instead of the <b>Router</b> row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
 
 1. If you have enabled TCP routing in the <a href="#advanced-features">Advanced Features</a> pane and set up the <a href="./gcp-prepare-env.html#tcp_websockets_lb">TCP Load Balancer in GCP</a>, add the name of your TCP load balancer, prepended with <code>tcp:</code>, to the <strong>LOAD BALANCERS</strong> column of the <storng>TCP Router</strong> row. For example, <code>tcp:pcf-tcp-router</code>.
 
-1. Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the name of your SSH load balancer prepended with `tcp:`. For example, `tcp:pcf-ssh`.
+1. Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the name of your SSH load balancer prepended with `tcp:`. For example, `tcp:MY-PCF-ssh-proxy`.
 
-1. Verify that the **Internet Connected** checkbox for every job is checked to allow the jobs to reach the Internet. This gives all VMs a public IP address that enables outbound Internet access.
+1. Verify that the **Internet Connected** checkbox for every job is unchecked. When preparing your GCP environment, you provisioned a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses to allow the jobs to reach the Internet.
    <p class="note"><strong>Note</strong>: If you want to provision a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses, deselect the <strong>Internet Connected</strong> checkboxes. For more information about using NAT in GCP, see the <a href="https://cloud.google.com/compute/docs/networking">GCP documentation</a>.</p>  
 
 1. Click **Save**.

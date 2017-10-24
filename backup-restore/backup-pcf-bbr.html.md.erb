@@ -13,13 +13,19 @@ To view the BBR release notes, see the <a href="https://docs.pivotal.io/bbr/bbr-
 
 During the backup, BBR stops the Cloud Controller API and the Cloud Controller workers to create a consistent backup. Only the API functionality, like that used when pushing applications or using the Cloud Foundry Command Line Interface (cf CLI), is affected. The deployed applications do not experience downtime.
 
-<p class="note warning"><strong>Warning</strong>: Backup artifacts can contain secrets. Pivotal strongly recommends that you secure backup artifacts using encryption or other means. </p>
-
 <p class="note"><strong>Note</strong>: You can only use BBR to back up PCF v1.11 and later. To back up earlier versions of PCF, perform the <a href="backup-pcf.html">manual procedures</a>.</p>
 
-<p class="note warning"><strong>Warning</strong>: BBR is designed to restore Pivotal Cloud Foundry after a disaster. The restore is a destructive operation. If the it fails, the environment may be left in an unusable state and require reprovisioning. The two restore scenarios currently documented are <a href="restore-pcf-bbr.html">Restoring Pivotal Cloud Foundry from Backup with BBR</a> and <a href="rollback-ert-bbr.html">Rolling Back ERT Deployment to an Earlier Backup with BBR</a>.</p>
+<div class="note warning">
+  <strong>Warnings</strong>:
+  <ul>
+    <li><strong>Backup artifacts can contain secrets.</strong> Secure backup artifacts using encryption or other means. </li>
+    <li><strong>The restore is a destructive operation.</strong> BBR is designed to restore PCF after a disaster. If it fails, the environment may be left in an unusable state and require reprovisioning. The two restore scenarios currently documented are <a href="restore-pcf-bbr.html">Restoring Pivotal Cloud Foundry from Backup with BBR</a> and <a href="rollback-ert-bbr.html">Rolling Back ERT Deployment to an Earlier Backup with BBR</a>.</li>
+    <li><strong>The Cloud Controller API will stop sending and receiving calls</strong> for the duration of PCF restoration.</li>
+    <li><strong>BBR does not back up any service data.</strong></li>
+    <li><strong>Using an external blobstore or an external MySQL database results in an unusable restore</strong> even if the restore appears to run successfully.</li>
+  </ul>
+</div>
 
-<p class="note warning"><strong>Warning</strong>: Backing up ERT will stop the Cloud Controller API while the backup is being taken.</p>
 
 ##<a id='recs'></a> Recommendations
 
@@ -40,13 +46,9 @@ BBR backs up the following PCF components:
 
 * **Elastic Runtime**: Elastic Runtime must be configured with an internal MySQL database and a WebDAV/NFS blobstore to be backed up and restored with BBR. BBR does not support Elastic Runtime with an external blobstore or an external MySQL database.
 
-  <p class="note warning"><strong>Warning</strong>: If you use BBR to back up an ERT with an external blobstore or an external MySQL database, the BBR commands may run successfully, but the result of the BBR restore will be incomplete and unusable.</p>
-
 * **BOSH Director**: The BOSH Director must have an internal Postgres database to be backed up and restored with BBR. As part of backing up the BOSH Director, BBR backs up the BOSH UAA database and the CredHub database.
 
 ### Backing Up Services
-
-<p class="note warning"><strong>Warning</strong>: BBR does <strong>not</strong> currently back up any service data.</p>
 
 Keep in mind the following when backing up services:
 
@@ -207,7 +209,13 @@ Pivotal recommends that you back up your installation settings by exporting
 frequently. This option is only available after you have deployed at least one time.
 Always export an installation before following the steps in the [Import Installation Settings](./restore-pcf.html#import) section of the [Restoring Pivotal Cloud Foundry from Backup with BBR](./restore-pcf-bbr.html) topic.
 
-<p class="note"><strong>Note</strong>: Exporting your installation only backs up your installation settings. It does not back up your virtual machines (VMs) or any external MySQL databases.</p>
+<div class="note"><strong>Notes</strong>:
+  <ul>
+    <li>Exporting your installation only backs up your installation settings. It does not back up your virtual machines (VMs) or any external MySQL databases.</li>
+    <li>Preparing and downloading the installation settings file takes around 5 to 15 minutes.</li>
+    <li>After exporting installation settings, Ops Manager will create a number of files in the <code>/tmp/ops_manager</code> directory on the Ops Manager VM and schedule a cleanup in one hour. Depending on the size of the VM, it may run out of disk space if you export multiple installations before the hourly cleanup runs.</li>
+  </ul>
+</div>
 
 From the **Installation Dashboard** in the Ops Manager interface, click your user name at the top right navigation. Select **Settings**.
 
@@ -215,9 +223,6 @@ From the **Installation Dashboard** in the Ops Manager interface, click your use
 settings and assets. When you export an installation, the exported file contains the base VM images,
 all necessary packages, and references to the installation IP addresses. As a result, an exported installation file can exceed 5 GB in size.
 
-<p class="note"><strong>Note</strong>: Preparing and downloading the installation settings file takes around 5 to 15 minutes.</note>
-
-<p class="note"><strong>Note</strong>: After exporting installation settings, Ops Manager will create a number of files in the <code>/tmp/ops_manager</code> directory on the Ops Manager VM and schedule a cleanup in one hour. Depending on the size of the VM, it may run out of disk space if you export multiple installations before the hourly cleanup runs.</p>
 
 <%= image_tag("settings.png") %>
 
@@ -239,9 +244,12 @@ Replace the placeholder values as follows:
 * `PRIVATE_KEY`: This is the path to the private key file you created in [Step 4: Check your BOSH Director](#check-director).
 * `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
 
-<p class="note"><strong>Note</strong>: The BOSH Director backup takes at least 20 minutes. </note> </p>
-
-<p class="note"><strong>Note</strong>: Because the BBR backup command can take a long time to complete, Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
+<div class="note"><strong>Notes</strong>:
+  <ul>
+    <li>The BOSH Director backup takes at least 20 minutes.</li>
+    <li>Because the BBR backup command can take a long time to complete, Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. Use <code>nohup</code>, a <code>screen</code>, or a <code>tmux</code> session.</li>
+  </ul>
+</div>
 
 If your backup terminates early or fails, you can clean up by running backup-cleanup:
 <pre class="terminal">
@@ -274,11 +282,13 @@ $ bbr director \
         --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
         backup --with-manifest</pre>
 
-<p class="note"><strong>Note</strong>: Backing up Elastic Runtime takes at least 10 minutes, and can take considerably longer with larger blobstores or slow network connections. The backup also incurs around 10 minutes of Cloud Controller downtime, during which users will be unable to push, scale, or delete apps. Your apps will not be affected.</p>
-
-<p class="note"><strong>Note</strong>: Because the BBR backup command can take a long time to complete, Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
-
-<p class="note"><strong>Note</strong>: The backup artifact will contain one or more empty UAA tar files. This is an extraneous artifact. The UAA backup is included in the MySQL backup. </p>
+<div class="note"><strong>Notes</strong>:
+  <ul>
+    <li>Backing up Elastic Runtime takes at least 10 minutes, and can take considerably longer with larger blobstores or slow network connections. The backup also incurs around 10 minutes of Cloud Controller downtime, during which users will be unable to push, scale, or delete apps. Your apps will not be affected.</li>
+    <li>Because the BBR backup command can take a long time to complete, Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</li>
+    <li>The backup artifact will contain one or more empty UAA tar files. This is an extraneous artifact. The UAA backup is included in the MySQL backup.</li>
+  </ul>
+</div>
 
 If the command fails, do the following:
 
@@ -297,11 +307,11 @@ If the command fails, do the following:
 1. Consult the [Exit Codes](#exit-codes) section below.
 
 ## <a id='after'></a>After Taking the Backups
-If the commands completes successfully, do the following:
+If the commands complete successfully, complete the following steps:
 
 1. Move the backup artifacts off the jumpbox to your preferred storage space. The backup created by BBR consists of a folder with the backup artifacts and metadata files. Pivotal recommends compressing and encrypting the files.
-1. Make redundant copies of your backup and store them in multiple locations in order to minimize the risk of losing your backups in the event of a disaster.
-1. Attempt a test restore on every backup in order to validate it by performing the procedures in the [Step 11: Validate Your Backup](#validate-backup) section below.
+1. Make redundant copies of your backup and store them in multiple locations to minimize the risk of losing backups in the event of a disaster.
+1. Attempt to test restore on every backup to validate it. Perform the procedures in the next step. See [Step 11: Validate Your Backup](#validate-backup).
 
 ### <a id='validate-backup'></a> Step 11: (Optional) Validate Your Backup
 
@@ -312,9 +322,12 @@ If you want to validate your backup, follow the instructions that correspond to 
 
 #### <a id='full-validate'></a> Validate Your Entire Backup
 
-<p class="note warning"><strong>Warning</strong>: When validating your backup, the VMs and disks from the backed-up BOSH Director should not be visible to the new BOSH Director. As a result, Pivotal recommends that you deploy the new BOSH Director to a different IaaS network and account than the VMs and disks of the backed-up BOSH Director.</p>
-
-<p class="note warning"><strong>Warning</strong>: If the apps in your backed-up environment refer to any data services outside of PCF, they will try to connect to those data services when you restore to a new environment. This may produce side effects with the data services. For example, consider an app that processes mail queues and connects to an external database. When you validate your backup in a test environment, the app may start processing the queue, and this work may be lost.</p>
+<div class="note warning"><strong>Warnings</strong>:
+  <ul>
+    <li><strong>The VMs and disks from the backed-up BOSH Director should not be visible to the new BOSH Director</strong> when validating your backup. As a result, Pivotal recommends that you deploy the new BOSH Director to a different IaaS network and account than the VMs and disks of the backed-up BOSH Director.</li>
+    <li><strong>Data services outside of PCF may produce unexpected side effects during restoration.</strong> The services will try to connect to those data services when you restore to a new environment. For example, consider an app that processes mail queues and connects to an external database. When you validate your backup in a test environment, the app may start processing the queue, and this work may be lost.</li>
+  </ul>
+</div>
 
 After backing up PCF, you may want to validate your backup by restoring it to a similar environment and checking the applications. Because BBR is designed for disaster recovery, its backups are intended to be restored to an environment deployed with the same configuration.
 

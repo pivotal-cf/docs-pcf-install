@@ -19,7 +19,7 @@ During the backup, BBR stops the Cloud Controller API and the Cloud Controller w
   <strong>Warnings</strong>:
   <ul>
     <li><strong>Backup artifacts can contain secrets.</strong> Secure backup artifacts using encryption or other means. </li>
-    <li><strong>The restore is a destructive operation.</strong> BBR is designed to restore PCF after a disaster. If it fails, the environment may be left in an unusable state and require reprovisioning. The two restore scenarios currently documented are <a href="restore-pcf-bbr.html">Restoring Pivotal Cloud Foundry from Backup with BBR</a> and <a href="rollback-ert-bbr.html">Rolling Back ERT Deployment to an Earlier Backup with BBR</a>.</li>
+    <li><strong>The restore is a destructive operation.</strong> BBR is designed to restore PCF after a disaster. If it fails, the environment may be left in an unusable state and require reprovisioning. The two restore scenarios currently documented are <a href="restore-pcf-bbr.html">Restoring Pivotal Cloud Foundry from Backup with BBR</a> and <a href="rollback-ert-bbr.html">Rolling Back Elastic Runtime Deployment to an Earlier Backup with BBR</a>.</li>
     <li><strong>The Cloud Controller API will stop sending and receiving calls</strong> for the duration of PCF restoration.</li>
     <li><strong>BBR does not back up any service data.</strong></li>
     <li><strong>Using an external blobstore or an external MySQL database results in an unusable restore</strong> even if the restore appears to run successfully.</li>
@@ -31,7 +31,7 @@ During the backup, BBR stops the Cloud Controller API and the Cloud Controller w
 
 Pivotal recommends the following:
 
-* Follow the full procedure documented in this topic when creating a backup. This ensures that you always have a consistent backup of Ops Manager, ERT, and BOSH to restore from.
+* Follow the full procedure documented in this topic when creating a backup. This ensures that you always have a consistent backup of Ops Manager, Elastic Runtime, and BOSH to restore from.
 * Back up frequently, especially before making any changes to your PCF deployment, such as the configuration of any tiles in Ops Manager.
 
 ## <a id="restore-compatibility"></a> Compatibility of Restore
@@ -139,7 +139,7 @@ You can also retrieve the credentials using the Ops Manager API with a GET reque
 
 ### <a id='backup-prepare-node'></a> Step 5: Enable Backup Prepare Node
 
-BBR requires the MySQL backup prepare node to be present in order to successfully back up ERT. Currently, the only way to ensure the presence of this node is to enable automated MySQL backups. If you already have these enabled, you may skip this section. Future versions of Elastic Runtime will include an option to deploy the backup prepare node without enabling automatic MySQL backups.
+BBR requires the MySQL backup prepare node to be present in order to successfully back up Elastic Runtime. Currently, the only way to ensure the presence of this node is to enable automated MySQL backups. If you already have these enabled, you may skip this section. Future versions of Elastic Runtime will include an option to deploy the backup prepare node without enabling automatic MySQL backups.
 
 Perform the following steps to enable the backup prepare node:
 
@@ -171,7 +171,7 @@ In the above example, the name of the BOSH deployment that contains PCF is `cf-e
 
 ### <a id='check'></a> Step 7: Check Your Deployment
 
-Perform the following steps to check that your BOSH Director is reachable and has an ERT deployment that can be backed up:
+Perform the following steps to check that your BOSH Director is reachable and has an Elastic Runtime deployment that can be backed up:
 
 1. From your jumpbox, run the BBR pre-backup check:
 	<pre class="terminal">
@@ -318,7 +318,7 @@ If the commands complete successfully, complete the following steps:
 If you want to validate your backup, follow the instructions that correspond to your use case:
 
 * **Production environments**: [Validate Your Entire Backup](#full-validate) 
-* **Sandbox and other non-production environments**: [Validate Only Your ERT Backup](#ert-validate)
+* **Sandbox and other non-production environments**: [Validate Your Elastic Runtime Backup Only](#ert-validate)
 
 #### <a id='full-validate'></a> Validate Your Entire Backup
 
@@ -344,9 +344,9 @@ Perform the following steps to spin up a second environment that matches the ori
 
 After you deploy the second environment, follow the instructions in the [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html) topic.
 
-#### <a id='ert-validate'></a> Validate Your ERT Backup Only
+#### <a id='ert-validate'></a> Validate Your Elastic Runtime Backup Only
 
-For a sandbox or other non-production environment, you can optionally perform an _in-place_ restore of ERT only. In this case, you restore the ERT backup to the same PCF environment that the backup was created from. Follow the procedures in [Restoring an ERT Backup In-place](in-place-restore.html).
+For a sandbox or other non-production environment, you can optionally perform an _in-place_ restore of Elastic Runtime only. In this case, you restore the Elastic Runtime backup to the same PCF environment that the backup was created from. Follow the procedures in [Restoring an Elastic Runtime Backup In-place](in-place-restore.html).
 
 ## <a id='exit-codes-logging'></a>Exit Codes and Logging
 
@@ -383,7 +383,7 @@ The exit code returned by BBR indicates the status of the backup. The following 
 </tr>
 </table>
 
-If multiple failures occur, your exit code reflects a combination of values. Use bitwise AND to determine which failures occurred.
+If multiple failures occur, your exit code reflects a combination of values. Use bitwise **AND** to determine which failures occurred.
 
 For example, the exit code `5` indicates that the pre-backup lock failed and a general error occurred.
 

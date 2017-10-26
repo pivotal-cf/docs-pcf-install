@@ -26,23 +26,39 @@ Here's the typical PCF planning and installation process:
       - Ops Manager generates BOSH manifests containing the user-supplied configuration values, and sends them to the Director.
       - After you install Ops Manager and BOSH, you use Ops Manager to deploy almost all PCF products.
   - Deploying Ops Manager deploys both BOSH and Ops Manager with a single procedure.
-      - On AWS, you can deploy Ops Manager semi-automatically with a CloudFormation template, or manually.
-      - On Azure, you can deploy Ops Manager semi-automatically with an Azure Resource Manager (ARM) template, or manually. You can only deploy Ops Manager to Azure Government Cloud or Azure Germany manually.
+      - On AWS, you can deploy Ops Manager manually, or automatically with a CloudFormation template.
+      - On Azure, you can deploy Ops Manager manually, or automatically with an Azure Resource Manager (ARM) template. On Azure Government Cloud and Azure Germany you can only deploy Ops Manager manually.
 
-1. (Optional) Bosh Add-ons  can do later but works better 
+1. **Deploy BOSH Add-ons** (Optional)
+  - BOSH add-ons include the [IPsec](https://docs.pivotal.io/addon-ipsec), [ClamAV](https://docs.pivotal.io/addon-clamav), and [File Integrity Monitoring](https://docs.pivotal.io/addon-fim), which enhance PCF platform security and security logging.
+  - You deploy these add-ons via BOSH rather than installing them with Ops Manager tiles.
 
-1. Install PAS
-Installing PAS fills in the last configuration details that PCF needs to abstract away the IaaS. Any tile that you install after PAS copies field values from your PAS configuration.
+1. **Install PAS**
+  - Developers use PAS (Pivotal Application Service) to develop and manage cloud-native apps and software services.
+  - You can install the [Small Footprint Runtime](./small-footprint.html) as alternative to PAS. It uses far fewer VMs than PAS but has limitations.
+  - PAS is based on the Cloud Foundry Foundation's open-source Application Runtime (formerly Elastic Runtime) project.
+ 
+1. **Install Additional Runtimes** (Optional)
+  - [PKS](http://docs-pks.cfapps.io) (Pivotal Container Service) uses BOSH to run and manage Kubernetes container clusters.
+      - PKS is based on the Cloud Foundry Foundation's open-source Container Runtime (formerly Kubo) project.
+  - [PCF Isolation Segment](./installing-pcf-is.html) lets a single PAS deployment run apps from separate, isolated pools of computing, routing, and logging resources.
+      - Operators replicate and configure an Isolation Segment tile for each new resource pool they want to create.
+  - [PAS for Windows 2016](https://docs-pas-windows.cfapps.io/pas-windows/index.html) enables PAS to manage host cells running Windows Server 2016, and lets developers push .NET apps to the Windows cells.
+      - As with Isolation Segment runtime, Operators replicate and configure a PAS for Windows 2016 tile for each new resource pool they want to create.
+  - [PAS for Windows 2012](https://docs-pas-windows.cfapps.io/pas-windows/index.html) enables PAS to manage Windows Server 2012 cells hosting .NET apps, and can also be replicated to create multiple isolated resource pools.
 
-1. Runtimes
+1. **Day 2 Configurations**
+  - Day 2 configurations set up internal operations and external integrations on a running PCF platform.
+      - Examples include front-end configuration, user accounts, logging and monitoring, internal security, and container and stemcell images.
 
-1. Day 2 Configurations
-
-1. Populate marketplace with services
+1. **Install Services**
+  - Install software services for PCF developers to use in their apps.
+      - Services include the databases, caches, and message brokers that stateless cloud apps rely on to save information.
+      - Installing and managing software services on PCF is an ongoing process, and is covered in the [PCF Operator Guide](../opsguide/index.html).
 
 ##<a id='bosh'></a>Deploying with BOSH
 
-Here's how BOSH runs software in the cloud:
+Here's how people use BOSH to run software in the cloud:
 
 1. To use BOSH, you create a a _manifest_ `.yml` file that specifies your software system's component processes, the VMs they run on, how they communicate, and anything else they need.
 

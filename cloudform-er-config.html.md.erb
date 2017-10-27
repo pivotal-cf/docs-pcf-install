@@ -1,26 +1,26 @@
 ---
-title: Deploying Elastic Runtime on AWS
+title: Deploying PAS on AWS
 owner: Ops Manager
 ---
 <strong><%= modified_date %></strong>
 <html class="list-style-none"></html>
 
-This topic describes how to install and configure Elastic Runtime after
+This topic describes how to install and configure Pivotal Application Service (PAS) after
 deploying the CloudFormation template for [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Amazon Web Services (AWS).
 Use this topic when [installing Pivotal Cloud Foundry on AWS](./cloudform-install.html).
 
-<p class="note"><strong>Note</strong>: If you plan to <a href = "http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the Elastic Runtime tile.</p>
+<p class="note"><strong>Note</strong>: If you plan to <a href = "http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the PAS tile.</p>
 
 ## <a id='open-outputs'></a>Step 1: Open the Outputs Tab in AWS ##
 
 <%= partial 'aws_stacks_view_outputs' %>
 
-## <a id='add-er'></a>Step 2: Add Elastic Runtime to Ops Manager ##
+## <a id='add-er'></a>Step 2: Add PAS to Ops Manager ##
 
-1. If you have not already downloaded Elastic Runtime, log in to [Pivotal Network](https://network.pivotal.io/products/pivotal-cf), and click on **Pivotal Cloud Foundry Elastic Runtime**. 
+1. If you have not already downloaded PAS, log in to [Pivotal Network](https://network.pivotal.io/products/pivotal-cf), and click PAS. 
 
 1. From the **Releases** drop-down, select the release to install and choose one of the following:
-  1. Click **PCF Elastic Runtime** to download the Elastic Runtime `.pivotal` file
+  1. Click PAS to download the PAS `.pivotal` file
   1. Click **PCF Small Footprint Runtime** to download the Small Footprint Runtime `.pivotal` file. For more information, see [Getting Started with Small Footprint Runtime](./small-footprint.html).
 
 1. Navigate to the Pivotal Cloud Foundry Operations Manager Installation
@@ -28,7 +28,7 @@ Dashboard.
 
 1. Click **Import a Product** to add your tile to Ops Manager. For more information, refer to the [Adding and Deleting Products](./add-delete.html) topic.
 
-1. Click the **Elastic Runtime** tile in the Installation Dashboard.
+1. Click the PAS tile in the Installation Dashboard.
 
     <%= image_tag("images/er-tile.png") %>
 
@@ -56,7 +56,7 @@ Dashboard.
 1. Enter the system and application domains.
     * For **System Domain**, enter `sys.YOUR-DOMAIN`. This defines your target when you push apps to Elastic
       Runtime.
-    * For **Apps Domain**, enter `apps.YOUR-DOMAIN`. This defines where Elastic Runtime should serve your apps.
+    * For **Apps Domain**, enter `apps.YOUR-DOMAIN`. This defines where PAS should serve your apps.
 
     <p class="note"><strong>Note</strong>: You configured a wildcard DNS record
     for these domains in an earlier step.</p>
@@ -89,7 +89,7 @@ Dashboard.
 
 ## <a id='sys-db'></a>Step 12: Configure System Databases ##
 
-You can configure Elastic Runtime to use the internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by Elastic Runtime.
+You can configure PAS to use the internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by PAS.
 
 <p class="note"><strong>Note</strong>: If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data first before changing the configuration. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information.</p>
 
@@ -101,7 +101,7 @@ Then proceed to [Step 13: (Optional) Configure Internal MySQL](#internal-mysql) 
 
 ### <a id='create-dbs'></a> Create External System Databases ###
 
-If you want to use an external database provider for your Elastic Runtime databases, you must first create the databases on the RDS instance provided by the CloudFormation script.
+If you want to use an external database provider for your PAS databases, you must first create the databases on the RDS instance provided by the CloudFormation script.
 
 To create the required databases on an AWS RDS instance, perform the following steps.
 
@@ -117,7 +117,7 @@ To create the required databases on an AWS RDS instance, perform the following s
 
      <pre class='terminal'>mysql --host=PcfRdsAddress --user=PcfRdsUsername --password=PcfRdsPassword</pre>
 
-1. Run the following MySQL commands to create databases for the seven Elastic Runtime components that require a relational database:
+1. Run the following MySQL commands to create databases for the seven PAS components that require a relational database:
   <pre class="terminal">
   CREATE database ccdb;
   CREATE database notifications;
@@ -137,7 +137,7 @@ To create the required databases on an AWS RDS instance, perform the following s
 
 1. Reboot the RDS instance in the AWS console.
 
-1. In Elastic Runtime, select **Databases**.
+1. In PAS, select **Databases**.
 
 1. Select the **External Databases** option.
 
@@ -146,7 +146,7 @@ To create the required databases on an AWS RDS instance, perform the following s
 1. For the **Hostname** and **TCP Port** fields, enter the corresponding values from the [Outputs tab](#open-outputs) in the AWS Console, according to the following table:
   <table border="1" class="nice" >
     <tr>
-      <th><strong>Elastic Runtime Field</strong></th>
+      <th><strong>PAS Field</strong></th>
       <th><strong>Outputs Key</strong></th>
     </tr>
     <tr>
@@ -162,7 +162,7 @@ To create the required databases on an AWS RDS instance, perform the following s
 1. For each **database username** and **database password** field, enter the corresponding values from the [Outputs tab](#open-outputs) in the AWS Console, according to the following table:
   <table border="1" class="nice" >
     <tr>
-      <th><strong>Elastic Runtime Field</strong></th>
+      <th><strong>PAS Field</strong></th>
       <th><strong>Outputs Key</strong></th>
     </tr>
     <tr>
@@ -195,9 +195,9 @@ For additional factors to consider when selecting file storage, see the <a href=
 
 ### <a id='external_s3'></a> External S3 or Ceph Filestore
 
-To use an external S3-compatible filestore for your Elastic Runtime file storage, perform the following steps:
+To use an external S3-compatible filestore for your PAS file storage, perform the following steps:
 
-1. In the Elastic Runtime tile, select **File Storage**.
+1. In the PAS tile, select **File Storage**.
     <%= image_tag("cloudform/external_filestore_config.png") %>
 1. Select the **External S3-Compatible Filestore** option and complete the following fields:
     * For **URL Endpoint**:
@@ -252,11 +252,11 @@ To use an external S3-compatible filestore for your Elastic Runtime file storage
 
 If you forward logging messages to an external Reliable Event Logging Protocol (RELP) server, complete the following steps:
 
-1. Select the **System Logging** section that is located within your Pivotal Elastic Runtime **Settings** tab.
+1. Select the **System Logging** section that is located within your PAS **Settings** tab.
   <%= image_tag("updated-system-logging.png") %>
 1. Enter the IP address of your syslog server in **Address**.
 1. Enter the port of your syslog server in **Port**. The default port for a syslog server is `514`.
-<p class="note"><strong>Note</strong>: The host must be reachable from the Elastic Runtime network, accept TCP connections, and use the RELP protocol. Ensure your syslog server listens on external interfaces.</p>
+<p class="note"><strong>Note</strong>: The host must be reachable from the PAS network, accept TCP connections, and use the RELP protocol. Ensure your syslog server listens on external interfaces.</p>
 1. Select a **Transport Protocol** to use when forwarding logs.
 1. If you plan to use TLS encryption when sending logs to the remote server, select **Yes** when answering the **Encrypt syslog using TLS?** question.
   1. In the **Permitted Peer** field, enter either the name or SHA1 fingerprint of the remote peer.
@@ -271,7 +271,7 @@ If you forward logging messages to an external Reliable Event Logging Protocol (
 
 ## <a id='smtp'></a>Step 17: (Optional) Configure Email Notifications ##
 
-Elastic Runtime uses SMTP to send invitations and confirmations to Apps Manager
+PAS uses SMTP to send invitations and confirmations to Apps Manager
 users.
 You must complete the **Email Notifications** page if you want to enable
 end-user self-registration.
@@ -308,7 +308,7 @@ the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating a
 
 ## <a id='config-elb'></a>Step 22: Configure Router (or HAProxy) to Elastic Load Balancer ##
 
-1. In the **Elastic Runtime** tile, click **Resource Config**.
+1. In the PAS tile, click **Resource Config**.
   <%= image_tag("pcfaws/er-aws-resource-config.png") %>
 
 1. Enter the name of you SSH load balancer depending on which release you are using. You can specify multiple load balancers by entering the names separated by commas.
@@ -328,7 +328,7 @@ the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating a
 
 ## <a id='stemcell'></a>Step 24: Download Stemcell ##
 
-This step is only required if your Ops Manager does not already have the Stemcell version required by Elastic Runtime.
+This step is only required if your Ops Manager does not already have the Stemcell version required by PAS.
 
 1. Select **Stemcell**.
 
@@ -340,7 +340,7 @@ This step is only required if your Ops Manager does not already have the Stemcel
 
     <%= image_tag("stemcell_18.png") %>
 
-## <a id='complete'></a>Step 25: Complete the Elastic Runtime Installation ##
+## <a id='complete'></a>Step 25: Complete the PAS Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.

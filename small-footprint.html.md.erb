@@ -1,42 +1,42 @@
 ---
-title: Getting Started with Small Footprint Runtime
+title: Getting Started with Small Footprint PAS
 owner: releng
 ---
 
-This topic describes the Small Footprint Runtime tile for Pivotal Cloud Foundry (PCF). The topic also describes how Small Footprint Runtime deployment differs from a standard deployment, as well as use cases and limitations.
+This topic describes the Small Footprint PAS tile for Pivotal Cloud Foundry (PCF). The topic also describes how Small Footprint PAS deployment differs from a standard deployment, as well as use cases and limitations.
 
-Use Small Footprint Runtime for testing or small on-site data centers where performance is less important than cost.
+Use Small Footprint PAS for testing or small on-site data centers where performance is less important than cost.
 
-<p class="note warning"><strong>WARNING</strong>: Pivotal does not recommend the Small Footprint Runtime tile for most production deployments. The tile has significant performance and capacity restraints. See <a href="#limits">Limitations</a>.</p>
+<p class="note warning"><strong>WARNING</strong>: Pivotal does not recommend the Small Footprint PAS tile for most production deployments. The tile has significant performance and capacity restraints. See <a href="#limits">Limitations</a>.</p>
 
-## <a id='compare'></a>Differentiate Small Footprint Runtime and Elastic Runtime
+## <a id='compare'></a>Differentiate Small Footprint PAS and PAS
 
-The Small Footprint Runtime is a repackaging of the Elastic Runtime components into a smaller and more efficient deployment. A standard Elastic Runtime deployment must have at least 24 virtual machines (VMs), but the Small Footprint Runtime requires only four.   
+The Small Footprint PAS is a repackaging of the Pivotal Application Service (PAS) components into a smaller and more efficient deployment. A standard Elastic PAS deployment must have at least 24 virtual machines (VMs), but the Small Footprint PAS requires only four.   
 
-The following image displays a comparison of the number of VMs deployed by Elastic Runtime and Small Footprint Runtime. 
+The following image displays a comparison of the number of VMs deployed by PAS and Small Footprint PAS. 
 
 ![ERT VMs](ert-vms.png)
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/15aWhXxONKb-yJcFMvDwgnwbzdyKbxZHfQ3_OOi6OkVQ/edit?usp=sharing
 
 ### <a id='usecase'></a>Use Cases
 
-The Small Footprint Runtime tile satisfies the following use cases:
+The Small Footprint PAS tile satisfies the following use cases:
 
 * **Small on-premise installations**: 
 	* Run PCF in a small, on-site data center such as at a warehouse, retail store, hospital, or factory.
 * **Proof-of-concept installations**: 
 	* Deploy PCF quickly and with a small footprint for evaluation or testing purposes. 
 * **Service tile R&D**: 
-	* Test a service tile against Small Footprint Runtime instead of a standard Elastic Runtime deployment to increase efficiency and reduce cost.  
+	* Test a service tile against Small Footprint PAS instead of a standard PAS deployment to increase efficiency and reduce cost.  
 
 ### <a id='limits'></a>Limitations
 
-The Small Footprint Runtime tile has the following limitations:
+The Small Footprint PAS has the following limitations:
 
 * **Number of app instances**: 
-	* The tile is not designed to support large numbers of app instances. You cannot scale the number of [Compute VMs](#compute) beyond `10` instances in the **Resource Config** pane. The Small Footprint Runtime is designed to support 2500 or fewer apps. 
+	* The tile is not designed to support large numbers of app instances. You cannot scale the number of [Compute VMs](#compute) beyond `10` instances in the **Resource Config** pane. The Small Footprint PAS designed to support 2500 or fewer apps. 
 * **Increasing platform capacity**: 
-	* You cannot upgrade the Small Footprint Runtime tile to the standard Elastic Runtime tile. If you expect platform usage to increase beyond the capacity of the Small Footprint Runtime tile, Pivotal recommends using the standard Elastic Runtime tile.
+	* You cannot upgrade the Small Footprint PAS to the standard PAS tile. If you expect platform usage to increase beyond the capacity of the Small Footprint PAS, Pivotal recommends using the standard PAS tile.
 * **Management plane availability during tile upgrades**
 	* You may not be able to perform management plane operations like deploying new apps and accessing APIs for brief periods during tile upgrades. The management plane is colocated on the [Control VM](#controlvm). 
 * **App availability during tile upgrades**:
@@ -45,64 +45,64 @@ The Small Footprint Runtime tile has the following limitations:
 
 ## <a id='arch'></a>Architecture
 
-You can deploy the Small Footprint Runtime tile with a minimum of four VMs, as shown in the image below.
+You can deploy the Small Footprint PAS tile with a minimum of four VMs, as shown in the image below.
 
 <p class="note"><strong>Note</strong>: The following image assumes that you are using an external blobstore.</p>
 
 ![SRT VMS](srt-vms.png)
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/13ycJou77RzIb3DeLF1rUOdmEiokNj3_-VTkmILcr6dM/edit?usp=sharing
 
-To reduce the number of VMs required for Small Footprint Runtime, the _Control_ and _Database_ VMs include colocated jobs that run on a single VM in Elastic Runtime. See the next sections for details. 
+To reduce the number of VMs required for Small Footprint PAS, the _Control_ and _Database_ VMs include colocated jobs that run on a single VM in PAS. See the next sections for details. 
 
-For more information about the components mentioned on this page, see the _Architecture_ section of the [Elastic Runtime Concepts](https://docs.pivotal.io/pivotalcf/concepts/index.html) guide. 
+For more information about the components mentioned on this page, see the _Architecture_ section of the [PAS Concepts](https://docs.pivotal.io/pivotalcf/concepts/index.html) guide. 
 
 ### <a id='controlvm'></a>Control VM
 
-The Control VM includes the Elastic Runtime jobs that handle management plane operations, app lifecycles, logging, and user authorization and authentication. Additionally, all errands run on the Control VM, eliminating the need for a VM for each errand and significantly reducing the time it takes to run errands. 
+The Control VM includes the PAS jobs that handle management plane operations, app lifecycles, logging, and user authorization and authentication. Additionally, all errands run on the Control VM, eliminating the need for a VM for each errand and significantly reducing the time it takes to run errands. 
 
-The following image shows all the jobs from Elastic Runtime that are colocated on the Control VM in Small Footprint Runtime. 
+The following image shows all the jobs from PAS that are colocated on the Control VM in Small Footprint PAS. 
 
 ![Control VMs](control-vms.png)
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/17AZ5xT_K8O0cATDZARPtgTEDV2cy6OfEbZybv81gqAg/edit?usp=sharing
 
 ### <a id='dbvm'></a>Database VM
 
-The database VM includes the Elastic Runtime jobs that handle internal storage and messaging. 
+The database VM includes the PAS jobs that handle internal storage and messaging. 
 
-The following image shows all the jobs from Elastic Runtime that are colocated on the Database VM in Small Footprint Runtime.
+The following image shows all the jobs from PAS that are colocated on the Database VM in Small Footprint PAS.
 
 ![DB VMs](db-vms.png) 
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/12UkinQ58ejlq9AZQvwq6r7Ghtp4RnTopI_-gTGerpU4/edit?usp=sharing
 
 ### <a id='computevm'></a>Compute VM
 
-The _Compute_ VM is the same as the Diego Cell VM in Elastic Runtime. 
+The _Compute_ VM is the same as the Diego Cell VM in PAS. 
 
 ![Compute VMs](compute-vms.png) 
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/1xOx5V1TGLoCCgIXuixTM1K9PlSTypmwHdt4xbN81BNY/edit?usp=sharing
 
 ### <a id='othervms'></a>Other VMs (Unchanged)
 
-The following image shows the VMs performs the same functions in both versions of the Elastic Runtime tile. 
+The following image shows the VMs performs the same functions in both versions of the PAS tile. 
 
 ![Unchanged VMs](unchanged-vms.png) 
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/12vWg66BUjOsSK4qC9vMqNxO9Ea1kdzfM2cH4yEAEgsg/edit?usp=sharing
 
-## <a id='install'></a>Installing Small Footprint Runtime
+## <a id='install'></a>Installing Small Footprint PAS
 
-To install the Small Footprint Runtime tile, follow the instructions for [Installing Pivotal Cloud Foundry](https://docs.pivotal.io/pivotalcf/installing/index.html) on your IaaS. 
+To install the Small Footprint PAS tile, follow the instructions for [Installing Pivotal Cloud Foundry](https://docs.pivotal.io/pivotalcf/installing/index.html) on your IaaS. 
 
-Follow the same installation and configuration steps as for Elastic Runtime, with the following differences:
+Follow the same installation and configuration steps as for PAS, with the following differences:
 
 * **Selecting a product in Pivotal Network**: 
-	* When you navigate to the Elastic Runtime tile on [Pivotal Network](https://network.pivotal.io/products/elastic-runtime), select the **Small Footprint** release.
+	* When you navigate to the PAS tile on [Pivotal Network](https://network.pivotal.io/products/elastic-runtime), select the **Small Footprint** release.
 
 * **Securing communication between Diego and the Cloud Controller**: 
-	* In the Small Footprint Runtime tile, Diego and Cloud Controller communicate securely by default.
+	* In the Small Footprint PAS tile, Diego and Cloud Controller communicate securely by default.
 
 * **Configuring resources**: 
-	* The **Resource Config** pane in the Small Footprint Runtime tile reflects the differences in VMs discussed in the _Architecture_ section of this topic. 
-	* Small Footprint Runtime does not default to a highly available configuration like Elastic Runtime does. It defaults to a minimum configuration. To make Small Footprint Runtime highly available, scale the VMs to the following instance counts:
+	* The **Resource Config** pane in the Small Footprint PAS tile reflects the differences in VMs discussed in the _Architecture_ section of this topic. 
+	* Small Footprint PAS does not default to a highly available configuration like PAS does. It defaults to a minimum configuration. To make Small Footprint PAS highly available, scale the VMs to the following instance counts:
 		* **Compute**: `3`
 		* **Control**: `2`
 		* **Database**: `3`
@@ -120,7 +120,7 @@ If you need to troubleshoot a job that runs on the Control or Database VMs, foll
 	1. [SSH into Ops Manager](https://docs.pivotal.io/pivotalcf/customizing/trouble-advanced.html#ssh)
 	1. [Log in to the BOSH Director](https://docs.pivotal.io/pivotalcf/customizing/trouble-advanced.html#log-in)
 
-1. Use BOSH to list the VMs in your Small Footprint Runtime deployment:
+1. Use BOSH to list the VMs in your Small Footprint PAS deployment:
 	<pre>bosh2 -e MY-ENV -d MY-DEPLOYMENT vms</pre>
 	<p class="note"><strong>Note</strong>: If you do not know the name of your deployment, you can run <code>bosh -e MY-ENV deployments</code> to list the deployments for your BOSH Director.</p>
 	See the following example output:
@@ -151,7 +151,7 @@ If you need to troubleshoot a job that runs on the Control or Database VMs, foll
 	Succeeded
 	</pre>
 
-1. Use BOSH to SSH into one of the Small Footprint Runtime VMs.
+1. Use BOSH to SSH into one of the Small Footprint PAS VMs.
 	<pre>bosh2 -e MY-ENV -d MY-DEPLOYMENT ssh VM-NAME/GUID</pre>
 	For example, to SSH into the Control VM, run the following:
 	<pre class="terminal">
@@ -222,4 +222,4 @@ If you need to troubleshoot a job that runs on the Control or Database VMs, foll
 
 ## <a id='rn'></a>Release Notes
 
-The Small Footprint Runtime tile releases alongside the Elastic Runtime tile. See the [Elastic Runtime Release Notes](../pcf-release-notes/runtime-rn.html).
+The Small Footprint PAS tile releases alongside the PAS tile. See the [PAS Release Notes](../pcf-release-notes/runtime-rn.html).

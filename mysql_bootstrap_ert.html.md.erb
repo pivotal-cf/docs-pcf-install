@@ -138,75 +138,61 @@ In this scenario, nodes are up and running, but the cluster has been disrupted. 
 
 In this scenario, severe circumstances such as power failure have terminated all of your VMs. You need to recreate the VMs before you can recover the cluster.
 
-1. If you enabled the [VM Resurrector](./resurrector.html#enabling) in Ops Manager, the system detects the terminated VMs and automatically attempts to recreate them. Run `bosh tasks recent --no-filter` to see the `scan and fix` job run by the VM Resurrector.
+1. To recreate terminated or lost VMs, perform the following steps:
 
-    <pre class="terminal">
-    $ bosh tasks recent --no-filter
-    +-----+------------+-------------------------+----------+--------------------------------------------+---------------------------------------------------+
-    | #   | State      | Timestamp               | User     | Description                                | Result                                            |
-    +-----+------------+-------------------------+----------+--------------------------------------------+---------------------------------------------------+
-    | 123 | queued     | 2016-01-08 00:18:07 UTC | director | scan and fix                               |                                                   |
-    </pre>
+    1. If you use the [VM Resurrector](./resurrector.html#enabling), disable it.
 
-    If you have not enabled the VM Resurrector, run the BOSH Cloud Check interactive command `bosh cck` to recreate your VMs. When prompted, select **Recreate VM**. If this option fails, select **Delete VM reference**.
+    1. Run the BOSH Cloud Check interactive command. When prompted, select **Recreate VM**. If this option fails, select **Delete VM reference**.
 
-    <pre class="terminal">
-    $ bosh cck
+        <pre class="terminal">
+        $ bosh cck
 
-    Acting as user 'director' on deployment 'cf-e82cbf44613594d8a155' on 'p-bosh-30c19bdd43c55c627d70'
-    Performing cloud check...
+        Acting as user 'director' on deployment 'cf-e82cbf44613594d8a155' on 'p-bosh-30c19bdd43c55c627d70'
+        Performing cloud check...
 
-    Director task 34
-      Started scanning 22 vms
-      Started scanning 22 vms > Checking VM states. Done (00:00:10)
-      Started scanning 22 vms > 19 OK, 0 unresponsive, 3 missing, 0 unbound, 0 out of sync. Done (00:00:00)
-         Done scanning 22 vms (00:00:10)
+        Director task 34
+          Started scanning 22 vms
+          Started scanning 22 vms > Checking VM states. Done (00:00:10)
+          Started scanning 22 vms > 19 OK, 0 unresponsive, 3 missing, 0 unbound, 0 out of sync. Done (00:00:00)
+             Done scanning 22 vms (00:00:10)
 
-      Started scanning 10 persistent disks
-      Started scanning 10 persistent disks > Looking for inactive disks. Done (00:00:02)
-      Started scanning 10 persistent disks > 10 OK, 0 missing, 0 inactive, 0 mount-info mismatch. Done (00:00:00)
-         Done scanning 10 persistent disks (00:00:02)
+          Started scanning 10 persistent disks
+          Started scanning 10 persistent disks > Looking for inactive disks. Done (00:00:02)
+          Started scanning 10 persistent disks > 10 OK, 0 missing, 0 inactive, 0 mount-info mismatch. Done (00:00:00)
+             Done scanning 10 persistent disks (00:00:02)
 
-    Task 34 done
+        Task 34 done
 
-    Started   2015-11-26 01:42:42 UTC
-    Finished  2015-11-26 01:42:54 UTC
-    Duration  00:00:12
+        Started   2015-11-26 01:42:42 UTC
+        Finished  2015-11-26 01:42:54 UTC
+        Duration  00:00:12
 
-    Scan is complete, checking if any problems found.
+        Scan is complete, checking if any problems found.
 
-    Found 3 problems
+        Found 3 problems
 
-    Problem 1 of 3: VM with cloud ID `i-afe2801f' missing.
-        1. Skip for now
-        2. Recreate VM
-        3. Delete VM reference
-    Please choose a resolution [1 - 3]: 2
+        Problem 1 of 3: VM with cloud ID `i-afe2801f' missing.
+            1. Skip for now
+            2. Recreate VM
+            3. Delete VM reference
+        Please choose a resolution [1 - 3]: 2
 
-    Problem 2 of 3: VM with cloud ID `i-36741a86' missing.
-        1. Skip for now
-        2. Recreate VM
-        3. Delete VM reference
-    Please choose a resolution [1 - 3]: 2
+        Problem 2 of 3: VM with cloud ID `i-36741a86' missing.
+            1. Skip for now
+            2. Recreate VM
+            3. Delete VM reference
+        Please choose a resolution [1 - 3]: 2
 
-    Problem 3 of 3: VM with cloud ID `i-ce751b7e' missing.
-        1. Skip for now
-        2. Recreate VM
-        3. Delete VM reference
-    Please choose a resolution [1 - 3]: 2
-    </pre>
+        Problem 3 of 3: VM with cloud ID `i-ce751b7e' missing.
+            1. Skip for now
+            2. Recreate VM
+            3. Delete VM reference
+        Please choose a resolution [1 - 3]: 2
+        </pre>
 
-1. Run `bosh instances` and examine the output. The VMs transition from `unresponsive agent` to `starting`. Ultimately, two appear as `failing`. Do not proceed to the next step until all three VMs are in the `starting` or `failing` state.
+    1. Re-enable the VM Resurrector if you want to continue to use it.
 
-    <pre class="terminal">
-    $ bosh instances
-    [...]
-    +--------------------------------------------------+----------+------------------------------------------------+------------+
-    | mysql-partition-e97dae91e44681e0b543/0           | starting | mysql-partition-e97dae91e44681e0b543           | 203.0.113.60 |
-    | mysql-partition-e97dae91e44681e0b543/1           | failing  | mysql-partition-e97dae91e44681e0b543           | 203.0.113.61 |
-    | mysql-partition-e97dae91e44681e0b543/2           | failing  | mysql-partition-e97dae91e44681e0b543           | 203.0.113.62 |
-    +--------------------------------------------------+----------+------------------------------------------------+------------+
-    </pre>
+    <p class="note"><strong>Note</strong>: Do not proceed to the next step until all VMs are in the <code>starting</code> or <code>failing</code> state.</p>
 
 1. Complete the following steps to prepare your deployment for the bootstrap errand:
 
@@ -240,7 +226,7 @@ In this scenario, severe circumstances such as power failure have terminated all
 If the bootstrap errand cannot recover the cluster, you need to perform the steps automated by the errand manually. 
 
 - If the output of `bosh instances` shows the state of the jobs as `failing` ([Scenario 1](#cluster-disrupted)), proceed directly to the manual steps below.
-- If the output of `bosh instances` shows the state of the jobs as `unknown/unknown`, perform Steps 1-3 of [Scenario 2](#vms-terminated), substitute the manual steps below for Step 4, and then perform Steps 5-6 of [Scenario 2](#vms-terminated).
+- If the output of `bosh instances` shows the state of the jobs as `unknown/unknown`, perform Steps 1-2 of [Scenario 2](#vms-terminated), substitute the manual steps below for Step 3, and then perform Steps 4-5 of [Scenario 2](#vms-terminated).
 
 1. SSH to each node in the cluster and, as root, shut down the `mariadb` process.
 

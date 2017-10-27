@@ -1,5 +1,5 @@
 ---
-title: Restoring an ERT Backup In-place
+title: Restoring an PAS Backup In-place
 owner: RelEng
 ---
 
@@ -34,13 +34,13 @@ cf-example               push-apps-manager-release/661.1.24
 
 In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
 
-## <a id='restore-ert'></a> Step 3: Restore Elastic Runtime
+## <a id='restore-ert'></a> Step 3: Restore PAS
 
 <p class="note"><strong>Note</strong>: If your apps must not be running after a restore run <code>bosh stop</code> on each <code>diego_cell</code> VM in the deployment.</p>
 
-1. If you use an external blobstore and copied it during the backup, restore the external blobstore with your IAAS specific tools before running Elastic Runtime restore.
+1. If you use an external blobstore and copied it during the backup, restore the external blobstore with your IAAS specific tools before running Pivotal Application Service (PAS) restore.
 
-1. Run the BBR restore command from your jumpbox to restore Elastic Runtime:
+1. Run the BBR restore command from your jumpbox to restore PAS:
 <pre class="terminal">
 $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
       bbr deployment \
@@ -60,13 +60,13 @@ $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
     * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 1: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 2: Identify Your Deployment](#identify-deployment) section.
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
-    * `PATH_TO_ERT_BACKUP`: This is the path to the Elastic Runtime backup you want to restore.
+    * `PATH_TO_ERT_BACKUP`: This is the path to the PAS backup you want to restore.
 
     <p class="note validation">
       <strong>Validation</strong>: If you ran <code>bosh stop</code> on each <code>diego_cell</code> before running <code>bbr restore</code>, you can now run <code>cf stop</code> on all apps and then run <code>bosh start</code> on each <code>diego_cell</code>. After this, all apps will be deployed in a stopped state.
     </p>
 
-1. Perform the following steps after restoring Elastic Runtime:
+1. Perform the following steps after restoring PAS:
   1. Retrieve the MySQL admin credentials from CredHub using the Ops Manager API:
           1. Perform the procedures in the [Using the Ops Manager API](../ops-man-api.html) topic to authenticate and access the Ops Manager API.
           1. Use the `GET /api/v0/deployed/products` endpoint to retrieve a list of deployed products, replacing `UAA-ACCESS-TOKEN` with the access token recorded in the previous step:
@@ -99,6 +99,6 @@ $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
   1. SSH onto each `diego_database` VM and run the following command:
     <pre class="terminal">$ sudo monit restart silk-controller</pre>
 
-      Restored apps will begin to start. The amount of time it takes for all apps to start depends on the number of app instances, the resources available to the underlying infrastructure, and the value of the **Max Inflight Container Starts** field in the Elastic Runtime tile.
+      Restored apps will begin to start. The amount of time it takes for all apps to start depends on the number of app instances, the resources available to the underlying infrastructure, and the value of the **Max Inflight Container Starts** field in the PAS tile.
 
-1. If desired, scale the MySQL Server job back up to its previous number of instances by navigating to the **Resource Config** section of the Elastic Runtime tile. After scaling the job, return to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy.
+1. If desired, scale the MySQL Server job back up to its previous number of instances by navigating to the **Resource Config** section of the PAS tile. After scaling the job, return to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy.

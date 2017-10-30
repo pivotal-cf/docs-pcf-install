@@ -36,7 +36,7 @@ BBR is a binary that can back up and restore BOSH deployments and BOSH Directors
 
 BBR backs up the following PCF components:
 
-* **Elastic Runtime**: Elastic Runtime must be configured with an internal MySQL database and a WebDAV/NFS blobstore to be backed up and restored with BBR. BBR does not support Elastic Runtime with an external blobstore or an external MySQL database.
+* **Pivotal Application Service (PAS)**: PAS must be configured with an internal MySQL database and a WebDAV/NFS blobstore to be backed up and restored with BBR. BBR does not support PAS with an external blobstore or an external MySQL database.
 
   <p class="note warning"><strong>Warning</strong>: If you use BBR to back up an ERT with an external blobstore or an external MySQL database, the BBR commands may run successfully, but the result of the BBR restore will be incomplete and unusable.</p>
 
@@ -81,10 +81,10 @@ Prepare your jumpbox for BBR by following the steps in the [Setting Up Your Jump
 
 ### <a id='encrypt-key'></a>Step 2: Record the Cloud Controller Database Encryption Credentials
 
-Perform the following steps to retrieve the Cloud Controller Database encryption credentials from the Elastic Runtime tile:
+Perform the following steps to retrieve the Cloud Controller Database encryption credentials from the PAS tile:
 
 1. Navigate to Ops Manager in a browser and log in to the Ops Manager Installation Dashboard.
-1. Select **Pivotal Elastic Runtime > Credentials** and locate the Cloud Controller section.
+1. Select PAS **Credentials** and locate the Cloud Controller section.
 1. Record the Cloud Controller **DB Encryption Credentials**.
 You must provide these credentials if you contact [Pivotal Support](https://support.pivotal.io) for help
 restoring your installation.
@@ -137,7 +137,7 @@ You can also retrieve the credentials using the Ops Manager API with a GET reque
 
 When BBR backs up ERT, it needs a MySQL backup prepare node. This procedure ensures that a MySQL backup prepare node exists even when automated backups are disabled:
 
-1. In Ops Manager, open the **Pivotal Elastic Runtime** tile.
+1. In Ops Manager, open the PAS tile.
 
 1. If automated backups are disabled under **Internal MySQL** > **Automated Backups Configuration**, do the following:
   1. In the **Resource Config** pane find the **Backup Prepare Node** job and select `1` from the **Instances** dropdown menu.
@@ -145,7 +145,7 @@ When BBR backs up ERT, it needs a MySQL backup prepare node. This procedure ensu
   1. Click **Save**.
   1. Navigate back to the Installation Dashboard and click **Apply Changes** to redeploy.
 
-No action is needed with automated backups enabled, because Elastic Runtime allocates a backup prepare node automatically.
+No action is needed with automated backups enabled, because PAS allocates a backup prepare node automatically.
 
 ### <a id='identify-deployment'></a> Step 6: Identify Your Deployment
 
@@ -191,7 +191,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 
 1. If the pre-backup check succeeds, continue to the [next section](#procedure). If it fails, the deployment you selected may not have the correct backup scripts, or the connection to the BOSH Director may have failed.
 	<br><br>
-	The following error occurs if you have not enabled the Elastic Runtime MySQL Backup Prepare Node:
+	The following error occurs if you have not enabled the PAS MySQL Backup Prepare Node:
 
 		1 error occurred:
 
@@ -236,11 +236,11 @@ Replace the placeholder values as follows:
 
 <p class="note"><strong>Note</strong>: The BOSH Director backup takes at least 20 minutes.</note> </p>
 
-### <a id='bbr-backup'></a> Step 10: Back Up Your Elastic Runtime Deployment
+### <a id='bbr-backup'></a> Step 10: Back Up Your PAS Deployment
 
-1.  If you are using an external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup may be slightly inconsistent with your Elastic Runtime backup depending on the duration of time between performing the backups.
+1.  If you are using an external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup may be slightly inconsistent with your PAS backup depending on the duration of time between performing the backups.
 
-1. Run the BBR backup command from your jumpbox to back up your Elastic Runtime deployment:
+1. Run the BBR backup command from your jumpbox to back up your PAS deployment:
   <pre class="terminal">
   $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
     nohup bbr deployment \
@@ -260,7 +260,7 @@ Replace the placeholder values as follows:
         --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
         backup --with-manifest</pre>
 
-    <p class="note"><strong>Note</strong>: Backing up Elastic Runtime takes at least 10 minutes, and can take considerably longer with larger blobstores or slow network connections. The backup also incurs around 10 minutes of Cloud Controller downtime, during which users will be unable to push, scale, or delete apps. Your apps will not be affected.</p>
+    <p class="note"><strong>Note</strong>: Backing up PAS takes at least 10 minutes, and can take considerably longer with larger blobstores or slow network connections. The backup also incurs around 10 minutes of Cloud Controller downtime, during which users will be unable to push, scale, or delete apps. Your apps will not be affected.</p>
 
     <p class="note"><strong>Note</strong>: Because the BBR backup command can take a long time to complete, Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
 

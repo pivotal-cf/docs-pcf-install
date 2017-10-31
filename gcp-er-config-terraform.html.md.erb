@@ -1,39 +1,39 @@
 ---
-title: Deploying Elastic Runtime on GCP (Terraform)
+title: Deploying PAS on GCP (Terraform)
 owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
 <html class="list-style-none"></html>
 
-This topic describes how to install and configure Elastic Runtime for Pivotal Cloud Foundry (PCF) on Google Cloud Platform (GCP).
+This topic describes how to install and configure Pivotal Application Service (PAS) on Google Cloud Platform (GCP).
 
 Before beginning this procedure, ensure that you have successfully completed the [Configuring Ops Manager Director on GCP](./gcp-om-config.html) topic.
 
-<p class="note"><strong>Note</strong>: If you plan to <a href="http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the Elastic Runtime tile. </p> 
+<p class="note"><strong>Note</strong>: If you plan to <a href="http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the PAS tile.</p> 
 
 ## <a id='prereq'></a>Prerequisite ##
 
 To complete the procedures in this topic, you must have access to the output from when you ran `terraform apply` to create resources for this deployment. You can view this output at any time by running `terraform output`. You use the values in your Terraform output to configure the Ops Manager Director tile. 
 
-## <a id='download-er'></a> Step 1: Download the Elastic Runtime Tile ##
+## <a id='download-er'></a> Step 1: Download the PAS Tile ##
 
-1. If you have not already downloaded Elastic Runtime, log in to [Pivotal Network](https://network.pivotal.io/products/pivotal-cf), and click on **Pivotal Cloud Foundry Elastic Runtime**. 
+1. If you have not already downloaded PAS, log in to [Pivotal Network](https://network.pivotal.io/products/pivotal-cf), and click on **Pivotal Application Service**. 
 
 1. From the **Releases** drop-down, select the release to install and choose one of the following:
-  1. Click **PCF Elastic Runtime** to download the Elastic Runtime `.pivotal` file
+  1. Click **Pivotal Application Service** to download the PAS `.pivotal` file
   1. Click **PCF Small Footprint Runtime** to download the Small Footprint Runtime `.pivotal` file. For more information, see [Getting Started with Small Footprint Runtime](./small-footprint.html).
 
-## <a id='add-er'></a> Step 2: Add Elastic Runtime to Ops Manager ##
+## <a id='add-er'></a> Step 2: Add PAS to Ops Manager ##
 
 1. Navigate to the Pivotal Cloud Foundry Operations Manager Installation Dashboard.
 
-1. Click **Import a Product** to add the Elastic Runtime tile to Ops Manager. This may take a while depending on your connection speed. 
+1. Click **Import a Product** to add the PAS tile to Ops Manager. This may take a while depending on your connection speed. 
   <p class="note"><strong>Tip</strong>: After you import a tile to Ops Manager, you can view the latest available version of that tile in the Installation Dashboard by enabling the Pivotal Network API. For more information, refer to the [Adding and Deleting Products](./add-delete.html#pivnet-api) topic.</p>
 
-1. On the left, click the plus icon next to the imported Elastic Runtime product to add it to the Installation Dashboard.
+1. On the left, click the plus icon next to the imported PAS product to add it to the Installation Dashboard.
 
-1. Click the newly added **Elastic Runtime** tile in the Installation Dashboard.
+1. Click the newly added PAS tile in the Installation Dashboard.
 
     <%= image_tag('images/er-tile.png') %>
 
@@ -45,7 +45,7 @@ To complete the procedures in this topic, you must have access to the output fro
 
 1. Select all Availability Zones under **Balance other jobs**. Ops Manager balances instances of jobs with more than one instance across the Availability Zones that you specify.
 
-    <p class="note"><strong>Note</strong>: For production deployments, Pivotal recommends at least three Availability Zones for a highly available installation of Elastic Runtime.</p>
+    <p class="note"><strong>Note</strong>: For production deployments, Pivotal recommends at least three Availability Zones for a highly available installation of PAS.</p>
 
 1. From the **Network** drop-down box, choose the `ert` network you created when [configuring Ops Manager Director](./gcp-om-config.html#network).
 
@@ -68,7 +68,7 @@ To complete the procedures in this topic, you must have access to the output fro
 1. Select **Networking**.
 
 1. Leave the **Router IPs**, **SSH Proxy IPs**, **HAProxy IPs**, and **TCP Router IPs** fields blank. You do not need to complete these fields when deploying PCF to GCP. 
-   <p class="note"><strong>Note</strong>: You specify load balancers in the **Resource Config** section of Elastic Runtime later on in the installation process. See the <a href="#config-lb">Configure Load Balancers</a> section of this topic for more information.</p>
+   <p class="note"><strong>Note</strong>: You specify load balancers in the **Resource Config** section of PAS later on in the installation process. See the <a href="#config-lb">Configure Load Balancers</a> section of this topic for more information.</p>
 
 1. Under **Certificate and Private Key for HAProxy and Router**, you must provide an **SSL Certificate and Private Key**. Starting in PCF v.1.12, HAProxy and Gorouter are enabled to receive TLS communication by default.
   <%= image_tag 'images/networking_haproxy_router_cert_config.png' %><br>
@@ -82,7 +82,7 @@ To complete the procedures in this topic, you must have access to the output fro
 1. <%= partial 'http_disable' %>
 1. <%= partial 'insecure_cookies' %> 
 1. <%= partial 'zipkin_enable' %>
-1. By default, the Elastic Runtime routers handle traffic for applications deployed to an isolation segment created by the PCF Isolation Segment tile. To configure the Elastic Runtime routers to reject requests for applications within isolation segments, select the **Routers reject requests for Isolation Segments** checkbox.
+1. By default, the PAS routers handle traffic for applications deployed to an isolation segment created by the PCF Isolation Segment tile. To configure the PAS routers to reject requests for applications within isolation segments, select the **Routers reject requests for Isolation Segments** checkbox.
   <%= image_tag 'isolate-network.png' %>
   Do not enable this option without deploying routers for each isolation segment. See the following topics for more information:
   * [Installing PCF Isolation Segment](../customizing/installing-pcf-is.html)
@@ -112,7 +112,7 @@ To complete the procedures in this topic, you must have access to the output fro
 1. <%= partial 'log-app-traffic-enable' %>
 
 1. <%= partial 'tcp_routing_enable' %>
-   1. For GCP, you also need to specify the name of a GCP TCP load balancer in the **LOAD BALANCER** column of TCP Router job of the **Resource Config** screen. You configure this later on in Elastic Runtime. See <a href="#configure-lb">Configure Load Balancers</a> section of this topic.</p>
+   1. For GCP, you also need to specify the name of a GCP TCP load balancer in the **LOAD BALANCER** column of TCP Router job of the **Resource Config** screen. You configure this later on in PAS. See <a href="#configure-lb">Configure Load Balancers</a> section of this topic.</p>
 1. <%= partial 'tcp_routing_disable' %>
 
 1. Click **Save**.
@@ -139,7 +139,7 @@ To complete the procedures in this topic, you must have access to the output fro
 
 ## <a id='sys-db'></a>Step 12: Configure System Databases ##
 
-You can configure Elastic Runtime to use Google Cloud SQL for the databases required by Elastic Runtime.
+You can configure PAS to use Google Cloud SQL for the databases required by PAS.
 
 <p class="note"><strong>Note</strong>: If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data first before changing the configuration. Contact Pivotal Support for help. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information.</p>
 
@@ -166,7 +166,7 @@ On GCP, you can use Google Cloud SQL and use the automated backup and high avail
 <p class="note warning">
 <strong>Warning</strong>: Protect whichever database you use in your deployment with a password.</p>
 
-To specify your Elastic Runtime databases, perform the following steps:
+To specify your PAS databases, perform the following steps:
 
 1. Select the **External Databases** option.
 
@@ -209,11 +209,11 @@ for a typical PCF on GCP installation.
 
 If you forward logging messages to an external Reliable Event Logging Protocol (RELP) server, complete the following steps:
 
-1. Select the **System Logging** section that is located within your Pivotal Elastic Runtime **Settings** tab.
+1. Select the **System Logging** section that is located within your PAS **Settings** tab.
   <%= image_tag("updated-system-logging.png") %>
 1. Enter the IP address of your syslog server in **Address**.
 1. Enter the port of your syslog server in **Port**. The default port for a syslog server is `514`.
-<p class="note"><strong>Note</strong>: The host must be reachable from the Elastic Runtime network, accept TCP connections, and use the RELP protocol. Ensure your syslog server listens on external interfaces.</p>
+<p class="note"><strong>Note</strong>: The host must be reachable from the PAS network, accept TCP connections, and use the RELP protocol. Ensure your syslog server listens on external interfaces.</p>
 1. Select a **Transport Protocol** to use when forwarding logs.
 1. If you plan to use TLS encryption when sending logs to the remote server, select **Yes** when answering the **Encrypt syslog using TLS?** question.
   1. In the **Permitted Peer** field, enter either the name or SHA1 fingerprint of the remote peer.
@@ -228,7 +228,7 @@ If you forward logging messages to an external Reliable Event Logging Protocol (
 
 ## <a id='smtp'></a>Step 17: (Optional) Configure Email Notifications ##
 
-Elastic Runtime uses SMTP to send invitations and confirmations to Apps Manager
+PAS uses SMTP to send invitations and confirmations to Apps Manager
 users.
 You must complete the **Email Notifications** page if you want to enable
 end-user self-registration.
@@ -273,7 +273,7 @@ the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating a
 1. If you have enabled TCP routing in the <a href="#advanced-features">Advanced Features</a> pane and set up the <a href="./gcp-prepare-env.html#tcp_websockets_lb">TCP Load Balancer in GCP</a>, add the value of `tcp_router_pool` from your Terraform output, prepended with <code>tcp:</code>, to the <strong>LOAD BALANCERS</strong> column of the <storng>TCP Router</strong> row. For example, <code>tcp:pcf-cf-tcp</code>.
 
 1. Enter the name of you SSH load balancer depending on which release you are using.
-  * **Elastic Runtime**: Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the value of `ssh_router_pool` from your Terraform output, prepended with `tcp:`. For example, `tcp:MY-PCF-ssh-proxy`.
+  * **PAS**: Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the value of `ssh_router_pool` from your Terraform output, prepended with `tcp:`. For example, `tcp:MY-PCF-ssh-proxy`.
   * **Small Footprint Runtime**: Under the **LOAD BALANCERS** column of the **Control** row,, enter the value of `ssh_router_pool` from your Terraform output, prepended with `tcp:`. 
 
 1. Verify that the **Internet Connected** checkbox for every job is unchecked. When preparing your GCP environment, you provisioned a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses to allow the jobs to reach the Internet.
@@ -287,25 +287,25 @@ the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating a
 
 ## <a id='stemcell'></a>Step 24: Verify and Download Stemcell Version##
 
-Verify whether Ops Manager is providing the stemcell version required by Elastic Runtime. If the correct version is already present, you do not need to download a new stemcell.
+Verify whether Ops Manager is providing the stemcell version required by PAS. If the correct version is already present, you do not need to download a new stemcell.
 
-1. In the Elastic Runtime tile, select **Stemcell**.
+1. In the PAS tile, select **Stemcell**.
 
-1. Verify that the version indicated in the filename matches the version of stemcell required by Elastic Runtime. 
-  * If Elastic Runtime detects that a stemcell `.tgz` file is present in the Ops Manager Director VM at `/var/tempest/stemcells/`, the Stemcell screen displays filename information.
+1. Verify that the version indicated in the filename matches the version of stemcell required by PAS. 
+  * If PAS detects that a stemcell `.tgz` file is present in the Ops Manager Director VM at `/var/tempest/stemcells/`, the Stemcell screen displays filename information.
   <%= image_tag("stemcell_18.png") %>
-  * If Elastic Runtime cannot detect a stemcell `.tgz` file, the following message displays:
+  * If PAS cannot detect a stemcell `.tgz` file, the following message displays:
   <%= image_tag("stemcell_not_found.png") %>
 
-1. If the version of the stemcell file that is loaded does not match the required version listed in the <a href="http://network.pivotal.io">Pivotal Network</a> download page for Elastic Runtime, or cannot be found by Ops Manager, perform the following steps to download and import a new stemcell file:
+1. If the version of the stemcell file that is loaded does not match the required version listed in the <a href="http://network.pivotal.io">Pivotal Network</a> download page for PAS, or cannot be found by Ops Manager, perform the following steps to download and import a new stemcell file:
 
   1. Log in to the [Pivotal Network](https://network.pivotal.io/products/pivotal-cf) and click **Stemcells**.
 
   1. Download the appropriate stemcell version targeted for your IaaS.
 
-  1. In the **Stemcell** section of the Elastic Runtime tile, click **Import Stemcell** to import the downloaded stemcell <code>.tgz</code> file.
+  1. In the **Stemcell** section of the PAS tile, click **Import Stemcell** to import the downloaded stemcell <code>.tgz</code> file.
 
-## <a id='complete'></a>Step 25: Complete the Elastic Runtime Installation ##
+## <a id='complete'></a>Step 25: Complete the PAS Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.

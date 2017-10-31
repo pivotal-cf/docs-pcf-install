@@ -16,8 +16,8 @@ You may also find it helpful to review different deployment options in the [Refe
 
 In addition to fulfilling the prerequisites listed in the [Installing Pivotal Cloud Foundry on GCP](./gcp.html) topic, ensure you have the following: 
 
-* Terraform CLI
-* gcloud CLI
+* The [Terraform CLI](https://www.terraform.io/intro/getting-started/install.html)
+* The [Google Cloud SDK](https://cloud.google.com/sdk/docs/quickstarts)
 * In your GCP project, enable the following APIs: 
   * [Identity and Access Management](https://console.developers.google.com/apis/api/iam.googleapis.com)
   * [Cloud Resource Manager](https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/)
@@ -65,7 +65,7 @@ Before you can run Terraform commands to create infrastructure resources, you mu
     opsman_image_url = "YOUR-OPS-MAN-IMAGE-URL"
     zones            = ["YOUR-AZ-1", "YOUR-AZ-2", "YOUR-AZ-3"]
     project          = "YOUR-GCP-PROJECT"
-    dns_suffix       = "YOUR-SYSTEM-DOMAIN"
+    dns_suffix       = "YOUR-DNS-SUFFIX"
 
     ssl_cert = <<SSL_CERT
     -----BEGIN CERTIFICATE-----
@@ -111,14 +111,16 @@ Before you can run Terraform commands to create infrastructure resources, you mu
       <td>Enter the name of the GCP project in which you want Terraform to create resources.</td>
     </tr>
     <tr>
-      <td><code>YOUR-SYSTEM-DOMAIN</code></td>
-      <td>Enter a domain name to use as the system domain for your PCF deployment. Terraform creates DNS records in GCP using `YOUR-ENVIRONMENT-NAME` and `YOUR-SYSTEM-DOMAIN`. For example, if you enter <code>example.com</code> for your system domain and have <code>pcf</code> as your environment name, Terraform will create DNS records at <code>pcf.example.com</code>.</td>
+      <td><code>YOUR-DNS-SUFFIX</code></td>
+      <td>Enter a domain name to use as part of the system domain for your PCF deployment. Terraform creates DNS records in GCP using <code>YOUR-ENVIRONMENT-NAME</code> and <code>YOUR-DNS-SUFFIX</code>. For example, if you enter <code>example.com</code> for your DNS suffix and have <code>pcf</code> as your environment name, Terraform will create DNS records at <code>pcf.example.com</code>.</td>
     </tr>
     <tr>
       <td><code>YOUR-CERTIFICATE</code></td>
       <td>Enter a certificate to use for HTTP load balancing. For production environments, use a certificate from a Certificate Authority (CA). For test environments, you can use a self-signed certificate. 
 
-      <p class="note"><strong>Note</strong>: Your certificate must specify <code>YOUR-SYSTEM-DOMAIN</code> as the common name. It also must include the following subdomains: <code>*.sys.example.com</code>, <code>*.login.sys.example.com</code>, <code>*.uaa.sys.example.com</code>, <code>*.apps.example.com</code>.</p></td>
+      Your certificate must specify your system domain as the common name. Your system domain is <code>YOUR-ENVIRONMENT-NAME.YOUR-DNS-SUFFIX</code>.
+
+      It also must include the following subdomains: <code>\*.sys.YOUR-SYSTEM-DOMAIN</code>, <code>\*.login.sys.YOUR-SYSTEM-DOMAIN</code>, <code>\*.uaa.sys.YOUR-SYSTEM-DOMAIN</code>, <code>\*.apps.YOUR-SYSTEM-DOMAIN</code>.</p></td>
     </tr>
     <tr>
       <td><code>YOUR-PRIVATE-KEY</code></td>
@@ -132,7 +134,7 @@ Before you can run Terraform commands to create infrastructure resources, you mu
 
 ## <a id="download"></a>Step 3: Add Optional Variables ##
 
-Complete this step if you want plan to deploy the Isolation Segment tile, use an external Google Cloud SQL database, or use external Google Storage buckets for your PCF deployment. In your `terraform.tfvars` file, specify the appropriate variables from the sections below.
+Complete this step if you plan to deploy the Isolation Segment tile, use an external Google Cloud SQL database, or use external Google Storage buckets for your PCF deployment. In your `terraform.tfvars` file, specify the appropriate variables from the sections below.
 
 ### <a id="iso_seg"></a> Isolation Segments
 
@@ -154,13 +156,13 @@ ISO_SEG_SSL_KEY
 
 ### <a id="cloudsql"></a> External Database
 
-1. If you want to use an external Google Cloud SQL database for Ops Manager and Elastic Runtime, add the following to your `terraform.tfvars` file: 
+1. If you want to use an external Google Cloud SQL database for Ops Manager and Pivotal Application Service (PAS), add the following to your `terraform.tfvars` file: 
 
     ```
     external_database: true
     ```
 
-1. If you want to specify a single host from which users can connect to the Ops Manger and Elastic Runtime database, add the following variables to your `terraform.tfvars` file. Replace `HOST_IP_ADDRESS` with your desired IP addresses. 
+1. If you want to specify a single host from which users can connect to the Ops Manger and PAS database, add the following variables to your `terraform.tfvars` file. Replace `HOST_IP_ADDRESS` with your desired IP addresses. 
 
     ```
     opsman_sql_db_host: HOST_IP_ADDRESS
@@ -169,7 +171,7 @@ ISO_SEG_SSL_KEY
 
 ### <a id="gcs"></a> External Storage Buckets
 
-If you want to use Google Cloud Storage buckets for the Elastic Runtime Cloud Controller, add the following to your `terraform.tfvars` file:
+If you want to use Google Cloud Storage buckets for the PAS Cloud Controller, add the following to your `terraform.tfvars` file:
 
 ```
 ert_sql_db_host: true
@@ -184,6 +186,13 @@ Follow these steps to use the Terraform CLI to create resources on GCP:
 
 1. Run the following command. It may take several minutes for Terraform to create all the resources in GCP. 
   <pre class="terminal">$ terraform apply</pre>
+
+## <a id="dns"></a>Step 5: Create DNS Record ##
+
+1. In a browswer, navigate to the DNS provider for the DNS suffix you entered in your `terraform.tfvars` file. 
+
+1. Create a new NS (Name server) record for your PCF system domain. Your system domain is `YOUR-ENVIRONMENT-NAME.YOUR-DNS-SUFFIX`. 
+  1. In this record, enter the name servers included in `env\_dns\_zone\_name\_servers` from your Terraform output. 
 
 ## <a id="next"></a> What to Do Next ##
 

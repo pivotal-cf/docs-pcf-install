@@ -79,7 +79,18 @@ Before upgrading to Ops Manager v1.9, you must be using the following product ve
 
 For information about how to upgrade product tiles in PCF v1.8, see the <a href="http://docs.pivotal.io/pivotalcf/1-8/customizing/upgrading-products.html">Upgrading Elastic Runtime and Other Pivotal Cloud Foundry Products</a> topic.
 
-### <a id="review-rabbitmq"></a> Prep 5: Review RabbitMQ for PCF Version and Health Status
+### <a id="cert-expiry"></a>Prep 5: Check Certificate Authority Expiration Dates
+
+Depending on the requirements of your deployment, you may need to rotate your Certificate Authority (CA) certificates. The non-configurable certificates in your deployment expire every two years. They must be regenerated and rotated so that critical components do not face a complete outage.
+
+Use the following HTTP request to get information about all the RSA and CA certificates for your deployment, including whether they are set to expire:
+<pre class="terminal">$ GET /api/v0/deployed/certificates?expires_within=1m</pre>
+
+<p class="note"><strong>Note</strong>: The query parameter `expires_within` uses values for days, weeks, months, and years. For example, to search for certificates expiring within one month, use `1m`.</p>
+
+For information on how to regenerate and rotate CA certificates, see [Regenerating and Rotating Non-Configurable TLS/SSL Certificates](https://docs.pivotal.io/pivotalcf/1-12/security/pcf-infrastructure/api-cert-rotation.html).
+
+### <a id="review-rabbitmq"></a> Prep 6: Review RabbitMQ for PCF Version and Health Status
 
 If you have RabbitMQ for PCF currently deployed in your PCF v1.8 environment, perform the following steps before upgrading to PCF v1.9.
 
@@ -87,7 +98,7 @@ If you have RabbitMQ for PCF currently deployed in your PCF v1.8 environment, pe
 
 1. Examine the RabbitMQ for PCF [management dashboard](https://docs.pivotal.io/rabbitmq-cf/1-7/managing.html) to ensure that the service status is **green** and that all nodes are healthy. For more information, see the [RabbitMQ for Pivotal Cloud Foundry](https://docs.pivotal.io/rabbitmq-cf/1-7/index.html) documentation.
 
-### <a id="remove-products"></a>Prep 6: Review and Remove Unsupported Products
+### <a id="remove-products"></a>Prep 7: Review and Remove Unsupported Products
 
 If your deployment contains any of the following unsupported products, you must remove the associated product tile before upgrading. The following products are no longer maintained and are not compatible with PCF v1.9:
 
@@ -102,17 +113,17 @@ If your deployment contains any of the following unsupported products, you must 
 
 Failure to remove these products prior to upgrade may cause issues with your deployment.
 
-### <a id="review-partners"></a>Prep 7: Review Partner Service Tiles
+### <a id="review-partners"></a>Prep 8: Review Partner Service Tiles
 
 Some partner service tiles may be incompatible with PCF v1.9. Pivotal is working with partners to ensure their tiles are updated to work with the latest versions of PCF. For information about which partner service releases are currently compatible with PCF v1.9, review the appropriate partners services release documentation at [http://docs.pivotal.io](http://docs.pivotal.io), or contact the partner organization that produces the service tile.
 
-### <a id="download-targets"></a>Prep 8: Download Upgrade Versions
+### <a id="download-targets"></a>Prep 9: Download Upgrade Versions
 
 To minimize disruptions to your deployment during the upgrade, and to satisfy any simultaneous upgrade requirements, download the version of the product files you wish to upgrade from [Pivotal Network](https://network.pivotal.io/). 
 
 At the minimum, you must download Elastic Runtime v1.9.x.
 
-### <a id="ccv3-impact"></a>Prep 9: Prepare for CC API v3 Upgrade
+### <a id="ccv3-impact"></a>Prep 10: Prepare for CC API v3 Upgrade
 
 The migration to PCF v1.9 removes all experimental Cloud Controller API v3 data. If you have experimented with the v3 API prior to this release, Pivotal recommends that you remove all existing v3 service bindings. 
 
@@ -138,7 +149,7 @@ To determine if your deployment is using any v3 service bindings, perform the fo
 
 In addition, although existing v2 applications still run normally during the upgrade, some developer interactions with PCF such as pushing apps to PCF may fail. You may want to warn users about potential availability issues during the upgrade window. 
 
-### <a id="prepare-env"></a>Prep 10: Prepare Your Environment
+### <a id="prepare-env"></a>Prep 11: Prepare Your Environment
 
 1. Install the releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.6 and you are upgrading to v1.9, you must sequentially install v1.7 and v1.8 before proceeding with the upgrade to v1.9.
 
@@ -169,7 +180,7 @@ This is the same information you entered at the end of deploying [Ops Manager on
        * Hard Disk 1
        * Network Adapter 1. When you configure the new VM, ensure your network adapters are configured properly and are on the same network.
 
-### <a id="check-health"></a>Prep 11: Check System Health Before Upgrade
+### <a id="check-health"></a>Prep 12: Check System Health Before Upgrade
 
 1. Run `bosh cloudcheck` to confirm that the VMs are healthy. For more information, see the [BOSH Cloudcheck](./trouble-advanced.html#cck) topic.
 

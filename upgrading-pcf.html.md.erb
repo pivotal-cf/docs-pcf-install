@@ -49,7 +49,18 @@ To minimize disruptions to your deployment during the upgrade, and to satisfy an
 
 At the minimum, you must download Elastic Runtime v1.11.x.
 
-### <a id="prepare-env"></a>Prep 5: Prepare Your Environment
+### <a id="cert-expiry"></a>Prep 5: Check Certificate Authority Expiration Dates
+
+Depending on the requirements of your deployment, you may need to rotate your Certificate Authority (CA) certificates. The non-configurable certificates in your deployment expire every two years. They must be regenerated and rotated so that critical components do not face a complete outage.
+
+Use the following HTTP request to get information about all the RSA and CA certificates for your deployment, including whether they are set to expire:
+<pre class="terminal">$ GET /api/v0/deployed/certificates?expires_within=1m</pre>
+
+<p class="note"><strong>Note</strong>: The query parameter `expires_within` uses values for days, weeks, months, and years. For example, to search for certificates expiring within one month, use `1m`.</p>
+
+For information on how to regenerate and rotate CA certificates, see [Regenerating and Rotating Non-Configurable TLS/SSL Certificates](https://docs.pivotal.io/pivotalcf/1-12/security/pcf-infrastructure/api-cert-rotation.html).
+
+### <a id="prepare-env"></a>Prep 6: Prepare Your Environment
 
 1. Install the releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.8 and you are upgrading to v1.11, you must sequentially install v1.9 and v1.10 before proceeding with the upgrade to v1.11.
 
@@ -84,7 +95,7 @@ This is the same information you entered at the end of deploying [Ops Manager on
        * Hard Disk 1
        * Network Adapter 1. When you configure the new VM, ensure your network adapters are configured properly and are on the same network.
 
-### <a id="upgrade-rmq"></a>Prep 6: Upgrade and Configure RabbitMQ for PCF
+### <a id="upgrade-rmq"></a>Prep 7: Upgrade and Configure RabbitMQ for PCF
 
 If your PCF deployment contains **RabbitMQ for PCF**, download and upgrade RabbitMQ for PCF to v1.8.19 or later. 
 
@@ -95,7 +106,7 @@ Ensure that you complete the following as part of the upgrade:
 * Firewall rules on your Rabbit VM instances must allow inbound traffic on port `8301`.  
 * In the **RabbitMQ metrics configuration** screen, deselect the **Use non-secure communication for metrics** checkbox. This checkbox must be unchecked for metrics to be emitted to the Firehose.
 
-### <a id="upgrade-redis"></a>Prep 7: Upgrade and Configure Redis for PCF
+### <a id="upgrade-redis"></a>Prep 8: Upgrade and Configure Redis for PCF
 
 If your PCF deployment contains **Redis for PCF**, download and upgrade to Redis for PCF v1.9 or later. 
 
@@ -106,7 +117,7 @@ Ensure that you complete the following as part of the upgrade:
 * When performing the upgrade process, ensure that persistent disk is set to 3.5x the amount of RAM.
 * Firewall rules on your Redis VM instances must allow inbound traffic on port `8301`.
 
-### <a id="upgrade-add-ons"></a>Prep 8: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
+### <a id="upgrade-add-ons"></a>Prep 9: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
 
  Before upgrading to PCF v1.11, operators who have deployed any PCF add-ons (such as **ClamAV for PCF**, **IPsec for PCF**, or **File Integrity Monitoring for PCF**) and who have deployed or are planning to deploy [PCF Runtime for Windows](../windows/index.html) must modify the add-on manifest to specify a compatible OS stemcell. 
 
@@ -129,7 +140,7 @@ Ensure that you complete the following as part of the upgrade:
 
  If you are using any other BOSH-managed add-ons in your deployment, you should verify OS compatibility for those component as well. For more information about configuring BOSH add-on manifests, see the [BOSH documentation](https://bosh.io/docs/runtime-config.html#addons). 
 
-### <a id="autoscaler"></a>Prep 9: Scale Down App Autoscaler
+### <a id="autoscaler"></a>Prep 10: Scale Down App Autoscaler
 
 Before upgrading to PCF v1.11, if you are using App Autoscaler, operators must scale down the service to one instance. Otherwise, the App Autoscaler may panic and fail due to leader elections conflicts.
 
@@ -144,7 +155,7 @@ Perform the following steps:
 1. Scale the App Autoscaler down to one instance:
   <pre class="terminal">$ cf scale autoscale -i 1</pre>
 
-### <a id="check-health"></a>Prep 10: Check System Health Before Upgrade
+### <a id="check-health"></a>Prep 11: Check System Health Before Upgrade
 
 1. Run `bosh cloudcheck` to confirm that the VMs are healthy. For more information, see the [BOSH Cloudcheck](./trouble-advanced.html#cck) topic.
 

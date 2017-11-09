@@ -1,11 +1,11 @@
 ---
-title: Manually Configuring Elastic Runtime for AWS
+title: Manually Configuring PAS for AWS
 owner: Ops Manager
 ---
 
 <html class="list-style-none"></html>
 
-This topic describes how to configure Pivotal Elastic Runtime components
+This topic describes how to configure Pivotal Application Service (PAS) components
 as part of deploying <a
 href="https://network.pivotal.io/productsf/pivotal-cf">Pivotal Cloud Foundry</a>
 (PCF) on Amazon Web Services (AWS).
@@ -14,30 +14,36 @@ Before beginning this procedure, ensure that you have successfully completed all
 
 <p class="note"><strong>Note</strong>: If you plan to 
 <a href = "http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, 
-you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the Elastic Runtime tile.</p>
+you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the PAS Runtime tile.
+</p>
 
-## <a id='om-add'></a>Step 1: Add Elastic Runtime to Ops Manager ##
+## <a id='om-add'></a>Step 1: Add PAS to Ops Manager ##
+
+1. If you have not already downloaded PAS, log in to [Pivotal Network](https://network.pivotal.io/products/pivotal-cf), and click on PAS
+1. From the **Releases** drop-down, select the release to install and choose one of the following:
+  1. Click PAS download the PAS `.pivotal` file
+  1. Click **PCF Small Footprint Runtime** to download the Small Footprint Runtime `.pivotal` file. For more information, see [Getting Started with Small Footprint Runtime](./small-footprint.html).
 
 1. Navigate to the Pivotal Cloud Foundry Operations Manager Installation
 Dashboard.
 
-1. If you have not downloaded Elastic Runtime, click the Pivotal Network link on the left to download the Elastic Runtime .pivotal file. Click **Import a Product** to add the tile to Ops Manager. For more information, refer to the [Adding and Deleting Products](./add-delete.html) topic.
+1. Click **Import a Product** to add your tile to Ops Manager. For more information, refer to the [Adding and Deleting Products](./add-delete.html) topic.
 
-1. Click the Elastic Runtime tile in the Installation Dashboard.
+1. Click the PAS tile in the Installation Dashboard.
 
     <%= image_tag("images/er-tile.png") %>
 
 ## <a id='az-networks'></a>Step 2: Assign Availability Zones and Networks ##
 
-1. Select **Assign AZs and Networks**. These are the Availability Zones that you create when configuring Ops Manager Director.
+1. Select **Assign AZs and Networks**. These are the Availability Zones that you create when configuring Ops Manager Director. <br> ![AZs](aws-ert-azs.png)
 
-  ![AZs](aws-ert-azs.png)
 
 1. Select an Availability Zone under **Place singleton jobs**. Ops Manager runs any job with a single instance in this Availability Zone.
 
 1. Select all Availability Zones under **Balance other jobs**. Ops Manager balances instances of jobs with more than one instance across the Availability Zones that you specify.
     
-    <p class="note"><strong>Note</strong>: Pivotal recommends at least three Availability Zones for a highly available installation of Elastic Runtime.</p>
+    <p class="note"><strong>Note</strong>: Pivotal recommends at least three Availability Zones for a highly available installation of PAS.
+    </p>
 
 1. For **Network**, select the `pcf-ert-network` network that you created in the [Step 5: Create Networks Page](./pcf-aws-manual-om-config.html#pcfaws-om-networks) section of the _Manually Configuring Ops Manager Director for AWS_ topic.
 
@@ -50,15 +56,14 @@ Dashboard.
     <%= image_tag("domains.png") %>
 
 1. Enter the system and application domains.
-    * The **System Domain** defines your target when you push apps to Elastic
-      Runtime. This the `system.YOUR-SYSTEM-DOMAIN.com` domain that you created in [Manually Configuring AWS for PCF](./pcf-aws-manual-config.html). 
-    * The **Apps Domain** defines where Elastic Runtime should serve your apps. This the `apps.YOUR-SYSTEM-DOMAIN.com` domain that you created in [Manually Configuring AWS for PCF](./pcf-aws-manual-config.html).
+    * The **System Domain** defines your target when you push apps to PAS. This the `system.YOUR-SYSTEM-DOMAIN.com` domain that you created in [Manually Configuring AWS for PCF](./pcf-aws-manual-config.html). 
+    * The **Apps Domain** defines where PAS should serve your apps. This the `apps.YOUR-SYSTEM-DOMAIN.com` domain that you created in [Manually Configuring AWS for PCF](./pcf-aws-manual-config.html).
 
 1. Click **Save**.
 
 ## <a id="networking"></a>Step 4: Configure Networking ##
 
-1. <%= partial 'networking-cloudform' %>
+<%= partial 'networking-cloudform' %>
 
 ## <a id='application-containers-config'></a>Step 5: Configure Application Containers ##
 
@@ -80,9 +85,13 @@ Dashboard.
 
 <%= partial 'uaa' %>
 
-## <a id='db-config'></a>Step 10: Configure System Databases ##
+## <a id='credhub'></a>Step 10: Configure CredHub ##
 
-You can configure Elastic Runtime to use the internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by Elastic Runtime.
+<%= partial '_credhub' %>
+
+## <a id='db-config'></a>Step 11: Configure System Databases ##
+
+You can configure PAS to use the internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by PAS.
 
 <p class="note"><strong>Note</strong>: If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data first before changing the configuration. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information.</p>
 
@@ -90,17 +99,17 @@ You can configure Elastic Runtime to use the internal MySQL database provided wi
 
 <%= partial 'ert_database_internal' %>
 
-Then proceed to [Step 11: (Optional) Configure Internal MySQL](#internal-mysql) to configure high availability and automatic backups for your internal MySQL databases.
+Then proceed to [Step 12: (Optional) Configure Internal MySQL](#internal-mysql) to configure high availability and automatic backups for your internal MySQL databases.
 
 ###<a id='create-dbs'></a> Create External System Databases
 
 <%= partial 'ert_database_external' %>
 
-## <a id='internal-mysql'></a> Step 11: (Optional) Configure Internal MySQL ##
+## <a id='internal-mysql'></a> Step 12: (Optional) Configure Internal MySQL ##
 
 <%= partial 'mysql_proxy_config' %>
 
-## <a id='file-store-config'></a>Step 12: Configure File Storage ##
+## <a id='file-store-config'></a>Step 13: Configure File Storage ##
 
 <p class="note"><strong>Note</strong>: If you followed the instructions in <a href="./pcf-aws-manual-config.html">Manually Configuring AWS for PCF</a>, you created the necessary resources for <a href="#external_s3">external S3-compatible file storage</a>.</p>
 
@@ -122,15 +131,15 @@ For more factors to consider when selecting file storage, see the <a href="../op
 
 [Google Cloud Storage](./gcp-er-config.html#external_gcp) and [Azure Storage](./gcp-er-config.html#external_azure) are also available as file storage options, but are not recommended for typical PCF on AWS installations. 
 
-## <a id='sys-logging'></a>Step 13: (Optional) Configure System Logging ##
+## <a id='sys-logging'></a>Step 14: (Optional) Configure System Logging ##
 
 If you forward logging messages to an external Reliable Event Logging Protocol (RELP) server, complete the following steps:
 
-1. Select the **System Logging** section that is located within your Pivotal Elastic Runtime **Settings** tab.
+1. Select the **System Logging** section that is located within your PAS **Settings** tab.
   <%= image_tag("updated-system-logging.png") %>
 1. Enter the IP address of your syslog server in **Address**.
 1. Enter the port of your syslog server in **Port**. The default port for a syslog server is `514`.
-<p class="note"><strong>Note</strong>: The host must be reachable from the Elastic Runtime network, accept TCP connections, and use the RELP protocol. Ensure your syslog server listens on external interfaces.</p>
+<p class="note"><strong>Note</strong>: The host must be reachable from the PAS network, accept TCP connections, and use the RELP protocol. Ensure your syslog server listens on external interfaces.</p>
 1. Select a **Transport Protocol** to use when forwarding logs.
 1. If you plan to use TLS encryption when sending logs to the remote server, select **Yes** when answering the **Encrypt syslog using TLS?** question.
   1. In the **Permitted Peer** field, enter either the name or SHA1 fingerprint of the remote peer.
@@ -139,13 +148,13 @@ If you forward logging messages to an external Reliable Event Logging Protocol (
 1. If you want to include security events in your log stream, select the **Enable Cloud Controller security event logging** checkbox. This logs all API requests, including the endpoint, user, source IP address, and request result, in the Common Event Format (CEF).
 1. Click **Save**.
 
-## <a id='customize-apps-man'></a>Step 14: (Optional) Customize Apps ##
+## <a id='customize-apps-man'></a>Step 15: (Optional) Customize Apps ##
 
 <%= partial 'custombranding' %>
 
-## <a id='smtp'></a>Step 15: (Optional) Configure Email Notifications ##
+## <a id='smtp'></a>Step 16: (Optional) Configure Email Notifications ##
 
-Elastic Runtime uses SMTP to send invitations and confirmations to Apps Manager
+PAS uses SMTP to send invitations and confirmations to Apps Manager
 users.
 You must complete the **Email Notifications** page if you want to enable
 end-user self-registration.
@@ -163,46 +172,48 @@ end-user self-registration.
 settings using this form, the administrator must create orgs and users using
 the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating and Managing Users with the cf CLI</a> for more information.</p>
 
-## <a id='config-cc'></a>Step 16: Configure Cloud Controller##
+## <a id='config-cc'></a>Step 17: Configure Cloud Controller##
 
 <%= partial 'cloud-controller' %>
 
-## <a id='config-smoke-test'></a>Step 17: Configure Smoke Tests ##
+## <a id='config-smoke-test'></a>Step 18: Configure Smoke Tests ##
 
 <%= partial '_smoketests' %>
 
-## <a id='advanced-features'></a>Step 18: (Optional) Enable Advanced Features
+## <a id='advanced-features'></a>Step 19: (Optional) Enable Advanced Features
 
 <%= partial '_advanced-features' %>
 
-## <a id='errands'></a>Step 19: Configure Errands ##
+## <a id='errands'></a>Step 20: Configure Errands ##
 
 <%= partial 'errands' %>
 
-## <a id='disable-resources'></a>Step 20: (Optional) Disable Unused Resources ##
+## <a id='disable-resources'></a>Step 21: (Optional) Disable Unused Resources ##
 
 <%= partial 'disable_resources' %>
 
-## <a id='config-elb'></a>Step 21: Configure Router to Elastic Load Balancers ##
+## <a id='config-elb'></a>Step 22: Configure Router to Elastic Load Balancers ##
 
 1. Record the names of your ELBs. If you followed the procedures in the [Manually Configuring AWS for PCF](./pcf-aws-manual-config.html) topic, you created the following: 
   * `pcf-ssh-elb`: A SSH load balancer
   * `pcf-web-elb`: A web load balancer
   * `pcf-tcp-elb`: A TCP load balancer
 
-1. In the **Elastic Runtime** tile, click **Resource Config**.
+1. In the PAS tile, click **Resource Config**.
   <%= image_tag("pcfaws/er-aws-resource-config.png") %>
 
-1. In the **ELB Name** field of the **Diego Brain** row, enter the name of your SSH load balancer: `pcf-ssh-elb`. You can specify multiple load balancers by entering the names separated by commas.
+1. Enter the name of you SSH load balancer depending on which release you are using. You can specify multiple load balancers by entering the names separated by commas.
+  * **PAS**: In the **ELB Name** field of the **Diego Brain** row, enter the name of your SSH load balancer: `pcf-ssh-elb`.
+  * **Small Footprint Runtime**: In the **ELB Name** field of the **Control** row, enter the name of your SSH load balancer: `pcf-ssh-elb`.
 
 1. In the **ELB Name** field of the **Router** row, enter the name of your web load balancer: `pcf-web-elb`. You can specify multiple load balancers by entering the names separated by commas.
   <p class="note"><strong>Note</strong>: If you are using HAProxy in your deployment, then put the name of the load balancers in the **ELB Name** field of the **HAProxy** row instead of the **Router** row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
 
 1. In the **ELB Name** field of the **TCP Router** row, enter the name of your TCP load balancer if you enabled TCP routing: `pcf-tcp-elb`. You can specify multiple load balancers by entering the names separated by commas.
 
-## <a id='stemcell'></a>Step 22: Download Stemcell ##
+## <a id='stemcell'></a>Step 23: Download Stemcell ##
 
-This step is only required if your Ops Manager does not already have the stemcell version required by Elastic Runtime.
+This step is only required if your Ops Manager does not already have the stemcell version required by PAS.
 
 1. Select **Stemcell**.
 
@@ -214,12 +225,12 @@ This step is only required if your Ops Manager does not already have the stemcel
 
     <%= image_tag("stemcell_18.png") %>
 
-## <a id='complete'></a>Step 23: Complete the Elastic Runtime Installation ##
+## <a id='complete'></a>Step 24: Complete the PAS Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.
 
-1. Click **Apply Changes** to begin your installation of Elastic Runtime. 
+1. Click **Apply Changes** to begin your installation of PAS. 
 <br><br>
 The install process generally requires a minimum of 90 minutes to complete. The image shows the **Changes Applied** window that displays when the
 	installation process successfully completes.

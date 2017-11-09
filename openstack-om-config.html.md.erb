@@ -13,7 +13,7 @@ Use this topic when [Installing Pivotal Cloud Foundry on OpenStack](./openstack.
 Before beginning this procedure, ensure that you have successfully completed all
 steps in the [Provisioning the OpenStack Infrastructure](./openstack-setup.html)
 topic.
-After you complete this procedure, follow the instructions in the [Installing Elastic Runtime after Deploying PCF on OpenStack](./openstack-er-config.html)
+After you complete this procedure, follow the instructions in the [Installing PAS after Deploying PCF on OpenStack](./openstack-er-config.html)
 topic.
 
 <p class="note"><strong>Note</strong>: You can also perform the procedures in this topic using the Ops Manager API. For more information, see the <a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
@@ -65,8 +65,6 @@ later step.
 
 1. Select **OpenStack Config**.
 
-    <%= image_tag("openstack/om-openstack-config.png") %>
-
 1. Complete the **OpenStack Management Console Config** page with the following information:
     * **Authentication URL**: Enter the Service Endpoint for the Identity
       service that you recorded in a previous step.
@@ -76,6 +74,8 @@ later step.
     * **Tenant**: Enter your OpenStack tenant name.
     * **Region**: Enter `RegionOne`, or another region if recommended by your
       OpenStack administrator.
+    * **Select OpenStack omNetwork Type**: Select either **Nova**, the legacy OpenStack networking model,
+    or **Neutron**, the newer networking model.
     * **Ignore Server Availability Zone**: Do not select the checkbox.
     * **Security Group Name**: Enter `opsmanager`. You created this Security
       Group when [Provisioning the OpenStack
@@ -91,6 +91,8 @@ later step.
     * **Disable DHCP**: Do not select the checkbox unless your setup requires it.
     * **Select OpenStack Network Type**: Select either **Nova**, the legacy networking model,
     or **Neutron**, the OpenStack networking model.
+
+    <%= image_tag("openstack/om-openstack-config.png") %>
 
 1. Click **Save**.
 
@@ -108,15 +110,6 @@ later step.
 
 ## <a id='director-config'></a>Step 4: Complete the Director Config Page ##
 
-1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Access & Security**. Select the **API Access** tab.
-
-    <%= image_tag("openstack/download-credentials.png") %>
-
-1. Click **Download EC2 Credentials**.
-
-1. Unzip the downloaded credentials. In a text editor, open the `ec2rc.sh` file.
-Depending on your configuration, you may use the contents of this file to complete the Ops Manager **Director Config** page.
-
 1. In Ops Manager, select **Director Config**.
 
     <%= image_tag("images/openstack/director-config.png") %>
@@ -128,7 +121,7 @@ Depending on your configuration, you may use the contents of this file to comple
 
 1. (Optional) Enter your **Bosh HM Forwarder IP Address** if you are using the BOSH HM Forwarder.
 
-1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops Manager Resurrector functionality and increase Elastic Runtime availability.
+1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops Manager Resurrector functionality and increase Pivotal Application Service availability.
 
 1. Select **Enable Post Deploy Scripts** to run a post-deploy script after deployment. This script allows the job to execute additional commands against a deployment.
 
@@ -155,7 +148,8 @@ Depending on your configuration, you may use the contents of this file to comple
     * **Enable TLS**: Select this checkbox to enable Transport Layer Security.
 
 1. For **Blobstore Location**, select **S3 Compatible Blobstore** and complete the following steps using information from the `ec2rc.sh` file:
-    <%= image_tag("images/director_blobstore.png") %>
+    <%= image_tag("openstack/director-blobstore.png") %>
+    * In a text editor, open the `ec2rc.sh` file that you downloaded in [Step 8: Download Credentials for S3 Blob Storage](./openstack-setup.html#blobstore-creds). Use the file to populate the fields described below.
     * **Blobstore Location**: Select the **S3 Compatible Blobstore** option.
     * **S3 Endpoint**: Use **S3_URL** from the `ec2rc.sh` file.
     * **Bucket Name**: Enter `pcf`.
@@ -170,6 +164,8 @@ Depending on your configuration, you may use the contents of this file to comple
 1. (Optional) For **Max Threads**, enter the number of operations the Ops Manager Director can perform simultaneously.
 
 1. (Optional) To add a custom URL for your Ops Manager Director, enter a valid hostname in **Director Hostname**. You can also use this field to configure [a load balancer in front of your Ops Manager Director](https://discuss.pivotal.io/hc/en-us/articles/225420588). 
+
+1. (Optional) To set a custom banner that users see when logging in to the Director using SSH, enter text in the **Custom SSH Banner** field.
 
 1. Click **Save**.
 
@@ -190,8 +186,6 @@ Depending on your configuration, you may use the contents of this file to comple
 ## <a id='create-networks'></a>Step 6: Complete the Create Networks Page ##
 
 1. In the left navigation of your OpenStack dashboard, click **Project > Network > Networks**.
-
-    <%= image_tag("openstack/click-network.png") %>
 
 1. Click the name of the network that contains the private subnet where you
 deployed the Ops Manager VM. The OpenStack Network Detail page displays your
@@ -216,7 +210,6 @@ network settings.
     * For **Gateway**, use the **Gateway IP** from the OpenStack page.
     * For **Availability Zones**, select which Availability Zones to use with the network.
 1. Click **Save**.
-
 
 ## <a id='assign-az'></a>Step 7: Complete the Assign AZs and Networks Page ##
 
@@ -247,9 +240,8 @@ network settings.
     <%= image_tag("openstack/om-resource-config.png") %>
 1. Adjust any values as necessary for your deployment, such as increasing the persistent disk size. Select **Automatic** from the drop-down menu to provision the amount of persistent disk predefined by the job. If the persistent disk field reads **None**, the job does not require persistent disk space.
 
-    <p class="note"><strong>Note</strong>: Ops Manager v1.11 requires a Director VM with at least 8&nbsp;GB memory.</p>
+    <p class="note"><strong>Note</strong>: Ops Manager v1.11 and above require a Director VM with at least 8&nbsp;GB memory.</p>
     <p class="note"><strong>Note</strong>: If you set a field to <strong>Automatic</strong> and the recommended resource allocation changes in a future version, Ops Manager automatically uses the updated recommended allocation.</p>
-
 
 1. Click **Save**.
 
@@ -266,7 +258,7 @@ network settings.
 
     <%= image_tag("openstack/om-installed.png") %>
 
-1. After you complete this procedure, follow the instructions in the [Installing Elastic Runtime after Deploying PCF on OpenStack](./openstack-er-config.html) topic.
+1. After you complete this procedure, follow the instructions in the [Installing PAS after Deploying PCF on OpenStack](./openstack-er-config.html) topic.
 
 ---
 

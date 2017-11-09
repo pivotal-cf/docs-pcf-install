@@ -1,5 +1,5 @@
 ---
-title: Launching an Ops Manager Director Instance on GCP
+title: Deploying BOSH and Ops Manager to GCP
 owner: Ops Manager
 ---
 
@@ -9,7 +9,7 @@ owner: Ops Manager
 This topic describes how to deploy Ops Manager Director for Pivotal Cloud Foundry (PCF) on Google Cloud Platform (GCP).
 
 After you complete this procedure, follow the instructions in the [Configuring Ops Manager Director on GCP](./gcp-om-config.html) and
-[Configuring Elastic Runtime on GCP](./gcp-er-config.html) topics.
+[Configuring PAS on GCP](./gcp-er-config.html) topics.
 
 ## <a id='select-tgz'></a>Step 1: Locate the Pivotal Ops Manager Installation File ##
 
@@ -35,7 +35,7 @@ After you complete this procedure, follow the instructions in the [Configuring O
 1. Click **Create Image**.
 
 1. Complete the following fields:
-  * **Name**: Enter a name. For example, `om-pcf`. 
+  * **Name**: Enter a name. For example, `opsman-pcf-gcp-2-0`.
   * **Encryption**: Leave **Automatic (recommended)** selected.
   * **Source**: Choose **Cloud Storage file**.
   * **Cloud Storage file**: Paste in the Google Cloud Storage filepath you copied from the PDF file in the [previous step](#select-tgz). 
@@ -52,8 +52,9 @@ After you complete this procedure, follow the instructions in the [Configuring O
 
 1. In the **Create an instance form**, complete the following fields:
   * **Name**: Enter a name that matches the naming conventions of your deployment.
-  * **Zone**: Choose a zone from the region in which you created your network. 
-  * **Machine type**: Click **Customize** to manually configure the vCPU and memory. An Ops Manager VM instance requires the following minimum specifications:
+  * **Zone**: Choose a zone from the region in which you created your network.
+  * **Machine type**: Choose `n1-standard-2`. 
+    * Click **Customize** to manually configure the vCPU and memory. An Ops Manager VM instance requires the following minimum specifications:
 
         | **Machine Spec** | **Minimum Value** |
         |------------------|----------------------|
@@ -73,19 +74,20 @@ After you complete this procedure, follow the instructions in the [Configuring O
   * Under **Identity and API access**, choose the **Service account** you created when preparing your environment during the step [Set up an IAM Service Account](./gcp-prepare-env.html#iam_account). 
   * **Allow HTTP traffic**: Leave this checkbox unselected.  
   * **Allow HTTPS traffic**: Leave this checkbox unselected. 
-      <%= image_tag("gcp/om_instance_1.png") %>
   * **Networking**: Select the **Networking** tab, and perform the following steps:
-     * For **Network** and **Subnetwork**, select the network and subnetwork you created when preparing your environment in the [Create a GCP Network with Subnet](./gcp-prepare-env.html#create_network) section of the _Preparing to Deploy PCF on GCP_ topic. 
-     * For **Network tags**, enter `pcf-opsmanager`. This tag applies the firewall rule you created in [Create Firewall Rules for the Network](gcp-prepare-env.html#firewall_rules) to the Ops Manager VM.
-     * For **Internal IP**, select `Custom`. Enter an IP address (for example, `10.0.0.4`) in the **Internal IP address** field. Specify an internal IP address located within the reserved IP range that you will [configure in Ops Manager Director](./gcp-om-config.html#network). Do not use `10.0.0.1`, which is configured for the Gateway.
-     * For **External IP**, select **New static IP address...**. In the next form, enter a name for the static IP. For example, `om-public-ip`. Click **Reserve**. In the **External IP** drop-down, select the static IP address you just reserved.
-           <%= image_tag("gcp/instance_networking.png") %>
-
+     * Under **Network interfaces**, perform the following steps:
+        * Remove the `default` network interface if this interface still exists.
+        * Select the network (for example, `MY-PCF-virt-network`) you created when preparing your environment in the [Create a GCP Network with Subnet](./gcp-prepare-env.html#create_network) section of the _Preparing to Deploy PCF on GCP_ topic. 
+        * Under **Subnetwork**, select the `MY-PCF-subnet-infrastructure-MY-GCP-REGION` subnet that you created when preparing your environment in the [Create a GCP Network with Subnet](./gcp-prepare-env.html#create_network) section of the _Preparing to Deploy PCF on GCP_ topic. 
+        * For **Primary internal IP**, select **Ephemeral (Custom)**. Enter an IP address (for example, `192.168.101.5`) in the **Custom ephemeral IP address** field. Specify the next available internal IP address located within the reserved IP range that you will [configure in Ops Manager Director](./gcp-om-config.html#network). Do not use the **Gateway IP**, for example `192.168.101.1`.
+        * For **External IP**, select **Create IP address**. In the next form, enter a name for the static IP. For example, `om-public-ip`. Click **Reserve**. In the **External IP** drop-down, select the static IP address you just reserved.
+     * For **Network tags**, enter `MY-PCF-opsman` and `allow-https`. These tags tag apply the firewall rules you created in [Create Firewall Rules for the Network](gcp-prepare-env.html#firewall_rules) to the Ops Manager VM.
+    
 1. Click **Create** to deploy the new Ops Manager VM. This may take a few moments.
 
-1. Navigate to your DNS provider, and create an entry that points a fully qualified domain name (FQDN) to the `om-public-ip` static IP address of Ops Manager that you created in a previous step. 
+1. Navigate to your DNS provider, and create an entry that points a fully qualified domain name (FQDN) `opsman.MY-DOMAIN` to the `MY-PCF-opsman` static IP address of Ops Manager that you created in a previous step. 
 
-   <p class="note"><b>Note</b>: In order to set up Ops Manager authentication correctly, Pivotal recommends using a Fully Qualified Domain Name (FQDN) to access Ops Manager. Using an ephemeral IP address to access Ops Manager can cause authentication errors upon subsequent access.</p>
+   <p class="note"><strong>Note</strong>: In order to set up Ops Manager authentication correctly, Pivotal recommends using a Fully Qualified Domain Name (FQDN) to access Ops Manager. Using an ephemeral IP address to access Ops Manager can cause authentication errors upon subsequent access.</p>
 
 ## <a id="next"></a> What to Do Next ###
 

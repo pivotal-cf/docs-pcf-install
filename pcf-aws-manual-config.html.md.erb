@@ -1,5 +1,5 @@
 ---
-title: Manually Configuring AWS for PCF
+title: Configuring Ops Manager on AWS Deployed Manually
 owner: Ops Manager
 ---
 
@@ -235,9 +235,9 @@ Perform the following steps to create an Amazon Identity and Access Management (
 1. For **VPC**, select the VPC where you want to deploy the PCF VMs.
 1. Click the **Inbound** tab and add rules for all traffic from your public and private subnets to your private subnet, as the table and image show.
     This rule configuration does the following:
-    * Enables BOSH to deploy ERT and other services.
+    * Enables BOSH to deploy PAS and other services.
     * Enables application VMs to communicate through the router.
-    * Allows the load balancer to send traffic to Elastic Runtime.
+    * Allows the load balancer to send traffic to Pivotal Application Service (PAS).
 
     <table border="1" class="nice" >
 <tr>
@@ -267,7 +267,7 @@ Perform the following steps to create an Amazon Identity and Access Management (
 1. For **VPC**, select the VPC where you want to deploy this Elastic Load Balancer (ELB).
 1. Click the **Inbound** tab and add rules to allow traffic to ports `80`, `443`, and `4443` from `0.0.0.0/0`, as the table and image show.
 
-    <p class="note"><strong>Note</strong>: You can change the <code>0.0.0.0/0</code> to be more restrictive if you want finer control over what can reach the Elastic Runtime. This security group governs external access to the Elastic Runtime from applications such as the cf CLI and application URLs.</p>
+    <p class="note"><strong>Note</strong>: You can change the <code>0.0.0.0/0</code> to be more restrictive if you want finer control over what can reach the PAS. This security group governs external access to the PAS from applications such as the cf CLI and application URLs.</p>
 
     <table border="1" class="nice" >
 <tr>
@@ -507,6 +507,8 @@ The default persistent disk value is 50 GB. Pivotal recommends increasing this v
       <td>80</td>
     </tr>
     </table>
+    <br/>
+    If you require traffic between the load balancer and HAProxy or Gorouter to be encrypted with TLS, consider that the AWS Classic load balancers do not support recommended TLS cipher suites. See [Securing Traffic into Cloud Foundry](../adminguide/securing-traffic.html#ciphers) for details.
 
 1. Under **Select Subnets**, select the public subnets you configured in [Step 4: Create a VPC](#pcfaws-vpc), and click **Next: Assign Security Groups**.
 
@@ -753,7 +755,7 @@ This section describes the AWS objects you create in the procedures above in ord
 
 Use this section to determine the resource requirements of PCF on AWS, or to verify that you created the correct resources after completing the procedures above.
 
-### S3 Buckets for Ops Manager and Elastic Runtime ###
+### S3 Buckets for Ops Manager and PAS ###
 
 You must create the following S3 buckets from the S3 Dashboard:
 

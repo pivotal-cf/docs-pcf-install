@@ -1,17 +1,19 @@
 ne#encoding: utf-8
 ---
-title: Pivotal Cloud Foundry Troubleshooting Guide
+title: Troubleshooting Problems in PCF
 owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
 
-This guide provides help with diagnosing and resolving issues encountered
+This guide provides help with resolving issues encountered
 during a [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) installation.
-For help troubleshooting issues that are specific to PCF deployments on
-VMware vSphere, refer to the topic on [Troubleshooting Ops Manager for VMware vSphere](./troubleshooting-vsphere.html).
 
-Although an install or update can fail for many reasons, the system is self-healing, and can often automatically correct or work around hardware or network faults. Click **Install** or **Apply Changes** again, and the system may resolve a problem on its own.
+## <a id='retry'></a> Retrying the Deployment
+
+Although an install or update can fail for many reasons, the system is self-healing, and can often automatically correct or work around hardware or network faults.
+
+Click **Install** or **Apply Changes** again, and the system may resolve a problem on its own.
 
 Some failures only produce generic errors like `Exited with 1`.
 In cases like this, where a failure is not accompanied by useful information,
@@ -19,220 +21,6 @@ click **Install** or **Apply Changes** to retry.
 
 When the system does provide informative evidence, review the [Common Problems](#common_probs) section at the end of this guide to see if your
 problem is covered there.
-
-Besides whether products install successfully or not, an important area to
-consider when troubleshooting is communication between VMs deployed by Pivotal
-Cloud Foundry.
-Depending on what products you install, communication takes the form of
-messaging, routing, or both.
-If they go wrong, an installation can fail.
-For example, in an Elastic Runtime installation the PCF VM tries to push
-a test application to the cloud during post-installation testing.
-The installation fails if the resulting traffic cannot be routed to the HA
-Proxy load balancer.
-
-## <a id='debug'></a>Viewing the Debug Endpoint ##
-
-The debug endpoint is a web page that provides information useful in
-troubleshooting.
-If you have superuser privileges and can view the Ops Manager Installation
-Dashboard, you can access the debug endpoint.
-
-* In a browser, open the URL:
-
-    `https://OPS-MANAGER-FQDN/debug`
-
-The debug endpoint offers three links:
-
-* *Files* allows you to view the YAML files that Ops Manager uses to configure
-products that you install.
-The most important YAML file, `installation.yml`, provides networking settings
-and describes `microbosh`.
-In this case, `microbosh` is the VM whose BOSH Director component is used by
-Ops Manager to perform installations and updates of Elastic Runtime and other
-products.
-* *Components* describes the components in detail.
-* *Rails log* shows errors thrown by the VM where the Ops Manager web
-application (a Rails application) is running, as recorded in the
-`production.log` file.
-See the next section to learn how to explore other logs.
-
-## <a id='tips'> </a>Logging Tips ##
-
-### <a id='starting'> </a>Identifying Where to Start ###
-
-This section contains general tips for locating where a particular problem is called out in the log files. Refer to the later sections for tips regarding specific logs (such as those for Elastic Runtime Components).
-
-* Start with the largest and most recently updated files in the job log
-* Identify logs that contain 'err' in the name
-* Scan the file contents for a "failed" or "error" string
-
-### <a id='component_logs'></a>Viewing Logs for Elastic Runtime Components ###
-
-To troubleshoot specific Elastic Runtime components by viewing their log files, browse to the Ops Manager interface and follow the procedure below.
-
-1. In Ops Manager, browse to the **Pivotal Elastic Runtime > Status** tab. In the **Job** column, locate the component of interest.
-1. In the **Logs** column for the component, click the download icon.
-
-    <%= image_tag("troubleshooting/status.png") %>
-
-1. Browse to the **Pivotal Elastic Runtime > Logs** tab.
-
-    <%= image_tag("troubleshooting/logs.png") %>
-
-1. Once the zip file corresponding to the component of interest moves to the **Downloaded** list, click the linked file path to download the zip file.
-1. Once the download completes, unzip the file.
-
-The contents of the log directory vary depending on which component you view. For example, the Diego cell log directory contains subdirectories for the `metron_agent` `rep`, `monit`, and `garden` processes. To view the standard error stream for `garden`, download the Diego cell logs and open `diego.0.job > garden > garden.stderr.log`.
-
-###<a id='view_in_terminal'></a>Viewing Web Application and BOSH Failure Logs in a Terminal Window ###
-
-You can obtain diagnostic information from the Operations Manager by logging
-in to the VM where it is running. To log in to the Operations Manager VM, you need the following information:
-
-* The IP address of the PCF VM shown in the `Settings` tab of the Ops
-Manager Director tile.
-* Your **import credentials**. Import credentials are the username and password
-used to import the PCF `.ova` or `.ovf` file into your virtualization
-system.
-
-Complete the following steps to log in to the Operations Manager VM:
-
-1. Open a terminal window.
-1. Run `ssh IMPORT-USERNAME@PCF-VM-IP-ADDRESS` to connect to the PCF installation VM.
-1. Enter your import password when prompted.
-1. Change directories to the home directory of the web application:
-
-    `cd /home/tempest-web/tempest/web/`
-
-1. You are now in a position to explore whether things are as they should be
-within the web application.
-<br /><br />
-    You can also verify that the `microbosh` component is successfully
-installed.
-A successful MicroBOSH installation is required to install Elastic Runtime and any products like databases and messaging services.
-
-1. Change directories to the BOSH installation log home:
-
-    `cd /var/tempest/workspaces/default/deployments/micro`
-
-1. You may want to begin by running a tail command on the `current` log:
-
-    `cd /var/tempest/workspaces/default/deployments/micro`
-
-    If you are unable to resolve an issue by viewing configurations, exploring
-logs, or reviewing common problems, you can troubleshoot further by running
-BOSH diagnostic commands with the BOSH Command Line Interface (CLI).
-
-<p class="note"><strong>Note</strong>: Do not manually modify the deployment manifest. Operations Manager will overwrite manual changes to this manifest.
-In addition, manually changing the manifest may cause future deployments to
-fail.</p>
-
-##<a id='view-vms'></a>Viewing the VMs in Your Deployment ##
-
-To view the VMs in your PCF deployment, perform the following steps specific to your IaaS.
-
-###<a id="aws"></a>Amazon Web Services (AWS)
-
-1. Log in to the <a href="https://console.aws.amazon.com/">AWS Console</a>.
-1. Navigate to the EC2 Dashboard.
-1. Click **Running Instances**.
-1. Click the gear icon in the upper right.
-1. Select the following: **job**, **deployment**, **director**, **index**.
-1. Click **Close**.
-
-###<a id="openstack"></a>OpenStack
-
-1. Install the [novaclient](https://github.com/openstack/python-novaclient).
-1. Point novaclient to your OpenStack installation and tenant by exporting the following environment variables:
-<pre class="terminal">
-$ export OS\_AUTH\_URL= YOUR\_KEYSTONE\_AUTH\_ENDPOINT
-$ export OS\_TENANT\_NAME = TENANT\_NAME
-$ export OS\_USERNAME = USERNAME
-$ export OS\_PASSWORD = PASSWORD
-</pre>
-1. List your VMs by running the following command:
-<pre class="terminal">
-$ nova list --fields metadata
-</pre>
-
-###<a id="vsphere"></a>vSphere
-
-1. Log into vCenter.
-1. Select **Hosts and Clusters**.
-1. Select the top level object that contains your PCF deployment. For example, select **Cluster**, **Datastore** or **Resource Pool**.
-1. In the top tab, click **Related Objects**.
-1. Select **Virtual Machines**.
-1. Right click on the **Table** heading and select **Show/Hide Columns**.
-1. Select the following boxes: **job**, **deployment**, **director**, **index**.
-
-##<a id='console-logs'></a>Viewing Apps Manager Logs in a Terminal Window ##
-
-The [Apps Manager](../console/dev-console.html) provides a graphical user
-interface to help manage organizations, users, applications, and spaces.
-
-When troubleshooting Apps Manager performance, you might want to view the
-Apps Manager application logs.
-To view the Apps Manager application logs, follow these steps:
-
-1. Run `cf login -a api.MY-SYSTEM-DOMAIN -u admin` from a command line to log
-in to PCF using the UAA Administrator credentials. In Pivotal Ops
-Manager, refer to **Pivotal Elastic Runtime > Credentials** for these
-credentials.
-
-    <pre class='terminal'>
-    $ cf login -a api.example.com -u admin
-    API endpoint: api.example.com
-
-    Password>******
-    Authenticating...
-    OK
-    </pre>
-
-1. Run `cf target -o system -s apps-manager` to target the `system` org and the
-`apps-manager` space.
-
-    <pre class='terminal'>
-    $ cf target -o system -s apps-manager
-    </pre>
-
-1. Run `cf logs apps-manager` to tail the Apps Manager logs.
-
-    <pre class='terminal'>
-    $ cf logs apps-manager
-    Connected, tailing logs for app apps-manager in org system / space apps-manager as
-    admin...
-    </pre>
-
-###<a id='changing-log-level'></a>Changing Logging Levels for the Apps Manager ##
-
-The Apps Manager recognizes the `LOG_LEVEL` environment variable.
-The `LOG_LEVEL` environment variable allows you to filter the messages
-reported in the Apps Manager log files by severity level. The Apps Manager defines severity levels using the Ruby standard library [Logger class](http://www.ruby-doc.org/stdlib-1.9.3/libdoc/logger/rdoc/Logger.html).
-
-By default, the Apps Manager `LOG_LEVEL` is set to `info`.
-The logs show more verbose messaging when you set the `LOG_LEVEL` to `debug`.
-
-To change the Apps Manager `LOG_LEVEL`, run `cf set-env apps-manager LOG_LEVEL` with the desired severity level.
-
-<pre class='terminal'>
-$ cf set-env apps-manager LOG_LEVEL debug
-</pre>
-
-You can set `LOG_LEVEL` to one of the six severity levels defined by the Ruby
-Logger class:
-
-* **Level 5**: `unknown` -- An unknown message that should always be logged
-* **Level 4**: `fatal` -- An unhandleable error that results in a program crash
-* **Level 3**: `error` -- A handleable error condition
-* **Level 2**: `warn` -- A warning
-* **Level 1**: `info` -- General information about system operation
-* **Level 0**: `debug` -- Low-level information for developers
-
-Once set, the Apps Manager log files only include messages at the set
-severity level and above.
-For example, if you set `LOG_LEVEL` to `fatal`, the log includes `fatal` and
-`unknown` level messages only.
 
 ## <a id='common_probs'></a>Common Issues ##
 
@@ -268,7 +56,7 @@ To diagnose:
 
 1. Access the VM using your virtualization console and log in.
 
-1. Navigate to the **Credentials** tab of the **Elastic Runtime** tile and
+1. Navigate to the **Credentials** tab of the Pivotal Application Service (PAS) tile and
 locate the VM in question to find the **VM credentials**.
 
 1. Become root.
@@ -351,13 +139,13 @@ domains in wildcard format:
 
 1. Browse to the Operations Manager fully qualified domain name (FQDN).
 
-1. Click the **Elastic Runtime** tile.
+1. Click the PAS tile.
 
 1. Select **HAProxy** and click **Generate Self-Signed RSA Certificate**.
 
 1. Enter your system and app domains in wildcard format, as well as optionally
 any custom domains, and click **Save**.
-Refer to **Elastic Runtime > Cloud Controller** for explanations of these
+Refer to PAS **Cloud Controller** for explanations of these
 domain values.
 
  <%= image_tag('rsa_cert.png') %>
@@ -365,16 +153,16 @@ domain values.
 ### <a id='runtime_depend'></a>Install Fails When Gateway Instances Exceed Zero ###
 
 If you configure the number of Gateway instances to be greater than zero for a
-given product, you create a dependency on Elastic Runtime for that product
+given product, you create a dependency on PAS for that product
 installation.
-If you attempt to install a product tile with an Elastic Runtime dependency
-before installing Elastic Runtime, the install fails.
+If you attempt to install a product tile with an PAS dependency
+before installing PAS, the install fails.
 
 To change the number of Gateway instances, click the product
 tile, then select **Settings > Resource sizes > INSTANCES** and change the
 value next to the product Gateway job.
 
-To remove the Elastic Runtime dependency, change the value of this field to `0`.
+To remove the PAS dependency, change the value of this field to `0`.
 
 ### <a id='out_of_disk_space'></a>Out of Disk Space Error ###
 
@@ -400,9 +188,9 @@ Ops Manager displays an error message when it cannot delete your installation. T
 
 Your installation is now deleted.
 
-### <a id='elastic_runtime_fails'></a>Installing Elastic Runtime Fails ###
+### <a id='elastic_runtime_fails'></a>Installing PAS Fails ###
 
-If the DNS information for the PCF VM becomes incorrect after Ops Manager Director has been installed, installing Elastic Runtime with Pivotal Operations
+If the DNS information for the PCF VM becomes incorrect after Ops Manager Director has been installed, installing PAS with Pivotal Operations
 Manager fails at the "Verifying app push" step.
 
 To resolve this issue, correct the DNS settings in the PCF Virtual
@@ -447,7 +235,7 @@ The specific procedures will vary depending on your IaaS. Consult your IaaS docu
 ## <a id='common_probs_firewalls'></a>Common Issues Caused by Firewalls ##
 
 This section describes various issues you might encounter when installing
-Elastic Runtime in an environment that uses a strong firewall.
+PAS in an environment that uses a strong firewall.
 
 ### <a id='DNS_res_fails'></a>DNS Resolution Fails ###
 

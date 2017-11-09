@@ -1,5 +1,5 @@
 ---
-title: Launching an Ops Manager Director Instance with an ARM Template
+title: Deploying BOSH and Ops Manager to Azure with ARM
 owner: Ops Manager
 ---
 
@@ -8,9 +8,23 @@ owner: Ops Manager
 
 This topic describes how to deploy Ops Manager Director for Pivotal Cloud Foundry (PCF) on Azure using an Azure Resource Manager (ARM) template. An ARM template is a JSON file that describes one or more resources to deploy to a resource group.
 
-You can also deploy Ops Manager Director manually. For more information, see the [Launching an Ops Manager Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic.
+You can also deploy Ops Manager Director manually, by following the procedure in the [Deploying BOSH and Ops Manager to Azure Manually](azure-om-deploy.html). Manual deployment is required if you are deploying to:
 
-Before you perform the procedures in this topic, you must complete the procedures in the [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic. After you complete the procedures in this topic, follow the instructions in [Configuring Ops Manager Director on Azure](azure-om-config.html).
+* Azure China
+* Azure Germany
+* Azure Government Cloud
+
+Before you perform the procedures in this topic, you must complete the procedures in the [Preparing Azure](azure-prepare-env.html) topic. After you complete the procedures in this topic, follow the instructions in [Configuring Ops Manager Director on Azure](azure-om-config.html).
+
+##<a id='arm-template'></a> Where to Find the PCF Azure ARM Templates
+
+The PCF Azure ARM Templates are available for download from the following GitHub repo:
+
+[https://github.com/pivotal-cf/pcf-azure-arm-templates](https://github.com/pivotal-cf/pcf-azure-arm-templates)
+
+For PCF v1.11 and later, use the templates tagged with the [1.11+ release](https://github.com/pivotal-cf/pcf-azure-arm-templates/releases/tag/1.11%2B).
+
+For PCF v1.11 and earlier, use the templates tagged with the [1.10- release](https://github.com/pivotal-cf/pcf-azure-arm-templates/releases/tag/1.10-).
 
 ##<a id='storage'></a> Step 1: Create BOSH Storage Account
 
@@ -117,22 +131,19 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
    </pre>
    <br>
    When prompted for a passphrase, follow the prompts to provide an empty passphrase.
-1. Clone the PCF Azure ARM Templates GitHub [repository](https://github.com/pivotal-cf/pcf-azure-arm-templates.git). This repository contains both the ARM template, `azure-deploy.json`, and the parameters file, `azure-deploy-parameters.json`.
+1. Download the latest release of the PCF Azure ARM Templates. For PCF v1.11 and later, download [this release](https://github.com/pivotal-cf/pcf-azure-arm-templates/releases/tag/1.11%2B). 
 1. Open the parameters file and enter values for the following parameters:
-    * **storageAccountName**: The name of the storage account you created in [Step 1: Create Storage Account](#storage)
-    * **storageEndpoint**: The name of the storage endpoint. Leave the default endpoint unless you are using Azure China, Azure Government Cloud, or Azure Germany:
+    * **OpsManVHDStorageAccount**: The name of the storage account you created in [Step 1: Create Storage Account](#storage)
+    * **BlobStorageContainer**: The name of the container to which you copied the Ops Manager VHD
+    * **BlobStorageEndpoint**: The base URL of the storage endpoint. Leave the default endpoint unless you are using Azure China, Azure Government Cloud, or Azure Germany:
         * For Azure China, use `blob.core.chinacloudapi.cn`. See the [Azure documentation](https://msdn.microsoft.com/en-us/library/azure/dn578439.aspx) for more information.
         * For Azure Government Cloud, use `blob.core.usgovcloudapi.net`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-government/documentation-government-services-storage) for more information.
         * For Azure Germany, use `blob.core.cloudapi.de`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/germany/germany-developer-guide) for more information.
-    * **adminSSHKey**: The contents of the `opsman.pub` public key file that you created above
-    * **tenantID**: Your tenant ID, retrieved in the [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic
-    * **clientID**: Your client or application ID, retrieved in the [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic
-    * **clientSecret**: Your client secret, created in the [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic
-    * **vmSize**: The size of the Ops Manager VM. Pivotal recommends using `Standard_DS2_v2`.
-    * **adminUsername**: Username for the Ops Manager VM. Do not change the default value, `ubuntu`. Changing the default value can result in unexpected behaviors, including a failed Elastic Runtime installation and the inability to connect to the VM using SSH.    
-    * **location**: The location to install the Ops Manager VM. For example, `westus`.
+    * **AdminSSHKey**: The contents of the `opsman.pub` public key file that you created above
+    * **Location**: The location to install the Ops Manager VM. For example, `westus`.
+    * **Environment**: Tag template-created resources for assisting with resource management
 
-##<a id='deploy'></a> Step 4: Deploy the ARM Template and Deployment Storage Accounts
+##<a id='deploy'></a> Step 4: Deploy the ARM Template
 
 1. Deploy the template:
     <pre class="terminal">
@@ -140,52 +151,6 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     --parameters azure-deploy-parameters.json \
     --resource-group $RESOURCE_GROUP --name cfdeploy
     </pre>
-1. When the command finishes, examine the output for the following values:
-    * `opsMan-FQDN`
-        <pre class="terminal">
-          "opsMan-FQDN": {
-            "type": "String",
-            "value": "pcf-opsman-efecrvhdf7w7g.westus.cloudapp.azure.com"
-          }
-        </pre>
-    * `extra Storage Account Prefix`
-        <pre class="terminal">
-        "extra Storage Account Prefix": {
-          "type": "String",
-          "value": "xtrastrgefecrvhdf7w7g"
-          },
-        </pre>
-1. The template creates five new Premium deployment storage accounts. The names of the deployment storage accounts are the value of `extra Storage Account Prefix` appended with `1`, `2`, `3`, `4`, and `5`. In the example above, the names of the five deployment storage accounts are the following:
-    * `xtrastrgefecrvhdf7w7g1`
-    * `xtrastrgefecrvhdf7w7g2`
-    * `xtrastrgefecrvhdf7w7g3`
-    * `xtrastrgefecrvhdf7w7g4`
-    * `xtrastrgefecrvhdf7w7g5`
-    <br/><br/>
-   <p class="note"><strong>Note</strong>: The five Premium storage accounts created by the template provide a reasonable amount of initial storage capacity. Pivotal recommends creating one Standard storage account for every 30 VMs, or one Premium storage account for every 150 VMs. You can increase the number of storage accounts later by provisioning more with the Azure CLI and following the naming sequence listed above.</p>
-   <br/>
-   For each of the five new deployment storage accounts, perform the following steps:<br/>
-        1. Retrieve the connection string for your storage account, replacing `YOUR-DEPLOYMENT-STORAGE-ACCOUNT-NAME` with the name of the storage account. For example, `xtrastrgefecrvhdf7w7g1`.
-        <pre class="terminal">
-        $ az storage account show-connection-string \
-        --name YOUR-DEPLOYMENT-STORAGE-ACCOUNT-NAME --resource-group $RESOURCE_GROUP
-        </pre>
-        The command returns output similar to the following:
-        <pre class="terminal">
-        {
-          "connectionString": "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=xtrastrgefecrvhdf7w7g1;AccountKey=e7R178h5teLtnkWLPxesFkAKLRO7oC7dlfujsW0PYV6vUhnJZSutCvVhla9u4xwtOV7liVZNAN6oJyoutO32fQ=="
-        }
-        </pre>
-        1. Record the full value of `connectionstring` from the output above, starting with and including `DefaultEndpointsProtocol=`.
-        1. Export the connection string, choosing a unique name for `CONNECTION_STRING_N`. For example, `CONNECTION_STRING_2`.
-        <pre class="terminal">$ export CONNECTION\_STRING\_N="YOUR-CONNECTION-STRING"</pre> 
-        1. Create a container for BOSH:
-        <pre class="terminal">$ az storage container create --name bosh \
-        --connection-string $CONNECTION\_STRING\_N</pre>
-        1. Create a container for the stemcell:
-        <pre class="terminal">$ az storage container create --name stemcell \
-        --connection-string $CONNECTION\_STRING\_N</pre>
-        </pre>
 
 1. Create a network security group named `pcf-nsg`.
     <pre class="terminal">
@@ -204,7 +169,8 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
 
 ##<a id='post-deploy'></a> Step 5: Complete Ops Manager Director Configuration
 
-1. Navigate to your DNS provider, and create an entry that points a fully qualified domain name (FQDN) in your domain to the `opsMan-FQDN` you retrieved from the output of the template deployment above.
+1. Navigate to your DNS provider, and create an entry that points a fully qualified domain name (FQDN) in your domain to the IP address of the Ops Manager VM. 
+    <p class="note"><strong>Note</strong>: If the ARM template deployment does not return an IP address in the output of <code>opsMan-FQDN</code>, then visit the Azure Portal to retrieve the public IP address of the new Ops Manager virtual machine.</p>
 
 1. Continue to the [Configuring Ops Manager Director on Azure](azure-om-config.html) topic.
 

@@ -1,12 +1,12 @@
 ---
-title: Installing Elastic Runtime after Deploying PCF on OpenStack
+title: Installing PAS after Deploying PCF on OpenStack
 owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
 <html class="list-style-none"></html>
 
-This topic describes how to install and configure Elastic Runtime after deploying [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on OpenStack.
+This topic describes how to install and configure Pivotal Application Service (PAS) after deploying [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on OpenStack.
 
 Use this topic when [Installing Pivotal Cloud Foundry on OpenStack](./openstack.html).
 
@@ -14,21 +14,25 @@ Before beginning this procedure, ensure that you have successfully completed all
 steps in the [Provisioning the OpenStack Infrastructure](./openstack-setup.html)
 topic and the [Configuring Ops Manager Director after Deploying Pivotal Cloud Foundry on OpenStack](./openstack-om-config.html) topics.
 
-<p class="note"><b>Note</b>: If you are performing an upgrade to PCF 1.8, please review <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for critical upgrade information.</p>
+## <a id='log-in'></a>Step 1: Add PAS to Ops Manager ##
 
-## <a id='log-in'></a>Step 1: Add Elastic Runtime to Ops Manager ##
+1. If you have not already downloaded PAS, log in to [Pivotal Network](https://network.pivotal.io/products/pivotal-cf), and click PAS. 
 
+1. From the **Releases** drop-down, select the release to install and choose one of the following:
+  1. Click PAS to download the PAS `.pivotal` file
+  1. Click **PCF Small Footprint Runtime** to download the Small Footprint Runtime `.pivotal` file. For more information, see [Getting Started with Small Footprint Runtime](./small-footprint.html).
+  
 1. Navigate to the Pivotal Cloud Foundry Operations Manager Installation
 Dashboard.
 
-1. Click the Pivotal Network link on the left to add Elastic Runtime to Ops
+1. Click the Pivotal Network link on the left to add PAS to Ops
 Manager. For more information, refer to the [Adding and Deleting Products](./add-delete.html) topic.
 
      <%= image_tag("images/er-tile.png") %>
 
 ## <a id='assign-az'></a>Step 2: Assign Availability Zones and Networks ##
 
-<p class="note"><b>Note</b>: Pivotal recommends at least three Availability Zones for a highly available installation of Elastic Runtime.</p>
+<p class="note"><strong>Note</strong>: Pivotal recommends at least three Availability Zones for a highly available installation of PAS.</p>
 
 1. Select **Assign AZ and Networks**. These are the Availability Zones that you [create](../customizing/openstack-om-config.html#az-config) when configuring Ops Manager Director.
 
@@ -36,7 +40,7 @@ Manager. For more information, refer to the [Adding and Deleting Products](./add
 
 1. Select one or more Availability Zones under **Balance other jobs**. Ops Manager balances instances of jobs with more than one instance across the Availability Zones that you specify.
 
-1. From the **Network** drop-down box, choose the network on which you want to run Elastic Runtime.
+1. From the **Network** drop-down box, choose the network on which you want to run PAS.
     <%= image_tag("images/er-az.png") %>
 
 1. Click **Save**.
@@ -47,14 +51,13 @@ Manager. For more information, refer to the [Adding and Deleting Products](./add
 
 1. Select **Domains**.
 
-    <%= image_tag("er17-config-domains.png") %>
+    <%= image_tag("er-config-domains.png") %>
 
 1. Enter the system and application domains.
-    * The **System Domain** defines your target when you push apps to Elastic
-      Runtime.
-    * The **Apps Domain** defines where Elastic Runtime should serve your apps.
+    * The **System Domain** defines your target when you push apps to PAS.
+    * The **Apps Domain** defines where PAS should serve your apps.
 
-    <p class="note"><b>Note</b>: Pivotal recommends that you use the same domain name but different subdomain names for your system and app domains. Doing so allows you to use a single wildcard certificate for the domain while preventing apps from creating routes that overlap with system routes. For example, name your system domain <code>system.EXAMPLE.com</code> and your apps domain <code>apps.EXAMPLE.com</code>.</p>
+    <p class="note"><strong>Note</strong>: Pivotal recommends that you use the same domain name but different subdomain names for your system and app domains. Doing so allows you to use a single wildcard certificate for the domain while preventing apps from creating routes that overlap with system routes. For example, name your system domain <code>system.EXAMPLE.com</code> and your apps domain <code>apps.EXAMPLE.com</code>.</p>
 
     <p class="note"><strong>Note</strong>: You configured wildcard DNS records
     for these domains in an earlier step.</p>
@@ -67,7 +70,7 @@ Manager. For more information, refer to the [Adding and Deleting Products](./add
 
 1. The values you enter in the **Router IPs** and **HAProxy IPs** fields depend on whether you are using HAProxy in your deployment. Use the table below to determine how to complete these fields.
 
-    <p class="note"><strong>Note</strong>: If you choose to assign specific IP addresses in either the <strong>Router IPs</strong> or <strong>HAProxy IPs</strong> field, ensure that these IP addresses are in the subnet that you configured for Elastic Runtime in Ops Manager.</p>
+    <p class="note"><strong>Note</strong>: If you choose to assign specific IP addresses in either the <strong>Router IPs</strong> or <strong>HAProxy IPs</strong> field, ensure that these IP addresses are in the subnet that you configured for PAS in Ops Manager.</p>
 
     <table border="1" class="nice" >
       <tr>
@@ -79,7 +82,7 @@ Manager. For more information, refer to the [Adding and Deleting Products](./add
         <td>No</td>
         <td><ol>
         <li>Choose IP addresses from the subnet you configured in Ops Manager.</li>
-        <li>Enter these IP addresses in the <b>Router IPs</b> field. You should specify more than one IP address for high availability.</li>
+        <li>Enter these IP addresses in the <strong>Router IPs</strong> field. You should specify more than one IP address for high availability.</li>
         <li>Configure your load balancer to forward requests for the domains that you have configured for your deployment to these IP addresses.</li>
         </ol></td>
         <td>Leave this field blank.</td>
@@ -89,7 +92,7 @@ Manager. For more information, refer to the [Adding and Deleting Products](./add
         <td>Leave this field blank.</td>
         <td><ol>
         <li>Choose IP addresses from the subnet you configured in Ops Manager.</li>
-        <li>Enter these IP addresses in the <b>HAProxy IPs</b> field. You should specify more than one IP address for high availability. </li>
+        <li>Enter these IP addresses in the <strong>HAProxy IPs</strong> field. You should specify more than one IP address for high availability. </li>
         <li>Configure your load balancer to forward requests for the domains you have configured for your deployment to these IP addresses.</li>
         </ol>
       </tr>
@@ -102,6 +105,7 @@ Manager. For more information, refer to the [Adding and Deleting Products](./add
     <%= image_tag 'images/ert_networking_ip_fields.png' %>   
 
 1. <%= partial 'haproxy_router_cert_config' %>
+1. <%= partial 'router_haproxy_ca' %>
 1. <%= partial 'min_tls_version' %>
 1. <%= partial 'tls_cipher_suites_router' %>
 1. <%= partial 'tls_cipher_suites_haproxy' %>  
@@ -110,9 +114,9 @@ Manager. For more information, refer to the [Adding and Deleting Products](./add
 1. <%= partial 'http_disable' %>
 1. <%= partial 'insecure_cookies' %> 
 1. <%= partial 'zipkin_enable' %>
-1. By default, the Elastic Runtime routers handle traffic for applications deployed to an isolation segment created by the PCF Isolation Segment tile. To configure the Elastic Runtime routers to reject requests for applications within isolation segments, select the **Routers reject requests for Isolation Segments** checkbox.
+1. By default, the PAS routers handle traffic for applications deployed to an isolation segment created by the PCF Isolation Segment tile. To configure the PAS routers to reject requests for applications within isolation segments, select the **Routers reject requests for Isolation Segments** checkbox.
   <%= image_tag 'isolate-network.png' %>
-  Do not enable this option without deploying routers for each isolation segment. See the the following topics for more information:
+  Do not enable this option without deploying routers for each isolation segment. See the following topics for more information:
   * [Installing PCF Isolation Segment](../customizing/installing-pcf-is.html)
   * [Sharding Routers for Isolation Segments](../adminguide/routing-is.html#sharding-routers-isolation-segment)
 1. <%= partial 'xforwarded_client_cert_xfcc' %>
@@ -123,6 +127,7 @@ Manager. For more information, refer to the [Adding and Deleting Products](./add
     <%= image_tag 'images/keepalive.png' %>
 
 1. <%= partial 'router_timeout_backend' %>  
+1. <%= partial 'frontend_idle_timeout' %>
 1. <%= partial 'lb_unhealthy_threshold' %>  
 1. <%= partial 'lb_healthy_threshold' %>
 
@@ -162,13 +167,17 @@ Manager. For more information, refer to the [Adding and Deleting Products](./add
 
 <%= partial 'uaa' %>
 
-## <a id='er-auth-config'></a>Step 9: Configure Authentication and Enterprise SSO ##
+## <a id='credhub'></a>Step 9: Configure CredHub ##
+
+<%= partial '_credhub' %>
+
+## <a id='er-auth-config'></a>Step 10: Configure Authentication and Enterprise SSO ##
 
 <%= partial 'authsso_config' %>
 
-## <a id='er-db-config'></a>Step 10: Configure System Databases ##
+## <a id='er-db-config'></a>Step 11: Configure System Databases ##
 
-You can configure Elastic Runtime to use the internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by Elastic Runtime.
+You can configure PAS to use the internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by PAS.
 
 <p class="note"><strong>Note</strong>: If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data first before changing the configuration. Contact Pivotal Support for help. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information.</p>
 
@@ -176,17 +185,17 @@ You can configure Elastic Runtime to use the internal MySQL database provided wi
 
 <%= partial 'ert_database_internal' %>
 
-Then proceed to [Step 11: (Optional) Configure Internal MySQL](#internal-mysql) to configure high availability and automatic backups for your internal MySQL databases.
+Then proceed to [Step 12: (Optional) Configure Internal MySQL](#internal-mysql) to configure high availability and automatic backups for your internal MySQL databases.
 
 ###<a id='create-dbs'></a> External Database Configuration
 
 <%= partial 'ert_database_external' %>
 
-## <a id='internal-mysql'></a> Step 11: (Optional) Configure Internal MySQL ##
+## <a id='internal-mysql'></a> Step 12: (Optional) Configure Internal MySQL ##
 
 <%= partial 'mysql_proxy_config' %>
 
-## <a id='filestore-config'></a>Step 12: Configure File Storage ##
+## <a id='filestore-config'></a>Step 13: Configure File Storage ##
 
 For production-level PCF deployments on OpenStack, the recommended selection is **External S3-Compatible**.
 
@@ -204,15 +213,15 @@ For more factors to consider when selecting file storage, see <a href="../opsgui
 
 [Google Cloud Storage](./gcp-er-config.html#external_gcp) and [Azure Storage](./gcp-er-config.html#external_azure) are also available as file storage options but have not been evaluated for typical PCF on OpenStack installations. 
 
-## <a id='config-sys-logging'></a>Step 13: (Optional) Configure System Logging ##
+## <a id='config-sys-logging'></a>Step 14: (Optional) Configure System Logging ##
 
 If you forward logging messages to an external Reliable Event Logging Protocol (RELP) server, complete the following steps:
 
-1. Select the **System Logging** section that is located within your Pivotal Elastic Runtime **Settings** tab.
+1. Select the **System Logging** section that is located within your PAS **Settings** tab.
   <%= image_tag("updated-system-logging.png") %>
 1. Enter the IP address of your syslog server in **Address**.
 1. Enter the port of your syslog server in **Port**. The default port for a syslog server is `514`.
-<p class="note"><strong>Note</strong>: The host must be reachable from the Elastic Runtime network, accept TCP connections, and use the RELP protocol. Ensure your syslog server listens on external interfaces.</p>
+<p class="note"><strong>Note</strong>: The host must be reachable from the PAS network, accept TCP connections, and use the RELP protocol. Ensure your syslog server listens on external interfaces.</p>
 1. Select a **Transport Protocol** to use when forwarding logs.
 1. If you plan to use TLS encryption when sending logs to the remote server, select **Yes** when answering the **Encrypt syslog using TLS?** question.
   1. In the **Permitted Peer** field, enter either the name or SHA1 fingerprint of the remote peer.
@@ -221,13 +230,13 @@ If you forward logging messages to an external Reliable Event Logging Protocol (
 1. If you want to include security events in your log stream, select the **Enable Cloud Controller security event logging** checkbox. This logs all API requests, including the endpoint, user, source IP address, and request result, in the Common Event Format (CEF).
 1. Click **Save**.
 
-## <a id='customize-apps-man'></a>Step 14: (Optional) Customize Apps Manager##
+## <a id='customize-apps-man'></a>Step 15: (Optional) Customize Apps Manager##
 
 <%= partial 'custombranding' %>
 
-## <a id='smtp'></a>Step 15: (Optional) Configure Email Notifications ##
+## <a id='smtp'></a>Step 16: (Optional) Configure Email Notifications ##
 
-Elastic Runtime uses SMTP to send invitations and confirmations to Apps Manager
+PAS uses SMTP to send invitations and confirmations to Apps Manager
 users.
 You must complete the **Email Notifications** page if you want to enable
 end-user self-registration.
@@ -246,25 +255,25 @@ end-user self-registration.
 settings using this form, the administrator must create orgs and users using
 the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating and Managing Users with the cf CLI</a> for more information.</p>
 
-## <a id='config-cc'></a>Step 16: Configure Cloud Controller##
+## <a id='config-cc'></a>Step 17: Configure Cloud Controller##
 
 <%= partial 'cloud-controller' %>
 
-## <a id='config-smoke-test'></a>Step 17: Configure Smoke Tests ##
+## <a id='config-smoke-test'></a>Step 18: Configure Smoke Tests ##
 
 <%= partial '_smoketests' %>
 
-## <a id='advanced'></a>Step 18: (Optional) Enable Advanced Features
+## <a id='advanced'></a>Step 19: (Optional) Enable Advanced Features
 
 <%= partial 'advanced-features' %>
 
-## <a id='errands'></a>Step 19: Configure Errands ##
+## <a id='errands'></a>Step 20: Configure Errands ##
 
 <%= partial 'errands' %>
 
-## <a id='floating-ips'></a>Step 20: Enable Traffic to Private Subnet ##
+## <a id='floating-ips'></a>Step 21: Enable Traffic to Private Subnet ##
 
-Unless you are using your own load balancer, you must enable traffic flow to the OpenStack private subnet as follows. Give each HAProxy a way of routing traffic into the private subnet by providing public IPs as floating IPs.
+Unless you are using your own load balancer, you must enable traffic flow to the OpenStack private subnet as follows. Give each HAProxy a way of routing traffic into the private subnet by providing public IP addresses as floating IP addresses.
 
 1. Click **Resource Config**.
 
@@ -276,11 +285,11 @@ Unless you are using your own load balancer, you must enable traffic flow to the
 
 1. Click **Save**.
 
-## <a id='disable-resources'></a>Step 21: (Optional) Scale Down and Disable Resources ##
+## <a id='disable-resources'></a>Step 22: (Optional) Scale Down and Disable Resources ##
 
 <%= partial 'disable_resources' %>
 
-## <a id='complete'></a>Step 22: Complete Elastic Runtime Installation ##
+## <a id='complete'></a>Step 23: Complete PAS Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
 
@@ -289,7 +298,7 @@ Unless you are using your own load balancer, you must enable traffic flow to the
 
     <%= image_tag("openstack/icmp-error.png") %>
 
-1. Elastic Runtime installs. The image shows the **Changes Applied** message that Ops Manager displays when the installation process successfully completes.
+1. PAS installs. The image shows the **Changes Applied** message that Ops Manager displays when the installation process successfully completes.
 
     <%= image_tag("openstack/om-installed.png") %>
 

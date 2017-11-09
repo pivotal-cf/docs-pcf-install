@@ -1,35 +1,35 @@
 ---
-title: Deploying Elastic Runtime on GCP
+title: Deploying PAS on GCP
 owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
 <html class="list-style-none"></html>
 
-This topic describes how to install and configure Elastic Runtime for Pivotal Cloud Foundry (PCF) on Google Cloud Platform (GCP).
+This topic describes how to install and configure Pivotal Application Service (PAS) on Google Cloud Platform (GCP).
 
 Before beginning this procedure, ensure that you have successfully completed the [Configuring Ops Manager Director on GCP](./gcp-om-config.html) topic.
 
-<p class="note"><strong>Note</strong>: If you plan to <a href="http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the Elastic Runtime tile. </p> 
+<p class="note"><strong>Note</strong>: If you plan to <a href="http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the PAS tile. </p> 
 
-## <a id='download-er'></a> Step 1: Download the Elastic Runtime Tile ##
+## <a id='download-er'></a> Step 1: Download the PAS Tile ##
 
-1. If you have not already downloaded Elastic Runtime, log in to [Pivotal Network](https://network.pivotal.io/products/pivotal-cf), and click on **Pivotal Cloud Foundry Elastic Runtime**. 
+1. If you have not already downloaded PAS, log in to [Pivotal Network](https://network.pivotal.io/products/pivotal-cf), and click PAS. 
 
-1. From the **Releases** drop-down, select the release to install.
+1. From the **Releases** drop-down, select the release to install and choose one of the following:
+  1. Click PAS to download the PAS `.pivotal` file
+  1. Click **PCF Small Footprint Runtime** to download the Small Footprint Runtime `.pivotal` file. For more information, see [Getting Started with Small Footprint Runtime](./small-footprint.html).
 
-1. Click on **PCF Elastic Runtime** to download the Elastic Runtime .pivotal file
-
-## <a id='add-er'></a> Step 2: Add Elastic Runtime to Ops Manager ##
+## <a id='add-er'></a> Step 2: Add PAS to Ops Manager ##
 
 1. Navigate to the Pivotal Cloud Foundry Operations Manager Installation Dashboard.
 
-1. Click **Import a Product** to add the Elastic Runtime tile to Ops Manager. This may take a while depending on your connection speed. 
+1. Click **Import a Product** to add the PAS tile to Ops Manager. This may take a while depending on your connection speed. 
   <p class="note"><strong>Tip</strong>: After you import a tile to Ops Manager, you can view the latest available version of that tile in the Installation Dashboard by enabling the Pivotal Network API. For more information, refer to the [Adding and Deleting Products](./add-delete.html#pivnet-api) topic.</p>
 
-1. On the left, click the plus icon next to the imported Elastic Runtime product to add it to the Installation Dashboard.
+1. On the left, click the plus icon next to the imported PAS product to add it to the Installation Dashboard.
 
-1. Click the newly added **Elastic Runtime** tile in the Installation Dashboard.
+1. Click the newly added PAS tile in the Installation Dashboard.
 
     <%= image_tag('images/er-tile.png') %>
 
@@ -37,15 +37,13 @@ Before beginning this procedure, ensure that you have successfully completed the
 
 1. Select **Assign AZ and Networks**. These are the Availability Zones that you [create](./gcp-om-config.html#az) when configuring Ops Manager Director.
 
-1. Select an Availability Zone under **Place singleton jobs**. Ops Manager runs any job with a single instance in this Availability Zone.
+1. Select an the first Availability Zone under **Place singleton jobs**. Ops Manager runs any job with a single instance in this Availability Zone.
 
-1. Select one or more Availability Zones under **Balance other jobs**. Ops Manager balances instances of jobs with more than one instance across the Availability Zones that you specify.
+1. Select all Availability Zones under **Balance other jobs**. Ops Manager balances instances of jobs with more than one instance across the Availability Zones that you specify.
 
-    <p class="note"><strong>Note</strong>: For production deployments, Pivotal recommends at least three Availability Zones for a highly available installation of Elastic Runtime.</p>
+    <p class="note"><strong>Note</strong>: For production deployments, Pivotal recommends at least three Availability Zones for a highly available installation of PAS.</p>
 
-1. From the **Network** drop-down box, choose the network on which you want to run Elastic Runtime.
-	
-    <%= image_tag("images/er-az.png") %>
+1. From the **Network** drop-down box, choose the `ert` network you created when [configuring Ops Manager Director](./gcp-om-config.html#network).
 
 1. Click **Save**.
 
@@ -54,10 +52,10 @@ Before beginning this procedure, ensure that you have successfully completed the
 In this step you redirect queries for your domain to the IP addresses of your load balancers.
 
 1. Locate the static IP addresses of the load balancers you created in [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html):
-    * An HTTP(S) load balancer named `pcf-router`
-    * A TCP load balancer for WebSockets named `pcf-websockets`
-    * A TCP load balancer named `pcf-ssh`
-    * A TCP load balancer for the TCP router if you plan on enabling the TCP routing feature
+    * An HTTP(S) load balancer named `MY-PCF-global-pcf`
+    * A TCP load balancer for WebSockets named `MY-PCF-wss-logs`
+    * A TCP load balancer for SSH access to applications named `MY-PCF-ssh-proxy`
+    * A TCP load balancer for the TCP router named `MY-PCF-cf-tcp-lb` if you plan on enabling the TCP routing feature
     <p class="note"><strong>Note</strong>: You can locate the static IP address of each load balancer by clicking its name under <strong>Networks > Load balancing</strong> in the GCP Console.</p>
 
 1. Log in to the DNS registrar that hosts your domain. Examples of DNS registrars include Network Solutions, GoDaddy, and Register.com.
@@ -69,37 +67,37 @@ In this step you redirect queries for your domain to the IP addresses of your lo
       </tr>
       <tr>
         <td>\*.YOURSYSTEMDOMAIN</td>
-        <td><code>pcf-router</code></td>
+        <td><code>MY-PCF-global-pcf</code></td>
         <td>Yes</td>
         <td>\*.system.example.com</td>
       </tr>
       <tr>
         <td>\*.YOURAPPSDOMAIN</td>
-        <td><code>pcf-router</code></td>
+        <td><code>MY-PCF-global-pcf</code></td>
         <td>Yes</td>
         <td>\*.apps.example.com</td>
       </tr>
       <tr>
         <td>doppler.YOURSYSTEMDOMAIN</td>
-        <td><code>pcf-websockets</code></td>
+        <td><code>MY-PCF-wss-logs</code></td>
         <td>Yes</td>
         <td>doppler.system.example.com</td>
       </tr>
             <tr>
         <td>loggregator.YOURSYSTEMDOMAIN</td>
-        <td><code>pcf-websockets</code></td>
+        <td><code>MY-PCF-wss-logs</code></td>
         <td>Yes</td>
         <td>loggregator.system.example.com</td>
       </tr>
       <tr>
         <td>ssh.YOURSYSTEMDOMAIN</td>
-        <td><code>pcf-ssh</code></td>
+        <td><code>MY-PCF-ssh-proxy</code></td>
         <td>Yes, to allow SSH access to apps</td>
         <td>ssh.system.example.com</td>
       </tr>
       <tr>
         <td>tcp.YOURDOMAIN</td>
-        <td>IP address of the TCP load balancer for TCP routing</td>
+        <td><code>MY-PCF-cf-tcp-lb</code></td>
         <td>No, only set up if you have enabled the TCP routing feature</td>
         <td>tcp.example.com</td>
       </tr>
@@ -124,10 +122,9 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 
     <%= image_tag("domains.png") %>
 
-1. Enter the system and application domains.
-    * The **System Domain** defines your target when you push apps to Elastic
-      Runtime.
-    * The **Apps Domain** defines where Elastic Runtime serves your apps.
+1. Enter the system and application domains that you created when [preparing your GCP environment](./gcp-prepare-env.html#cname).
+    * The **System Domain** defines your target when you push apps to PAS.
+    * The **Apps Domain** defines where PAS serves your apps.
 
     <p class="note"><strong>Note</strong>: Pivotal recommends that you use the same domain name but different subdomain names for your system and app domains. For example, use <code>system.example.com</code> for your system domain, and <code>apps.example.com</code> for your apps domain.</p>
 
@@ -138,9 +135,10 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 1. Select **Networking**.
 
 1. Leave the **Router IPs**, **SSH Proxy IPs**, **HAProxy IPs**, and **TCP Router IPs** fields blank. You do not need to complete these fields when deploying PCF to GCP. 
-   <p class="note"><strong>Note</strong>: You specify load balancers in the **Resource Config** section of Elastic Runtime later on in the installation process. See the <a href="#config-lb">Configure Load Balancers</a> section of this topic for more information.</p>
+   <p class="note"><strong>Note</strong>: You specify load balancers in the **Resource Config** section of PAS later on in the installation process. See the <a href="#config-lb">Configure Load Balancers</a> section of this topic for more information.</p>
 
 1. <%= partial 'haproxy_router_cert_config' %>
+1. <%= partial 'router_haproxy_ca' %>
 1. <%= partial 'min_tls_version' %>
 1. <%= partial 'tls_cipher_suites_router' %>
 1. <%= partial 'tls_cipher_suites_haproxy' %>
@@ -149,9 +147,9 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 1. <%= partial 'http_disable' %>
 1. <%= partial 'insecure_cookies' %> 
 1. <%= partial 'zipkin_enable' %>
-1. By default, the Elastic Runtime routers handle traffic for applications deployed to an isolation segment created by the PCF Isolation Segment tile. To configure the Elastic Runtime routers to reject requests for applications within isolation segments, select the **Routers reject requests for Isolation Segments** checkbox.
+1. By default, the PAS routers handle traffic for applications deployed to an isolation segment created by the PCF Isolation Segment tile. To configure the PAS routers to reject requests for applications within isolation segments, select the **Routers reject requests for Isolation Segments** checkbox.
   <%= image_tag 'isolate-network.png' %>
-  Do not enable this option without deploying routers for each isolation segment. See the the following topics for more information:
+  Do not enable this option without deploying routers for each isolation segment. See the following topics for more information:
   * [Installing PCF Isolation Segment](../customizing/installing-pcf-is.html)
   * [Sharding Routers for Isolation Segments](../adminguide/routing-is.html#sharding-routers-isolation-segment).
 1. <%= partial 'xforwarded_client_cert_xfcc' %>
@@ -162,6 +160,7 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
     <%= image_tag 'images/keepalive.png' %>
 
 1. <%= partial 'router_timeout_backend' %>
+1. <%= partial 'frontend_idle_timeout' %>
 1. <%= partial 'lb_unhealthy_threshold' %>
 1. <%= partial 'lb_healthy_threshold' %>
 
@@ -177,8 +176,8 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 1. <%= partial 'c2c-vxlan' %>
 1. <%= partial 'log-app-traffic-enable' %>
 
-1. <%= partial 'tcp_routing_enable' %>
-   1. For GCP, you also need to specify the name of a GCP TCP load balancer in the **LOAD BALANCER** column of TCP Router job of the **Resource Config** screen. You configure this later on in Elastic Runtime. See <a href="#configure-lb">Configure Load Balancers</a> section of this topic.</p>
+1. <a id='tcp-routing-enable'></a><%= partial 'tcp_routing_enable' %>
+   1. For GCP, you also need to specify the name of a GCP TCP load balancer in the **LOAD BALANCER** column of TCP Router job of the **Resource Config** screen. You configure this later on in PAS. See <a href="#configure-lb">Configure Load Balancers</a> section of this topic.</p>
 1. <%= partial 'tcp_routing_disable' %>
 
 1. Click **Save**.
@@ -196,34 +195,172 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 <%= partial 'application_security_group' %>
 
 ## <a id='uaa'></a>Step 10: Configure UAA ##
+1. Select **UAA**. 
 
-<%= partial 'uaa' %>
+1. (Optional) Under **JWT Issuer URI**, enter the URI that UAA uses as the issuer when generating tokens. 
 
-## <a id='er-auth-config'></a> Step 11: Configure Authentication and Enterprise SSO ##
+    <%= image_tag('ert_uaa_jwt_uri.png') %>
+1. Under **SAML Service Provider Credentials**, enter a certificate and private key to be used by UAA as a SAML Service Provider for signing outgoing SAML authentication requests. You can provide an existing certificate and private key from your trusted Certificate Authority or generate a self-signed certificate. The following domain must be associated with the certificate: `*.login.YOUR-SYSTEM-DOMAIN`.
+  <p class="note"><strong>Note</strong>: The Pivotal Single Sign-On Service and Pivotal Spring Cloud Services tiles require the <code>*.login.YOUR-SYSTEM-DOMAIN</code>.</p>
+
+1. If the private key specified under **Service Provider Credentials** is password-protected, enter the password under **SAML Service Provider Key Password**.
+    <%= image_tag("service-provider.png") %>
+
+1. (Optional) In the **Apps Manager Access Token Lifetime**, **Apps Manager Refresh Token Lifetime**, **Cloud Foundry CLI Access Token Lifetime**, and **Cloud Foundry CLI Refresh Token Lifetime** fields, change the lifetimes of tokens granted for Apps Manager and Cloud Foundry Command Line Interface (cf CLI) login access and refresh. Most deployments use the defaults. 
+    <%= image_tag("authsso-uaa-bottom.png") %>
+
+1. (Optional) Customize the text prompts used for username and password from the cf CLI and Apps Manager login popup by entering values for **Customize Username Label (on login page)** and **Customize Password Label (on login page)**.
+
+1. (Optional) The **Proxy IPs Regular Expression** field contains a pipe-delimited set of regular expressions that UAA considers to be reverse proxy IP addresses. UAA respects the `x-forwarded-for` and `x-forwarded-proto` headers coming from IP addresses that match these regular expressions. To configure UAA to respond properly to Router or HAProxy requests coming from a public IP address, append a regular expression or regular expressions to match the public IP address.
+
+1. You can configure UAA to use the internal MySQL database provided with PCF, or you can configure an external database provider. Follow the procedures in either the [Internal Database Configuration](#uaa-internal) or the [External Database Configuration](#uaa-external) section below.
+  <p class="note"><strong>Note</strong>: For GCP installations, Pivotal recommends selecting <strong>External</strong> and using Google Cloud SQL.</p>
+  <p class="note"><strong>Note</strong>: If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data before changing the configuration. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information, and contact <a href="https://support.pivotal.io">Pivotal Support</a> for help. </p>
+
+###<a id='uaa-internal'></a> Internal Database Configuration
+
+1. Select **Internal MySQL**.
+
+    ![UAA DB Selection](ert_uaa_internal.png)
+
+1. Click **Save**.
+
+1. Ensure that you complete the "Configure Internal MySQL" step later in this topic to configure high availability and automatic backups for your internal MySQL databases.
+
+###<a id='uaa-external'></a> External Database Configuration
+
+1. From the **UAA** section in Pivotal Application Service (PAS), select **External**.
+    <%= image_tag('ert_uaa_external.png') %>
+1. Enter the **Hostname** and **TCP Port** of the database from [Step 6: Create Database Instance and Databases](./gcp-prepare-env.html#dbs) of the _Preparing to Deploy PCF on GCP_ topic.
+1. For **User Account and Authentication database username**, specify a unique username that can access this specific database on the database server.
+1. For **User Account and Authentication database password**, specify a password for the provided username.
+1. Click **Save**.
+
+## <a id='credhub'></a>Step 11: Configure CredHub ##
+
+<%= partial '_credhub' %>
+
+## <a id='er-auth-config'></a> Step 12: Configure Authentication and Enterprise SSO ##
 
 <%= partial 'authsso_config' %>
 
-## <a id='sys-db'></a>Step 12: Configure System Databases ##
+## <a id='sys-db'></a>Step 13: Configure System Databases ##
 
-You can configure Elastic Runtime to use the internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by Elastic Runtime.
+You can configure PAS to use Google Cloud SQL for the databases required by PAS.
 
 <p class="note"><strong>Note</strong>: If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data first before changing the configuration. Contact Pivotal Support for help. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information.</p>
 
 ###<a id='internal-db'></a> Internal Database Configuration
 
+<p class="note"><strong>Note</strong>: For GCP installations, Pivotal recommends selecting <strong>External</strong> and using Google Cloud SQL. Only use internal MySQL for non-production or test installations on GCP.</p>
+
 <%= partial 'ert_database_internal' %>
 
-Then proceed to [Step 13: (Optional) Configure Internal MySQL](#internal-mysql) to configure high availability and automatic backups for your internal MySQL databases.
+Then proceed to [Step 14: (Optional) Configure Internal MySQL](#internal-mysql) to configure high availability and automatic backups for your internal MySQL databases.
 
 ###<a id='create-dbs'></a> External Database Configuration
 
-<%= partial 'ert_database_external' %>
+Pivotal recommends using an external database such as Google Cloud SQL for high availability reasons. 
 
-## <a id='internal-mysql'></a> Step 13: (Optional) Configure Internal MySQL ##
+On GCP, you can use Google Cloud SQL and use the automated backup and high availability replica features.
 
-<%= partial 'mysql_proxy_config_gcp' %>
+<p class="note"><strong>Note</strong>: To configure an external database for UAA, see the <i>External Database Configuration</i> section of <a href="#uaa">Configure UAA</a>.</p>
 
-## <a id='filestore'></a>Step 14: Configure File Storage ##
+<p class="note warning">
+<strong>Warning</strong>: Protect whichever database you use in your deployment with a password.</p>
+
+To specify your PAS databases, perform the following steps:
+
+1. Select the **External Databases** option.
+
+1. In the **Hostname** field, enter the IP address of the Google Cloud SQL instance that you created in [Step 6: Create Database Instance and Databases](./gcp-prepare-env.html#dbs) of the _Preparing to Deploy PCF on GCP_ topic. You can obtain this address from the Instances dashboard of the **SQL** configuration page in the GCP Console.
+
+1. In the **TCP Port** field, enter `3306`.
+
+1. Each component that requires a relational database has two corresponding fields: one for the database username and one for the database password. For each set of fields, specify the username that can access this specific database on the database server and a password for the provided username. You created these users in [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html#dbs).
+  <%= image_tag("gcp/gcp-external-db.png") %>
+
+1. Click **Save**.
+
+## <a id='internal-mysql'></a> Step 14: (Optional) Configure Internal MySQL ##
+
+<p class="note"><strong>Note</strong>: You only need to configure this section if you have selected <strong>Internal Databases - MySQL</strong> in the <strong>Databases</strong> section.</p>
+
+1. Select **Internal MySQL**. 
+
+1. In the **MySQL Proxy IPs** field, enter one or more comma-delimited IP addresses that are not in the reserved CIDR range of your network. If a MySQL node fails, these proxies re-route connections to a healthy node. See the [MySQL Proxy](http://docs.pivotal.io/p-mysql/1-9/proxy.html) topic for more information.</p>
+  <%= image_tag("mysql-config.png") %>
+
+1. For **MySQL Service Hostname**, enter an IP address or hostname for your load balancer. If a MySQL proxy fails, the load balancer re-routes connections to a healthy proxy. If you leave this field blank, components are configured with the IP address of the first proxy instance entered above.
+
+  <p class="note warning"><strong>Warning</strong>: You must configure a load balancer to achieve complete high-availability.</p>
+
+1. In the **Replication canary time period** field, leave the default of 30 seconds or modify the value based on the needs of your deployment. Lower numbers cause the canary to run more frequently, which means that the canary reacts more quickly to replication failure but adds load to the database.
+
+1. In the **Replication canary read delay** field, leave the default of 20 seconds or modify the value based on the needs of your deployment. This field configures how long the canary waits, in seconds, before verifying that data is replicating across each MySQL node. Clusters under heavy load can experience a small replication lag as write-sets are committed across the nodes.
+
+1. (**Required**): In the **E-mail address** field, enter the email address where the MySQL service sends alerts when the cluster experiences a replication issue or when a node is not allowed to auto-rejoin the cluster. 
+
+1. To prohibit the creation of command line history files on the MySQL nodes, deselect the **Allow Command History** checkbox.
+
+1. For **Cluster Probe Timeout**, enter the maximum amount of time, in seconds, that a new node will search for existing cluster nodes. If left blank, the default value is 10 seconds.
+
+  <%= image_tag("mysql-replication-canary.png") %>
+
+1. Under **Automated Backups Configuration**, choose one of five options for MySQL backups:
+  * **Disable automatic backups of MySQL** disables automatic backups, but you can still deploy the Backup Prepare Node if you use BOSH Backup and Restore to back up your MySQL database. For more information, see the [Backing Up Pivotal Cloud Foundry with BBR](./backup-restore/backup-pcf-bbr.html) topic.
+  * **Enable automated backups from MySQL to an S3 bucket or other S3-compatible file store** saves your backups to an existing Amazon Web Services (AWS) or <a href="http://ceph.com/">Ceph</a> S3-compatible blobstore.
+    <%= image_tag("mysql-backups-s3.png") %>
+    This option requires the following fields:
+    * For **S3 Bucket Name**, enter the name of your S3 bucket. Do not include an `s3://` prefix, a trailing `/`, or underscores. If the bucket does not already exist, it will be created automatically.
+    * For **Bucket Path**, specify a folder within the bucket to hold your MySQL backups. Do not include a trailing `/`.
+    * For **S3 Bucket Region**, enter the AWS region where the bucket is located, such as `us-east-1`.
+    * For **AWS Access Key ID** and **AWS Secret Access Key**, enter your AWS or Ceph credentials.
+    * For **Cron Schedule**, enter a valid [cron](https://godoc.org/github.com/robfig/cron) expression to schedule your automated backups. Cron uses your computer's local time zone.
+    * Enable **Backup All Nodes** to make unique backups from each instance of the MySQL server rather than just the first MySQL server instance.
+  * **Enable automated backups from MySQL to Google Cloud Storage** saves your backups to Google Cloud Storage.
+    <%= image_tag("mysql-backups-gcs.png") %>
+    This option requires the following fields:
+    * For **GCP Service Account Key JSON**, enter the name of a Google Cloud Platform (GCP) service account key with access to the project and bucket specified below. This key must be in JSON format.
+    * For **GCP Project ID**, enter the project ID of your GCP project. You can find the project ID on the Dashboard of the GCP Console. 
+    * For **GCP Storage Bucket Name**, enter the name of a bucket in Google Cloud Storage where your backups will be uploaded. If the bucket does not already exist, it will be created automatically.
+    * For **Cron Schedule**, enter a valid [cron](https://godoc.org/github.com/robfig/cron) expression to schedule your automated backups. Cron uses your computer's local time zone.
+    * Enable **Backup All Nodes** to make unique backups from each instance of the MySQL server rather than just the first MySQL server instance.
+  * **Enable automated backups from MySQL to Azure** saves your backups to Azure.
+    <%= image_tag("mysql-backups-azure.png") %>
+    This option requires the following fields:
+    * For **Azure Storage Account**, enter the name of an existing Azure storage account where backups will be uploaded. For more information about creating and managing an Azure storage account, see the [Azure documentation](https://docs.microsoft.com/en-us/azure/storage/common/storage-create-storage-account).
+    * For **Azure Storage Access Key**, enter an Azure storage access key for the storage account.
+    * For **Azure Storage Container**, enter the name of an existing Azure storage container that will store the backups.
+    * For **Backup Path**, enter the path within the Azure storage container where backups will be uploaded.
+    * For **Cron Schedule**, enter a valid [cron](https://godoc.org/github.com/robfig/cron) expression to schedule your automated backups. Cron uses your computer's local time zone.
+    * Enable **Backup All Nodes** to make unique backups from each instance of the MySQL server rather than just the first MySQL server instance.
+  * **Enable automated backups from MySQL to a remote host via SCP** saves your backups to a remote host using secure copy protocol (SCP).
+    <%= image_tag("mysql-backups-scp.png") %>
+    This option requires the following fields:
+    * For **Hostname**, enter the name of your SCP host.
+    * For **Port**, enter your SCP port. This should be the TCP port that your SCP host uses for SSH. The default port is `22`.
+    * For **Username**, enter your SSH username for the SCP host.
+    * For **Private key**, paste in your SSH private key.
+    * For **Destination directory**, enter the directory on the SCP host where you want to save backup files.
+    * For **Cron Schedule**, enter a valid [cron](https://godoc.org/github.com/robfig/cron) expression to schedule your automated backups. Cron uses your computer's local time zone.
+    * Enable **Backup All Nodes** to make unique backups from each instance of the MySQL server rather than just the first MySQL server instance.
+<p class="note"><strong>Note</strong>: If you choose to enable automated MySQL backups, set the number of instances for the **Backup Prepare Node** under the **Resource Config** section of the Pivotal Application Service (PAS) tile to `1`.</p>
+
+1. If you want to log audit events for internal MySQL, select **Enable server activity logging** under **Server Activity Logging**.
+  1. For the **Event types** field, you can enter the events you want the MySQL service to log. By default, this field includes `connect` and `query`, which tracks who connects to the system and what queries are processed. For more information, see the [Logging Events](https://mariadb.com/kb/en/mariadb/about-the-mariadb-audit-plugin/#logging-events) section of the MariaDB documentation.
+
+    ![Server Activity Logging, Load Balancer Thresholds](internal_mysql_bottom.png)
+
+1. Enter values for the following fields:
+  * **Load Balancer Healthy Threshold**: Specifies the amount of time, in seconds, to wait until declaring the MySQL proxy instance started. This allows an external load balancer time to register the instance as healthy.
+  * **Load Balancer Unhealthy Threshold**: Specifies the amount of time, in seconds, that the MySQL proxy continues to accept connections before shutting down. During this period, the healthcheck reports as unhealthy to cause load balancers to fail over to other proxies. You must enter a value greater than or equal to the maximum time it takes your load balancer to consider a proxy instance unhealthy, given repeated failed healthchecks.
+
+1. If you want to enable the MySQL interruptor feature, select the checkbox to **Prevent node auto re-join**. This feature stops all writes to the MySQL database if it notices an inconsistency in the dataset between the nodes. For more information, see the [Interruptor](http://docs.pivotal.io/p-mysql/1-10/troubleshooting.html#interruptor) section in the MySQL for PCF documentation. 
+
+1. Click **Save**.
+
+## <a id='filestore'></a>Step 15: Configure File Storage ##
 
 <%= partial 'filestore_config' %>
 
@@ -246,15 +383,15 @@ For additional factors to consider when selecting file storage, see the <a href=
 are also available as file storage options, but Pivotal does not recommend these 
 for a typical PCF on GCP installation. 
 
-## <a id='sys-logging'></a>Step 15: (Optional) Configure System Logging ##
+## <a id='sys-logging'></a>Step 16: (Optional) Configure System Logging ##
 
 If you forward logging messages to an external Reliable Event Logging Protocol (RELP) server, complete the following steps:
 
-1. Select the **System Logging** section that is located within your Pivotal Elastic Runtime **Settings** tab.
+1. Select the **System Logging** section that is located within your PAS **Settings** tab.
   <%= image_tag("updated-system-logging.png") %>
 1. Enter the IP address of your syslog server in **Address**.
 1. Enter the port of your syslog server in **Port**. The default port for a syslog server is `514`.
-<p class="note"><strong>Note</strong>: The host must be reachable from the Elastic Runtime network, accept TCP connections, and use the RELP protocol. Ensure your syslog server listens on external interfaces.</p>
+<p class="note"><strong>Note</strong>: The host must be reachable from the PAS network, accept TCP connections, and use the RELP protocol. Ensure your syslog server listens on external interfaces.</p>
 1. Select a **Transport Protocol** to use when forwarding logs.
 1. If you plan to use TLS encryption when sending logs to the remote server, select **Yes** when answering the **Encrypt syslog using TLS?** question.
   1. In the **Permitted Peer** field, enter either the name or SHA1 fingerprint of the remote peer.
@@ -263,13 +400,13 @@ If you forward logging messages to an external Reliable Event Logging Protocol (
 1. If you want to include security events in your log stream, select the **Enable Cloud Controller security event logging** checkbox. This logs all API requests, including the endpoint, user, source IP address, and request result, in the Common Event Format (CEF).
 1. Click **Save**.
 
-## <a id='customize-apps-man'></a>Step 16: (Optional) Customize Apps Manager##
+## <a id='customize-apps-man'></a>Step 17: (Optional) Customize Apps Manager##
 
 <%= partial 'custombranding' %>
 
-## <a id='smtp'></a>Step 17: (Optional) Configure Email Notifications ##
+## <a id='smtp'></a>Step 18: (Optional) Configure Email Notifications ##
 
-Elastic Runtime uses SMTP to send invitations and confirmations to Apps Manager
+PAS uses SMTP to send invitations and confirmations to Apps Manager
 users.
 You must complete the **Email Notifications** page if you want to enable
 end-user self-registration.
@@ -288,80 +425,82 @@ end-user self-registration.
 settings using this form, the administrator must create orgs and users using
 the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating and Managing Users with the cf CLI</a> for more information.</p>
 
-## <a id='config-cc'></a>Step 18: Configure Cloud Controller##
+## <a id='config-cc'></a>Step 19: Configure Cloud Controller##
 
 <%= partial 'cloud-controller' %>
 
-## <a id='config-smoke-test'></a>Step 19: Configure Smoke Tests##
+## <a id='config-smoke-test'></a>Step 20: Configure Smoke Tests##
 
 <%= partial 'smoketests' %>
 
-## <a id='advanced-features'></a>Step 20: (Optional) Enable Advanced Features ##
+## <a id='advanced-features'></a>Step 21: (Optional) Enable Advanced Features ##
 
 <%= partial 'advanced-features' %>
 
-## <a id='errands'></a>Step 21: Configure Errands ##
+## <a id='errands'></a>Step 22: Configure Errands ##
 
 <%= partial 'errands' %>
 
-## <a id='config-lb'></a>Step 22: Configure Load Balancers ##
+## <a id='config-lb'></a>Step 23: Configure Load Balancers ##
 
 1. Navigate to the GCP Console and click **Load balancing**.
 
     <%= image_tag('gcp/config-lb.png') %>
 
-    You should see the SSH load balancer, the HTTP(S) load balancer, the TCP WebSockets load balancer, and optionally, the TCP router that you created in the [Create Load Balancers in GCP](gcp-prepare-env.html#create_loadbalancers) section of the _Preparing to Deploy PCF on GCP_ topic. 
+    You should see the SSH load balancer, the HTTP(S) load balancer, the TCP WebSockets load balancer, and the TCP router that you created in the _Preparing to Deploy PCF on GCP_ topic. 
 
-1. Record the name of your SSH load balancer and your TCP WebSockets load balancer. For example, `pcf-ssh` and `pcf-websockets`.
+1. Record the name of your SSH load balancer and your TCP WebSockets load balancer, `MY-PCF-wss-logs` and `MY-PCF-ssh-proxy`.
 
-1. Click your HTTP(S) load balancer. For example, `pcf-router`. 
+1. Click your HTTP(S) load balancer, `MY-PCF-global-pcf`. 
     <%= image_tag('gcp/pcf-router.png') %>
 
-1. Under **Backend services**, record the name of the backend service of the HTTP(S) load balancer. For example, `pcf-backend`.
+1. Under **Backend services**, record the name of the backend service of the HTTP(S) load balancer, `MY-PCF-http-lb-backend`.
 
-1. In the **Elastic Runtime** tile, click **Resource Config**.
+1. In the PAS tile, click **Resource Config**.
 
     <%= image_tag("gcp/resource_config.png") %>
 
-1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-delimited list consisting of the name of your TCP WebSockets load balancer and the name of your HTTP(S) load balancer backend with the protocol prepended. For example, `tcp:pcf-websockets,http:pcf-backend`.
+1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-delimited list consisting of the name of your TCP WebSockets load balancer and the name of your HTTP(S) load balancer backend with the protocol prepended. For example, `tcp:MY-PCF-wss-logs,http:MY-PCF-http-lb-backend`.
 
     <p class="note"><strong>Note</strong>: Do not add a space between key/value pairs in the <code>LOAD BALANCER</code> field or it will fail.</p>
-    <p class="note"><strong>Note</strong>: If you are using HAProxy in your deployment, then enter the above load balancer values in the <code>LOAD BALANCERS</code> field of the <b>HAPRoxy</b> row instead of the <b>Router</b> row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
+    <p class="note"><strong>Note</strong>: If you are using HAProxy in your deployment, then enter the above load balancer values in the <code>LOAD BALANCERS</code> field of the <strong>HAProxy</strong> row instead of the <strong>Router</strong> row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
 
-1. If you have enabled TCP routing in the <a href="#advanced-features">Advanced Features</a> pane and set up the <a href="./gcp-prepare-env.html#tcp_websockets_lb">TCP Load Balancer in GCP</a>, add the name of your TCP load balancer, prepended with <code>tcp:</code>, to the <strong>LOAD BALANCERS</strong> column of the <storng>TCP Router</strong> row. For example, <code>tcp:pcf-tcp-router</code>.
+1. If you have enabled TCP routing in the <a href="#tcp-routing-enable">Networking</a> pane and set up the <a href="./gcp-prepare-env.html#tcp_websockets_lb">TCP Load Balancer in GCP</a>, add the name of your TCP load balancer, prepended with <code>tcp:</code>, to the <strong>LOAD BALANCERS</strong> column of the <storng>TCP Router</strong> row. For example, <code>tcp:pcf-tcp-router</code>.
 
-1. Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the name of your SSH load balancer prepended with `tcp:`. For example, `tcp:pcf-ssh`.
+1. Enter the name of you SSH load balancer depending on which release you are using.
+  * **PAS**: Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the name of your SSH load balancer prepended with `tcp:`. For example, `tcp:MY-PCF-ssh-proxy`.
+  * **Small Footprint Runtime**: Under the **LOAD BALANCERS** column of the **Control** row, enter the name of your SSH load balancer prepended with `tcp:`. 
 
-1. Verify that the **Internet Connected** checkbox for every job is checked to allow the jobs to reach the Internet. This gives all VMs a public IP address that enables outbound Internet access.
+1. Verify that the **Internet Connected** checkbox for every job is unchecked. When preparing your GCP environment, you provisioned a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses to allow the jobs to reach the Internet.
    <p class="note"><strong>Note</strong>: If you want to provision a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses, deselect the <strong>Internet Connected</strong> checkboxes. For more information about using NAT in GCP, see the <a href="https://cloud.google.com/compute/docs/networking">GCP documentation</a>.</p>  
 
 1. Click **Save**.
 
-## <a id='disable-resources'></a>Step 23: (Optional) Scale Down and Disable Resources ##
+## <a id='disable-resources'></a>Step 24: (Optional) Scale Down and Disable Resources ##
 
 <%= partial 'disable_resources' %>
 
-## <a id='stemcell'></a>Step 24: Verify and Download Stemcell Version##
+## <a id='stemcell'></a>Step 25: Verify and Download Stemcell Version##
 
-Verify whether Ops Manager is providing the stemcell version required by Elastic Runtime. If the correct version is already present, you do not need to download a new stemcell.
+Verify whether Ops Manager is providing the stemcell version required by PAS. If the correct version is already present, you do not need to download a new stemcell.
 
-1. In the Elastic Runtime tile, select **Stemcell**.
+1. In the PAS tile, select **Stemcell**.
 
-1. Verify that the version indicated in the filename matches the version of stemcell required by Elastic Runtime. 
-  * If Elastic Runtime detects that a stemcell `.tgz` file is present in the Ops Manager Director VM at `/var/tempest/stemcells/`, the Stemcell screen displays filename information.
+1. Verify that the version indicated in the filename matches the version of stemcell required by PAS. 
+  * If PAS detects that a stemcell `.tgz` file is present in the Ops Manager Director VM at `/var/tempest/stemcells/`, the Stemcell screen displays filename information.
   <%= image_tag("stemcell_18.png") %>
-  * If Elastic Runtime cannot detect a stemcell `.tgz` file, the following message displays:
+  * If PAS cannot detect a stemcell `.tgz` file, the following message displays:
   <%= image_tag("stemcell_not_found.png") %>
 
-1. If the version of the stemcell file that is loaded does not match the required version listed in the <a href="http://network.pivotal.io">Pivotal Network</a> download page for Elastic Runtime, or cannot be found by Ops Manager, perform the following steps to download and import a new stemcell file:
+1. If the version of the stemcell file that is loaded does not match the required version listed in the <a href="http://network.pivotal.io">Pivotal Network</a> download page for PAS, or cannot be found by Ops Manager, perform the following steps to download and import a new stemcell file:
 
   1. Log in to the [Pivotal Network](https://network.pivotal.io/products/pivotal-cf) and click **Stemcells**.
 
   1. Download the appropriate stemcell version targeted for your IaaS.
 
-  1. In the **Stemcell** section of the Elastic Runtime tile, click **Import Stemcell** to import the downloaded stemcell <code>.tgz</code> file.
+  1. In the **Stemcell** section of the PAS tile, click **Import Stemcell** to import the downloaded stemcell <code>.tgz</code> file.
 
-## <a id='complete'></a>Step 25: Complete the Elastic Runtime Installation ##
+## <a id='complete'></a>Step 26: Complete the PAS Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.

@@ -1,5 +1,5 @@
 ---
-title: Recovering MySQL from Elastic Runtime Downtime
+title: Recovering MySQL from PAS Downtime
 owner: RelEng
 ---
 
@@ -7,7 +7,7 @@ owner: RelEng
 
 _This topic assumes you are using [BOSH CLI v2](https://bosh.io/docs/cli-v2.html)._
 
-This topic describes the procedure for recovering a terminated Elastic Runtime cluster using a process known as bootstrapping.
+This topic describes the procedure for recovering a terminated Pivotal Application Service (PAS) cluster using a process known as bootstrapping.
 
 ## <a id='when'></a>When to Bootstrap
 
@@ -41,15 +41,15 @@ Follow the steps below to recover a cluster that has lost quorum.
 
 ## <a id='manifest'></a>Step 1: Choose the Correct Manifest
 
-1. Log in to the BOSH Director by running `bosh2 -e MY-ENV log-in`. Replace `MY-ENV` with the environment where you deployed the cluster.
+1. Log in to the BOSH Director by running `bosh -e MY-ENV log-in`. Replace `MY-ENV` with the environment where you deployed the cluster.
     <pre class="terminal">
-    $ bosh2 -e prod log-in
+    $ bosh -e prod log-in
     </pre>
 
-1. Run `bosh2 -e MY-ENV deployments`. Replace `MY-ENV` with the environment where you deployed the cluster.
+1. Run `bosh -e MY-ENV deployments`. Replace `MY-ENV` with the environment where you deployed the cluster.
 
     <pre class="terminal">
-    $ bosh2 -e prod deployments
+    $ bosh -e prod deployments
     Using environment '192.168.56.6' as client 'admin'
     Name                Release(s)                Stemcell(s)                                         Team(s)  Cloud Config
     cf                  binary-buildpack/1.0.9    bosh-warden-boshlite-ubuntu-trusty-go<\_agent/3363.9  -        latest
@@ -72,35 +72,35 @@ Follow the steps below to recover a cluster that has lost quorum.
     Succeeded
     </pre>
 
-1.  Run `bosh2 -e MY-ENV -d MY-DEPLOYMENT manifest > /tmp/MANIFEST.yml` to download the manifest. Replace the example text with the following:
+1.  Run `bosh -e MY-ENV -d MY-DEPLOYMENT manifest > /tmp/MANIFEST.yml` to download the manifest. Replace the example text with the following:
   * `MY-ENV`: the environment where you deployed the cluster
   * `MY-DEPLOYMENT`: the name of your deployment cluster
   * `MANIFEST.yml`: the name you want to give the manifest
 
     <pre class="terminal">
-    $ bosh2 -e prod -d mysql manifest /tmp/mysql.yml
+    $ bosh -e prod -d mysql manifest /tmp/mysql.yml
     </pre>
 
 ## <a id="assisted-bootstrap"></a>Step 2: Run the Bootstrap Errand
 
-Elastic Runtime versions 1.7.0 and later include a [BOSH errand](http://bosh.io/docs/jobs.html#jobs-vs-errands) to automate the process of bootstrapping. The bootstrap errand automates the steps described in the [Manual Bootstrapping](#manual-bootstrap) section below. It finds the node with the highest transaction sequence number and asks it to start up by itself in bootstrap mode. Finally, it asks the remaining nodes to join the cluster.
+PAS versions 1.7.0 and later include a [BOSH errand](http://bosh.io/docs/jobs.html#jobs-vs-errands) to automate the process of bootstrapping. The bootstrap errand automates the steps described in the [Manual Bootstrapping](#manual-bootstrap) section below. It finds the node with the highest transaction sequence number and asks it to start up by itself in bootstrap mode. Finally, it asks the remaining nodes to join the cluster.
 
 In most cases, running the errand will recover your cluster. However, certain scenarios require additional steps. To determine which set of instructions to follow, you must determine the state of your Virtual Machines (VMs).
 
-1. Run `bosh2 -e MY-ENV -d MY-DEPLOYMENT instances` and examine the output. Replace `MY-ENV` with the environment where you deployed the cluster and `MY-DEPLOYMENT` with the deployment cluster name.
+1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT instances` and examine the output. Replace `MY-ENV` with the environment where you deployed the cluster and `MY-DEPLOYMENT` with the deployment cluster name.
     <pre class="terminal">
-    $ bosh2 -e prod -d mysql instances
+    $ bosh -e prod -d mysql instances
     </pre>
-    * If the output of `bosh2 instances` shows the state of the jobs as `failing`, proceed to Scenario 1.
-    * If the output of `bosh2 instances` shows the state of jobs as `unknown/unknown`, proceed to Scenario 2.
+    * If the output of `bosh instances` shows the state of the jobs as `failing`, proceed to Scenario 1.
+    * If the output of `bosh instances` shows the state of jobs as `unknown/unknown`, proceed to Scenario 2.
 
 ### <a id="cluster-disrupted"></a>Scenario 1: Virtual Machines Running, Cluster Disrupted
 
 In this scenario, nodes are up and running, but the cluster has been disrupted. You can run the bootstrap errand without recreating the VMs.
 
-1. Run `bosh2 -e MY-ENV -d MY-DEPLOYMENT run-errand bootstrap`. Replace `MY-ENV` with the name of the environment where you deployed the cluster and `MY-DEPLOYMENT` with the deployment cluster name.
+1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT <%= vars.bosh_run_errand %> bootstrap`. Replace `MY-ENV` with the name of the environment where you deployed the cluster and `MY-DEPLOYMENT` with the deployment cluster name.
     <pre class="terminal">
-    $ bosh2 -e prod -d mysql run-errand bootstrap
+    $ bosh -e prod -d mysql <%= vars.bosh_run_errand %>  bootstrap
     </pre>
     <p class="note"><strong>Note</strong>: Sometimes the bootstrap errand fails on the first try. If this happens, run the command again in a few minutes.</p>
 
@@ -110,52 +110,47 @@ In this scenario, nodes are up and running, but the cluster has been disrupted. 
 
 In this scenario, severe circumstances such as power failure have terminated all of your VMs. You need to recreate the VMs before you can recover the cluster.
 
-1. If you enabled the [VM Resurrector](./resurrector.html#enabling) in Ops Manager, the system detects the terminated VMs and automatically attempts to recreate them. Run `bosh2 -e MY-ENV tasks` to see the `scan and fix` job run by the VM Resurrector.
+1. To recreate terminated or lost VMs, perform the following steps:
 
-    <pre class="terminal">
-    $ bosh2 -e prod tasks
-    </pre>
+    1. If you use the [VM Resurrector](./resurrector.html#enabling), disable it.
 
-    If you have not enabled the VM Resurrector, run the BOSH Cloudcheck command `bosh2 -e MY-ENV -d MY-DEPLOYMENT cloud-check` to delete any placeholder VMs. When prompted, choose `Delete VM reference` by entering `6`.
+    1. Run the BOSH Cloud Check interactive command `bosh -e MY-ENV -d MY-DEPLOYMENT <%= vars.bosh_cloud_check %>`. When prompted, select **Recreate VM and wait for processes to start**. If this option fails, select **Delete VM reference**.
 
-    <pre class="terminal">
-    $ bosh2 -e prod -d mysql cloud-check
+        <pre class="terminal">
+        $ bosh -e prod -d mysql <%= vars.bosh_cloud_check %> 
 
-    Using environment '192.168.56.6' as user 'director' (bosh.*.read, openid, bosh.*.admin, bosh.read, bosh.admin)
+        Using environment '192.168.56.6' as user 'director' (bosh.*.read, openid, bosh.*.admin, bosh.read, bosh.admin)
 
-    Task 34
+        Task 34
 
-    19:19:12 | Scanning 21 VMs: Checking VM states (00:00:16)
-    19:19:28 | Scanning 21 VMs: 19 OK, 2 unresponsive, 0 missing, 0 unbound (00:00:00)
-    19:19:28 | Scanning 5 persistent disks: Looking for inactive disks (00:00:00)
-    19:19:28 | Scanning 5 persistent disks: 5 OK, 0 missing, 0 inactive, 0 mount-info mismatch (00:00:00)
+        19:19:12 | Scanning 21 VMs: Checking VM states (00:00:16)
+        19:19:28 | Scanning 21 VMs: 19 OK, 2 unresponsive, 0 missing, 0 unbound (00:00:00)
+        19:19:28 | Scanning 5 persistent disks: Looking for inactive disks (00:00:00)
+        19:19:28 | Scanning 5 persistent disks: 5 OK, 0 missing, 0 inactive, 0 mount-info mismatch (00:00:00)
 
-    Started  Fri Aug  4 19:19:12 UTC 2017
-    Finished Fri Aug  4 19:19:28 UTC 2017
-    Duration 00:00:16
+        Started  Fri Aug  4 19:19:12 UTC 2017
+        Finished Fri Aug  4 19:19:28 UTC 2017
+        Duration 00:00:16
 
-    Task 34 done
+        Task 34 done
 
-    #  Type                Description
-    1  unresponsive_agent  VM for 'uaa/0 (0)' with cloud ID 'vm-001' is not responding.
-    2  unresponsive_agent  VM for 'mysql/0 (0)' with cloud ID 'vm-007' is not responding.
+        #  Type                Description
+        1  unresponsive_agent  VM for 'uaa/0 (0)' with cloud ID 'vm-001' is not responding.
+        2  unresponsive_agent  VM for 'mysql/0 (0)' with cloud ID 'vm-007' is not responding.
 
-    2 problems
+        2 problems
 
-    1: Skip for now
-    2: Reboot VM
-    3: Recreate VM without waiting for processes to start
-    4: Recreate VM and wait for processes to start
-    5: Delete VM
-    6: Delete VM reference (forceful; may need to manually delete VM from the Cloud to avoid IP conflicts)
-    </pre>
+        1: Skip for now
+        2: Reboot VM
+        3: Recreate VM without waiting for processes to start
+        4: Recreate VM and wait for processes to start
+        5: Delete VM
+        6: Delete VM reference (forceful; may need to manually delete VM from the Cloud to avoid IP conflicts)
+        </pre>
 
-1. Run `bosh2 -e MY-ENV -d MY-DEPLOYMENT instances` and examine the output.
-Do not proceed to the next step until all VMs are in either the `starting` or `failing` state.
+    1. Re-enable the VM Resurrector if you want to continue to use it.
 
-    <pre class="terminal">
-    $ bosh2 -e prod -d mysql instances
-    </pre>
+    <p class="note"><strong>Note</strong>: Do not proceed to the next step until all VMs are in either the <code>starting</code> or <code>failing</code> state.</p>
 
 1. Complete the following steps to prepare your deployment for the bootstrap errand:
 
@@ -166,17 +161,17 @@ Do not proceed to the next step until all VMs are in either the `starting` or `f
     1. Change `max_in_flight` to `3`.
     1. Below the `max_in_flight` line, add a new line: `canaries: 0`.
     1. Set `update.serial` to `false`.
-    1. Run `bosh2 -e MY-ENV -d MY-DEPLOYMENT deploy /tmp/MANIFEST.yml`.
+    1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT deploy /tmp/MANIFEST.yml`.
 
-1. Run `bosh2 -e MY-ENV -d MY-DEPLOYMENT run-errand bootstrap`. Replace `MY-ENV` with the name of the environment where you deployed the cluster and `MY-DEPLOYMENT` with the deployment cluster name.
+1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT <%= vars.bosh_run_errand %> bootstrap`. Replace `MY-ENV` with the name of the environment where you deployed the cluster and `MY-DEPLOYMENT` with the deployment cluster name.
 
-1. Run `bosh2 -e MY-ENV -d MY-DEPLOYMENT instances` and examine the output to confirm that the errand completes successfully. Some instances may still appear as `failing`. 
+1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT instances` and examine the output to confirm that the errand completes successfully. Some instances may still appear as `failing`. 
 
 1. Complete the following steps to restore the BOSH configuration:
 
     1. Open `/tmp/MANIFEST.yml` in a text editor.
     1. Re-set `canaries` to 1, `max_in_flight` to 1, and `serial` to true in the same manner as above.
-    1. Run `bosh2 -e MY-ENV -d MY-DEPLOYMENT deploy /tmp/MANIFEST.yml`.
+    1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT deploy /tmp/MANIFEST.yml`.
     1. Validate that all mysql instances are in `running` state.
 
     <p class="note"><strong>Note:</strong> You must reset the values in the BOSH manifest to ensure successful future deployments and accurate reporting of the status of your jobs.</p>
@@ -188,8 +183,8 @@ Do not proceed to the next step until all VMs are in either the `starting` or `f
 <p class="note"><strong>Note</strong>: The following steps are prone to user error and can result in lost data if followed incorrectly. Please follow the <a href="#assisted-bootstrap">Run the Bootstrap Errand</a> instructions above first, and only resort to the manual process if the errand fails to repair the cluster.</p>
 If the bootstrap errand cannot recover the cluster, you need to perform the steps automated by the errand manually. 
 
-- If the output of `bosh2 instances` shows the state of the jobs as `failing` ([Scenario 1](#cluster-disrupted)), proceed directly to the manual steps below.
-- If the output of `bosh2 instances` shows the state of the jobs as `unknown/unknown`, perform Steps 1-3 of [Scenario 2](#vms-terminated), substitute the manual steps below for Step 4, and then perform Steps 5-6 of [Scenario 2](#vms-terminated).
+- If the output of `bosh instances` shows the state of the jobs as `failing` ([Scenario 1](#cluster-disrupted)), proceed directly to the manual steps below.
+- If the output of `bosh instances` shows the state of the jobs as `unknown/unknown`, perform Steps 1-2 of [Scenario 2](#vms-terminated), substitute the manual steps below for Step 3, and then perform Steps 4-5 of [Scenario 2](#vms-terminated).
 
 1. SSH to each node in the cluster and, as root, shut down the `mariadb` process.
 
@@ -251,7 +246,7 @@ If the bootstrap errand cannot recover the cluster, you need to perform the step
 
     1. Open `/tmp/MANIFEST.yml` in a text editor.
     1. Re-set `canaries` to 1, `max_in_flight` to 1, and `serial` to true in the same manner as above.
-    1. Run `bosh2 -e MY-ENV -d MY-DEPLOYMENT deploy /tmp/MANIFEST.yml`.
+    1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT deploy /tmp/MANIFEST.yml`.
     1. Validate that all mysql instances are in `running` state.
 
     <p class="note"><strong>Note:</strong> You must reset the values in the BOSH manifest to ensure successful future deployments and accurate reporting of the status of your jobs.</p>

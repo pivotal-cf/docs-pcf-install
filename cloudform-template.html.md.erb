@@ -1,13 +1,13 @@
 ---
-title: Deploying the CloudFormation Template for PCF on AWS
+title: Deploying BOSH and Ops Manager to AWS
 owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
 
-This topic describes how to deploy the CloudFormation template for [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Amazon Web Services (AWS).
+This topic describes how to use the CloudFormation template to deploy BOSH and Ops Manager to Amazon Web Services (AWS), as a part of installing [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF).
 
-An AWS CloudFormation template describes a set of AWS resources and properties. The template used in this topic is designed to output the resources necessary for three availability zones (AZ), with an Ops Manager, Elastic Runtime, and services subnet in each AZ. The Elastic Load Balancer will be attached to the public subnet the AZs to balance traffic.
+An AWS CloudFormation template describes a set of AWS resources and properties. The template used in this topic is designed to output the resources necessary for three availability zones (AZ), with an Ops Manager, Pivotal Application Service (PAS), and services subnet in each AZ. The Elastic Load Balancer will be attached to the public subnet the AZs to balance traffic.
 
 ## <a id='prereq'></a> Prerequisites
 
@@ -36,7 +36,7 @@ The [AWS CLI](https://aws.amazon.com/cli/) must be installed on your machine and
   * `*.login.sys.example.com`
   * `*.uaa.sys.example.com`
   * `*.apps.example.com`
-  <p class='note'><strong>Note</strong>: If you use a self-signed certificate or select the "Generate Self-Signed RSA Certificate" option during the <a href="./../customizing/cloudform-er-config.html#security-config">Deploying Elastic Runtime on AWS</a> installation process, you can ignore the step above. However, make sure you upload the self-signed certificate to AWS and attach the certificate to the listeners on the AWS Elastic Load Balancer. Pivotal recommends only using a self-signed certificate for testing and development.</p>
+  <p class='note'><strong>Note</strong>: If you use a self-signed certificate or select the "Generate Self-Signed RSA Certificate" option during the <a href="./../customizing/cloudform-er-config.html#security-config">Deploying PAS on AWS</a> installation process, you can ignore the step above. However, make sure you upload the self-signed certificate to AWS and attach the certificate to the listeners on the AWS Elastic Load Balancer. Pivotal recommends only using a self-signed certificate for testing and development.</p>
 
 1. Upload your SSL certificate to AWS. For more information, see the [AWS documentation s on uploading SSL certificate using the CLI](http://docs.aws.amazon.com/cli/latest/reference/iam/upload-server-certificate.html).
 <pre class='terminal'>
@@ -92,7 +92,7 @@ $ aws iam upload-server-certificate \
 
 1. Sign in to [Pivotal Network](https://network.pivotal.io/).
 
-1. Select <b>Elastic Runtime</b>. From the <b>Releases</b> drop-down menu, select the release that you wish to install.
+1. Select PAS. From the <strong>Releases</strong> drop-down menu, select the release that you wish to install.
 
 1. Download the **PCF CloudFormation for AWS Setup**.
 
@@ -125,12 +125,12 @@ following fields:
     * **AvailabilityZone2**: Enter the second availability zone in your region.
     * **AvailabilityZone3**: Enter the third availability zone in your region.
     * **EnvironmentID**: Enter a prefix by which you can identify the resources for this PCF deployment. 
-    * **ERTCertificateARN**: Enter your uploaded SSL Certificate ARN to use for Elastic Runtime.
+    * **ERTCertificateARN**: Enter your uploaded SSL Certificate ARN to use for PAS.
     * **IsoCertificateARN**: Enter your uploaded SSL Certificate ARN to use for PCF Isolation Segment.
     * **OpsManAMI**: Enter the **AMI ID** for your region. You can find this in the `Pivotal Cloud Foundry Ops Manager for AWS` PDF file available with the Ops Manager release on [Pivotal Network](https://network.pivotal.io). 
-    * **OpsManIngressCidr**: If you want to limit which range of IPs can reach Ops Manager, enter a CIDR range in this field. Otherwise, leave `0.0.0.0/0`. 
+    * **OpsManIngressCidr**: If you want to limit which range of IP addresses can reach Ops Manager, enter a CIDR range in this field. Otherwise, leave this as `0.0.0.0/0`. 
     * **OpsManSSHKeyPairName**: Use the drop-down menu to select the name of your pre-existing AWS key pair. 
-    * If you want to use Amazon RDS for the Elastic Runtime databases, complete the following fields:
+    * If you want to use Amazon RDS for the PAS databases, complete the following fields:
       * **RDSDBName**: Do not change this value.
       * **RDSPassword**: Enter a password for the RDS database.
       * **RDSUsername**: Enter a username for the RDS database.
@@ -154,10 +154,6 @@ When the installation process successfully completes, AWS displays **CREATE_COMP
 After completing this procedure, complete all of the steps in the following
 topics:
 
-* [Configure DNS for PCF on AWS](./cloudform-dns-config.html)
-* [Configuring Ops Manager Director for AWS](./cloudform-om-config.html)
-* [Deploying Elastic Runtime on AWS](./cloudform-er-config.html)
-
----
-
-Return to [Installing Pivotal Cloud Foundry Using AWS CloudFormation](./cloudform-install.html).
+* [Configuring DNS on AWS](./cloudform-dns-config.html)
+* [Configuring Ops Manager on AWS](./cloudform-om-config.html)
+* [Deploying PAS on AWS](./cloudform-er-config.html)

@@ -5,7 +5,7 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-This topic describes using the BOSH CLI to help diagnose and resolve issues with your [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) deployment. Before using the information and techniques in this topic, you might want to review the [Pivotal Cloud Foundry Troubleshooting Guide](./troubleshooting.html).
+This topic describes using the BOSH CLI to help diagnose and resolve issues with your [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) deployment. Before using the information and techniques in this topic, review [Diagnosing Problems in PCF](./diagnostics.html).
 
 To follow the steps in this topic, you must log in to the BOSH Director. The BOSH Director runs on the virtual machine (VM) that Ops Manager deploys on the first install of the Ops Manager Director tile.
 
@@ -105,31 +105,29 @@ To SSH into the Ops Manager VM in GCP, follow these instructions:
 
 Follow the steps below to log in to the BOSH Director.
 
-<p class="note"><strong>Note</strong>: The procedures in this topic use <a href="https://bosh.io/docs/cli-v2-diff.html">BOSH CLI v2</a>. The BOSH Director VM includes both BOSH CLI versions, but some BOSH CLI v1 commands are incompatible with PCF 1.12 deployments. Run the BOSH commands in this topic using <code>bosh2</code>.</p>
-
 ### <a id='bosh-alias'></a>Create a Local BOSH Director Alias
 
-1. Run the following command to create a local alias for the BOSH Director using the BOSH CLI: `bosh2 alias-env MY-ENV -e DIRECTOR-IP-ADDRESS --ca-cert /var/tempest/workspaces/default/root_ca_certificate`
+1. Run the following command to create a local alias for the BOSH Director using the BOSH CLI: `bosh alias-env MY-ENV -e DIRECTOR-IP-ADDRESS --ca-cert /var/tempest/workspaces/default/root_ca_certificate`
 
     Replace the placeholder text with the following:
     * `MY-ENV`: Enter an alias for the BOSH Director, such as `gcp`.
     * `DIRECTOR-IP-ADDRESS`: Enter the IP address of your Ops Manager Director VM.
 For example:
-    <pre class="terminal">$ bosh2 alias-env gcp -e 10.0.0.3 --ca-cert /var/tempest/workspaces/default/root_ca_certificate</pre>
+    <pre class="terminal">$ bosh alias-env gcp -e 10.0.0.3 --ca-cert /var/tempest/workspaces/default/root_ca_certificate</pre>
 
 1. Log in to the BOSH Director using one of the following options:
-  * [Internal User Store Login through UAA](#uaa-bosh2): Log in to the Director using BOSH.
-  * [External User Store Login through SAML](#saml-bosh2): Use an external user store to log in to the BOSH Director.
+  * [Internal User Store Login through UAA](#uaa-bosh): Log in to the Director using BOSH.
+  * [External User Store Login through SAML](#saml-bosh): Use an external user store to log in to the BOSH Director.
 
-### <a id='uaa-bosh2'></a>Log in to the BOSH Director with UAA
+### <a id='uaa-bosh'></a>Log in to the BOSH Director with UAA
 
 1. Retrieve the Director password from the **Ops Manager Director > Credentials** tab. Alternatively, launch a browser and visit `https://OPS-MANAGER-FQDN/api/v0/deployed/director/credentials/director_credentials` to obtain the password. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager.
 
-1. Run `bosh2 -e MY-ENV log-in` to log in to the BOSH Director. Replace `MY-ENV` with the alias for your BOSH Director. For example:
-    <pre class='terminal'>$ bosh2 -e gcp log-in</pre>
+1. Run `bosh -e MY-ENV log-in` to log in to the BOSH Director. Replace `MY-ENV` with the alias for your BOSH Director. For example:
+    <pre class='terminal'>$ bosh -e gcp log-in</pre>
     Follow the BOSH CLI prompts and enter the Ops Manager Director credentials to log in to the BOSH Director.
 
-### <a id='saml-bosh2'></a>Log in to the BOSH Director with SAML
+### <a id='saml-bosh'></a>Log in to the BOSH Director with SAML
 
 1. Log in to your identity provider and use the following information to configure SAML Service Provider Properties:
   * **Service Provider Entity ID**: `bosh-uaa`
@@ -139,8 +137,8 @@ For example:
   * **Binding**: HTTP Redirect
   * **Name ID**: Email Address
 
-1. Run `bosh2 -e MY-ENV log-in` to log in to the BOSH Director. Replace `MY-ENV` with the alias for your BOSH Director. For example:
-    <pre class='terminal'>$ bosh2 -e gcp log-in</pre>
+1. Run `bosh -e MY-ENV log-in` to log in to the BOSH Director. Replace `MY-ENV` with the alias for your BOSH Director. For example:
+    <pre class='terminal'>$ bosh -e gcp log-in</pre>
     Follow the BOSH CLI prompts and enter your SAML credentials to log in to the BOSH Director.
     <br><br>
     If you do not have browser access to the BOSH Director, run `sshuttle` on a local Linux workstation to browse the BOSH Director IP address as if it were a local address. Retrieve a UAA passcode using the browser:
@@ -163,43 +161,6 @@ For example:
     <pre class='terminal'>Logged in as admin@example.org
     </pre>
 
-### <a id='product'></a>Select a Product Deployment to Troubleshoot ###
-
-When you import and install a product using Ops Manager, you deploy an instance
-of the product described by a YAML file. Examples of available products include
-Elastic Runtime, MySQL, or any other service that you imported and installed.
-
-1. Identify the YAML file that describes the deployment you want to troubleshoot by its filename.
-For example, to identify Elastic Runtime deployments, run the following command:
-
-    <pre class="terminal">$ find /var/tempest/workspaces/default/deployments -name cf-*.yml</pre>
-
-    The table below shows the naming conventions for deployment files.
-
-    <table border="1" class="nice" >
-      <tr>
-        <th>Product</th><th>Deployment Filename Convention</th>
-      </tr>
-      <tr>
-        <td>Elastic Runtime</td>
-        <td>cf-&lt;20-character_random_string&gt;.yml</td>
-      </tr>
-      <tr>
-        <td>MySQL Dev</td>
-        <td>cf_services-&lt;20-character_random_string&gt;.yml</td>
-      </tr>
-      <tr>
-        <td>Other</td>
-        <td>&lt;20-character_random_string&gt;.yml</td>
-      </tr>
-    </table>
-
-    <p class="note"><strong>Note</strong>: Where more than one installation of the same product exists, record the release number shown on the product tile in Ops Manager. Then, from the YAML files for that product, find the deployment that specifies the same release version as the product tile.</p>
-
-1. Run `bosh2 -e MY-ENV environment`, replacing `MY-ENV` with the alias you set for the BOSH Director. For example:
-    <pre class="terminal">$ bosh2 -e gcp environment</pre>
-    The output of the command includes the BOSH Director UUID. Record the UUID value.
-
 ## <a id='cli'></a>Use the BOSH CLI for Troubleshooting
 
 This section describes three BOSH CLI commands commonly used during
@@ -211,37 +172,37 @@ troubleshooting.
 
 ### <a id='vms'></a>BOSH VMs
 
-The `bosh2 vms` command provides an overview of the virtual machines that BOSH manages.
+The `bosh vms` command provides an overview of the virtual machines that BOSH manages.
 
-To use this command, run `bosh2 -e MY-ENV vms` to see an overview of all virtual machines managed by BOSH, or `bosh2 -e MY-ENV -d MY-DEPLOYMENT vms` to just see the virtual machines associated with a particular deployment. Replace `MY-ENV` with your environment, and if using the `-d` flag, also replace `MY-DEPLOYMENT` with the name of a deployment.
+To use this command, run `bosh2 -e MY-ENV vms` to see an overview of all virtual machines managed by BOSH, or `bosh2 -e MY-ENV -d MY-DEPLOYMENT vms` to see only the virtual machines associated with a particular deployment. Replace `MY-ENV` with your environment, and, if using the `-d` flag, also replace `MY-DEPLOYMENT` with the name of a deployment.
 
-When troubleshooting an issue with your deployment, `bosh2 vms` may show a VM in
+When troubleshooting an issue with your deployment, `bosh vms` may show a VM in
 an **unknown** state.
-Run [bosh2 cloud-check](#cck) on a VM in an **unknown** state to instruct BOSH to
+Run [bosh <%= vars.bosh_cloud_check %>](#cck) on a VM in an **unknown** state to instruct BOSH to
 diagnose problems with the VM.
 
-You can also run `bosh2 vms` to identify VMs in your deployment, then use the
-[bosh2 ssh](#ssh) command to SSH into an identified VM for further 
+You can also run `bosh vms` to identify VMs in your deployment, then use the
+[bosh ssh](#ssh) command to SSH into an identified VM for further 
 troubleshooting.
 
-`bosh2 vms` supports the following arguments:
+`bosh vms` supports the following arguments:
 
 * `--dns`: Report also includes the DNS A record for each VM
 * `--vitals`: Report also includes load, CPU, memory usage, swap usage, system disk usage, ephemeral disk usage, and persistent disk usage for each VM
 
-<p class="note"><strong>Note</strong>: The <strong>Status</strong> tab of the <strong>Elastic Runtime</strong> product tile displays information similar to the <code>bosh2 vms</code> output.</p>
+<p class="note"><strong>Note</strong>: The <strong>Status</strong> tab of the Pivotal Application Service (PAS) product tile displays information similar to the <code>bosh vms</code> output.</p>
 
 ### <a id='cck'></a>BOSH Cloud Check
 
-Run the `bosh2 cloud-check` command to instruct BOSH to detect differences
+Run the `bosh <%= vars.bosh_cloud_check %>` command to instruct BOSH to detect differences
 between the VM state database maintained by the BOSH Director and the actual
-state of the VMs. For each difference detected, `bosh2 cloud-check` can offer the
+state of the VMs. For each difference detected, `bosh <%= vars.bosh_cloud_check %>` can offer the
 following repair options:
 
 * `Reboot VM`: Instructs BOSH to reboot a VM. Rebooting can resolve many
   transient errors.
 * `Ignore problem`: Instructs BOSH to do nothing.
-  You may want to ignore a problem in order to run `bosh2 ssh` and attempt
+  You may want to ignore a problem in order to run `bosh ssh` and attempt
   troubleshooting directly on the machine.
 * `Reassociate VM with corresponding instance`: Updates the BOSH Director state
   database.
@@ -256,14 +217,14 @@ following repair options:
   Select this option only if you know that this reference is in error.
   Once you delete the VM reference, BOSH can no longer control the VM.
 
-To use this command, run `bosh2 -e MY-ENV -d MY-DEPLOYMENT cloud-check`. Replace `MY-ENV` with your environment, and `MY-DEPLOYMENT` with your deployment.
+To use this command, run `bosh -e MY-ENV -d MY-DEPLOYMENT <%= vars.bosh_cloud_check %>`. Replace `MY-ENV` with your environment, and `MY-DEPLOYMENT` with your deployment.
 
 ####Example Scenarios ####
 
 **Unresponsive Agent**
 
 <pre class='terminal'>
-  $ bosh2 -e example-env -d example-deployment cloud-check
+  $ bosh -e example-env -d example-deployment <%= vars.bosh_cloud_check %>
   ccdb/0 (vm-3e37133c-bc33-450e-98b1-f86d5b63502a) is not responding:
 
   - Ignore problem
@@ -275,7 +236,7 @@ To use this command, run `bosh2 -e MY-ENV -d MY-DEPLOYMENT cloud-check`. Replace
 **Missing VM**
 
 <pre class='terminal'>
-  $ bosh2 -e example-env -d example-deployment cloud-check
+  $ bosh -e example-env -d example-deployment <%= vars.bosh_cloud_check %>
   VM with cloud ID `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' missing:
 
   - Ignore problem
@@ -286,7 +247,7 @@ To use this command, run `bosh2 -e MY-ENV -d MY-DEPLOYMENT cloud-check`. Replace
 **Unbound Instance VM**
 
 <pre class='terminal'>
-  $ bosh2 -e example-env -d example-deployment cloud-check
+  $ bosh -e example-env -d example-deployment <%= vars.bosh_cloud_check %>
   VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' reports itself as `ccdb/0' but does not have a bound instance:
 
   - Ignore problem
@@ -297,7 +258,7 @@ To use this command, run `bosh2 -e MY-ENV -d MY-DEPLOYMENT cloud-check`. Replace
 **Out of Sync VM**
 
 <pre class='terminal'>
-  $ bosh2 -e example-env -d example-deployment cloud-check
+  $ bosh -e example-env -d example-deployment <%= vars.bosh_cloud_check %>
   VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' is out of sync:
   expected `cf-d7293430724a2c421061: ccdb/0', got `cf-d7293430724a2c421061: nats/0':
 
@@ -307,15 +268,11 @@ To use this command, run `bosh2 -e MY-ENV -d MY-DEPLOYMENT cloud-check`. Replace
 
 ### <a id='bosh-ssh'></a>BOSH SSH
 
-Use `bosh2 ssh` to SSH into the VMs in your deployment.
+Use `bosh ssh` to SSH into the VMs in your deployment.
 
-Follow the steps below to use `bosh2 ssh`:
+Follow the steps below to use `bosh ssh`:
 
-1. Run `ssh-keygen -t rsa` to provide BOSH with the correct public key.
+1. Identify a VM to SSH into. Run `bosh -e MY-ENV -d MY-DEPLOYMENT vms` to list the VMs in the given deployment. Replace `MY-ENV` with your environment alias and `MY-DEPLOYMENT` with the deployment name.
 
-1. Accept the defaults.
-
-1. Identify a VM to SSH into. Run `bosh2 -e MY-ENV -d MY-DEPLOYMENT vms` to list the VMs in the given deployment. Replace `MY-ENV` with your environment alias and `MY-DEPLOYMENT` with the deployment name.
-
-1. Run `bosh2 -e MY-ENV -d MY-DEPLOYMENT ssh VM-NAME/GUID`. For example:
-  <pre class="terminal">$ bosh2 -e example-env -d example-deployment ssh diego-cell/abcd0123-a012-b345-c678-9def01234567</pre>
+1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT ssh VM-NAME/GUID`. For example:
+  <pre class="terminal">$ bosh -e example-env -d example-deployment ssh diego-cell/abcd0123-a012-b345-c678-9def01234567</pre>

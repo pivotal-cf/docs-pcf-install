@@ -5,7 +5,7 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-This topic describes upgrading Pivotal Cloud Foundry (PCF) to v1.12. The upgrade procedure below describes upgrading Pivotal Cloud Foundry Operations Manager (Ops Manager), Pivotal Elastic Runtime, and product tiles.
+This topic describes upgrading Pivotal Cloud Foundry (PCF) to v2.0. The upgrade procedure below describes upgrading Pivotal Cloud Foundry Operations Manager (Ops Manager), Pivotal Application Service (PAS), and product tiles.
 
 The apps in your deployment continue to run during the upgrade. However, you cannot write to your deployment or make changes to apps during the upgrade.
 
@@ -15,23 +15,15 @@ For more details about the impact of upgrading on individual PCF components, see
 
 ## <a id="beforeupgrade"></a>Before You Upgrade
 
-This section contains important preparation steps, **Preps**, that you must follow before beginning an upgrade to Ops Manager v1.12. Failure to follow these instructions may jeopardize your existing deployment data and cause your upgrade to fail.
+This section contains important preparation steps, **Preps**, that you must follow before beginning an upgrade to Ops Manager v2.0. Failure to follow these instructions may jeopardize your existing deployment data and cause your upgrade to fail.
 
 Pivotal recommends backing up your PCF deployment before upgrading, to restore in the case of failure. To back up a PCF 1.11 deployment, follow the instructions in the <a href="./backup-restore/backup-pcf-bbr.html">Backing Up Pivotal Cloud Foundry with BBR</a> topic. 
 
-### <a id="postgres"></a>Prep 1: Migrate the CC and UAA Databases from Postgres to MySQL
-
-Prior to PCF 1.6, Postgres was the default database for Cloud Controller and UAA. PCF 1.6 introduced MySQL as the default database and PCF 1.12 removes the legacy Postgres database VMs.
-
-If your deployment was originally installed before PCF 1.6 and still uses Postgres, you must contact your dedicated Support Engineer or Platform Architect for assistance migrating your Cloud Controller and UAA databases to MySQL. They will have access to the PostgreSQL-to-MySQL Migrator tool and instructions on Pivotal Network. 
-
-If you do not migrate to MySQL before upgrading to PCF 1.12, the upgrade will fail during the deployment of the Elastic Runtime tile.
-
-### <a id="storage"></a>Prep 2: Review File Storage IOPS and Other Upgrade Limiting Factors
+### <a id="storage"></a>Prep 1: Review File Storage IOPS and Other Upgrade Limiting Factors
 
 During the PCF upgrade process, a large quantity of data is moved around on disk. 
 
-To ensure a successful upgrade of PCF, verify that your underlying Elastic Runtime file storage is performant enough to handle the upgrade. For more information about the configurations to evaluate, see <a href="../opsguide/storage_considerations.html" class="subnav">Upgrade Considerations for Selecting Pivotal Cloud Foundry Storage</a>.
+To ensure a successful upgrade of PCF, verify that your underlying Application Service file storage is performant enough to handle the upgrade. For more information about the configurations to evaluate, see <a href="../opsguide/storage_considerations.html" class="subnav">Upgrade Considerations for Selecting Pivotal Cloud Foundry Storage</a>.
 
 In addition to file storage IOPS, consider additional existing deployment factors that can impact overall upgrade duration and performance:
 
@@ -43,29 +35,37 @@ In addition to file storage IOPS, consider additional existing deployment factor
 
 To review example upgrade-related performance measurements of an existing production Cloud Foundry deployment, see the <a href="../opsguide/pws_upgrade_load.html" class="subnav">Pivotal Web Services Performance During Upgrade</a> topic. 
 
-### <a id="app_usage"></a>Prep 3: Verify App Usage Service Remedial Steps
+### <a id="app_usage"></a>Prep 2: Verify App Usage Service Remedial Steps
 
-If you are upgrading from a PCF deployment that at one point included Elastic Runtime v1.7.16 or earlier, you must perform the remedial steps outlined in <a href="https://discuss.pivotal.io/hc/en-us/articles/228639827-App-Usage-Data-and-Events-Data-Becomes-Corrupted-After-Upgrade-or-Install">App Usage Data and Events Data Become Corrupted After Upgrade or Install</a> before proceeding with this upgrade.
+If you are upgrading from a PCF deployment that at one point included Application Service v1.7.16 or earlier, you must perform the remedial steps outlined in <a href="https://discuss.pivotal.io/hc/en-us/articles/228639827-App-Usage-Data-and-Events-Data-Becomes-Corrupted-After-Upgrade-or-Install">App Usage Data and Events Data Become Corrupted After Upgrade or Install</a> before proceeding with this upgrade.
 
 <p class="note warning"><strong>Warning</strong>: If you fail to perform the remedial steps for this issue, this upgrade process may corrupt your existing usage data.</p>
 
-### <a id="remove-log-search"></a>Prep 4: Remove PCF Log Search
+### <a id="cert-expiry"></a>Prep 3: Check Certificate Authority Expiration Dates
 
-If your deployment contains PCF Log Search, you must remove the product tile before upgrading. Failure to remove this product prior to upgrade may cause issues with your deployment.
+Depending on the requirements of your deployment, you may need to rotate your Certificate Authority (CA) certificates. The non-configurable certificates in your deployment expire every two years. You must regenerate and rotate them so that critical components do not face a complete outage.
 
-### <a id="review-partners"></a>Prep 5: Review Partner Service Tiles
+On the command line, run `GET /api/v0/deployed/certificates?expires_within=TIME` to retrieve information about all the RSA and CA certificates for your deployment, including whether they are set to expire. Replace `TIME` with an integer and a letter code. Valid letter codes are `d` for days, `w` for weeks, `m` for months, and `y` for years.
 
-Some partner service tiles may be incompatible with PCF v1.12. Pivotal is working with partners to ensure their tiles are updated to work with the latest versions of PCF. For information about which partner service releases are currently compatible with PCF v1.12, review the appropriate partners services release documentation at [http://docs.pivotal.io](http://docs.pivotal.io), or contact the partner organization that produces the service tile.
+For example, to search for certificates expiring within one month, replace `TIME` with `1m` as follows:
 
-### <a id="download-targets"></a>Prep 6: Download Upgrade Versions
+<pre class="terminal">$ GET /api/v0/deployed/certificates?expires_within=1m</pre>
+
+For information about how to regenerate and rotate CA certificates, see [Regenerating and Rotating Non-Configurable TLS/SSL Certificates](https://docs.pivotal.io/pivotalcf/1-12/security/pcf-infrastructure/api-cert-rotation.html).
+
+### <a id="review-partners"></a>Prep 4: Review Partner Service Tiles
+
+Some partner service tiles may be incompatible with PCF v2.0. Pivotal is working with partners to ensure their tiles are updated to work with the latest versions of PCF. For information about which partner service releases are currently compatible with PCF v2.0, review the appropriate partners services release documentation at [http://docs.pivotal.io](http://docs.pivotal.io), or contact the partner organization that produces the service tile.
+
+### <a id="download-targets"></a>Prep 5: Download Upgrade Versions
 
 To minimize disruptions to your deployment during the upgrade, and to satisfy any simultaneous upgrade requirements, download the version of the product files you wish to upgrade from [Pivotal Network](https://network.pivotal.io/). 
 
-At the minimum, you must download Elastic Runtime v1.12.x.
+At the minimum, you must download Application Service v2.0.x.
 
-### <a id="prepare-env"></a>Prep 7: Prepare Your Environment
+### <a id="prepare-env"></a>Prep 6: Prepare Your Environment
 
-1. Install the releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.8 and you are upgrading to v1.12, you must sequentially install v1.9, v1.10, and v1.11 before proceeding with the upgrade to v1.12.
+1. Install the releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.8 and you are upgrading to v2.0, you must sequentially install v1.9, v1.10, v1.11, and v1.12 before proceeding with the upgrade to v2.0.
 
 1. If you have disabled lifecycle errands for any installed product to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. For more information, see the <a href="./add-delete.html#add-import">Adding and Deleting Products</a> topic.
 
@@ -78,9 +78,9 @@ At the minimum, you must download Elastic Runtime v1.12.x.
    4. Click **Save**.
    5. Return to the **Installation Dashboard** and click **Apply Changes**.
 
-1. If your original Elastic Runtime deploy was PCF 1.6 or earlier, rotate non-configurable Director certificates using the Ops Manager API. Follow Step 3 of the [Regenerating and Rotating Non-Configurable TLS/SSL Certificates](../security/pcf-infrastructure/api-cert-rotation.html) topic to regenerate certificates, or begin with Step 1 to also update the certificate authority (CA).
+1. If your original Application Service deploy was PCF 1.6 or earlier, rotate non-configurable Director certificates using the Ops Manager API. Follow Step 3 of the [Regenerating and Rotating Non-Configurable TLS/SSL Certificates](../security/pcf-infrastructure/api-cert-rotation.html) topic to regenerate certificates, or begin with Step 1 to also update the certificate authority (CA).
 
-1. Check the required machine specifications for Ops Manager v1.12. These specifications are specific [to your IaaS](gcp-om-deploy.html#start-vm). If these specifications do not match your existing Ops Manager, modify the values of your Ops Manager VM instance. For example, if the boot disk of your existing Ops Manager is 50 GB and the new Ops Manager requires 100 GB, then increase the size of your Ops Manager boot disk to 100 GB. 
+1. Check the required machine specifications for Ops Manager v2.0. These specifications are specific [to your IaaS](gcp-om-deploy.html#start-vm). If these specifications do not match your existing Ops Manager, modify the values of your Ops Manager VM instance. For example, if the boot disk of your existing Ops Manager is 50 GB and the new Ops Manager requires 100 GB, then increase the size of your Ops Manager boot disk to 100 GB. 
 
 1. If you are upgrading a vSphere environment, ensure that you have the following information about your existing environment before starting the upgrade:
   * Record the following IP addresses, which you can find in the vSphere web client under **Manage** > **Settings** > **vApp Options**. 
@@ -96,28 +96,27 @@ This is the same information you entered at the end of deploying [Ops Manager on
        * Hard Disk 1
        * Network Adapter 1. When you configure the new VM, ensure your network adapters are configured properly and are on the same network.
 
-### <a id="upgrade-mysql"></a>Prep 8: Upgrade MySQL for PCF
+### <a id="upgrade-mysql"></a>Prep 7: Upgrade MySQL for PCF
 
-If your PCF deployment includes both <b><a href="../windows/index.html">PCF Runtime for Windows</a></b> and <b>MySQL for PCF v1.x</b>, download and upgrade to MySQL for PCF v1.10.3 or later. For instructions on how to upgrade MySQL for PCF, see the 
+If your PCF deployment includes both <strong><a href="../windows/index.html">PCF Runtime for Windows</a></strong> and <strong>MySQL for PCF v1.x</strong>, download and upgrade to MySQL for PCF v1.10.3 or later. For instructions on how to upgrade MySQL for PCF, see the 
  <a href="http://docs.pivotal.io/p-mysql/1-10/index.html">MySQL for PCF</a> documentation.
 
-### <a id="upgrade-rmq"></a>Prep 9: Upgrade and Configure RabbitMQ for PCF
+### <a id="upgrade-rmq"></a>Prep 8: Upgrade and Configure RabbitMQ for PCF
 
-If your PCF deployment contains **RabbitMQ for PCF**, download and upgrade RabbitMQ for PCF to v1.9.6 or later. For upgrade instructions, see the [RabbitMQ for PCF documentation](https://docs.pivotal.io/rabbitmq-cf/1-9/index.html). As part of the upgrade, ensure that the firewall rules on your Rabbit VM instances allow inbound traffic on port `8301`.  
+If your PCF deployment contains **RabbitMQ for PCF**, download and upgrade RabbitMQ for PCF to v1.9 or later. For upgrade instructions, see the [RabbitMQ for PCF documentation](https://docs.pivotal.io/rabbitmq-cf/1-10/index.html). As part of the upgrade, ensure that the firewall rules on your Rabbit VM instances allow inbound traffic on port `8301`.  
 
-### <a id="upgrade-redis"></a>Prep 10: Upgrade and Configure Redis for PCF
+### <a id="upgrade-redis"></a>Prep 9: Upgrade and Configure Redis for PCF
 
-If your PCF deployment contains **Redis for PCF**, download and upgrade to Redis for PCF v1.9 or later. Ensure that you complete the following as part of the upgrade:
+If your PCF deployment contains **Redis for PCF**, download and upgrade to Redis for PCF v1.10. Ensure that you complete the following as part of the upgrade:
+ 
+* When performing the upgrade, ensure that persistent disk is set to 3.5x the amount of RAM for your Dedicated-VM Redis instances. See [Networks, Security, and Assigning AZs](https://docs.pivotal.io/redis/1-10/installing.html#azs) for more information.
+* Ensure you have configured [firewall rules](http://docs.pivotal.io/redis/1-10/odnetworking.html#network-rules) on your Redis VM instances.
 
-* If your PCF deployment currently uses Redis v1.7 or earlier, you must set up a [service network](http://docs.pivotal.io/redis/1-9/odnetworking.html#architecture_networks) to use Redis v1.9.  
-* When performing the upgrade, ensure that persistent disk is set to 3.5x the amount of RAM for your Dedicated-VM Redis instances.
-* Ensure you have configured [firewall rules](http://docs.pivotal.io/redis/1-9/odnetworking.html#network-rules) on your Redis VM instances.
+For upgrade instructions, see the [Redis for PCF documentation](https://docs.pivotal.io/redis/1-10/index.html).
 
-For upgrade instructions, see the [Redis for PCF documentation](https://docs.pivotal.io/redis/1-9/index.html).
+### <a id="upgrade-add-ons"></a>Prep 10: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
 
-### <a id="upgrade-add-ons"></a>Prep 11: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
-
- Before upgrading to PCF v1.12, operators who have deployed any PCF add-ons (such as **ClamAV for PCF**, **IPsec for PCF**, or **File Integrity Monitoring for PCF**) and who have deployed or are planning to deploy [PCF Runtime for Windows](../windows/index.html) must modify the add-on manifest to specify a compatible OS stemcell. 
+ Before upgrading to PCF v2.0, operators who have deployed any PCF add-ons (such as **ClamAV for PCF**, **IPsec for PCF**, or **File Integrity Monitoring for PCF**) and who have deployed or are planning to deploy [PCF Runtime for Windows](../windows/index.html) must modify the add-on manifest to specify a compatible OS stemcell. 
 
  For example, **ClamAV for PCF** is not supported on Windows. Therefore, the manifest must use an `include` directive to specify the target OS stemcell of `ubuntu-trusty`. 
 
@@ -136,9 +135,9 @@ For upgrade instructions, see the [Redis for PCF documentation](https://docs.piv
 
  If you are using any other BOSH-managed add-ons in your deployment, you should verify OS compatibility for those component as well. For more information about configuring BOSH add-on manifests, see the [BOSH documentation](https://bosh.io/docs/runtime-config.html#addons). 
 
-### <a id="check-health"></a>Prep 12: Check System Health Before Upgrade
+### <a id="check-health"></a>Prep 11: Check System Health Before Upgrade
 
-1. Run `bosh cloudcheck` to confirm that the VMs are healthy. For more information, see the [BOSH Cloudcheck](./trouble-advanced.html#cck) topic.
+1. Run `bosh <%= vars.bosh_cloud_check %>` to confirm that the VMs are healthy. For more information, see the [BOSH Cloudcheck](./trouble-advanced.html#cck) topic.
 
 1. Check the system health of installed products. In the **Installation Dashboard**, select the **Status** tab for each service tile. Confirm that all jobs are healthy.
 
@@ -154,11 +153,11 @@ For more information, see the [Viewing Logs in the Command Line Interface](../de
     Exited with 0.
     </pre>
 
-## <a id="upgrade_ops"></a>Upgrade Ops Manager and Installed Products to v1.12 ##
+## <a id="upgrade_ops"></a>Upgrade Ops Manager and Installed Products to v2.0 ##
 
 ### <a id="export"></a>Step 1: Export Your Installation ###
 
-1. In your Ops Manager v1.11.x **Installation Dashboard**, click the account dropdown and select **Settings**.
+1. In your Ops Manager v1.12.x **Installation Dashboard**, click the account dropdown and select **Settings**.
 
     <%= image_tag("./images/upgrading/upgrade_to_1.9.png") %>
 
@@ -180,9 +179,9 @@ process and might appear to hang.<br/><br/>
 
 <%= image_tag("./images/upgrading/compress.png") %>
 
-### <a id="upgrade"></a>Step 2: Upgrade to Ops Manager v1.12 ###
+### <a id="upgrade"></a>Step 2: Upgrade to Ops Manager v2.0 ###
 
-1. Download the Ops Manager VM Template v1.12.x from the [Pivotal
+1. Download the Ops Manager VM Template v2.0.x from the [Pivotal
 Network](https://network.pivotal.io/products/ops-manager) site.
 
 1. Record the FQDN address of the existing Ops Manager VM.
@@ -190,8 +189,8 @@ Network](https://network.pivotal.io/products/ops-manager) site.
 1. To avoid conflicts, power off the existing Ops Manager VM.
 
 1. Deploy the new Ops Manager VM by following the steps in one of these topics:
+    * **AWS (CloudFormation)**: [Deploying BOSH and Ops Manager to AWS](./cloudform-template.html) and subsequent topics.
     * **AWS (Manual)**: [Manually Configuring AWS for PCF](./pcf-aws-manual-om-config.html)
-    * **AWS (CloudFormation)**: [Installing PCF on AWS using CloudFormation](./cloudform-install.html)
     * **Azure**: [Upgrading Ops Manager Director on Azure](./azure-om-upgrade.html)
     * **GCP**: [Upgrading Ops Manager Director on GCP](./gcp-om-upgrade.html)
     * **OpenStack**: [Provisioning the OpenStack Infrastructure](./openstack-setup.html)
@@ -220,9 +219,9 @@ Network](https://network.pivotal.io/products/ops-manager) site.
     <%= image_tag("./images/upgrading/success.png") %>
 
 
-### <a id="upgrade_products"></a>Step 3: Upgrade Elastic Runtime and Product Tiles
+### <a id="upgrade_products"></a>Step 3: Upgrade Application Service and Product Tiles
 
-1. <a name="success"></a>After upgrading to Ops Manager v1.12, upgrade your product versions. 
+1. <a name="success"></a>After upgrading to Ops Manager v2.0, upgrade your product versions. 
 
 1. Import the product file to your Ops Manager **Installation Dashboard**.
 
@@ -230,7 +229,7 @@ Network](https://network.pivotal.io/products/ops-manager) site.
 
 1. Click the newly added tile to review any configurable options.
 
-1. (Optional) If you are using other service tiles, you can upgrade them following the same procedure. See the <a href="./upgrading-products.html" class="subnav">Upgrading Elastic Runtime and Other Pivotal Cloud Foundry Products</a> topic for more information.
+1. (Optional) If you are using other service tiles, you can upgrade them following the same procedure. See the <a href="./upgrading-products.html" class="subnav">Upgrading Application Service and Other Pivotal Cloud Foundry Products</a> topic for more information.
 
 
 ### <a id="perform-upgrade"></a>Step 4: Perform Your Upgrade ###
@@ -243,26 +242,9 @@ Network](https://network.pivotal.io/products/ops-manager) site.
 
 1. Click each service tile, select the **Status** tab, and confirm that all VMs appear and are in good health.
 
-1. After confirming that the new installation functions correctly, remove the previous (v1.11.x) Ops Manager VM. 
+1. After confirming that the new installation functions correctly, remove the previous (v1.11.x) Ops Manager VM.
 
-### <a id="cc"></a>Step 5: Secure the Cloud Controller ###
-
-After deploying PCF, you must secure the Cloud Controller and redeploy.
-
-In previous versions of PCF, the Cloud Controller and Diego communicated insecurely and indirectly through the Cloud Controller Bridge. As of PCF v1.12, the Cloud Controller and Diego can communicate directly over secure TLS, without a bridge component. The **Enable** button selects this new option, enabling direct, secure communications and deactivating the Cloud Controller Bridge.
-
-In a fresh install of PCF v1.12, the **Enable** option is selected by default. In upgrades, operators must manually select **Enable** to deactivate the Cloud Controller Bridge and make the internal communications secure.
-
-Perform the following steps:
-
-1. Click the **Elastic Runtime** tile.
-1. Click **Cloud Controller**.
-1. Under **Enable secure communication between Diego and Cloud Controller?**, select **Enable**.
-  <%= image_tag('secure-cc.png') %>
-
-1. Click **Save**.
-
-### <a id="complete"></a>Step 6: Complete Your Installation ###
+### <a id="complete"></a>Step 5: Complete Your Installation ###
 
 1. Navigate to the Ops Manager **Installation Dashboard**.
 
@@ -276,8 +258,8 @@ Perform the following steps:
 
 ### <a id="cli-upgrade"></a>Upgrade cf CLI
 
-To use the experimental push commands, [multiple buildpack](../buildpacks/use-multiple-buildpacks.html) support, and [container networking commands](../devguide/deploy-apps/cf-networking.html#create-policies) in PCF 1.12, users must upgrade to cf CLI v6.30 or later. 
+To use the experimental push commands, [multiple buildpack](../buildpacks/use-multiple-buildpacks.html) support, and [container networking commands](../devguide/deploy-apps/cf-networking.html#create-policies) in PCF 2.0, make sure you have [the latest version of cf CLI](https://github.com/cloudfoundry/cli#downloads) installed. 
 
-## <a id="rollback"></a>Rolling Back ERT in the Event of a Failed Upgrade
+## <a id="rollback"></a>Rolling Back PAS in the Event of a Failed Upgrade
 
-If you have previously backed up PCF using BOSH Backup and Restore, you can roll back Elastic Runtime (ERT) to an earlier deployment if the ERT upgrade fails. For instructions about rolling back the ERT deployment, see [Rolling Back ERT Deployment to an Earlier Backup with BBR](backup-restore/rollback-ert-bbr.html).
+If you have previously backed up PCF using BOSH Backup and Restore, you can roll back Application Service (PAS) to an earlier deployment if the PAS upgrade fails. For instructions about rolling back the PAS deployment, see [Rolling Back PAS Deployment to an Earlier Backup with BBR](backup-restore/rollback-ert-bbr.html).

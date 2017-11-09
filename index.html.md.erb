@@ -1,45 +1,79 @@
 ---
 breadcrumb: Pivotal Cloud Foundry Documentation
-title: Using Ops Manager
-owner: Ops Manager
+title: PCF Planning and Installation
+owner: PCF Documentation
 ---
 
-Ops Manager is a web application that you use to deploy and manage a [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) PaaS.
-This is a guide to deploying and using Ops Manager.
+This topic provides an overview of how to install and configure Pivotal Cloud Foundry (PCF).
 
-## Browser Support
+##<a id='sequence'></a>PCF Installation Sequence
 
-Ops Manager is compatible with current and recent versions of all major browsers. Pivotal recommends using the current version of Chrome, Firefox, or Safari for the best Ops Manager experience.
+PCF is a suite of products that runs on multiple IaaSes. Planning and installing PCF means building layers from the bottom up, starting with the details of your IaaS and ending with "Day 2" configurations that you perform on a installed and running PCF deployment.
 
-## Ops Manager API
+Here's the typical PCF planning and installation process:
 
-Use the Ops Manager API to automate any Ops Manager task. 
+1. **Plan**
+  - Review the Requirements for your IaaS ([AWS](./aws.html), [Azure](./azure.html), [GCP](./gcp.html), [OpenStack](./openstack.html), [vSphere](./vsphere.html)).
+  - Refer to the Reference Architecture for your IaaS.
+  - Assess your platform needs, including capacity, availability, container support, host OS, resource isolation, and geographical distribution. Discuss with your Pivotal contact.
 
-See the <a href="./ops-man-api.html" class="subnav">Using Ops Manager API</a> topic to learn how to get started using the Ops Manager API. To view the Ops
-Manager API documentation, browse to `https://YOUR-OPS-MANAGER-FQDN/docs`.
+1. **Deploy BOSH and Ops Manager**
+  - [BOSH](http://bosh.io) is an open-source tool that lets you run software systems in the cloud.
+      - BOSH and its IaaS-specific Cloud Provider Interfaces (CPIs) are what enable PCF to run on multiple IaaSes.
+      - See [Deploying with BOSH](#bosh) for a mini description of the BOSH deployment process.
+   - [Ops Manager](./ops-man.html) is a GUI application deployed by BOSH that streamlines deploying subsequent software to the cloud via BOSH.
+      - Ops Manager represents PCF products as _tiles_ with multiple configuration panes that let you input or select configuration values needed for the product.
+      - Ops Manager generates BOSH manifests containing the user-supplied configuration values, and sends them to the Director.
+      - After you install Ops Manager and BOSH, you use Ops Manager to deploy almost all PCF products.
+  - Deploying Ops Manager deploys both BOSH and Ops Manager with a single procedure.
+      - On AWS, you can deploy Ops Manager manually, or automatically with a CloudFormation template.
+      - On Azure, you can deploy Ops Manager manually, or automatically with an Azure Resource Manager (ARM) template. On Azure Government Cloud and Azure Germany you can only deploy Ops Manager manually.
 
+1. **Deploy BOSH Add-ons** (Optional)
+  - BOSH add-ons include the [IPsec](https://docs.pivotal.io/addon-ipsec), [ClamAV](https://docs.pivotal.io/addon-clamav), and [File Integrity Monitoring](https://docs.pivotal.io/addon-fim), which enhance PCF platform security and security logging.
+  - You deploy these add-ons via BOSH rather than installing them with Ops Manager tiles.
 
-## Using Ops Manager and Installed Products
+1. **Install Runtimes**
+  - [PAS](./pas.html) (Pivotal Application Service) lets developers develop and manage cloud-native apps and software services.
+      - PAS is based on the Cloud Foundry Foundation's open-source Application Runtime (formerly Elastic Runtime) project.
+  - [PKS](http://docs-pks.cfapps.io) (Pivotal Container Service) uses BOSH to run and manage Kubernetes container clusters.
+      - PKS is based on the Cloud Foundry Foundation's open-source Container Runtime (formerly Kubo) project.
+  - [PCF Isolation Segment](./installing-pcf-is.html) lets a single PAS deployment run apps from separate, isolated pools of computing, routing, and logging resources.
+      - Operators replicate and configure an Isolation Segment tile for each new resource pool they want to create.
+     - You must install PAS before you can install Isolation Segment.
+  - [PAS for Windows](https://docs-pas-windows.cfapps.io/pas-windows/index.html) enables PAS to manage host cells running Windows Server 2016, and lets developers push .NET apps to the Windows cells.
+      - As with Isolation Segment runtime, Operators replicate and configure a PAS for Windows tile for each new resource pool they want to create.
+      - You must install PAS before you can install PAS for Windows 2016.
+  - [PAS for Windows 2012R](https://docs-pas-windows.cfapps.io/pas-windows/index.html) enables PAS to manage Windows Server 2012 cells hosting .NET apps, and can also be replicated to create multiple isolated resource pools.
+      - You must install PAS before you can install PAS for Windows 2012R.
+  - [Small Footprint PAS](./small-footprint.html) is an alternative to PAS that uses far fewer VMs than PAS but has limitations.
 
-* <a href="./pcf-interface.html" class="subnav">Understanding the Ops Manager Interface</a>
+1. **Day 2 Configurations**
+  - Day 2 configurations set up internal operations and external integrations on a running PCF platform.
+      - Examples include front-end configuration, user accounts, logging and monitoring, internal security, and container and stemcell images.
 
-* <a href="./add-delete.html" class="subnav">Adding and Deleting Products</a>
+1. **Install Services**
+  - Install software services for PCF developers to use in their apps.
+      - Services include the databases, caches, and message brokers that stateless cloud apps rely on to save information.
+      - Installing and managing software services on PCF is an ongoing process, and is covered in the [PCF Operator Guide](../opsguide/index.html).
 
-* <a href="./deploy-ops-man-director.html" class="subnav">Applying Changes to Ops Manager Director</a>
+##<a id='bosh'></a>Deploying with BOSH
 
-* <a href="./credentials.html" class="subnav">Retrieving Credentials from Your Deployment</a>
+Here's how people use BOSH to run software in the cloud:
 
-* <a href="./understanding-stemcells.html" class="subnav">Understanding Floating Stemcells</a>
+1. To use BOSH, you create a a _manifest_ `.yml` file that specifies your software system's component processes, the VMs they run on, how they communicate, and anything else they need.
 
-* <a href="./vsphere-config.html">Configuring Ops Manager Director for VMware vSphere</a>
+2. The BOSH command-line interface (CLI) or API sends the manifest to the _Director_, BOSH's executive process.
 
-* <a href="./opsmanager-create-bosh-client.html" class="subnav">Creating UAA Clients for BOSH Director</a>
+3. The Director provisions what it needs from the IaaS, _deploys_ your software to run in the cloud, and heals automatically when VMs go down.
+
+4. BOSH CLI and API commands let you control BOSH-managed processes and allocate or release IaaS resources.
 
 * <a href="./openstack-om-config.html">Configuring Ops Manager Director for OpenStack</a>
 
-* <a href="./config-er-vmware.html">Configuring Elastic Runtime for vSphere</a>
+* <a href="./config-er-vmware.html">Configuring PAS for vSphere</a>
 
-* <a href="./openstack-er-config.html">Installing Elastic Runtime after Deploying Pivotal Cloud Foundry on OpenStack</a>
+* <a href="./openstack-er-config.html">Installing PAS after Deploying Pivotal Cloud Foundry on OpenStack</a>
 
 * <a href="./custom-load-balancer.html" class="subnav">Using Your Own Load Balancer</a>
 
@@ -47,7 +81,7 @@ Manager API documentation, browse to `https://YOUR-OPS-MANAGER-FQDN/docs`.
 
 * <a href="./opsman-users.html" class="subnav">Creating and Managing Ops Manager User Accounts</a>
 
-* <a href="./creating-account.html" class="subnav">Creating New Elastic Runtime User Accounts</a>
+* <a href="./creating-account.html" class="subnav">Creating New PAS User Accounts</a>
 
 * <a href="./console-login.html" class="subnav">Logging in to Apps Manager</a>
 
@@ -67,10 +101,12 @@ Manager API documentation, browse to `https://YOUR-OPS-MANAGER-FQDN/docs`.
 
 * <a href="./monitoring.html" class="subnav">Monitoring Virtual Machines in Pivotal Cloud Foundry</a>
 
-* <a href="./troubleshooting.html" class="subnav">Pivotal Cloud Foundry Troubleshooting Guide</a>
+* <a href="./diagnostics.html">Diagnosing Problems in PCF</a>
+
+* <a href="./troubleshooting.html">Troubleshooting Problems in PCF</a>
 
 * <a href="./troubleshooting-vsphere.html" class="subnav">Troubleshooting Ops Manager for VMware vSphere</a>
 
-* <a href="./mysql_bootstrap_ert.html" class="subnav">Recovering MySQL from Elastic Runtime Downtime</a>
+* <a href="./mysql_bootstrap_ert.html" class="subnav">Recovering MySQL from PAS Downtime</a>
 
 * <a href="./trouble-advanced.html" class="subnav">Advanced Troubleshooting with the BOSH CLI</a>

@@ -1,16 +1,20 @@
 ---
-title: Launching an Ops Manager Director Instance on Azure without an ARM Template
+title: Deploying BOSH and Ops Manager to Azure Manually
 owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
 <html class="list-style-none"></html>
 
-This topic describes how to deploy Ops Manager Director for Pivotal Cloud Foundry (PCF) on Azure by using individual commands to create resources in Azure instead of using an Azure Resource Manager (ARM) template. For information about using the ARM template, see the [Launching an Ops Manager Director Instance with an ARM Template](azure-arm-template.html) topic.
+This topic describes how to deploy BOSH and Ops Manager for Pivotal Cloud Foundry (PCF) on Azure by using individual commands to create resources. Pivotal recommends this manual procedure for deploying to Azure China, Azure Germany, and Azure Government Cloud.
 
-Before you perform the procedures in this topic, you must have completed the procedures in the [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic. After you complete the procedures in this topic, follow the instructions in the [Configuring Ops Manager Director on Azure](azure-om-config.html) topic.
+As an alternative to this procedure, you can use an Azure Resource Manager (ARM) template to create resources automatically. For information about using the ARM template, see the [Deploying BOSH and Ops Manager to Azure with ARM](azure-arm-template.html) topic.
 
-<p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p> 
+Before you perform the procedures in this topic, you must have completed the procedures in the [Preparing Azure](azure-prepare-env.html) topic. After you complete the procedures in this topic, follow the instructions in the [Configuring Ops Manager  on Azure](azure-om-config.html) topic.
+
+<p class="note"><strong>Note</strong>: If you are deploying PCF on Azure Stack, complete the procedures in <a href="https://docs.microsoft.com/en-us/azure/azure-stack/user/azure-stack-connect-cli">Install and configure CLI for use with Azure Stack</a> in the Microsoft documentation before following the procedures in this topic.</p>
+
+<p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p>
 
 ##<a id='network'></a> Step 1: Create Network Resources
 
@@ -24,7 +28,7 @@ Before you perform the procedures in this topic, you must have completed the pro
     <p class="note"><strong>Note</strong>: If you are on a Windows machine, you can use <code>set</code> instead of <code>export</code>.</p>
 1. Export your location. For example, `westus`.
     <pre class="terminal">
-    $ export LOCATION="YOUR-LOCATION"
+    $ export LOCATION=westus
     </pre>
     <p class="note"><strong>Note</strong>: For a list of available locations, run <code>az account list-locations</code>.</p>
 1. Create a network security group named `pcf-nsg`.
@@ -47,21 +51,21 @@ Before you perform the procedures in this topic, you must have completed the pro
     --resource-group $RESOURCE_GROUP \
     --location $LOCATION
     </pre> 
-1. Add a network security group rule to the `opsmgr-nsg` group that allow HTTP traffic to the Ops Manager VM.
+1. Add a network security group rule to the `opsmgr-nsg` group to allow HTTP traffic to the Ops Manager VM.
     <pre class="terminal">
     $ az network nsg rule create --name http \
     --nsg-name opsmgr-nsg --resource-group $RESOURCE_GROUP \
     --protocol Tcp --priority 100 \
     --destination-port-range 80 
     </pre>
-1. Add a network security group rule to the `opsmgr-nsg` group that allow HTTPS traffic to the Ops Manager VM.
+1. Add a network security group rule to the `opsmgr-nsg` group to allow HTTPS traffic to the Ops Manager VM.
     <pre class="terminal">
     $ az network nsg rule create --name https \
     --nsg-name opsmgr-nsg --resource-group $RESOURCE_GROUP \
     --protocol Tcp --priority 200 \
     --destination-port-range 443 
     </pre>
-1. Add a network security group rule to the `opsmgr-nsg` group that allow SSH traffic to the Ops Manager VM.
+1. Add a network security group rule to the `opsmgr-nsg` group to allow SSH traffic to the Ops Manager VM.
     <pre class="terminal">
     $ az network nsg rule create --name ssh \
     --nsg-name opsmgr-nsg --resource-group $RESOURCE_GROUP \
@@ -90,15 +94,15 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     <pre class="terminal">
     $ export STORAGE_NAME="YOUR-BOSH-STORAGE-ACCOUNT-NAME"
     </pre>
-1. Create a Standard storage account for BOSH with the following command. This account will be used for BOSH book-keeping and running the Ops Manager VM itself, but does not have to be used for running any other VMs.
+1. Create a Standard storage account for BOSH with the following command. This account will be used for BOSH bookkeeping and running the Ops Manager VM itself, but does not have to be used for running any other VMs.
     <pre class="terminal">
     $ az storage account create --name $STORAGE\_NAME \
     --resource-group $RESOURCE\_GROUP \
-    --sku Standard_LRS --kind Storage \
+    --sku Standard_LRS \
     --location $LOCATION
     </pre>
-    <p class="note"><strong>Note</strong>: <code>Standard_LRS</code> refers to a Standard Azure storage account. The BOSH Director requires table storage to store stemcell information. Azure Premium storage does not support table storage and cannot be used for the BOSH storage account.</p>
-    If the command fails, ensure you have followed the rules for naming your storage account. Re-export a new storage account name if necessary.
+    <p class="note"><strong>Note</strong>: <code>Standard\_LRS</code> refers to a Standard Azure storage account. The BOSH Director requires table storage to store stemcell information. Azure Premium storage does not support table storage and cannot be used for the BOSH storage account.</p>
+    If the command fails, ensure you have followed the rules for naming your storage account. Export another new storage account name if necessary.
 1. Configure the Azure CLI to use the BOSH storage account as its default.
     1. Retrieve the connection string for the account.
     <pre class="terminal">
@@ -112,15 +116,18 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     }
     </pre>
     1. Record the full value of `connectionString` from the output above, starting with and including `DefaultEndpointsProtocol=`.
-    1. Export the value of `connectionString` as the environment variable `$AZURE_STORAGE_CONNECTION_STRING`.
+    1. Export the value of `connectionString` as the environment variable `$CONNECTION_STRING`.
     <pre class="terminal">
-    $ export AZURE\_STORAGE\_CONNECTION\_STRING="YOUR-ACCOUNT-KEY-STRING"
+    $ export CONNECTION\_STRING="YOUR-ACCOUNT-KEY-STRING"
     </pre>
 1. Create three blob containers in the BOSH storage account, named `opsmanager`, `bosh`, and `stemcell`.
     <pre class="terminal">
-    $ az storage container create --name opsmanager
-    $ az storage container create --name bosh
-    $ az storage container create --name stemcell --public-access blob
+    $ az storage container create --name opsmanager \
+    --connection-string $CONNECTION\_STRING
+    $ az storage container create --name bosh \
+    --connection-string $CONNECTION\_STRING
+    $ az storage container create --name stemcell --public-access blob 
+    --connection-string $CONNECTION\_STRING
     </pre>
 1. Create a table named `stemcells`.
     <pre class="terminal">
@@ -161,11 +168,11 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     1. Create two blob containers named `bosh` and `stemcell` in the account.
     <pre class="terminal">
     $ az storage container create --name bosh \
-    --connection-string "YOUR-ACCOUNT-KEY-STRING"
+    --connection-string $CONNECTION\_STRING
     </pre>
     <pre class="terminal">
     $ az storage container create --name stemcell \
-    --connection-string "YOUR-ACCOUNT-KEY-STRING"
+    --connection-string $CONNECTION\_STRING
     </pre>
 
 ##<a id='lb'></a> Step 3: Create a Load Balancer
@@ -218,7 +225,7 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
 1. Add a backend address pool to the load balancer.
     <pre class="terminal">
     $ az network lb address-pool create --lb-name pcf-lb \
-    --name pcf-vms --resource-group $RESOURCE_GROUP
+    --name pcf-lbbepool --resource-group $RESOURCE_GROUP
     </pre>
     <p class="note"><strong>Note</strong>: This backend pool is empty when you create it.</p>
 1. Add a load balancing rule for HTTP.
@@ -227,7 +234,8 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     --name http --resource-group $RESOURCE_GROUP \
     --protocol Tcp --frontend-port 80 \
     --backend-port 80 --frontend-ip-name pcf-fe-ip \
-    --backend-pool-name pcf-vms
+    --backend-pool-name pcf-lbbepool \
+    --probe-name tcp80
     </pre>
 1. Add a load balancing rule for HTTPS.
     <pre class="terminal">
@@ -235,7 +243,8 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     --name https --resource-group $RESOURCE_GROUP \
     --protocol Tcp --frontend-port 443 \
     --backend-port 443 --frontend-ip-name pcf-fe-ip \
-    --backend-pool-name pcf-vms
+    --backend-pool-name pcf-lbbepool \
+    --probe-name tcp80
     </pre>
 1. Add a load balancing rule for SSH.
     <pre class="terminal">
@@ -243,7 +252,8 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     --name diego-ssh --resource-group $RESOURCE_GROUP \
     --protocol Tcp --frontend-port 2222 \
     --backend-port 2222 --frontend-ip-name pcf-fe-ip \
-    --backend-pool-name pcf-vms
+    --backend-pool-name pcf-lbbepool
+    --probe-name tcp80
     </pre>
 
 1.  Navigate to your DNS provider, and create an entry that points `*.YOUR-SUBDOMAIN` to the public IP address of your load balancer that you recorded in a previous step. For example, create an entry that points `azure.example.com` to `198.51.100.1`.
@@ -258,30 +268,43 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
 1. Export the Ops Manager image URL as an environment variable.
     <pre class="terminal">$ export OPS\_MAN\_IMAGE\_URL="YOUR-OPS-MAN-IMAGE-URL"</pre>
 
-1. Copy the Ops Manager image into your storage account.
-    <pre class="terminal">
-    $ az storage blob copy start --source-uri $OPS\_MAN\_IMAGE\_URL \
-    --connection-string $AZURE\_STORAGE\_CONNECTION\_STRING \
-    --destination-container opsmanager \
-    --destination-blob image.vhd 
-    </pre>
-
-1. Copying the image may take several minutes. Run the following command and examine the output under `"copy"`:
-    <pre class="terminal">
-    $ az storage blob show --name image.vhd \
-    --container-name opsmanager \
-    --account-name $STORAGE_NAME
-    ...
-    "copy": {
-      "completionTime": "2017-06-26T22:24:11+00:00",
-      "id": "b9c8b272-a562-4574-baa6-f1a04afcefdf",
-      "progress": "53687091712/53687091712",
-      "source": "http<span>s:/</span>/opsmanagerwestus.blob.core.windows.net/images/ops-manager-1.11.3.vhd",
-      "status": "success",
-      "statusDescription": null
-    },
-    </pre>
-    Wait a few moments and re-run the command above if `status` is `pending`. When `status` reads `success`, continue to the next step.
+1. Download the Ops Manager image. For compatibility when upgrading to future versions of Ops Manager, choose a unique name for the image that includes the Ops Manager version number. For example, replace <code>opsman-image-2.0.x</code> in the following examples with <code>opsman-image-2.0.1</code>.
+  * If you use unmanaged disks, perform the following steps:
+  <p class="note"><strong>Note</strong>: Azure Stack requires unmanaged disks.</p>
+      1. Download the Ops Manager image to your local machine. The image size is 5&nbsp;GB.
+        <pre class="terminal">$ wget $OPS\_MAN\_IMAGE\_URL -O opsman-image-2.0.x.vhd</pre>
+      1. Upload the image to your storage account using the Azure CLI.
+        <pre class="terminal">
+        $ az storage blob upload --name opsman-image-2.0.x.vhd \
+        --connection-string $CONNECTION\_STRING \
+        --container-name opsmanager \
+        --type page \
+        --file opsman-image-2.0.x.vhd
+        </pre>
+  * If you use managed disks, perform the following steps:
+       1. Copy the Ops Manager image into your storage account using the Azure CLI.
+        <pre class="terminal">
+        $ az storage blob copy start --source-uri $OPS\_MAN\_IMAGE\_URL \
+        --connection-string $CONNECTION\_STRING \
+        --destination-container opsmanager \
+        --destination-blob opsman-image-2.0.x.vhd
+        </pre>
+       1. Copying the image may take several minutes. Run the following command and examine the output under `"copy"`:
+        <pre class="terminal">
+        $ az storage blob show --name opsman-image-2.0.x.vhd \
+        --container-name opsmanager \
+        --account-name $STORAGE_NAME
+        ...
+        "copy": {
+          "completionTime": "2017-06-26T22:24:11+00:00",
+          "id": "b9c8b272-a562-4574-baa6-f1a04afcefdf",
+          "progress": "53687091712/53687091712",
+          "source": "http<span>s:/</span>/opsmanagerwestus.blob.core.windows.net/images/ops-manager-2.0.0.vhd",
+          "status": "success",
+          "statusDescription": null
+        },
+        </pre>
+        1. Wait a few moments and re-run the command above if `status` is `pending`. When `status` reads `success`, continue to the next step.
 
 1. Create a public IP address named `ops-manager-ip`.
     <pre class="terminal">
@@ -318,7 +341,7 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     --private-ip-address 10.0.0.5 \
     --public-ip-address ops-manager-ip \
     --resource-group $RESOURCE_GROUP \
-    --name ops-manager-nic --location $LOCATION
+    --name opsman-nic --location $LOCATION
     </pre>
 
 1. Create a keypair on your local machine with the username `ubuntu`. For example, enter the following command:
@@ -328,35 +351,69 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
    <br>
    When prompted for a passphrase, press the `enter` key to provide an empty passphrase.
 
-1. Create a managed disk from the Ops Manager image:
+1. Create the Ops Manager VM.
+    * If you are using unmanaged disks, run the following command to create your Ops Manager VM, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key .pub file:
+        <pre class="terminal">
+        $ az vm create --name opsman-2.0.x --resource-group $RESOURCE_GROUP \
+        --location $LOCATION \
+        --nics opsman-nic \
+        --image https://$STORAGENAME.my-azure-instance.com/opsmanager/opsman-image-2.0.x.vhd \
+        --os-disk-name opsman-2.0.x-osdisk \
+        --os-disk-size-gb 128 \
+        --os-type Linux \
+        --use-unmanaged-disk \
+        --storage-account $STORAGENAME \
+        --storage-container-name opsmanager \
+        --admin-username ubuntu \
+        --ssh-key-value PATH-TO-PUBLIC-KEY
+        </pre>
+        Replace `my-azure-instance.com` with the URL of your Azure instance. Find the complete source URL in the Azure UI by viewing the **Blob properties** of the Ops Manager image you created earlier in this procedure.<br><br>
+    * If you are using Azure managed disks, perform the following steps:
+        1. Create a managed image from the Ops Manager VHD file:
+            <pre class="terminal">
+            $ az image create --resource-group $RESOURCE\_GROUP \
+            --name opsman-image-2.0.x \
+            --source https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image-2.0.x.vhd \
+            --location $LOCATION \
+            --os-type Linux
+            </pre>
+            If you are using Azure China, Azure Government Cloud, or Azure Germany, replace `blob.core.windows.net` with the following:
+            * For Azure China, use `blob.core.chinacloudapi.cn`. See the [Azure documentation](https://msdn.microsoft.com/en-us/library/azure/dn578439.aspx) for more information.
+            * For Azure Government Cloud, use `blob.core.usgovcloudapi.net`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-government/documentation-government-services-storage) for more information.
+            * For Azure Germany, use `blob.core.cloudapi.de`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/germany/germany-developer-guide) for more information.
+        1. Create your Ops Manager VM, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file.
+            <pre class="terminal">
+             $ az vm create --name opsman-2.0.x --resource-group $RESOURCE\_GROUP \
+             --location $LOCATION \
+             --nics opsman-nic \
+             --image opsman-image-2.0.x \
+             --os-disk-name opsman-2.0.x-osdisk \
+             --admin-username ubuntu \
+             --size Standard\_DS2_v2 \
+             --storage-sku Standard\_LRS \
+             --ssh-key-value PATH-TO-PUBLIC-KEY
+            </pre>
+
+1. If you plan to install more than one tile in this Ops Manager installation, perform the following steps to increase the size of the Ops Manager VM disk. You can repeat this process and increase the disk again at a later time if necessary.
+    <p class="note"><strong>Note</strong>: If you use Azure Stack, you must increase the Ops Manager VM disk size using the Azure Stack UI.</p>
+    1. Run the following command to stop the VM and detach the disk:
     <pre class="terminal">
-    $ az disk create --resource-group $RESOURCE_GROUP \
-    --name opsman-disk \
-    --source https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image.vhd \
-    --location $LOCATION --size-gb 120
-    --sku Standard_LRS
+    $ az vm deallocate --name opsman-2.0.x \
+    --resource-group $RESOURCE\_GROUP
     </pre>
-    <br>
-    If you are using Azure China, Azure Government Cloud, or Azure Germany, replace `blob.core.windows.net` with the following:
-    <br><br>
-    * For Azure China, use `blob.core.chinacloudapi.cn`. See the [Azure documentation](https://msdn.microsoft.com/en-us/library/azure/dn578439.aspx) for more information.
-    * For Azure Government Cloud, use `blob.core.usgovcloudapi.net`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-government/documentation-government-services-storage) for more information.
-    * For Azure Germany, use `blob.core.cloudapi.de`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/germany/germany-developer-guide) for more information.
-
-1. Create your Ops Manager VM, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file.
+    1. Run the following command to resize the disk to 128&nbsp;GB:
     <pre class="terminal">
-     $ az vm create --name ops-manager --resource-group $RESOURCE_GROUP \
-     --location $LOCATION --os-type linux \
-     --nics ops-manager-nic \
-     --attach-os-disk opsman-disk \
-     --admin-username ubuntu \
-     --size Standard_DS2_v2 \
-     --ssh-key-value PATH-TO-PUBLIC-KEY
-    </pre> 
+    $ az disk update --size-gb 128 --name opsman-2.0.x-osdisk \
+    --resource-group $RESOURCE\_GROUP
+    </pre>
+    1. Run the following command to start the VM:
+    <pre class="terminal">
+    $ az vm start --name opsman-2.0.x --resource-group $RESOURCE\_GROUP
+    </pre>
 
-##<a id='post-deploy'></a> Step 6: Complete Ops Manager Director Configuration
+##<a id='post-deploy'></a> Step 5: Complete Ops Manager Director Configuration
 
 1. Navigate to your DNS provider, and create an entry that points a fully qualified domain name (FQDN) to the public IP address of Ops Manager. As a best practice, always use the FQDN to access Ops Manager.
 
-1. Continue to the [Configuring Ops Manager Director on Azure](azure-om-config.html) topic.
+1. Continue to the [Configuring Ops Manager on Azure](azure-om-config.html) topic.
 

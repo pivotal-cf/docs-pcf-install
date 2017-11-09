@@ -1,5 +1,5 @@
 ---
-title: Configuring Ops Manager Director for VMware vSphere
+title: Configuring Ops Manager on vSphere
 owner: Ops Manager
 ---
 
@@ -8,7 +8,7 @@ owner: Ops Manager
 
 This topic describes how to configure the Ops Manager Director for VMware vSphere.
 
-Before you begin this procedure, ensure that you have successfully completed all steps in the [Deploying Operations Manager to vSphere](deploying-vm.html) topic. After you complete this procedure, follow the instructions in the [Configuring Elastic Runtime for vSphere](config-er-vmware.html) topic.
+Before you begin this procedure, ensure that you have successfully completed all steps in the [Deploying Operations Manager to vSphere](deploying-vm.html) topic. After you complete this procedure, follow the instructions in the [Configuring Pivotal Application Service (PAS) for vSphere](config-er-vmware.html) topic.
 
 <p class="note"><strong>Note</strong>: You can also perform the procedures in this topic using the Ops Manager API. For more information, see the <a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
 
@@ -62,12 +62,11 @@ Before you begin this procedure, ensure that you have successfully completed all
     * **Template Folder**: The vSphere datacenter folder (default: `pcf_templates`) where Ops Manager places VMs.
     * **Disk path Folder**: The vSphere datastore folder (default: `pcf_disk`) where Ops Manager creates attached disk images. You must not nest this folder.
 
-    <%= image_tag("nsx-config.png") %>
-
 1. Select a network configuration from one of the following:
     * **Standard vCenter Networking**: This is the default option when upgrading Ops Manager.
     * **NSX Networking**: Select this option to enable VMware NSX Network Virtualization.
 To configure NSX networking, enter the following information:
+      * **NSX Mode**: Select either **NSX-V** or **NSX-T**.
       * **NSX Address**: The address of the NSX manager.
       * **NSX Username**: The username to connect to the NSX manager.
       * **NSX Password**: The password for the username specified above.
@@ -88,7 +87,7 @@ To configure NSX networking, enter the following information:
 1. In the **NTP Servers (comma delimited)** field, enter your NTP server addresses.
 1. (Optional) If you have installed and configured the [JMX Bridge](https://docs.pivotal.io/jmx-bridge/index.html) product, enter your **JMX Provider IP Address**.
 1. (Optional) Enter your **Bosh HM Forwarder IP Address** if you are using the BOSH HM Forwarder.
-1. Select the **Enable VM Resurrector Plugin** to enable Ops Manager Resurrector functionality and increase Elastic Runtime availability. For more information, see the [Using Ops Manager Resurrector on VMware vSphere](./resurrector.html) topic.
+1. Select the **Enable VM Resurrector Plugin** to enable Ops Manager Resurrector functionality and increase PAS availability. For more information, see the [Using Ops Manager Resurrector on VMware vSphere](./resurrector.html) topic.
 1. Select **Enable Post Deploy Scripts** to run a post-deploy script after deployment. This script allows the job to execute additional commands against a deployment.
 1. Select **Recreate all VMs** to force BOSH to recreate all VMs on the next deploy. This process does not destroy any persistent disk data.
 1. Select **Enable bosh deploy retries** if you want Ops Manager to retry failed BOSH operations up to five times.
@@ -117,13 +116,14 @@ To configure NSX networking, enter the following information:
 
 1. (Optional) **Director Workers** sets the number of workers available to execute Director tasks. This field defaults to `5`.
 1. (Optional) **Max Threads** sets the maximum number of threads that the Ops Manager Director can run simultaneously. For vSphere, the default value is `32`. Leave the field blank to use this default value. Pivotal recommends that you use the default value unless doing so results in rate limiting or errors on your IaaS.
-1. (Optional) To add a custom URL for your Ops Manager Director, enter a valid hostname in **Director Hostname**. You can also use this field to configure [a load balancer in front of your Ops Manager Director](https://discuss.pivotal.io/hc/en-us/articles/225420588). 
+1. (Optional) To add a custom URL for your Ops Manager Director, enter a valid hostname in **Director Hostname**. You can also use this field to configure [a load balancer in front of your Ops Manager Director](https://discuss.pivotal.io/hc/en-us/articles/225420588).
+1. (Optional) To set a custom banner that users see when logging in to the Director using SSH, enter text in the **Custom SSH Banner** field.
 1. Click **Save**.
 
 <p class="note"><strong>Note</strong>: After your initial deployment, you will not be able to edit the Blobstore and Database locations.</p>
 
 ## <a id='create-az'></a>Step 4: Create Availability Zone Page
-Ops Manager Availability Zones correspond to your vCenter clusters and resource pools. Multiple Availability Zones allow you to provide high-availability and load balancing to your applications. When you run more than one instance of an application, Ops Manager balances those instances across all of the Availability Zones assigned to the application. At least three availability zones are recommended for a highly available installation of Elastic Runtime.
+Ops Manager Availability Zones correspond to your vCenter clusters and resource pools. Multiple Availability Zones allow you to provide high-availability and load balancing to your applications. When you run more than one instance of an application, Ops Manager balances those instances across all of the Availability Zones assigned to the application. At least three availability zones are recommended for a highly available installation of PAS.
 
 1. Select **Create Availability Zones**.
     
@@ -205,4 +205,4 @@ choose **Automatic** from the drop-down menu to allocate the recommended resourc
 
 1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
 1. Click **Apply Changes** on the right navigation.
-1. After you complete this procedure, follow the instructions in the [Configuring Elastic Runtime for vSphere](config-er-vmware.html) topic.
+1. After you complete this procedure, follow the instructions in the [Configuring PAS for vSphere](config-er-vmware.html) topic.

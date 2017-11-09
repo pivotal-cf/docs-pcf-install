@@ -1,10 +1,28 @@
-## CredHub in PCF
+## <a name="pcfcredhub"></a>CredHub in PCF
 
 A PCF deployment stores credentials in the following locations:
 
 * **BOSH CredHub**: colocated with the BOSH Director on a single VM. This CredHub instance stores credentials for the BOSH Director.
-* **Runtime CredHub**: deployed as an independent service and stores credentials for PAS components in your deployment.
+* **Runtime CredHub**: deployed as an independent service and stores service instance credentials.
 
-See the [Colocated with the BOSH Director](#colocated) section for more information about colocated CredHub.
+### <a name="bosh"></a>BOSH CredHub
 
-See the [Deployed as a Service](#service) section for more information about CredHub deployed as a service.
+In PCF, BOSH Director VM includes a CredHub job.
+This provides a lightweight credential storage instance for the BOSH Director.
+
+<p class="note"><strong>Note</strong>: This configuration does not provide high availability.</p>
+
+In this colocated deployment architecture, the BOSH Director, CredHub, UAA, and the Director database are all installed on a single BOSH VM, as shown in the following diagram:
+
+![Diagram that show the following components colocated on the BOSH VM: BOSH Director, CredHub, UAA, and the Director database](images/bosh-deployment.png) 
+
+### <a name="runtime"></a>Runtime CredHub
+
+The Pivotal Application Service (PAS) tile deploys CredHub as an independent service on its own VM.
+This provides a highly available credential storage instance for securing service instance credentials. 
+
+CredHub is a stateless application, so you can scale it to multiple instances that share a common database cluster and encryption provider.
+
+With CredHub as a service, the load balancer and external databases communicate directly with the CredHub VMs, as shown in the following diagram:
+
+![Diagram that shows multiple CredHub VMs that connect to UAA, an HSM, an external database, and a load balancer. The load balancer connects to four consumer VMs.](images/service-deployment.png)

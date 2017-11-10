@@ -5,18 +5,34 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-This topic describes how to use the CloudFormation template to deploy BOSH and Ops Manager to Amazon Web Services (AWS), as a part of installing [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF).
+This topic describes how to use the Terraform templates to deploy BOSH and
+Ops Manager to Amazon Web Services (AWS), as a part of installing [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF).
 
-An AWS CloudFormation template describes a set of AWS resources and properties. The template used in this topic is designed to output the resources necessary for three availability zones (AZ), with an Ops Manager, Pivotal Application Service (PAS), and services subnet in each AZ. The Elastic Load Balancer will be attached to the public subnet the AZs to balance traffic.
+An AWS Terraform template describes a set of AWS resources and properties.
+The template used in this topic is designed to output the resources necessary
+for three availability zones (AZ), with an Ops Manager, Pivotal Application Service (PAS),
+and services subnet in each AZ. The Elastic Load Balancer will be attached to
+the public subnet the AZs to balance traffic.
 
 ## <a id='prereq'></a> Prerequisites
 
-The procedure in this topic requires the following: 
+The procedure in this topic requires the following:
 
-* **An AWS Region with at least 3 availability zones**: Before following the procedure below, confirm that you have selected the correct region within your AWS account. All of the AWS resources for your deployment must exist within a single region. See the <a href='http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-regions-availability-zones'>Amazon documentation on regions and availability zones</a> for help selecting the correct region for your deployment.
+* **An AWS Region with at least 3 availability zones**: Before following the
+  procedure below, confirm that you have selected the correct region within
+  your AWS account. All of the AWS resources for your deployment must exist
+  within a single region.
+  See the <a href='http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-regions-availability-zones'>Amazon documentation on regions and availability zones</a> for help selecting the correct region for your deployment.
   <p class="note"><strong>Note</strong>: To deploy PCF to AWS GovCloud (US), select the <code>us-gov-west-1</code> region.</p>
-* **An AWS SSH keypair**: You must provide an AWS SSH keypair name as a parameter for the CloudFormation template. If you do not have a pre-existing key pair, create one in [AWS](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair). Save the resulting private key file in a secure location.
-* **A registered wildcard domain**: You must enter a wildcard domain as the `Common name` when creating your SSL certificate.  
+
+* **An AWS SSH keypair**: You must provide an AWS SSH keypair name as a
+  parameter for the Terraform template. If you do not have a pre-existing
+  key pair, create one in
+  [AWS](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair).
+  Save the resulting private key file in a secure location.
+
+* **A registered wildcard domain**: You must enter a wildcard domain as the
+  `Common name` when creating your SSL certificate.
 
 ## <a id='upload-cert'></a>Step 1: Upload an SSL Certificate to AWS ##
 
@@ -29,7 +45,8 @@ You can add an SSL Certificate using two methods:
 
 The [AWS CLI](https://aws.amazon.com/cli/) must be installed on your machine and configured to a user account with admin access privileges on your AWS account.
 
-1. Obtain or create an SSL server certificate. For more information, see the [AWS documentation on SSL certificates](http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/ssl-server-cert.html). When you create a certificate signing request (CSR) in the "Create a Server Certificate" instructions, you must use your wildcard domain as the Common Name input.
+1. Obtain or create an SSL server certificate.
+For more information, see the [AWS documentation on SSL certificates](http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/ssl-server-cert.html). When you create a certificate signing request (CSR) in the "Create a Server Certificate" instructions, you must use your wildcard domain as the Common Name input.
 
 1. Add the following additional domains and wildcards using the OpenSSL SAN (subjectAltName) extension: 
   * `*.sys.example.com`
@@ -38,36 +55,11 @@ The [AWS CLI](https://aws.amazon.com/cli/) must be installed on your machine and
   * `*.apps.example.com`
   <p class='note'><strong>Note</strong>: If you use a self-signed certificate or select the "Generate Self-Signed RSA Certificate" option during the <a href="./../customizing/aws-terraform-er-config.html#security-config">Deploying PAS on AWS</a> installation process, you can ignore the step above. However, make sure you upload the self-signed certificate to AWS and attach the certificate to the listeners on the AWS Elastic Load Balancer. Pivotal recommends only using a self-signed certificate for testing and development.</p>
 
-1. Upload your SSL certificate to AWS. For more information, see the [AWS documentation s on uploading SSL certificate using the CLI](http://docs.aws.amazon.com/cli/latest/reference/iam/upload-server-certificate.html).
-<pre class='terminal'>
-$ aws iam upload-server-certificate \
---server-certificate-name YOUR-CERTIFICATE \
---certificate-body file://YOUR-PUBLIC-KEY-CERT-FILE.pem \
---private-key file://YOUR-PRIVATE-KEY-FILE.pem \
-</pre>
-For example:
-<pre class='terminal'>
-$ aws iam upload-server-certificate \
---server-certificate-name myServerCertificate \
---certificate-body file://my-certificate.pem \
---private-key file://my-private-key.pem
-</pre><p class='note'><strong>Note</strong>: If you receive an upload error (MalformedCertificate), run the following command to convert your server certificate to the PEM format as required by the AWS Identity and Management (IAM) service:
-<code>$ openssl x509 -inform PEM -in my-certificate.pem</code><br/>Then try your upload again.</p>
-
-1. After successfully uploading the certificate to your AWS account, you will see output metadata for your certificate. For example:
-   <pre class="highlight json">
-   {
-     "ServerCertificateMetadata": {
-     "ServerCertificateId": "ASCAI3HRFYUTD55KNAF64",
-     "ServerCertificateName": "myServerCertificate",
-     "Expiration": "2016-10-18T18:41:59Z",
-     "Path": "/",
-     "Arn": "arn:aws:iam::9240874958318:server-certificate/myServerCertificate",
-     "UploadDate": "2015-10-19T19:10:57.404Z"
-     }
-   }
-   </pre>
-1. Record the value of the SSL Certificate <code>ARN</code> (Amazon Resource Name) to use when [configuring](#create-stack) your AWS resource stack. Alternatively, if you know the name of the certificate, you can run the following command to retrieve certificate metadata later: <pre class='terminal'>$ aws iam get-server-certificate --server-certificate-name YOUR-CERT-NAME</pre> For example: <pre class='terminal'>$ aws iam get-server-certificate --server-certificate-name myServerCertificate</pre>
+1. Record the value of the certificate and key to use when [editing](#editing-terraform-vars)
+  the Terraform Variables File. Alternatively, if you know the name of the certificate,
+  you can run the following command to retrieve certificate metadata later:
+  <pre class='terminal'>$ aws iam get-server-certificate --server-certificate-name YOUR-CERT-NAME</pre>
+  For example: <pre class='terminal'>$ aws iam get-server-certificate --server-certificate-name myServerCertificate</pre>
 
 ### <a id="aws-certificate-manager"></a>(Option) Create SSL Certificate using the AWS Certificate Manager
 
@@ -86,70 +78,77 @@ $ aws iam upload-server-certificate \
 
 1. From the approval page, click **I Approve**.
 
-1. Record the SSL Certificate Amazon Resource Name (ARN) shown on the confirmation page to use when [configuring](#create-stack) your AWS resource stack. Alternatively, you can retrieve certificate metadata later by selecting the certificate listing in Certificate Manager and recording values in the **Details** pane that appears underneath.
+1. Record the value of the certificate and key to use when [editing](#editing-terraform-vars)
+  the Terraform Variables File. Alternatively, if you know the name of the certificate,
+  you can run the following command to retrieve certificate metadata later:
+  <pre class='terminal'>$ aws iam get-server-certificate --server-certificate-name YOUR-CERT-NAME</pre>
+  For example: <pre class='terminal'>$ aws iam get-server-certificate --server-certificate-name myServerCertificate</pre>
 
-## <a id='download-template'></a>Step 2: Download the PCF CloudFormation Template ##
+## <a id='download-template'></a>Step 2: Download and Edit the Terraform Variables File ##
 
-1. Sign in to [Pivotal Network](https://network.pivotal.io/).
+1. Navigate to the Pivotal Application Service (PAS) release on [Pivotal Network](https://network.pivotal.io). 
 
-1. Select PAS. From the <strong>Releases</strong> drop-down menu, select the release that you wish to install.
+1. Download the AWS Terraform zip file.
 
-1. Download the **PCF CloudFormation for AWS Setup**.
+1. Extract the contents of the zip file and place the folder in your `workspace` directory on your local machine.
 
-1. Save the file as `pcf-cloudformation.json`.
+1. From a terminal window, navigate to the folder:
+  <pre class="terminal">$ cd ~/workspace/TERRAFORMING-AWS-FOLDER</pre>
 
-## <a id='create-stack'></a>Step 3: Create a Resource Stack Using the CloudFormation Template ##
+1. Create a new file named `terraform.tfvars`.
+  <pre class="terminal">$ touch terraform.tfvars</pre>
 
-1. Log in to the [AWS Console](https://console.aws.amazon.com/).
-   <p class="note"><strong>Note</strong>: Log in to the <a href="https://console.amazonaws-us-gov.com/">AWS GovCloud (US) console</a> to deploy PCF on AWS GovCloud.</p>
+1. Open the `terraform.tfvars` file and paste in the following contents:
 
-1. In the second column, under **Management Tools**, click **CloudFormation**.
 
-    <%= image_tag("cloudform/cloudformation.png") %>
+    ```
+    env_name           = "YOUR-ENVIRONMENT-NAME"
+    access_key         = "YOUR-ACCESS-KEY"
+    secret_key         = "YOUR-SECRET-KEY"
+    region             = "YOUR-AWS-REGION"
+    availability_zones = ["YOUR-AZ-1", "YOUR-AZ-2", "YOUR-AZ-3"]
+    ops_manager_ami    = "YOUR-OPS-MAN-AMI"
+    dns_suffix         = "YOUR-DNS-SUFFIX"
+    ```
 
-1. Click **Create New Stack**.
 
-    <%= image_tag("cloudform/newstack.png") %>
+1. Edit the values in the file according to the table below:
+  <table>
+    <tr>
+      <th style="width: 35%">Value to replace</th>
+      <th>Guidance</th>
+    </tr>
+    <tr>
+      <td><code>YOUR-ENVIRONMENT-NAME</code></td>
+      <td>Enter a name to use to identify resources in AWS. Terraform prepends the names of the resources it creates with this environment name. Example: <code>pcf</code>.</td>
+    </tr>
+    <tr>
+      <td><code>YOUR-ACCESS-KEY</code></td>
+      <td>Enter your AWS Access Key.</td>
+    </tr>
+    <tr>
+      <td><code>YOUR-SECRET-KEY</code></td>
+      <td>Enter your AWS Secret Key.</td>
+    </tr>
+    <tr>
+      <td><code>YOUR-OPS-MAN-AMI</code></td>
+      <td>Enter the ami of the Ops Manager image you want to boot. You can find this in the PDF included with the Ops Manager release on <a href="https://network.pivotal.io/">Pivotal Network</a>.</td>
+    </tr>
+    <tr>
+      <td><code>YOUR-AWS-REGION</code></td>
+      <td>Enter the name of the AWS region in which you want Terraform to create resources. Example: <code>us-east-1</code>.</td>
+    </tr>
+    <tr>
+      <td><code>YOUR-AZ-1<br>YOUR-AZ-2<br>YOUR-AZ-3</code></td>
+      <td>Enter three availability zones from your region. Example: <code>us-east-1a</code>, <code>us-east-1b</code>, <code>us-east-1c</code>.</td>
+    </tr>
+    <tr>
+      <td><code>YOUR-DNS-SUFFIX</code></td>
+      <td>Enter a domain name to use as part of the system domain for your PCF deployment. Terraform creates DNS records in GCP using <code>YOUR-ENVIRONMENT-NAME</code> and <code>YOUR-DNS-SUFFIX</code>. For example, if you enter <code>example.com</code> for your DNS suffix and have <code>pcf</code> as your environment name, Terraform will create DNS records at <code>pcf.example.com</code>.</td>
+    </tr>
+  </table>
 
-1. Select **Upload a template to Amazon S3**.
 
-    <%= image_tag("cloudform/uploadtemplate.png") %>
-
-1. Click **Browse**. Browse to and select the `pcf-cloudformation.json`, the **Pivotal Cloud Foundry CloudFormation script for AWS** file that you downloaded. Click **Next**.
-
-1. On the next screen, name the stack `pcf-stack`.
-
-1. <a id='parameters'></a>In the **Specify Parameters** page, complete the
-following fields:
-    * **AvailabilityZone1**: Enter the first availability zone in your region. 
-    * **AvailabilityZone2**: Enter the second availability zone in your region.
-    * **AvailabilityZone3**: Enter the third availability zone in your region.
-    * **EnvironmentID**: Enter a prefix by which you can identify the resources for this PCF deployment. 
-    * **ERTCertificateARN**: Enter your uploaded SSL Certificate ARN to use for PAS.
-    * **IsoCertificateARN**: Enter your uploaded SSL Certificate ARN to use for PCF Isolation Segment.
-    * **OpsManAMI**: Enter the **AMI ID** for your region. You can find this in the `Pivotal Cloud Foundry Ops Manager for AWS` PDF file available with the Ops Manager release on [Pivotal Network](https://network.pivotal.io). 
-    * **OpsManIngressCidr**: If you want to limit which range of IP addresses can reach Ops Manager, enter a CIDR range in this field. Otherwise, leave this as `0.0.0.0/0`. 
-    * **OpsManSSHKeyPairName**: Use the drop-down menu to select the name of your pre-existing AWS key pair. 
-    * If you want to use Amazon RDS for the PAS databases, complete the following fields:
-      * **RDSDBName**: Do not change this value.
-      * **RDSPassword**: Enter a password for the RDS database.
-      * **RDSUsername**: Enter a username for the RDS database.
-
-1. Click **Next**.
-
-1. On the **Options** page, leave the fields blank and click **Next**.
-
-    <%= image_tag("cloudform/options.png") %>
-
-1. On the **Review** page, select the **I acknowledge that this template might cause AWS CloudFormation to create IAM resources** checkbox and click **Create**.
-
-	<%= image_tag("cloudform/acknowledge.png") %>
-
-	AWS runs the CloudFormation script and creates the infrastructure that you need to deploy PCF to AWS. This may take a few moments. You can click on the **Events** tab to view the progress of the setup.
-
-When the installation process successfully completes, AWS displays **CREATE_COMPLETE** as the status of the stack.
-
-<%= image_tag "cloudform/aws-cloudform-stacks.png" %>
 
 After completing this procedure, complete all of the steps in the following
 topics:

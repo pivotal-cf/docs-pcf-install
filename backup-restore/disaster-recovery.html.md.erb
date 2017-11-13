@@ -36,7 +36,7 @@ For more information, see [Backing Up Pivotal Cloud Foundry with BBR](./backup-p
 
 The restore process involves creating a new PCF foundation starting with the Ops Manager VM. For more information, see [Restoring Pivotal Cloud Foundry from Backup with BBR](./restore-pcf-bbr.html). 
 
-The time required to restore the data is proportionate to the size of the data. That means a 1 Tb blobstore takes 1000x as long as a 1Gb blobstore, because of the additional time required to copy the data.
+The time required to restore the data is proportionate to the size of the data. For example, a 1 Tb blobstore takes 1000x as long as a 1 Gb blobstore, because of the additional time required to copy the data.
 
 ### <a id="benefits"></a> Benefits
 
@@ -44,7 +44,7 @@ Unlike other backup solutions, using BBR to back up PCF enables:
 
 * **Completeness**: BBR supports backing up BOSH, including releases, Credhub, UAA, and service instances created with an on demand service broker. With PCF1.12, Ops Manager export no longer includes releases.
 * **Consistency**: referential integrity between the database and the blobstore, because a lock is held while both the database and blobstore are backed up. 
-* **Correctness**: using the BBR flow addresses C2C and routing issues that can occur during restore
+* **Correctness**: using the BBR restore flow addresses C2C and routing issues that can occur during restore
 
 ### <a id="api-downtime"></a> API Downtime During Backups
 
@@ -54,11 +54,11 @@ In order to take a consistent backup -- the blobs in the blobstore match the blo
 
 #### <a id="blobstore-bbr"></a>Blobstore backup and restore
 
-Blobstores can be very large. In order to minimize downtime, only metadata about the blobs is taken during the backup. For example, in the case of internal blobstores (Webdav/NFS), a list of hardlinks to the blobs is taken. After API access is restored, the blobs are copied. 
+Blobstores can be very large. In order to minimize downtime, only metadata about the blobs is taken during the backup. For example, in the case of internal blobstores (Webdav/NFS), a list of hardlinks to the blobs is taken. After API access is restored, copies of the blobs are made. 
 
 ### <a id="not-supported"></a>Products and Hardware Not Supported 
 
-The follow components and products to not support BBR:
+The follow components and products do not yet support BBR:
 
 * **Data services**: BBR is not yet supported in Pivotal’s flagship data services (MySQL, RabbitMQ, Redis, PCC). In the meantime, operators should use the “automatic backups” feature of each tile, available within Ops Manager. 
 * **External blobstores**: BBR does not yet back up external blobstores but can be used to back up the rest of <%= vars.product_short %>. Pivotal recommends that operators copy the blobstore using IaaS tooling, in conjunction with backing up <%= vars.product_short %> with BBR.
@@ -66,9 +66,9 @@ The follow components and products to not support BBR:
 
 To address the limitations noted above, when using BBR to back up PCF when <%= vars.product_short %> is configured with an external blobstore and/or external database:
 
-* With <%= vars.product_short %> configured an internal database and an external blobstore, follow the PCF backup process and copy the external blobstore via the IaaS. There may be inconsistencies between the blobstore and database that mean that some apps don’t come up during a restore. Those apps can be repushed. 
+* With <%= vars.product_short %> configured an internal database and an external blobstore, follow the PCF backup process using BBR and copy the external blobstore via the IaaS. There may be inconsistencies between the blobstore and database that mean that some apps don’t come up during a restore. Those apps can be repushed. 
 
-* With <%= vars.product_short %> configured configured an external database and an external blobstore, follow the PCF backup process, but skip the backup of <%= vars.product_short %>. Copy the external database and blobstore via the IaaS. There may be inconsistencies  between the blobstore and database that mean that some apps don’t come up during a restore. Those apps can be repushed. 
+* With <%= vars.product_short %> configured configured an external database and an external blobstore, follow the PCF backup process using BBR, but skip the backup of <%= vars.product_short %>. Copy the external database and blobstore via the IaaS. There may be inconsistencies  between the blobstore and database that mean that some apps don’t come up during a restore. Those apps can be repushed. 
 
 ### <a id="best-practices"></a> Best Practices
 
@@ -85,7 +85,7 @@ When deciding the (restore timeframe), other factors such as compliance and audi
 
 #### <a id="security"></a>Security
 
-Artifacts should be encrypted and stored securely.
+It is strongly recommended that artifacts are encrypted and stored securely.
 
 ## <a id="recreation"></a> Disaster Recovery by Recreating the Foundation
 

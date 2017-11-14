@@ -22,7 +22,7 @@ The backup process for App Autoscaler is as follows:
 	</tr>
 	<tr>
 		<td>1: Pre-backup lock</td>
-		<td>The Autoscaler apps in the <code>system</code> org stop. This lock occurs before the CAPI and UAA components lock. </td>
+		<td>The Autoscaler apps in the <code>system</code> org stop. This lock occurs before the Cloud Controller and UAA components lock. </td>
 	</tr>
 	<tr>
 		<td>2: Backup</td>
@@ -30,7 +30,7 @@ The backup process for App Autoscaler is as follows:
 	</tr>
 	<tr>
 		<td>3: Post-backup unlock</td>
-		<td>The Autoscaler apps in the <code>system</code> org start again. This unlock occurs after the CAPI and UAA components unlock.</td>
+		<td>The Autoscaler apps in the <code>system</code> org start again. This unlock occurs after the Cloud Controller and UAA components unlock.</td>
 	</tr>
 </table>
 
@@ -46,9 +46,11 @@ Because the database for App Autoscaler is small, the majority of downtime comes
 
 ## <a id="nfs-volume-services"></a> NFS Volume Service
 
-The Cloud Controller is responsible for invoking the NFS broker, which provides the volume service. Therefore, the NFS broker backup scripts rely on the locking of the Cloud Controller to stop traffic to its service. This means that during backup when the Cloud Controller locks, you cannot create or delete new service instances or bindings. However, apps already bound to volumes continue to operate normally during backups.
+The NFS service broker backup scripts rely on the locking of the Cloud Controller to stop traffic to its service. This is because the Cloud Controller is responsible for invoking the NFS service broker. 
 
-The NFS broker backup script performs a backup of the database used to store service instances and service bindings for the NFS broker. This database is located in the Cloud Controller Database (CCDB).
+When the Cloud Controller locks during backup, you cannot create or delete new instances or bindings of a volume service. However, apps already bound to a volume service continue to operate normally during backups.
+
+The NFS service broker backup script performs a backup of the database used to store service instances and service bindings for the NFS service broker. This database is located in the Cloud Controller Database (CCDB).
 
 ## <a id="routing-api"></a> Routing API
 

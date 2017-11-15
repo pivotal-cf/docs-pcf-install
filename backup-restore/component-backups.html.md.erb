@@ -38,11 +38,11 @@ Because the database for App Autoscaler is small, the majority of downtime comes
 
 ## <a id="cloud-controller"></a> Cloud Controller
 
-The Cloud Controller is unavailable during backup. Apps and Services continue to run as normal, but you cannot perform operations that require the Cloud Controller API (CAPI). This includes the following:
+The Cloud Controller is unavailable during backup. Apps and Services continue to run as normal, but you cannot perform operations that require the Cloud Controller API. This includes the following:
 
 * Pushing new apps or creating new services
 * Modifying existing apps or services 
-* Using the Cloud Foundry Command Line Interface (cf CLI), Apps Manager, or any other client of CAPI, such as the Java client used by Spring apps
+* Using the Cloud Foundry Command Line Interface (cf CLI), Apps Manager, or any other client of the Cloud Controller API, such as the Java client used by Spring apps
 
 The backup process for the Cloud Controller is as follows:
 
@@ -53,7 +53,7 @@ The backup process for the Cloud Controller is as follows:
 	</tr>
 	<tr>
 		<td>1: Pre-backup lock</td>
-		<td>The worker process on the <b>Cloud Controller Worker</b> VM stops and the server process on the <b>Cloud Controller</b> VM stops.</td>
+		<td>The processes running on the <b>Cloud Controller Worker</b>, <b>Cloud Controller</b>, and <b>Clock Global</b> VMs are stopped.</td>
 	</tr>
 	<tr>
 		<td>2: Backup</td>
@@ -61,7 +61,7 @@ The backup process for the Cloud Controller is as follows:
 	</tr>
 	<tr>
 		<td>3: Post-backup unlock</td>
-		<td>The worker process on the <b>Cloud Controller Worker</b> VM starts and the server process on the <b>Cloud Controller</b> VM starts.</td>
+		<td>The processes start again on the <b>Cloud Controller Worker</b>, <b>Cloud Controller</b>, and <b>Clock Global</b> VMs.</td>
 	</tr>
 </table>
 
@@ -80,5 +80,9 @@ When the Cloud Controller locks during backup, you cannot create or delete new i
 The NFS service broker backup script performs a backup of the database used to store service instances and service bindings for the NFS service broker.
 
 ## <a id="routing-api"></a> Routing API
+
+The Routing API remains available during backup. However, you cannot perform write operations using the Routing API because the routing database is locked. All read operations offered by the Routing API remain available through curl.    
+
+The BBR SDK backup script for the Routing API backs up its database, which contains router groups, routes, and internal implementation information. 
 
 ## <a id="uaa"></a> UAA

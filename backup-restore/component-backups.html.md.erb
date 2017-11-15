@@ -94,6 +94,8 @@ The backup process for the Cloud Controller is as follows:
 
 ## <a id="network-policy-server"></a> Network Policy Server
 
+The Network Policy Server is unavailable during backup. While existing policies are still enforced, you cannot use the cf CLI to add or remove policies for Container Networking as documented in [Administering Container-to-Container Networking](../devguide/deploy-apps/cf-networking.html).
+
 ## <a id="notification-service"></a> Notification Service
 
 ## <a id="nfs-volume-services"></a> NFS Volume Service
@@ -111,3 +113,28 @@ The Routing API remains available during backup. However, you cannot perform wri
 The BBR SDK backup script for the Routing API backs up its database, which contains router groups, routes, and internal implementation information. 
 
 ## <a id="uaa"></a> UAA
+
+UAA remains available in read-only mode during backup. This means that you cannot perform write operations for clients, users, groups, identity providers, or zone configuration. However, you can continue performing read operations, including generating, validating, and revoking tokens. Additionally, UAA continues to authenticate users and authorize requests for users and clients.
+
+The read-only behavior during backup applies to all of the following ways of accessing UAA: the UAA API, the UAA CLI, cf CLI, login screens, and the Single Sign-On Service tile. 
+
+The backup process for UAA is as follows:
+
+<table>
+	<tr>
+		<th style="width:25%">Stage</th>
+		<th>Description</th>
+	</tr>
+	<tr>
+		<td>1: Pre-backup lock</td>
+		<td>UAA enters read-only mode.</td>
+	</tr>
+	<tr>
+		<td>2: Backup</td>
+		<td>The BBR SDK backup script runs to backup the UAA database, which contains Cloud Foundry user credentials.</td>
+	</tr>
+	<tr>
+		<td>3: Post-backup unlock</td>
+		<td>UAA exits read-only mode.</td>
+	</tr>
+</table>

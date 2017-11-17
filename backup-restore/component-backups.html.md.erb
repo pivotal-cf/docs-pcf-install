@@ -3,7 +3,7 @@ title: PAS Component Availability During Backup
 owner: Component Teams
 ---
 
-This topic describes the operational impact of backing up Pivotal Application Service (PAS) components with BBR. To ensure correctness of backups, each component that requires backup has its own set of scripts. The sections in this topic describe the behavior of each component during backup. 
+This topic describes the operational impact of backing up Pivotal Application Service (PAS) components with BBR. To ensure correctness of backups, each component that requires backup has its own set of scripts. The sections in this topic describe the availability of each component during backup of its database. 
 
 ## <a id="cloud-controller"></a> Cloud Controller
 
@@ -41,7 +41,7 @@ The backup process for the Cloud Controller is as follows:
 
 UAA remains available in read-only mode during backup. This means that you cannot perform write operations for clients, users, groups, identity providers, or zone configuration. However, you can continue performing read operations, such as generating, validating, and revoking tokens. Additionally, UAA continues to authenticate users and authorize requests for users and clients.
 
-The read-only behavior during backup applies to all of the following ways of accessing UAA: the UAA API, the UAA CLI, cf CLI, login screens, and the Single Sign-On Service tile. 
+The read-only behavior during backup applies to all of the following ways of accessing UAA: the UAA API, the UAA CLI, cf CLI, login screens, and services such as the Single Sign-On Service tile. 
 
 The backup process for UAA is as follows:
 
@@ -125,8 +125,6 @@ The backup process for App Autoscaler is as follows:
 	</tr>
 </table>
 
-Because the database for App Autoscaler is small, the majority of downtime comes from stopping and starting the apps. 
-
 ## <a id="nfs-volume-services"></a> NFS Volume Service
 
 The NFS service broker backup scripts rely on the locking of the Cloud Controller to stop traffic to its service. This is because the Cloud Controller is responsible for invoking the NFS service broker. 
@@ -137,7 +135,7 @@ The NFS service broker backup script performs a backup of the database used to s
 
 ## <a id="notification-service"></a> Notification Service
 
-The Notification Service is available during backup, which means that the API is available to accept requests. However, any database requests are cached. These cached requests will be handled once the backup completes, which may result in emails being delayed. 
+The Notification Service is not available during backup with BBR due to its dependency on the Cloud Controller. Notifications cannot be sent while the Cloud Controller is unavailable.
 
 ## <a id="network-policy-server"></a> Network Policy Server
 

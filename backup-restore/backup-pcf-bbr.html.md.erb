@@ -19,7 +19,7 @@ During the backup, BBR stops the Cloud Controller API and the Cloud Controller w
   <strong>Warnings</strong>:
   <ul>
     <li><strong>Backup artifacts can contain secrets.</strong> Secure backup artifacts by using encryption or other means. </li>
-    <li><strong>The restore is a destructive operation.</strong> BBR is designed to restore PCF after a disaster. If it fails, the environment may be left in an unusable state and require reprovisioning. The two restore scenarios currently documented are <a href="restore-pcf-bbr.html">Restoring Pivotal Cloud Foundry from Backup with BBR</a> and <a href="rollback-ert-bbr.html">Rolling Back Elastic Runtime Deployment to an Earlier Backup with BBR</a>.</li>
+    <li><strong>The restore is a destructive operation.</strong> BBR is designed to restore PCF after a disaster. If it fails, the environment may be left in an unusable state and require reprovisioning. The two restore scenarios currently documented are <a href="restore-pcf-bbr.html">Restoring Pivotal Cloud Foundry from Backup with BBR</a> and <a href="rollback-ert-bbr.html">Rolling Back Pivotal Application Service (PAS) Deployment to an Earlier Backup with BBR</a>.</li>
     <li><strong>The Cloud Controller API will stop sending and receiving calls</strong> for the duration of PCF restoration.</li>
     <li><strong>BBR does not back up any service data.</strong></li>
     <li><strong>Using an external blobstore or an external MySQL database results in an unusable restore</strong> even if the restore appears to run successfully.</li>
@@ -44,9 +44,9 @@ BBR is a binary that can back up and restore BOSH deployments and BOSH Directors
 BBR backs up the following PCF components:
 
 * **Pivotal Application Service (PAS)**: PAS must be configured with an internal MySQL database and a WebDAV/NFS blobstore to be backed up and restored with BBR. BBR does not support PAS with an external blobstore or an external MySQL database.
-  <ul class="note warning"><strong>Warning</strong>: The following guidelines apply when you are using BBR to back up PCF and have configured an external blobstore and/or external database in Elastic Runtime:<ul>
-    <li> If you configured an internal database and an external blobstore in Elastic Runtime, then follow the PCF backup process, and copy the external blobstore via the IaaS. There may be inconsistencies between the blobstore and database, which may result in some apps not coming up during a restore. Those apps can be repushed. </li>
-    <li>If you configured an external database and an external blobstore in Elastic Runtime, then follow the PCF backup process, but skip the backup of Elastic Runtime. Copy the external database and blobstore via the IaaS. There may be inconsistencies  between the blobstore and database, which may result in some apps not coming up during a restore. Those apps can be repushed.</li></ul></ul>
+  <ul class="note warning"><strong>Warning</strong>: The following guidelines apply when you are using BBR to back up PCF and have configured an external blobstore and/or external database in PAS:<ul>
+    <li> If you configured an internal database and an external blobstore in PAS, then follow the PCF backup process, and copy the external blobstore via the IaaS. There may be inconsistencies between the blobstore and database, which may result in some apps not coming up during a restore. Those apps can be repushed. </li>
+    <li>If you configured an external database and an external blobstore in PAS, then follow the PCF backup process, but skip the backup of PAS. Copy the external database and blobstore via the IaaS. There may be inconsistencies  between the blobstore and database, which may result in some apps not coming up during a restore. Those apps can be repushed.</li></ul></ul>
 
 * **BOSH Director**: The BOSH Director must have an internal Postgres database to be backed up and restored with BBR. As part of backing up the BOSH Director, BBR backs up the BOSH UAA database and the CredHub database.
 
@@ -243,9 +243,9 @@ $ bbr director \
   --host HOST \
   backup-cleanup
 </pre>
-### <a id='bbr-backup'></a> Step 9: Back Up Your Elastic Runtime Deployment
+### <a id='bbr-backup'></a> Step 9: Back Up Your PAS Deployment
 
-1.  If you are using an external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup may be slightly inconsistent with your Elastic Runtime backup depending on the duration of time between performing the backups.
+1.  If you are using an external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup may be slightly inconsistent with your PAS backup depending on the duration of time between performing the backups.
 
 1.  If you are using an external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup may be slightly inconsistent with your PAS backup depending on the duration of time between performing the backups.
 
@@ -271,7 +271,7 @@ $ bbr director \
 
 <div class="note"><strong>Notes</strong>:
   <ul>
-    <li>Backing up Elastic Runtime takes at least 10 minutes and can take considerably longer with larger blobstores or slow network connections. The backup also incurs around 10 minutes of Cloud Controller downtime during which users are unable to push, scale, or delete apps. Your apps will not be affected.</li>
+    <li>Backing up PAS takes at least 10 minutes and can take considerably longer with larger blobstores or slow network connections. The backup also incurs around 10 minutes of Cloud Controller downtime during which users are unable to push, scale, or delete apps. Your apps will not be affected.</li>
     <li>Because the BBR backup command can take a long time to complete, Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</li>
     <li>The backup artifact will contain one or more empty UAA tar files. This is an extraneous artifact. The UAA backup is included in the MySQL backup.</li>
   </ul>

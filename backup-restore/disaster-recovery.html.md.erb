@@ -3,61 +3,68 @@ title: Disaster Recovery in Pivotal Cloud Foundry
 owner: BBR
 ---
 
-This document provides a high level overview of the options and considerations for disaster recovery in Pivotal Cloud Foundry (PCF). 
+This document provides an overview of the options and considerations for disaster recovery in Pivotal Cloud Foundry (PCF). 
 
-Operators have a range of approaches for ensuring they can recover Pivotal Cloud Foundry, apps, and data in case of a disaster. The approaches fall into two categories: 
+Operators have a range of approaches for ensuring they can recover Pivotal Cloud Foundry, apps, and data in case of a disaster. The approaches fall into the following two categories:
 
-* Using data from a backup to restore the data in the PCF Foundation: [Backup & Restore using BOSH Backup and Restore (BBR)](#bbr) 
-* Recreating the data in PCF by automating the creation of state in PCF: [Disaster Recovery by Recreating the Foundation](#recreation)
+* Using data from a backup to restore the data in the PCF Deployment. See [Back up and Restore Using BOSH Backup and Restore (BBR)](#bbr) for more information.
+* Recreating the data in PCF by automating the creation of state in PCF. See  [Disaster Recovery by Recreating the Deployment](#recreation) for more information.
 
-## <a id="bbr"></a>Backup & Restore using BOSH Backup and Restore (BBR)
+## <a id="bbr"></a>Back up and Restore using BOSH Backup and Restore (BBR)
 
 ### <a id="what-is-bbr"></a>What is BBR?
 
-BOSH Backup and Restore (BBR) is a CLI for orchestrating the backup and restore of BOSH deployments and BOSH Directors. It triggers the backup (or restore) process on the deployment or Director, and transfers the backup artifact to and from the deployment or Director.
-Use BOSH Backup and Restore to reliably create backups of core PCF components and their data (CredHub, UAA, BOSH Director, and <%= vars.product_short %>).
-Each component includes its own backup scripts. This decentralized structure helps keep scripts in sync. At the same time, _locking_ features ensure data integrity and consistent, distributed backups across your deployment.
+BOSH Backup and Restore (BBR) is a CLI for orchestrating backing up and restoring BOSH deployments and BOSH Directors. BBR triggers the backup or restore process on the deployment or Director, and transfers the backup artifact to and from the deployment or Director.
+
+Use BOSH Backup and Restore to reliably create backups of core PCF components and their data. These core components include CredHub, UAA, BOSH Director, and <%= vars.product_short %>.
+
+Each component includes its own backup scripts. This decentralized structure helps keep scripts synchronized with the components. At the same time, _locking_ features ensure data integrity and consistent, distributed backups across your deployment.
 
 #### <a id="bbr-how"></a> How Does BBR Work?
 
-Operators trigger a backup or a restore for a BOSH deployment or BOSH director using the BBR binary on a jumpbox or in Concourse. BOSH Backup and Restore then looks at the jobs in the deployment or director for backup or restore scripts, and then triggers those scripts in the prescribed order. The artifacts are then transferred to or from the jumpbox/Concourse worker. The operator is responsible for transferring artifacts to or from external storage.
+1. An operator trigger a backup or a restore for a BOSH deployment or BOSH Director using the BBR binary on a jumpbox or in Concourse. 
+
+2. BOSH Backup and Restore examines the jobs in the deployment or Director for backup or restore scripts, then triggers those scripts in the prescribed order. 
+
+3. The artifacts are then transferred to or from the jumpbox or Concourse worker. 
+
+4. The operator must transfer artifacts to or from external storage. 
 
 ### <a id="bbr-backup"></a>Backing up PCF 
 
-Backing up PCF requires backing up these components:
+Backing up PCF requires backing up the following components:
 
 * Ops Manager settings
-* BOSH Director (includes Credhub and UAA)
+* BOSH Director, including CredHub and UAA
 * <%= vars.product_full %>
 * Data services
 
-For more information, see [Backing Up Pivotal Cloud Foundry with BBR](./backup-pcf-bbr.html). With these backup artifacts, operators can recreate PCF exactly as it was when the backup was taken. 
+For more information, see [Backing up Pivotal Cloud Foundry with BBR](./backup-pcf-bbr.html). With these backup artifacts, operators can recreate PCF exactly as it was when the backup was taken. 
 
 ### <a id="bbr-restore"></a> Restoring PCF
 
-The restore process involves creating a new PCF foundation starting with the Ops Manager VM. For more information, see [Restoring Pivotal Cloud Foundry from Backup with BBR](./restore-pcf-bbr.html). 
+The restore process involves creating a new PCF deployment starting with the Ops Manager VM. For more information, see [Restoring Pivotal Cloud Foundry from Backup with BBR](./restore-pcf-bbr.html). 
 
-The time required to restore the data is proportionate to the size of the data. For example, a 1 Tb blobstore takes 1000x as long as a 1 Gb blobstore, because of the additional time required to copy the data.
+The time required to restore the data is proportionate to the size of the data because the restore process includes copying data. For example, restoring a 1&nbsp;TB blobstore takes one thousand times as long as restoring a 1&nbsp;GB blobstore. 
 
 ### <a id="benefits"></a> Benefits
 
-Unlike other backup solutions, using BBR to back up PCF enables:
+Unlike other backup solutions, using BBR to back up PCF enables the following:
 
-* **Completeness**: BBR supports backing up BOSH, including releases, Credhub, UAA, and service instances created with an on demand service broker. With PCF1.12, Ops Manager export no longer includes releases.
-* **Consistency**: referential integrity between the database and the blobstore, because a lock is held while both the database and blobstore are backed up. 
-* **Correctness**: using the BBR restore flow addresses C2C and routing issues that can occur during restore
-
+* **Completeness**: BBR supports backing up BOSH, including releases, CredHub, UAA, and service instances created with an on-demand service broker. With PCF v1.12, Ops Manager export no longer includes releases.
+* **Consistency**: BBR provides referential integrity between the database and the blobstore because a lock is held while both the database and blobstore are backed up. 
+* **Correctness**: Using the BBR restore flow addresses C2C and routing issues that can occur during restore.
 
 ### <a id="api-downtime"></a> API Downtime During Backups
 
 Apps are not affected during backups, but certain APIs are unavailable. The downtime occurs only while the backup is being taken, not while the backup is being copied to the jumpbox.
  
-In order to take a consistent backup -- the blobs in the blobstore match the blobs in the cloud controller database -- changes to the data are prevented during the backup.  This means that the CF API, Routing API, Usage Service, Autoscaler, Notification Service, Network Policy Server, and Credhub are unavailable while the backup is being taken.  UAA is in read-only mode during the backup. are unavailable while the backup is being taken. 
+In a consistent backup, the blobs in the blobstore match the blobs in the Cloud Controller Database. To take a consistent backup, changes to the data are prevented during the backup. This means that the CF API, Routing API, Usage Service, Autoscaler, Notification Service, Network Policy Server, and CredHub are unavailable while the backup is being taken. UAA is in read-only mode during the backup.
 
 ### <a id="backup-timings"></a> Backup Timings
-The table below gives an indication of the downtime that can be expected; downtime will vary based on hardware and PCF configuration. 
+The table below gives an indication of the downtime that you can expect. Actual downtime varies based on hardware and PCF configuration.
 
-These timings were taken on GCP. The components scaled were CAPI workers, Credhub, UAA, Router, CAPI API, Networking, to similate a 'normal' and 'very large' PCF foundation. API downtime is the sum of the time spent in lock, backup, and unlock phases. 
+These example timings were taken on GCP. The components scaled were CAPI workers, CredHub, UAA, Router, CAPI API, and Networking to simulate a "normal" and "very large" PCF deployment. API downtime is the sum of the time spent in lock, backup, and unlock phases. 
 <table>
   <tr>
     <th colspan="4"><em>Backup Timings with Scaled Components</em></th>
@@ -94,44 +101,44 @@ These timings were taken on GCP. The components scaled were CAPI workers, Credhu
 
 #### <a id="blobstore-bbr"></a>Blobstore backup and restore
 
-Blobstores can be very large. In order to minimize downtime, only metadata about the blobs is taken during the backup. For example, in the case of internal blobstores (Webdav/NFS), a list of hardlinks to the blobs is taken. After API access is restored, copies of the blobs are made. 
+Blobstores can be very large. To minimize downtime, only metadata about the blobs is taken during the back up. For example, in the case of internal blobstores (Webdav/NFS), a list of hardlinks to the blobs is taken. After API access is restored, copies of the blobs are made. 
 
 ### <a id="not-supported"></a>Products and Hardware Not Supported 
 
 The follow components and products do not yet support BBR:
 
-* **Data services**: BBR is not yet supported in Pivotal’s flagship data services (MySQL, RabbitMQ, Redis, PCC). In the meantime, operators should use the “automatic backups” feature of each tile, available within Ops Manager. 
+* **Data services**: BBR is not yet supported in Pivotal’s flagship data services (MySQL, RabbitMQ, Redis, PCC). In the meantime, operators should use the automatic backups feature of each tile, available within Ops Manager. 
 * **External blobstores**: BBR does not yet back up external blobstores but can be used to back up the rest of <%= vars.product_short %>. Pivotal recommends that operators copy the blobstore using IaaS tooling, in conjunction with backing up <%= vars.product_short %> with BBR.
 * **External databases**: BBR does not yet support <%= vars.product_short %> configured with an external database. Pivotal recommends that operators copy the database using IaaS tooling.
 
-To address the limitations noted above, when using BBR to back up PCF when <%= vars.product_short %> is configured with an external blobstore and/or external database:
+To address the limitations noted above, follow the guidlines below when using BBR to back up PCF when <%= vars.product_short %> configured with an external blobstore or external database:
 
-* With <%= vars.product_short %> configured an internal database and an external blobstore, follow the PCF backup process using BBR and copy the external blobstore via the IaaS. There may be inconsistencies between the blobstore and database that mean that some apps don’t come up during a restore. Those apps can be repushed. 
+* With <%= vars.product_short %> configured with an internal database and an external blobstore, follow the PCF backup process using BBR and copy the external blobstore using your IaaS. Inconsistencies between the blobstore and database may result in apps failing to restart during the restore. You can push these apps again to restart them. 
 
-* With <%= vars.product_short %> configured configured an external database and an external blobstore, follow the PCF backup process using BBR, but skip the backup of <%= vars.product_short %>. Copy the external database and blobstore via the IaaS. There may be inconsistencies  between the blobstore and database that mean that some apps don’t come up during a restore. Those apps can be repushed. 
+* With <%= vars.product_short %> configured with an external database and an external blobstore, follow the PCF backup process using BBR, but skip the backup of <%= vars.product_short %>. Copy the external database and blobstore using your IaaS. Inconsistencies between the blobstore and database may result in apps failing to restart during the restore. You can push these apps again to restart them. 
 
 ### <a id="best-practices"></a> Best Practices
 
 #### <a id="backup-frequency"></a> Frequency of Backups
 
-Backups should be taken in proportion to the rate of change of the data in PCF to minimize the number of changes lost if a restore is required.  A good starting point is every 24 hours. If app developers are making very frequent changes, the operator should increase the frequency of backups.
+Pivotal recommends that you take backups in proportion to the rate of change of the data in PCF to minimize the number of changes lost if a restore is required. We suggest starting with backing up every 24 hours. If app developers make frequent changes, you should increase the frequency of backups.
 
 #### <a id="artifact-retention"></a> Retention of Backup Artifacts
 
 Operators should retain backup artifacts based on the timeframe they need to be able to restore to. For example, if backups are taken every 24 hours and PCF must be able to be restored to three days prior, three sets of backup artifacts should be retained.
 
 Artifacts should be stored in two data centers other than the PCF data center.
-When deciding the (restore timeframe), other factors such as compliance and auditability should be taken into account. 
+When deciding the restore timeframe, you should take other factors such as compliance and auditability into account. 
 
 #### <a id="security"></a>Security
 
-It is strongly recommended that artifacts are encrypted and stored securely.
+Pivotal strongly recommends that you encrypt artifacts and stored them securely.
 
-## <a id="recreation"></a> Disaster Recovery by Recreating the Foundation
+## <a id="recreation"></a> Disaster Recovery by Recreating the Deployment
 
-An alternative strategy for recovering PCF after a disaster is to have automation in place so that all the data can be recreated. This requires that every modification to PCF settings and state be automated, typically via pipeline. 
+An alternative strategy for recovering PCF after a disaster is to have automation in place so that all the data can be recreated. This requires that every modification to PCF settings and state be automated, typically through use of a pipeline. 
 
-Recovery steps include creating a new PCF, recreating orgs, spaces, users, services, service bindings and other state, and repushing apps.
+Recovery steps include creating a new PCF, recreating orgs, spaces, users, services, service bindings and other state, and re-pushing apps.
 
 For more information about this approach, see the following Cloud Foundry Summit presentation: [Multi-DC Cloud Foundry: What, Why and How?](https://www.youtube.com/watch?v=t61r8THmtsc). 
 
@@ -139,11 +146,11 @@ For more information about this approach, see the following Cloud Foundry Summit
 
 ### <a id="active-active"></a>  Active-Active
 
-To prevent app downtime, some Pivotal customers run active-active, where there are two or more identical PCF foundations in different data centers. If one PCF foundation becomes unavailable, traffic is seamlessly routed to the other foundation. To achieve identical foundations, all operations to PCF are automated so they can be applied to both PCFs in parallel.
+To prevent app downtime, some Pivotal customers run active-active, where they run two or more identical PCF deployments in different data centers. If one PCF deployment becomes unavailable, traffic is seamlessly routed to the other deployment. To achieve identical deployments, all operations to PCF are automated so they can be applied to both PCF deployments in parallel.
 
-Because all operations have been automated, the automation approach to disaster recovery is a viable option for active-active; disaster recovery requires recreating PCF then running all the automation to recreate state. 
+Because all operations have been automated, the automation approach to disaster recovery is a viable option for active-active. Disaster recovery requires recreating PCF, then running all the automation to recreate state. 
 
-However, it requires discipline to automate all changes to PCF. Some of the operations that need to be automated are:
+This option requires discipline to automate all changes to PCF. Some of the operations that need to be automated are the following:
 
 * App push, restage, scale
 * Org, space, and user create, read, update, and delete (CRUD)
@@ -155,7 +162,7 @@ However, it requires discipline to automate all changes to PCF. Some of the oper
 
 Human-initiated changes always make their way into the system. These changes can include quotas being raised, new settings being enabled, and incident responses. For this reason, Pivotal recommends taking backups even when using an automated disaster recovery strategy.
 
-#### <a id="bbr-aa-comparison"></a> Using BBR Backup & Restore vs Recreating a Failed PCF Foundation in Active-Active
+#### <a id="bbr-aa-comparison"></a> Using BBR Backup and Restore versus Recreating a Failed PCF Deployment in Active-Active
 
 <table>
 <tr>
@@ -259,17 +266,16 @@ Current time
 
 ### <a id="active-passive"></a>  Active-Passive
 
-Instead of having a true active/active deployment across all layers, some Pivotal customers prefer to install a PCF/<%= vars.product_short %> foundation on a backup site. The backup site resides on-premises, in a co-location facility, or the public cloud. The backup site includes an operational foundation, with only the most critical apps ready to accept traffic should a failure occur in the primary data center. Disaster recovery in this scenario involves:
+Instead of having a true active-active deployment across all layers, some Pivotal customers prefer to install a PCF or <%= vars.product_short %> deployment on a backup site. The backup site resides on-premises, in a co-location facility, or the public cloud. The backup site includes an operational deployment, with only the most critical apps ready to accept traffic should a failure occur in the primary data center. Disaster recovery in this scenario involves the following:
 
 1. Switching traffic to the passive PCF, making it active.
-1. Recovering the formerly-active PCF. Operators can choose to do this via automation, if that option is available, or by using BBR and the restore process.
+1. Recovering the formerly-active PCF. Operators can choose to do this through automation, if that option is available, or by using BBR and the restore process.
 
-The RTO and RPO for recreating the active PCF are the same as outlined in the Backup & Restore vs Automation for Active-Active disaster recovery table. 
+The RTO and RPO for recreating the active PCF are the same as outlined in the table above. 
 
 ## <a id="reducing-rto"></a> Reducing RTO
 
-Both the restore and recreate data disaster recovery options require standing up a new PCF, which can take hours. If a shorter RTO is required, several options involving a pre-created standby hardware + PCF are available:
-
+Both the restore and recreate data disaster recovery options require standing up a new PCF, which can take hours. If you require shorter RTO, several options involving a pre-created standby hardware and PCF are available:
 
 <table>
 <tbody>
@@ -278,7 +284,7 @@ Both the restore and recreate data disaster recovery options require standing up
 <p><strong>Active-cold</strong></p>
 </th>
 <td>
-<p>Public cloud environment ready for PCF installation, no PCF installed. This saves both IaaS costs and PCF instance costs. For on prem installations, this would require hardware on standby ready to install on, which is not a realistic option.</p>
+<p>Public cloud environment ready for PCF installation, no PCF installed. This saves both IaaS costs and PCF instance costs. For on-prem installations, this requires hardware on standby, ready to install on, which may not be a realistic option.</p>
 </td>
 </tr>
 <tr>
@@ -286,7 +292,7 @@ Both the restore and recreate data disaster recovery options require standing up
 <p><strong>Active-warm</strong></p>
 </th>
 <td>
-<p>PCF installed on standby hardware and kept up to date, VMs scaled down to zero (spin them up each time there is a platform update), no apps installed, no orgs/spaces defined.</p>
+<p>PCF installed on standby hardware and kept up to date, VMs scaled down to zero (spin them up each time there is a platform update), no apps installed, no orgs or spaces defined.</p>
 </td>
 </tr>
 <tr>
@@ -294,7 +300,7 @@ Both the restore and recreate data disaster recovery options require standing up
 <p><strong>Active-inflate platform</strong></p>
 </th>
 <td>
-<p>Bare minimum PCF install, either with no applications, or a small number of each app in a stopped state. On recovery, push a small number of apps (or start current apps), while simultaneously triggering automation to scale the platform to the primary node size (or smaller version if large percentages of loss are acceptable). This mode allows you to start sending SOME traffic immediately, while not paying for a full non-primary platform. This method needs to have data seeded, but it is usually acceptable to complete data sync while platform is scaling up.</p>
+<p>Bare minimum PCF install, either with no applications, or a small number of each app in a stopped state. On recovery, push a small number of apps or start current apps, while simultaneously triggering automation to scale the platform to the primary node size, or a smaller version if large percentages of loss are acceptable. This mode allows you to start sending some traffic immediately, while not paying for a full non-primary platform. This method requires data seeded, but it is usually acceptable to complete data sync while platform is scaling up.</p>
 </td>
 </tr>
 <tr>
@@ -302,23 +308,23 @@ Both the restore and recreate data disaster recovery options require standing up
 <p><strong>Active-inflate apps</strong></p>
 </th>
 <td>
-<p>Non-primary foundation scaled to the primary node size (or smaller version if large percentages of loss are acceptable), with a small number of diego cells (VMs). On failover, scale diego cells up to primary node counts. This mode allows you to start sending MOST traffic immediately, while not paying for all the AIs of a fully fledged node. This method requires data to be there very quickly after failure (does not require real-time sync, but near-real time). </p>
+<p>Non-primary deployment scaled to the primary node size, or smaller version if large percentages of loss are acceptable, with a small number of Diego cells (VMs). On failover, scale Diego cells up to primary node counts. This mode allows you to start sending most traffic immediately, while not paying for all the AIs of a fully fledged node. This method requires data to be there very quickly after failure. It does not require real-time sync, but near-real time. </p>
 </td>
 </tr>
 </tbody>
 </table>
 
-There is a tradeoff between cost and RTO - the less the replacement PCF needs to be deployed and scaled, the faster the restore. 
+There is a tradeoff between cost and RTO: the less the replacement PCF needs to be deployed and scaled, the faster the restore. 
 
 ## <a id="automating-backups"></a> Automating Backups
 
 BBR generates the backup artifacts required for PCF, but does not handle scheduling, artifact management, or encryption. The BBR team has created a [starter Concourse pipeline](https://github.com/pivotal-cf/bbr-pcf-pipeline-tasks) to automate backups with BBR. 
 
-Also, Stark & Wayne’s Shield can be used as a front end management tool using the BBR plugin.
+Also, Stark & Wayne's Shield can be used as a front end management tool using the BBR plugin.
 
 ## <a id="validating-backups"></a> Validating Backups
 
 To ensure that backup artifacts are valid, the BBR tool creates checksums of the generated backup artifacts, and ensures that the checksums match the artifacts on the jumpbox. 
 
-However, the only way to be 100% sure that the backup artifact can be used to successfully recreate PCF is to test it out in the restore process. This is a cumbersome, dangerous process so should be done with care. For instructions, see [Step 11: (Optional) Validate Your Backup](./backup-pcf-bbr.html#validate-backup) of the _Backing Up Pivotal Cloud Foundry with BBR_. 
+However, the only way to be sure that the backup artifact can be used to successfully recreate PCF is to test it in the restore process. This is a cumbersome, dangerous process so should be done with care. For instructions, see [Step 11: (Optional) Validate Your Backup](./backup-pcf-bbr.html#validate-backup) of the _Backing Up Pivotal Cloud Foundry with BBR_. 
 

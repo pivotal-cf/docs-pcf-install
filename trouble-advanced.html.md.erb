@@ -161,29 +161,23 @@ Log in to the BOSH Director using one of the following options below:
     $ bosh login
     Email: admin
     Password:
-    One Time Code (Get one at https:<span>//</span>192.0.2.16.11:8888/passcode):
-    </pre>
-
-     If you do not have browser access to the BOSH Director, run `sshuttle` on a local Linux workstation to browse the BOSH Director IP as if it were a local address. Retrieve a UAA passcode using the browser:
-    <pre class='terminal'>
-    $ git clone https:<span>//</span>github.com/apenwarr/sshuttle.git
-    $ cd sshuttle
-    $ ./sshuttle -r username@opsmanagerIP 0.0.0.0/0 -vv
-    </pre>
+One Time Code (Get one at https:<span>//</span>192.0.2.16.11:8888/passcode):
+</pre>
+<p class="note"><strong>Note: </strong>Your browser must be able to reach the BOSH Director in order to login with SAML.</p>
 
 
 1. Click **Log in with organization credentials (SAML)**.
 
-    <%= image_tag("login-saml-credentials.png") %>
+<%= image_tag("login-saml-credentials.png") %>
 
 1. Copy the **Temporary Authentication Code** that appears in your browser.
 
-    <%= image_tag("saml-login-temp-auth-code.png") %>
+<%= image_tag("saml-login-temp-auth-code.png") %>
 
 1. You see a login confirmation. For example:
 
-    <pre class='terminal'>Logged in as admin@example.org
-    </pre>
+<pre class='terminal'>Logged in as admin@example.org
+</pre>
 
 ### <a id='product'></a>Select a Product Deployment to Troubleshoot ###
 
@@ -196,49 +190,49 @@ Perform the following steps to select a product deployment to troubleshoot:
 1. Identify the YAML file that describes the deployment you want to
 troubleshoot.
 
-    You identify the YAML file that describes a deployment by its filename.
-    For example, to identify Elastic Runtime deployments, run the following
-    command:
+You identify the YAML file that describes a deployment by its filename.
+For example, to identify Elastic Runtime deployments, run the following
+command:
 
-    `find /var/tempest/workspaces/default/deployments -name cf-*.yml`
+`find /var/tempest/workspaces/default/deployments -name cf-*.yml`
 
-    The table below shows the naming conventions for deployment files.
+The table below shows the naming conventions for deployment files.
 
-    <table border="1" class="nice" >
-      <tr>
-        <th>Product</th><th>Deployment Filename Convention</th>
-      </tr>
-      <tr>
-        <td>Elastic Runtime</td>
-        <td>cf-&lt;20-character_random_string&gt;.yml</td>
-      </tr>
-      <tr>
-        <td>MySQL Dev</td>
-        <td>cf_services-&lt;20-character_random_string&gt;.yml</td>
-      </tr>
-      <tr>
-        <td>Other</td>
-        <td>&lt;20-character_random_string&gt;.yml</td>
-      </tr>
-    </table>
+<table border="1" class="nice" >
+<tr>
+<th>Product</th><th>Deployment Filename Convention</th>
+</tr>
+<tr>
+<td>Elastic Runtime</td>
+<td>cf-&lt;20-character_random_string&gt;.yml</td>
+</tr>
+<tr>
+<td>MySQL Dev</td>
+<td>cf_services-&lt;20-character_random_string&gt;.yml</td>
+</tr>
+<tr>
+<td>Other</td>
+<td>&lt;20-character_random_string&gt;.yml</td>
+</tr>
+</table>
 
-    <p class="note"><strong>Note</strong>: Where there is more than one installation of the same product, record the release number shown on the product tile in Operations Manager. Then, from the YAML files for that product, find the deployment that specifies the same release version as the product tile.</p>
+<p class="note"><strong>Note</strong>: Where there is more than one installation of the same product, record the release number shown on the product tile in Operations Manager. Then, from the YAML files for that product, find the deployment that specifies the same release version as the product tile.</p>
 
 1. Run `bosh status` and record the UUID value.
 
 1. Open the `DEPLOYMENT-FILENAME.yml` file in a text editor and compare the
 `director_uuids` value in this file with the UUID value that you recorded. If
 the values do not match, perform the following steps:
-    1. Replace the `director_uuids` value with the UUID value.
-    1. Run `bosh deployment DEPLOYMENT-FILENAME.yml` to reset the file for your
-    deployment.
+1. Replace the `director_uuids` value with the UUID value.
+1. Run `bosh deployment DEPLOYMENT-FILENAME.yml` to reset the file for your
+deployment.
 
 1. Run `bosh deployment DEPLOYMENT-FILENAME.yml` to instruct the BOSH Director
 to apply BOSH CLI commands against the deployment described by the YAML file that you identified:
 
-    <pre class='terminal'>
-    $ bosh deployment /var/tempest/workspaces/default/deployments/cf-cca1234abcd.yml
-    </pre>
+<pre class='terminal'>
+$ bosh deployment /var/tempest/workspaces/default/deployments/cf-cca1234abcd.yml
+</pre>
 
 ## <a id='cli'></a>Use the BOSH CLI for Troubleshooting##
 
@@ -312,68 +306,68 @@ state of the VMs. For each difference detected, `bosh cloudcheck` can offer the
 following repair options:
 
 * `Reboot VM`: Instructs BOSH to reboot a VM. Rebooting can resolve many
-  transient errors.
+transient errors.
 * `Ignore problem`: Instructs BOSH to do nothing.
-  You may want to ignore a problem in order to run `bosh ssh` and attempt
-  troubleshooting directly on the machine.
+You may want to ignore a problem in order to run `bosh ssh` and attempt
+troubleshooting directly on the machine.
 * `Reassociate VM with corresponding instance`: Updates the BOSH Director state
-  database.
-  Use this option if you believe that the BOSH Director state database is in
-  error and that a VM is correctly associated with a job.
+database.
+Use this option if you believe that the BOSH Director state database is in
+error and that a VM is correctly associated with a job.
 * `Recreate VM using last known apply spec`: Instructs BOSH to destroy the
-  server and recreate it from the deployment manifest that the installer
-  provides. Use this option if a VM is corrupted.
+server and recreate it from the deployment manifest that the installer
+provides. Use this option if a VM is corrupted.
 * `Delete VM reference`: Instructs BOSH to delete a VM reference in the
-  Director state database. If a VM reference exists in the state database, BOSH
-  expects to find an agent running on the VM.
-  Select this option only if you know that this reference is in error.
-  Once you delete the VM reference, BOSH can no longer control the VM.
+Director state database. If a VM reference exists in the state database, BOSH
+expects to find an agent running on the VM.
+Select this option only if you know that this reference is in error.
+Once you delete the VM reference, BOSH can no longer control the VM.
 
 ####Example Scenarios ####
 
 **Unresponsive Agent**
 
 <pre class='terminal'>
-  $ bosh cloudcheck
-  ccdb/0 (vm-3e37133c-bc33-450e-98b1-f86d5b63502a) is not responding:
+$ bosh cloudcheck
+ccdb/0 (vm-3e37133c-bc33-450e-98b1-f86d5b63502a) is not responding:
 
-  - Ignore problem
-  - Reboot VM
-  - Recreate VM using last known apply spec
-  - Delete VM reference (DANGEROUS!)
+- Ignore problem
+- Reboot VM
+- Recreate VM using last known apply spec
+- Delete VM reference (DANGEROUS!)
 </pre>
 
 **Missing VM**
 
 <pre class='terminal'>
-  $ bosh cloudcheck
-  VM with cloud ID `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' missing:
+$ bosh cloudcheck
+VM with cloud ID `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' missing:
 
-  - Ignore problem
-  - Recreate VM using last known apply spec
-  - Delete VM reference (DANGEROUS!)
+- Ignore problem
+- Recreate VM using last known apply spec
+- Delete VM reference (DANGEROUS!)
 </pre>
 
 **Unbound Instance VM**
 
 <pre class='terminal'>
-  $ bosh cloudcheck
-  VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' reports itself as `ccdb/0' but does not have a bound instance:
+$ bosh cloudcheck
+VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' reports itself as `ccdb/0' but does not have a bound instance:
 
-  - Ignore problem
-  - Delete VM (unless it has persistent disk)
-  - Reassociate VM with corresponding instance
+- Ignore problem
+- Delete VM (unless it has persistent disk)
+- Reassociate VM with corresponding instance
 </pre>
 
 **Out of Sync VM**
 
 <pre class='terminal'>
-  $ bosh cloudcheck
-  VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' is out of sync:
-  expected `cf-d7293430724a2c421061: ccdb/0', got `cf-d7293430724a2c421061: nats/0':
+$ bosh cloudcheck
+VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' is out of sync:
+expected `cf-d7293430724a2c421061: ccdb/0', got `cf-d7293430724a2c421061: nats/0':
 
-  - Ignore problem
-  - Delete VM (unless it has persistent disk)
+- Ignore problem
+- Delete VM (unless it has persistent disk)
 </pre>
 
 ### <a id='bosh-ssh'></a>BOSH SSH ###
@@ -418,11 +412,11 @@ RSA 1024 bit CA certificates are loaded due to old openssl compatibility
 18. nfs_server-partition-3333e3ee3332221e222e/0 (abc31111-111e-1ec3-bb3e-jjj111111111)
 Choose an instance:
 
-  Choose an instance: 5
-  Enter password (use it to sudo on remote host): *******
-  Target deployment 'cf-33e333333eebbb3b33b3'
+Choose an instance: 5
+Enter password (use it to sudo on remote host): *******
+Target deployment 'cf-33e333333eebbb3b33b3'
 
-  Setting up ssh artifacts
+Setting up ssh artifacts
 </pre>
 
 ### <a id='standard-ssh'></a>Standard SSH ###
@@ -431,7 +425,7 @@ In most cases, operators should use the `bosh ssh` command in the BOSH CLI to SS
 
 1. Locate the IP address of your BOSH Director and your BOSH Director credentials by following the [steps](#gather) above.
 1. SSH into the BOSH Director with the private key you used with `bosh-init` to deploy the BOSH Director:
-  <pre class="terminal">$ ssh BOSH-DIRECTOR-IP -i PATH-TO-PRIVATE-KEY </pre>
+<pre class="terminal">$ ssh BOSH-DIRECTOR-IP -i PATH-TO-PRIVATE-KEY </pre>
 1. Enter your BOSH Director credentials to log in.
 
 From the BOSH Director, you can SSH into the other VMs in your deployment by performing the following steps:

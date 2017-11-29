@@ -13,45 +13,38 @@ An AWS CloudFormation template describes a set of AWS resources and properties. 
 
 The procedure in this topic requires the following: 
 
-* **An AWS Region with at least 3 availability zones**: Before following the procedure below, confirm that you have selected the correct region within your AWS account. All of the AWS resources for your deployment must exist within a single region. See the <a href='http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-regions-availability-zones'>Amazon documentation on regions and availability zones</a> for help selecting the correct region for your deployment.
+* **An AWS Region with at least 3 availability zones**: Confirm that you have selected the correct region within your AWS account. All of the AWS resources for your deployment must exist within a single region. For information about selecting the correct region for your deployment, see [Region and Availability Zone Concepts](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-regions-availability-zones) from Amazon's AWS documentation.
   <p class="note"><strong>Note</strong>: To deploy PCF to AWS GovCloud (US), select the <code>us-gov-west-1</code> region.</p>
-* **An AWS SSH keypair**: You must provide an AWS SSH keypair name as a parameter for the CloudFormation template. If you do not have a pre-existing key pair, create one in [AWS](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair). Save the resulting private key file in a secure location.
-* **A registered wildcard domain**: You must enter a wildcard domain as the `Common name` when creating your SSL certificate.  
+* **An AWS SSH key pair**: Provide an AWS SSH key pair name as a parameter for the CloudFormation template. If you do not have a pre-existing key pair, create one in AWS. For more information about creating a key pair, see [Creating a Key Pair Using Amazon EC2](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair) from Amazon's AWS documentation. Save the resulting private key file in a secure location.
+* **A registered wildcard domain**: Enter a wildcard domain as the Common Name (CN) when creating your SSL certificate.  
 
 ## <a id='upload-cert'></a>Step 1: Upload an SSL Certificate to AWS ##
 
-You can add an SSL Certificate using two methods:
+You can add an SSL Certificate using one of two methods: the AWS CLI or the AWS Certificate Manager.
 
-  * The [AWS CLI](#aws-cli)
-  * The [AWS Certificate Manager](#aws-certificate-manager)
+### <a id="aws-cli"></a>Option 1: Create SSL Certificate using the AWS CLI
 
-### <a id="aws-cli"></a>(Option) Create SSL Certificate using the AWS CLI
+1. Install AWS CLI. For more information about installing AWS CLI, see [Installing the AWS Command Line Interface](http://docs.aws.amazon.com/cli/latest/userguide/installing.html) from Amazon's AWS documentation.
 
-The [AWS CLI](https://aws.amazon.com/cli/) must be installed on your machine and configured to a user account with admin access privileges on your AWS account.
+1. Ensure your user account has admin access privileges on your AWS account. For more information, see [Configuring and Using a Role](http://docs.aws.amazon.com/cli/latest/userguide/cli-roles.html#cli-role-prepare) from Amazon's AWS documentation.
 
-1. Obtain or create an SSL server certificate. For more information, see the [AWS documentation on SSL certificates](http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/ssl-server-cert.html). When you create a certificate signing request (CSR) in the "Create a Server Certificate" instructions, you must use your wildcard domain as the Common Name input.
+1. Obtain or create an SSL server certificate. For more information, see [SSL/TLS Certificates for Classic Load Balancers](http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/ssl-server-cert.html). When you create a certificate signing request (CSR), use your wildcard domain as the Common Name input.
 
-1. Add the following additional domains and wildcards using the OpenSSL SAN (subjectAltName) extension: 
+1. Add the following additional domains and wildcards using the OpenSSL SAN `subjectAltName` extension: 
   * `*.sys.example.com`
   * `*.login.sys.example.com`
   * `*.uaa.sys.example.com`
   * `*.apps.example.com`
   <p class='note'><strong>Note</strong>: If you use a self-signed certificate or select the "Generate Self-Signed RSA Certificate" option during the <a href="./../customizing/cloudform-er-config.html#security-config">Deploying PAS on AWS</a> installation process, you can ignore the step above. However, make sure you upload the self-signed certificate to AWS and attach the certificate to the listeners on the AWS Elastic Load Balancer. Pivotal recommends only using a self-signed certificate for testing and development.</p>
 
-1. Upload your SSL certificate to AWS. For more information, see the [AWS documentation s on uploading SSL certificate using the CLI](http://docs.aws.amazon.com/cli/latest/reference/iam/upload-server-certificate.html).
+1. Upload your SSL certificate to AWS using the [upload-server-certificate](http://docs.aws.amazon.com/cli/latest/reference/iam/upload-server-certificate.html) AWS CLI command:
 <pre class='terminal'>
 $ aws iam upload-server-certificate \
 --server-certificate-name YOUR-CERTIFICATE \
 --certificate-body file://YOUR-PUBLIC-KEY-CERT-FILE.pem \
 --private-key file://YOUR-PRIVATE-KEY-FILE.pem \
 </pre>
-For example:
-<pre class='terminal'>
-$ aws iam upload-server-certificate \
---server-certificate-name myServerCertificate \
---certificate-body file://my-certificate.pem \
---private-key file://my-private-key.pem
-</pre><p class='note'><strong>Note</strong>: If you receive an upload error (MalformedCertificate), run the following command to convert your server certificate to the PEM format as required by the AWS Identity and Management (IAM) service:
+<p class='note'><strong>Note</strong>: If you receive an upload error (MalformedCertificate), run the following command to convert your server certificate to the PEM format as required by the AWS Identity and Management (IAM) service:
 <code>$ openssl x509 -inform PEM -in my-certificate.pem</code><br/>Then try your upload again.</p>
 
 1. After successfully uploading the certificate to your AWS account, you will see output metadata for your certificate. For example:
@@ -69,7 +62,7 @@ $ aws iam upload-server-certificate \
    </pre>
 1. Record the value of the SSL Certificate <code>ARN</code> (Amazon Resource Name) to use when [configuring](#create-stack) your AWS resource stack. Alternatively, if you know the name of the certificate, you can run the following command to retrieve certificate metadata later: <pre class='terminal'>$ aws iam get-server-certificate --server-certificate-name YOUR-CERT-NAME</pre> For example: <pre class='terminal'>$ aws iam get-server-certificate --server-certificate-name myServerCertificate</pre>
 
-### <a id="aws-certificate-manager"></a>(Option) Create SSL Certificate using the AWS Certificate Manager
+### <a id="aws-certificate-manager"></a>Option 2: Create SSL Certificate using the AWS Certificate Manager
 
 1. Log into your AWS management console and navigate to **Certificate Manager**. If your Certificate Manager has no certificates, click **Get Started**.
 

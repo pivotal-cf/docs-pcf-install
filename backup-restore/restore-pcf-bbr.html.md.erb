@@ -285,45 +285,6 @@ $ BOSH-CLIENT-SECRET=BOSH-PASSWORD \
       <strong>Validation</strong>: If you ran <code>bosh stop</code> on each <code>diego_cell</code> before running <code>bbr restore</code>, you can now run <code>cf stop</code> on all apps and then run <code>bosh start</code> on each <code>diego_cell</code>. After this, all apps will be deployed in a stopped state.
     </p>
 
-1. Perform the following steps after restoring PAS:
-  1. Retrieve the MySQL admin credentials from CredHub using the Ops Manager API:
-          1. Perform the procedures in the [Using the Ops Manager API](../ops-man-api.html) topic to authenticate and access the Ops Manager API.
-          1. Use the `GET /api/v0/deployed/products` endpoint to retrieve a list of deployed products, replacing `UAA-ACCESS-TOKEN` with the access token recorded in the previous step:
-              <pre class="terminal">$ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products" \
-                -X GET \
-                -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
-          1. In the response to the above request, locate the product with an `installation_name` starting with `cf-` and copy its `guid`.
-          1. Run the following `curl` command, replacing `PRODUCT-GUID` with the value of `guid` from the previous step:
-              <pre class="terminal">$ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products/PRODUCT-GUID/variables?name=mysql-admin-credentials" \
-                -X GET \
-                -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
-          1. Record the MySQL admin credentials from the response to the above request.
-  1. List the VMs in your deployment:
-    <pre class="terminal">$ bosh -e DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate \
-    -d DEPLOYMENT-NAME \
-    vms</pre>
-  1. Run BOSH SSH:
-    <pre class="terminal">$ bosh -e DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate \
-    ssh</pre>
-  1. Select the `mysql` VM to SSH into.
-  1. From the `mysql` VM, run the following command:
-    <pre class="terminal">$ sudo /var/vcap/packages/mariadb/bin/mysql -u root -p</pre> When prompted, enter the MySQL admin password.<br><br>
-  1. At the MySQL prompt, run the following command:
-    <pre class="terminal">mysql> use silk; drop table subnets; drop table gorp_migrations;</pre>
-  1. Exit MySQL:
-    <pre class="terminal">mysql> exit</pre>
-  1. Exit the `mysql` VM:
-    <pre class="terminal">$ exit</pre>
-  1. List the VMs in your deployment:
-    <pre class="terminal">$ bosh -e DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate \
-    -d DEPLOYMENT-NAME \
-    vms</pre>
-  1. SSH onto each `diego_database` VM and run the following command:
-    <pre class="terminal">$ sudo su 
-    $ monit restart silk-controller</pre>
-
-      Restored apps will begin to start. The amount of time it takes for all apps to start depends on the number of app instances, the resources available to the underlying infrastructure, and the value of the **Max Inflight Container Starts** field in the PAS tile.
-
 1. If desired, scale the MySQL Server job back up to its previous number of instances by navigating to the **Resource Config** section of the PAS tile. After scaling the job, return to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy.
 
 ##<a id='odb'></a> (Optional) Step 13: Restore On-Demand Service Instances

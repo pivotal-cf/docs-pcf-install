@@ -43,18 +43,18 @@ Follow the procedures below as part of the upgrade process documented in the [Up
 1. Retrieve the connection string for the account.
     <pre class="terminal">
     $ az storage account show-connection-string \
-    --name $STORAGE\_NAME --resource-group $RESOURCE_GROUP
+    --name $STORAGE_NAME --resource-group $RESOURCE_GROUP
     </pre>
 The command returns output similar to the following:
     <pre class="terminal">
     {
-      "connectionString": "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=cfdocsboshstorage;AccountKey=KwKQqVXgVcEVBZUY/leiIy/Lprnc5igFxYWsgq016Tu9uGwseOl8bqNBEL/2tp7wX92QMUM19Pz9BYTXt8aq4A=="
+      "connectionString": "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=cfdocsboshstorage;AccountKey=EXAMPLEaaaaaaaaaleiIy/Lprnc5igFxYWsgq016Tu9uGwseOl8bqNBEL/2tp7wX92QMUM19Pz9BYTXt8aq4A=="
     }
     </pre>
 1. From the `data:` field in the output above, record the full value of `connectionString` from the output above, starting with and including `DefaultEndpointsProtocol=`.
 1. Export the value of `connectionString` as the environment variable `$AZURE_STORAGE_CONNECTION_STRING`.
     <pre class="terminal">
-    $ export AZURE\_STORAGE\_CONNECTION\_STRING="YOUR-ACCOUNT-KEY-STRING"
+    $ export AZURE_STORAGE_CONNECTION_STRING="YOUR-ACCOUNT-KEY-STRING"
     </pre>
 
 ##<a id='setup'></a> Step 2: Set Up Ops Manager
@@ -64,13 +64,13 @@ The command returns output similar to the following:
 1. View the downloaded PDF and locate the Ops Manager image URL appropriate for your region.
 
 1. Export the Ops Manager image URL as an environment variable.
-    <pre class="terminal">$ export OPS\_MAN\_IMAGE\_URL="YOUR-OPS-MAN-IMAGE-URL"</pre>
+    <pre class="terminal">$ export OPS_MAN_IMAGE_URL="YOUR-OPS-MAN-IMAGE-URL"</pre>
     This command overrides the old Ops Manager image URL with the new Ops Manager image URL.
 
 1. Copy the Ops Manager image into your storage account.
     <pre class="terminal">
-    $ az storage blob copy start --source-uri $OPS\_MAN\_IMAGE\_URL \
-    --connection-string $AZURE\_STORAGE\_CONNECTION\_STRING \
+    $ az storage blob copy start --source-uri $OPS_MAN_IMAGE_URL \
+    --connection-string $AZURE_STORAGE_CONNECTION_STRING \
     --destination-container opsmanager \
     --destination-blob image.vhd 
     </pre>
@@ -151,7 +151,7 @@ You have two choices for the Ops Manager IP address. Choose one of the following
 
 1. Shut down your old Ops Manager VM:
     <pre class="terminal">
-    $ az vm stop --name ops-manager --resource-group $RESOURCE\_GROUP 
+    $ az vm stop --name ops-manager --resource-group $RESOURCE_GROUP 
     </pre>
     If your Ops Manager VM is not named `ops-manager`, provide the correct name. To list all VMs in your account, use `az vm list`.
 
@@ -170,7 +170,7 @@ You have two choices for the Ops Manager IP address. Choose one of the following
     <pre class="terminal">
     $ az disk create --resource-group $RESOURCE_GROUP \
     --name opsman-disk \
-    --source https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image.vhd \
+    --source https://$STORAGE_NAME.blob.core.windows.net/opsmanager/image.vhd \
     --location $LOCATION --size-gb 120
     </pre>
     <br>
@@ -182,11 +182,11 @@ You have two choices for the Ops Manager IP address. Choose one of the following
 
 1. Create your Ops Manager VM, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file.
     <pre class="terminal">
-     $ az vm create --name ops-manager --resource-group $RESOURCE\_GROUP \
+     $ az vm create --name ops-manager --resource-group $RESOURCE_GROUP \
      --location $LOCATION --os-type linux \
      --nics ops-manager-nic \
      --attach-os-disk opsman-disk \
      --admin-username ubuntu \
-     --size Standard\_DS2\_v2 \
+     --size Standard_DS2_v2 \
      --ssh-key-value PATH-TO-PUBLIC-KEY
     </pre> 

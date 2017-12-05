@@ -68,24 +68,12 @@ Use SSH to connect to the Ops Manager web application VM.
 
 To SSH into the Ops Manager VM:
 
-**vSphere:**
+### <a id='ssh-aws'></a>AWS
 
-You need the credentials used to import the PCF .ova or .ovf file into
-your virtualization system.
+To SSH into the Ops Manager VM in AWS, you need the key pair you used when you created the Ops Manager VM.
+To see the name of the key pair, click on the Ops Manager VM and locate the `key pair name` in the properties.
 
-1. From a command line, run `ssh ubuntu@OPS-MANAGER-FQDN`.
-
-1. When prompted, enter the password that you set during the .ova deployment
-into vCenter:
-    <pre class='terminal'>
-    $ ssh ubuntu@OPS-MANAGER-FQDN
-    Password: ***********
-    </pre>
-
-**AWS, Azure, and OpenStack:**
-
-1. Locate the Ops Manager FQDN on the AWS EC2 instances page or the
-OpenStack Access & Security page.
+1. Locate the Ops Manager FQDN on the AWS **EC2 instances** page.
 
 1. Change the permissions on the `.pem` file to be more restrictive:
 
@@ -99,26 +87,77 @@ OpenStack Access & Security page.
 	ssh -i ops_mgr.pem ubuntu@OPS-MANAGER-FQDN
 	</pre>
 
-**GCP:**
+### <a id='ssh-azure'></a>Azure
+
+To SSH into the Ops Manager VM in Azure, you need the key pair you used when creating the Ops Manager VM.
+If you need to reset the SSH key, locate the Ops Manager VM in the Azure UI and click **Reset Password**.
+
+Perform the following steps to SSH into the Ops Manager VM in Azure:
+
+1. Run `chmod 600 ops_mgr.pem` to change the permissions on the `.pem` file to be more restrictive. For example:
+  <pre class="terminal">
+  $ chmod 600 ops_mgr.pem
+  </pre>
+
+1. Run `ssh -i ops_mgr.pem ubuntu@OPS-MANAGER-FQDN` to SSH into the Ops Manager VM. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager. For example:
+  <pre class="terminal">
+  $ ssh -i ops_mgr.pem ubuntu<span>@</span>my-opsmanager-fqdn.example.com
+  </pre>
+
+### <a id='ssh-openstack'></a>OpenStack
+
+To SSH into the Ops Manager VM in OpenStack, you need the key pair that you created in the [Configure Security](./openstack-setup.html#security) step of the _Provisioning the OpenStack Infrastructure_ topic.
+If you need to reset the SSH key, locate the Ops Manager VM in the OpenStack console and boot it in recovery mode to generate a new key pair.
+
+Perform the following steps to SSH into the Ops Manager VM in OpenStack:
+
+1. Locate the Ops Manager FQDN on the **Access & Security** page.
+
+1. Run `chmod 600 ops_mgr.pem` to change the permissions on the `.pem` file to be more restrictive. For example:
+  <pre class="terminal">
+  $ chmod 600 ops_mgr.pem
+  </pre>
+
+1. Run `ssh -i ops_mgr.pem ubuntu@OPS-MANAGER-FQDN` to SSH into the Ops Manager VM. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager. For example:
+  <pre class="terminal">
+  $ ssh -i ops_mgr.pem ubuntu<span>@</span>my-opsmanager-fqdn.example.com
+  </pre>
+
+### <a id='ssh-gcp'></a>GCP
 
 1. Confirm that you have installed the gcloud CLI. If you do not have the gcloud CLI, see [the Google Cloud Platform documentation](https://cloud.google.com/sdk/gcloud/#downloading_gcloud).
 
-1. Run `gcloud config set project MY-PROJECT` to configure your Google Cloud Platform project. For example:
-    <pre class="terminal">
-    $ gcloud config set project gcp
-    </pre>
+1. From the GCP console, click **Compute Engine**.
 
-1. Run `gcloud auth login MY-GCP-ACCOUNT`. For example:
-    <pre class="terminal">
-    $ gcloud auth login user<span>@</span>example.com
-    </pre>
+1. Locate the Ops Manager VM in the **VM Instances** list.
 
-1. Run `gcloud compute ssh MY-INSTANCE --zone MY-ZONE`. For example:
+1. Click the **SSH** menu button.
+
+1. Copy the SSH command that appears in the popup window.
+
+1. Paste the command into your terminal window to SSH to the Ops Manager VM. For example:
     <pre class="terminal">
     $ gcloud compute ssh om-pcf-1a --zone us-central1-b
     </pre>
 
 1. Run `sudo su - ubuntu` to switch to the `ubuntu` user.
+
+### <a id='ssh-vsphere'></a>vSphere
+
+To SSH into the Ops Manager VM in vSphere, you need the credentials used to import the PCF .ova or .ovf file into your virtualization system.
+You set these credentials when you installed Ops Manager.
+
+<p class="note"><strong>Note</strong>: If you lose your credentials, you must shut down the Ops Manager VM in the vSphere UI and reset the password. See the <a href="https://docs.vmware.com/en/VMware-vSphere/6.5/com.vmware.vsphere.vm_admin.doc/GUID-E05E8AF9-C8F2-4482-B3F0-733C85C6DD97.html">vSphere documentation</a> for more information.</p>
+
+1. From a command line, run `ssh ubuntu@OPS-MANAGER-FQDN` to SSH into the Ops Manager VM. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager.
+
+1. When prompted, enter the password that you set during the .ova deployment
+into vCenter. For example:
+
+    <pre class='terminal'>
+    $ ssh ubuntu@my-opsmanager-fqdn.example.com
+    Password: ***********
+    </pre>
 
 ## <a id='log-in'></a>Log in to the BOSH Director
 

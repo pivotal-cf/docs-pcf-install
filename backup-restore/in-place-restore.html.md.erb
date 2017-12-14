@@ -8,16 +8,22 @@ owner: RelEng
 This document describes how to run an _in-place_ restore of an PAS backup created with BBR. An in-place restore differs from a normal restore in that you do not tear down and redeploy your environment before the restore. Instead, you restore the PAS backup to the same PCF environment that the backup was created from.
 
 <p class="note warning"><strong>Warning</strong>: An in-place restore erases any changes  made to PAS since the backup was created. Follow the procedures in this topic only for sandbox/dev environments or when recovering from a disaster that affected PAS data.</p>
-
 <p class="note warning"><strong>Warning</strong>: For PCF 2.0.0, BBR only supports backup and restore of environments with 0 or 1 CredHub instances.</p>
 
-## <a id="retrieve"></a> Step 1: Retrieve BOSH Director Address and Credentials
+## <a id='scale-down-mysql'></a> Step 1: Scale down MySQL
+
+1. From the Ops Manager Installation Dashboard, navigate to PAS **Resource Config**.
+1. Ensure the number of instances for MySQL Server is set to `1`.
+  <p class="note warning"><strong>Warning</strong>: Restore will fail if there is not exactly one MySQL Server instance deployed.</p>
+1. Return to the Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
+
+## <a id="retrieve"></a> Step 2: Retrieve BOSH Director Address and Credentials
 
 Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in from the Ops Manager Director tile:
 
 <%= partial 'bosh_target_director_bbr' %>
 
-## <a id='identify-deployment'></a> Step 2: Identify Your Deployment
+## <a id='identify-deployment'></a> Step 3: Identify Your Deployment
 
 After logging in to your BOSH Director, run `bosh deployments` to identify the name of the BOSH deployment that contains PCF:
 
@@ -36,7 +42,7 @@ cf-example               push-apps-manager-release/661.1.24
 
 In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
 
-## <a id='restore-ert'></a> Step 3: Restore PAS
+## <a id='restore-ert'></a> Step 4: Restore PAS
 
 <p class="note"><strong>Note</strong>: If your apps must not be running after a restore run <code>bosh stop</code> on each <code>diego_cell</code> VM in the deployment.</p>
 
@@ -59,8 +65,8 @@ $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
     * `BOSH_CLIENT`, `BOSH_PASSWORD`: Use the BOSH UAA user provided in  **Pivotal Ops Manager > Credentials > Uaa Bbr Client Credentials**.
     <br><br>
        You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
-    * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 1: Retrieve BOSH Director Address and Credentials](#retrieve) section.
-    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 2: Identify Your Deployment](#identify-deployment) section.
+    * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 2: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 3: Identify Your Deployment](#identify-deployment) section.
     * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
     * `PATH_TO_ERT_BACKUP`: This is the path to the PAS backup you want to restore.
 

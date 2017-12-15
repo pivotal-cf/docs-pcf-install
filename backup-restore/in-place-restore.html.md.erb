@@ -5,17 +5,17 @@ owner: RelEng
 
 <strong><%= modified_date %></strong>
 
-This document describes how to run an _in-place_ restore of an ERT backup created with BBR. An in-place restore differs from a normal restore in that you do not tear down and redeploy your environment before the restore. Instead, you restore the ERT backup to the same PCF environment that the backup was created from.
+This document describes how to run an _in-place_ restore of an Elastic Runtime (ERT) backup created with BOSH Backup and Restore (BBR). An in-place restore differs from a normal restore in that you do not tear down and redeploy your environment before the restore. Instead, you restore the ERT backup to the same PCF environment that the backup was created from.
 
-<p class="note warning"><strong>Warning</strong>: An in-place restore erases any changes  made to ERT since the backup was created. Follow the procedures in this topic only for sandbox/dev environments or when recovering from a disaster that affected ERT data.</p>
+<p class="note warning"><strong>Warning</strong>: An in-place restore erases any changes made to ERT since the backup was created. Follow the procedures in this topic only for sandbox or development environments, or when recovering from a disaster that affected ERT data.</p>
 
-## <a id='scale-down-mysql'></a> Step 1: Scale down MySQL
+## <a id='scale-down-mysql'></a> Step 1: Scale Down MySQL
 
 1. From the Ops Manager Installation Dashboard, navigate to **Pivotal Elastic Runtime > Resource Config**.
 1. Ensure the number of instances for MySQL Server is set to `1`.
   <p class="note warning"><strong>Warning</strong>: Restore fails if there is not exactly one MySQL Server instance deployed.</p>
-1. If you are using PCF v1.12.0, ensure that the CredHub process successfully restarts by following the steps in [this PCF Knowledge Base article](https://discuss.pivotal.io/hc/en-us/articles/115012475527).
-  <p class="note warning"><strong>Warning</strong>: Restoring a PCF 1.12.0 deployment fails if the CredHub process has not been manually restarted.</p>
+1. If you are using PCF v1.12.0, ensure that the CredHub process successfully restarts by following the steps in [Config server error when redeploying Elastic Runtime with BBR](https://discuss.pivotal.io/hc/en-us/articles/115012475527) in the Pivotal Knowledge Base.
+  <p class="note warning"><strong>Warning</strong>: Restoring a PCF v1.12.0 deployment fails if the CredHub process has not been manually restarted.</p>
 1. Return to the Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
 
 ## <a id="retrieve"></a> Step 2: Retrieve BOSH Director Address and Credentials
@@ -29,7 +29,7 @@ Perform the following steps to retrieve the IP address of your BOSH Director and
 After logging in to your BOSH Director, run `bosh deployments` to identify the name of the BOSH deployment that contains PCF:
 
 <pre class='terminal'>
-$ bosh -e DIRECTOR_IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate deployments
+$ bosh -e DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate deployments
 
 Name                     Release(s)
 cf-example               push-apps-manager-release/661.1.24
@@ -51,25 +51,25 @@ In the above example, the name of the BOSH deployment that contains PCF is `cf-e
 
 1. Run the BBR restore command from your jumpbox to restore Elastic Runtime:
 <pre class="terminal">
-$ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
+$ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
       bbr deployment \
-        --target BOSH\_DIRECTOR\_IP \
-        --username BOSH\_CLIENT \
-        --deployment DEPLOYMENT\_NAME \
-        --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
+        --target BOSH-DIRECTOR-IP \
+        --username BOSH-CLIENT \
+        --deployment DEPLOYMENT-NAME \
+        --ca-cert PATH-TO-BOSH-SERVER-CERT \
         restore \
-          --artifact-path PATH\_TO\_ERT\_BACKUP
+          --artifact-path PATH-TO-ERT-BACKUP
 </pre>
 
     Replace the placeholder values as follows:
     <br><br>
-    * `BOSH_CLIENT`, `BOSH_PASSWORD`: Use the BOSH UAA user provided in  **Pivotal Ops Manager > Credentials > Uaa Bbr Client Credentials**.
+    * `BOSH-CLIENT`, `BOSH-PASSWORD`: Use the BOSH UAA user provided in  **Pivotal Ops Manager > Credentials > Uaa Bbr Client Credentials**.
     <br><br>
        You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
-    * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 2: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+    * `BOSH-DIRECTOR-IP`: You retrieved this value in the [Step 2: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 3: Identify Your Deployment](#identify-deployment) section.
-    * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
-    * `PATH_TO_ERT_BACKUP`: This is the path to the Elastic Runtime backup you want to restore.
+    * `PATH-TO-BOSH-SERVER-CERT`: This is the path to the BOSH Director's Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine's certificate chain.
+    * `PATH-TO-ERT-BACKUP`: This is the path to the Elastic Runtime backup you want to restore.
 
     <p class="note validation">
       <strong>Validation</strong>: If you ran <code>bosh stop</code> on each <code>diego_cell</code> before running <code>bbr restore</code>, you can now run <code>cf stop</code> on all apps and then run <code>bosh start</code> on each <code>diego_cell</code>. After this, all apps will be deployed in a stopped state.
@@ -89,8 +89,8 @@ $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
                 -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
           1. Record the MySQL admin credentials from the response to the above request.
   1. List the VMs in your deployment:
-    <pre class="terminal">$ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate \
-    -d DEPLOYMENT\_NAME \
+    <pre class="terminal">$ bosh -e DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate \
+    -d DEPLOYMENT-NAME \
     ssh</pre>
   1. Select the `mysql` VM to SSH into.
   1. From the `mysql` VM, run the following command:
@@ -102,8 +102,8 @@ $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
   1. Exit the `mysql` VM:
     <pre class="terminal">$ exit</pre>
   1. List the VMs in your deployment:
-    <pre class="terminal">$ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate \
-    -d DEPLOYMENT\_NAME \
+    <pre class="terminal">$ bosh -e DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate \
+    -d DEPLOYMENT-NAME \
     ssh</pre>
   1. SSH onto each `diego_database` VM and run the following command:
     <pre class="terminal">$ sudo monit restart silk-controller</pre>

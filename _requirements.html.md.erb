@@ -1,30 +1,34 @@
 The following are general requirements for deploying and managing a PCF deployment with Ops Manager and Pivotal Application Service (PAS):
 
-* (**Recommended**) Ability to create a wildcard DNS record to point to your
-router or load balancer.
+* A wildcard DNS record that points to your router or load balancer.
 Alternatively, you can use a service such as xip.io. For example, `203.0.113.0.xip.io`.
 <br /><br />
     PAS gives each application its own hostname in your app domain.
     With a wildcard DNS record, every hostname in your domain resolves to the IP
     address of your router or load balancer, and you do not need to configure an
     A record for each app hostname. For example, if you create a DNS record
-    `*.example.com` pointing to your router, every application deployed to the
+    `*.example.com` pointing to your load balancer or router, every application deployed to the
     `example.com` domain resolves to the IP address of your router.
 
-* (**Recommended**) A network without DHCP available for deploying the PAS VMs
-<p class="note"><strong>Note</strong>: If you have DHCP, refer to the Troubleshooting Guide to avoid issues with your installation.</p>
+* At least one wildcard TLS certificate that matches the DNS record you set up above, `*.example.com`.
+
+* Sufficient IP allocation:
+  * One static IP address for either HAProxy or one of your gorouters
+  * One IP address for each VM instance
+  * An additional IP address for each compilation worker  
+    So the formula for total IPs needed is `IPs needed = static IPs + VM instances + compilation workers`
+    <p class="note"><strong>Note</strong>: Pivotal recommends that you allocate at least 36 dynamic IP addresses when deploying Ops Manager and PAS. BOSH requires additional dynamic IP addresses during installation to compile and deploy VMs, install PAS, and connect to services.
+    </p>
+
+* One or more NTP servers if not already provided by your IaaS.
+
+* (**Recommended**) A network without DHCP available for deploying the PAS VMs.
+<p class="note"><strong>Note</strong>: If you have DHCP, refer to the <a href="./troubleshooting.html">Troubleshooting Guide</a> to avoid issues with your installation.</p>
 
 * (**Optional**) External storage. When you deploy PCF, you can select internal file storage or external file storage, either network-accessible or IaaS-provided, as an option in the PAS tile. Pivotal recommends using external storage whenever possible. See [Upgrade Considerations for Selecting File Storage in Pivotal Cloud Foundry](../opsguide/storage_considerations.html) for a discussion of how file storage location affects platform performance and stability during upgrades.
 
-* Sufficient IP allocation:
-  * One IP address for each VM instance
-  * An additional IP address for each instance that requires static IP addresses
-  * An additional IP address for each errand
-  * An additional IP address for each compilation worker:
-`IPs needed = VM instances + static IPs + errands + compilation workers`
-    <p class="note"><strong>Note</strong>: BOSH requires that you allocate a sufficient number of additional dynamic IP addresses when configuring a reserved IP range during installation. BOSH uses these IP addresses during installation to compile and deploy VMs, install PAS, and connect to services. We recommend that you allocate at least 36 dynamic IP addresses when deploying Ops Manager and PAS.
-    </p>
+* (**Optional**) External databases. When you deploy PCF, you can select internal or external databases for the BOSH Director and for PAS. Pivotal recommends using external databases in production deployments.
 
-* The most recent version of the [Cloud Foundry Command Line Interface (cf CLI)](https://github.com/cloudfoundry/cli#downloads)
-* One or more NTP servers if not already provided by your IaaS
+* (**Optional**) External user stores. When you deploy PCF, you can select a SAML user store for Ops Manager or a SAML or LDAP user store for PAS, to integrate existing user accounts. 
 
+* The most recent version of the [Cloud Foundry Command Line Interface (cf CLI)](https://github.com/cloudfoundry/cli#downloads).

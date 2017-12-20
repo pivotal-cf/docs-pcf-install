@@ -19,6 +19,8 @@ The procedures described in this topic prepare your environment for PCF, deploy 
 
 <p class="note"><strong>Note</strong>: BBR is a feature in PCF v1.11. You can only use BBR to back up PCF v1.11 and later. To restore earlier versions of PCF, perform the manual procedure documented for your specific PCF version.</p>
 
+<p class="note"><strong>Note</strong>: If the BOSH Director you are restoring had any deployments that were deployed manually rather than via an Ops Manager Tile then these will need to be individually restored at the end of the process, see <a href="#non-tiles">(Optional) Step 14: Restore Non-Tile Deployments</a>.</p>
+
 <p class="note validation"><strong>Note</strong>: If you are restoring in order to validate a backup, look for notes marked <strong>Validation</strong> throughout the topic.</p>
 
 ## <a id="compatibility"></a> Compatibility of Restore
@@ -359,6 +361,32 @@ If you have on-demand service instances provisioned by an on-demand service brok
   $ rm /tmp/manifest.yml
   </pre>
 1. Any PAS apps bound to these services will have to be restarted to pick up the recreated service instances.
+
+## <a id='non-tiles'></a> (Optional) Step 14: Restore Non-Tile Deployments
+
+If you have any deployments that were deployed directly via the BOSH Director rather than through an Ops Manager Tile you can perform the following steps to restore the deployments' vms.
+
+1. Identify names of the deployments that need to be be restored (being sure not to include deployments from Ops Manager Tiles), the full list of all deployments on your BOSH director can be obtained by running:
+  <pre class="terminal">
+  $ bosh -e BOSH-DIRECTOR-IP \
+      --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+      deployments
+  </pre>
+1. For each deployment that needs to be restored run:
+  <pre class="terminal">
+  $ bosh -n -e BOSH-DIRECTOR-IP \
+      --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+      -d DEPLOYMENT-NAME \
+      cck --resolution=recreate_vm
+  </pre>
+1. The status of each individual deployment's VMs can be verified by running:
+  <pre class="terminal">
+  $ bosh -e BOSH-DIRECTOR-IP \
+      --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+      -d DEPLOYMENT-NAME \
+      vms
+  </pre>
+  The process state for all the VMs should now be `running`.
 
 ## <a id='removing-disks'></a> Remove Unused Disks
 

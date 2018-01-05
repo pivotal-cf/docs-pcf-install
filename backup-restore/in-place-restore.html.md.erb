@@ -40,7 +40,7 @@ cf-example               push-apps-manager-release/661.1.24
                          ...
 </pre>
 
-In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.  You can find out how to get `PATH-TO-BOSH-SERVER-CERTIFICATE` in the [Jumpbox Set Up Instructions](./system-setup-bbr.html#root-ca-cert).
+In the above example, the name of the BOSH deployment that contains PCF is `cf-example`. `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority (CA) certificate for the BOSH Director. For more information, see [Ensure BOSH Director Certificate Availability](./system-setup-bbr.html#root-ca-cert).
 
 ## <a id='restore-ert'></a> Step 4: Restore PAS
 
@@ -55,9 +55,9 @@ $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
         --target BOSH-DIRECTOR-IP \
         --username BOSH-CLIENT \
         --deployment DEPLOYMENT-NAME \
-        --ca-cert PATH-TO-BOSH-SERVER-CERT \
+        --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
         restore \
-          --artifact-path PATH-TO-ERT-BACKUP
+          --artifact-path PATH-TO-PAS-BACKUP
 </pre>
 
     Replace the placeholder values as follows:
@@ -67,8 +67,8 @@ $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
        You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
     * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 2: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 3: Identify Your Deployment](#identify-deployment) section.
-    * `PATH_TO_BOSH_SERVER_CERT`: The path to the BOSH Director's Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine's certificate chain.
-    * `PATH_TO_ERT_BACKUP`: The path to the PAS backup you want to restore.
+    * `PATH-TO-BOSH-SERVER-CERTIFICATE`: The path to the BOSH Director's Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine's certificate chain.
+    * `PATH-TO-PAS-BACKUP`: The path to the PAS backup you want to restore.
 
     <p class="note validation">
       <strong>Validation</strong>: If you ran <code>bosh stop</code> on each <code>diego_cell</code> before running <code>bbr restore</code>, you can now run <code>cf stop</code> on all apps and then run <code>bosh start</code> on each <code>diego_cell</code>. After this, all apps will be deployed in a stopped state.

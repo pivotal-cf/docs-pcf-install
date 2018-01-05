@@ -44,18 +44,41 @@ Consult the following table for more information about the network access permis
 </tr>
 </table>
 
-## <a id='scp'></a>Step 2: Transfer BBR to Your Jumpbox
+## <a id='scp'></a>Step 2: Get BBR Binary on your Jumpbox
 
 Perform the following steps to transfer BBR to your jumpbox:
 
+If your jumpbox does not have access to the internet:
 1. Download the [latest BBR release](https://network.pivotal.io/products/p-bosh-backup-and-restore).
 1. Change the permissions of `bbr` in order to make it executable:
 	<pre class="terminal">$ chmod a+x bbr</pre>
 1. SCP the binary to your jumpbox:
 	<pre class="terminal">$ scp LOCAL\_PATH\_TO\_BBR/bbr JUMPBOX\_USER/JUMPBOX\_ADDRESS</pre>
-	If your jumpbox has access to the internet, you can also SSH into your jumpbox and use `wget`:
-	<pre class="terminal">
-	$ ssh JUMPBOX\_USER/JUMPBOX\_ADDRESS -i YOUR\_CERTIFICATE.pem
-	$ wget BBR\_RELEASE\_URL
-	$ chmod a+x bbr
-	</pre>
+Alternatively if your jumpbox has access to the internet, you can instead SSH into your jumpbox and use `wget`:
+<pre class="terminal">
+$ ssh JUMPBOX\_USER/JUMPBOX\_ADDRESS -i YOUR\_CERTIFICATE.pem
+$ wget BBR\_RELEASE\_URL
+$ chmod a+x bbr
+</pre>
+
+## <a id='root-ca-cert'></a> Step 3: Ensure BOSH Director Root CA Cert is available on your Jumpbox
+For running bbr commands, you will need the path to the BOSH Director's Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
+
+If you are using the Ops Manager machine as your jumpbox the root ca cert should already be present at `/var/tempest/workspaces/default/root_ca_certificate`, which will be referred to as `PATH-TO-BOSH-SERVER-CERTIFICATE` in other docs.
+
+If you're not using the Ops Manager machine as your jumpbox you can copy the certificate from the Ops Manager machine by running on the jumpbox:
+<pre class="terminal">
+$ export OPSMAN=127.0.0.1 # Ops Manager DNS name or IP address
+$ export OPSMAN\_USERNAME=OPSMANAGER-USERNAME # Ops Manager admin username
+$ export OPSMAN\_PASSWORD=OPSMANAGER-PASSWORD # Ops Manager admin password
+</br>\# Get UAA token
+$ uaac target $OPSMAN/uaa --skip-ssl-validation
+$ uaac token owner get opsman $OPSMAN\_USERNAME -s "" -p $OPSMAN\_PASSWORD
+$ apitoken=uaac contexts | grep $OPSMAN -B6 | grep access\_token | cut -d ':' -f 2 | cut -d ' ' -f 2
+</br>\# Get the cert (it's a json payload)
+$ export cert=$(curl -k "https://$OPSMAN/api/v0/security/root\_ca\_certificate" \
+-X GET \
+-H "Authorization: Bearer $apitoken" \
+| jq '.root\_ca\_certificate\_pem')
+</br>$ echo -e $cert > PATH-TO-BOSH-SERVER-CERTIFICATE
+</pre>

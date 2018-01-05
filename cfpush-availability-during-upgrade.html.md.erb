@@ -17,6 +17,10 @@ Having a single VM in use, such as a WebDAV, a HAProxy, a Gorouter, a UAA, or a 
 
 If you have scaled out your application to achieve high availability and are not using WebDAV, `cf push` should be available for the entire duration of the upgrade. However, upgrades to certain versions of ERT sometimes require a CCDB schema or data migration, which may cause `cf push` to be unavailable while Cloud Controllers are rolling during the upgrade.
 
+## <a id='bbr-backup'></a> Availability During a BBR Backup
+
+The Cloud Controller API is taken down during the `pre-backup-lock` stage of a BBR backup and put back up again during the `post-backup-unlock` stage. As a result, `cf push` becomes unavailable during that time. However, the backup that takes place between those stages is very short, no longer than a few minutes. The bulk of the BBR backup operation happens after the `post-backup-unlock` stage, so the Cloud Controller API and `cf push` are available for most of the duration of a BBR backup.
+
 The [Uptimer](https://github.com/cloudfoundry/uptimer) tool can help you measure `cf push` availability during an upgrade.
 
 ## <a id=‘release-specific’></a> Release-Specific Information

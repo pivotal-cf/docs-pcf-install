@@ -43,7 +43,7 @@ BBR is a binary that can back up and restore BOSH deployments and BOSH Directors
 
 BBR backs up the following PCF components:
 
-* **Elastic Runtime**: Elastic Runtime must be configured with an internal MySQL database and a WebDAV/NFS blobstore to be backed up and restored with BBR. BBR does not support Elastic Runtime backup with an external blobstore or an external MySQL database.
+* **Elastic Runtime**: Elastic Runtime (ERT) must be configured with an internal MySQL database and a WebDAV/NFS blobstore to be backed up and restored with BBR. BBR does not support Elastic Runtime backup with an external blobstore or an external MySQL database.
   <ul class="note warning"><strong>Warning</strong>: The following guidelines apply when you are using BBR to back up PCF and have configured an external blobstore and/or external database in Elastic Runtime:<ul>
     <li> If you configured an internal database and an external blobstore in Elastic Runtime, then follow the PCF backup process, and copy the external blobstore via the IaaS. There may be inconsistencies between the blobstore and database, which may result in some apps not coming up during a restore. Those apps can be repushed. </li>
     <li>If you configured an external database and an external blobstore in Elastic Runtime, then follow the PCF backup process, but skip the backup of Elastic Runtime. Copy the external database and blobstore via the IaaS. There may be inconsistencies  between the blobstore and database, which may result in some apps not coming up during a restore. Those apps can be repushed.</li></ul></ul>
@@ -128,7 +128,7 @@ You can also retrieve the credentials using the Ops Manager API with a GET reque
 1. Run the BBR `pre-backup-check` command from your jumpbox:
 	<pre class="terminal">
 	$ bbr director \
-	  --private-key-path PRIVATE\_KEY \
+	  --private-key-path PRIVATE-KEY \
 	  --username bbr \
 	  --host HOST \
 	  pre-backup-check
@@ -137,8 +137,8 @@ You can also retrieve the credentials using the Ops Manager API with a GET reque
 	Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
 	<br><br>
 	Replace the placeholder values as follows:
-	* `PRIVATE_KEY`: This is the path to the private key file you created above.
-	* `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+	* `PRIVATE-KEY`: This is the path to the private key file you created above.
+	* `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH-DIRECTOR-IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
 1. If the pre-backup check succeeds, continue to the [next section](#backup-prepare-node). If it fails, the Director may not have the correct backup scripts, or the connection to the BOSH Director may have failed.
 
 ### <a id='backup-prepare-node'></a> Step 5: Enable Backup Prepare Node
@@ -160,7 +160,7 @@ No action is needed with automated backups enabled, because Elastic Runtime allo
 After logging in to your BOSH Director, run the following command to identify the name of the BOSH deployment that contains PCF:
 
 <pre class="terminal">
-$ bosh -e DIRECTOR_IP --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
+$ bosh -e DIRECTOR-IP --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
 
 Name                     Release(s)
 cf-example               push-apps-manager-release/661.1.24
@@ -180,22 +180,22 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 
 1. From your jumpbox, run the BBR pre-backup check:
 	<pre class="terminal">
-  $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
+  $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
       bbr deployment \
-      --target BOSH\_DIRECTOR\_IP \
-      --username BOSH\_CLIENT \
-      --deployment DEPLOYMENT\_NAME \
+      --target BOSH-DIRECTOR-IP \
+      --username BOSH-CLIENT \
+      --deployment DEPLOYMENT-NAME \
       --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
       pre-backup-check
 	</pre>
 
     Replace the placeholder values as follows:
     <br><br>
-    * `BOSH_CLIENT`, `BOSH_PASSWORD`: From the Ops Manager Installation Dashboard, click **Ops Manager Director**, navigate to the **Credentials** tab, and click **Uaa Bbr Client Credentials** to retrieve the BOSH UAA credentials.<br><br>
+    * `BOSH-CLIENT`, `BOSH-PASSWORD`: From the Ops Manager Installation Dashboard, click **Ops Manager Director**, navigate to the **Credentials** tab, and click **Uaa Bbr Client Credentials** to retrieve the BOSH UAA credentials.<br><br>
     You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
-    * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+    * `BOSH-DIRECTOR-IP`: You retrieved this value in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 6: Identify Your Deployment](#identify-deployment) section.
-    * `PATH-TO-BOSH-SERVER-CERTIFICATE`: You can find out how to get this in the [Jumpbox Set Up Instructions](./system-setup-bbr.html#root-ca-cert).
+    * `PATH-TO-BOSH-SERVER-CERTIFICATE`: This is the path to the Certificate Authority (CA) certificate for the BOSH Director. For more information, see [Ensure BOSH Director Certificate Availability](./system-setup-bbr.html#root-ca-cert).
 
 1. If the pre-backup check succeeds, continue to the [next section](#procedure). If it fails, the deployment you selected may not have the correct backup scripts, or the connection to the BOSH Director may have failed.
 	<br><br>
@@ -229,7 +229,7 @@ From the **Installation Dashboard** in the Ops Manager interface, click your use
 Run the BBR backup command from your jumpbox to back up your BOSH Director:
 <pre class="terminal">
 $ bbr director \
-  --private-key-path PRIVATE\_KEY \
+  --private-key-path PRIVATE-KEY \
   --username bbr \
   --host HOST \
   backup
@@ -239,8 +239,8 @@ Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging
 <br><br>
 Replace the placeholder values as follows:
 
-* `PRIVATE_KEY`: This is the path to the private key file you created in [Step 4: Check your BOSH Director](#check-director).
-* `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+* `PRIVATE-KEY`: This is the path to the private key file you created in [Step 4: Check your BOSH Director](#check-director).
+* `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH-DIRECTOR-IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
 
 <div class="note"><strong>Notes</strong>:
   <ul>
@@ -252,7 +252,7 @@ Replace the placeholder values as follows:
 If your backup terminates early or fails, you can clean up by running backup-cleanup:
 <pre class="terminal">
 $ bbr director \
-  --private-key-path PRIVATE\_KEY \
+  --private-key-path PRIVATE-KEY \
   --username bbr \
   --host HOST \
   backup-cleanup
@@ -263,21 +263,21 @@ $ bbr director \
 
 1. Run the BBR backup command from your jumpbox to back up your Elastic Runtime deployment:
   <pre class="terminal">
-  $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
+  $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
     nohup bbr deployment \
-    --target BOSH\_DIRECTOR\_IP \
-    --username BOSH\_CLIENT \
-    --deployment DEPLOYMENT\_NAME \
+    --target BOSH-DIRECTOR-IP \
+    --username BOSH-CLIENT \
+    --deployment DEPLOYMENT-NAME \
     --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
     backup</pre>
     * Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
     * Use the optional `--with-manifest` flag to ensure that BBR downloads your current deployment manifest when backing up. These manifests are included in the Ops Manager export, but are useful for reference. For example:
       <pre class="terminal">
-      $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
+      $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
         nohup bbr deployment \
-        --target BOSH\_DIRECTOR\_IP \
-        --username BOSH\_CLIENT \
-        --deployment DEPLOYMENT\_NAME \
+        --target BOSH-DIRECTOR-IP \
+        --username BOSH-CLIENT \
+        --deployment DEPLOYMENT-NAME \
         --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
         backup --with-manifest</pre>
 
@@ -293,11 +293,11 @@ If the command fails, do the following:
 
 1. Run backup-cleanup:
   <pre class="terminal">
-  $ BOSH\_CLIENT\_SECRET=BOSH\_PASSWORD \
+  $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
      bbr deployment \
-    --target BOSH\_DIRECTOR\_IP \
-    --username BOSH\_CLIENT \
-    --deployment DEPLOYMENT\_NAME \
+    --target BOSH-DIRECTOR-IP \
+    --username BOSH-CLIENT \
+    --deployment DEPLOYMENT-NAME \
     --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
     backup-cleanup</pre>
 1. Ensure all the parameters in the command are set.
@@ -417,13 +417,13 @@ If more logging is needed, use the optional `--debug` flag to print the followin
 
 If you need to cancel a backup, perform the following steps:
 
-1. Terminate the BBR process by pressing Ctrl-C and then typing `yes` to confirm.
+1. Enter `CTRL-C` to terminate the BBR process, then enter `yes` to confirm.
 1. Log in to your BOSH Director with the BOSH CLI by performing the procedures in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section above.
 1. Perform the following steps for each `cloud_controller` VM in your deployment:
 	1. List the VMs in your deployment:
-		<pre class="terminal">$ bosh -e DIRECTOR\_IP \
+		<pre class="terminal">$ bosh -e DIRECTOR-IP \
 		--ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
-		-d DEPLOYMENT\_NAME \
+		-d DEPLOYMENT-NAME \
 		ssh</pre>
 	1. Select the VM you want to SSH into.
 	1. Run the following command from the VM:

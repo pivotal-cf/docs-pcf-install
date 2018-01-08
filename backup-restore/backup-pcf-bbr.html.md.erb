@@ -155,7 +155,7 @@ Perform the following steps to enable the backup prepare node:
 After logging in to your BOSH Director, run the following command to identify the name of the BOSH deployment that contains PCF:
 
 <pre class="terminal">
-$ bosh -e DIRECTOR_IP --ca-cert PATH_TO_BOSH_SERVER_CERT deployments
+$ bosh -e DIRECTOR_IP --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
 
 Name                     Release(s)
 cf-example               push-apps-manager-release/661.1.24
@@ -180,7 +180,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
       --target BOSH\_DIRECTOR\_IP \
       --username BOSH\_CLIENT \
       --deployment DEPLOYMENT\_NAME \
-      --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
+      --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
       pre-backup-check
 	</pre>
 
@@ -190,7 +190,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
     You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
     * `BOSH_DIRECTOR_IP`: You retrieved this value in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 6: Identify Your Deployment](#identify-deployment) section.
-    * `PATH_TO_BOSH_SERVER_CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain. If you are using the Ops Manager VM as your jumpbox, locate the certificate at `/var/tempest/workspaces/default/root_ca_certificate`.
+    * `PATH-TO-BOSH-SERVER-CERTIFICATE`: This is the path to the Certificate Authority (CA) certificate for the BOSH Director. For more information, see [Ensure BOSH Director Certificate Availability](./system-setup-bbr.html#root-ca-cert).
 
 1. If the pre-backup check succeeds, continue to the [next section](#procedure). If it fails, the deployment you selected may not have the correct backup scripts, or the connection to the BOSH Director may have failed.
 	<br><br>
@@ -269,7 +269,7 @@ $ bbr director \
     --target BOSH\_DIRECTOR\_IP \
     --username BOSH\_CLIENT \
     --deployment DEPLOYMENT\_NAME \
-    --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
+    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
     backup</pre>
     * Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
     * Use the optional `--with-manifest` flag to ensure that BBR downloads your current deployment manifest when backing up. These manifests are included in the Ops Manager export, but are useful for reference. For example:
@@ -279,7 +279,7 @@ $ bbr director \
         --target BOSH\_DIRECTOR\_IP \
         --username BOSH\_CLIENT \
         --deployment DEPLOYMENT\_NAME \
-        --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
+        --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
         backup --with-manifest</pre>
 
 <div class="note"><strong>Notes</strong>:
@@ -299,7 +299,7 @@ If the command fails, do the following:
     --target BOSH\_DIRECTOR\_IP \
     --username BOSH\_CLIENT \
     --deployment DEPLOYMENT\_NAME \
-    --ca-cert PATH\_TO\_BOSH\_SERVER\_CERT \
+    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
     backup-cleanup</pre>
 1. Ensure all the parameters in the command are set.
 1. Ensure the BOSH Director credentials are valid.
@@ -418,11 +418,12 @@ If more logging is needed, use the optional `--debug` flag to print the followin
 
 If you need to cancel a backup, perform the following steps:
 
-1. Terminate the BBR process by pressing Ctrl-C and then typing `yes` to confirm.
+1. Enter `CTRL-C` to terminate the BBR process, then enter `yes` to confirm.
 1. Log in to your BOSH Director with the BOSH CLI by performing the procedures in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section above.
 1. Perform the following steps for each `cloud_controller` VM in your deployment:
 	1. List the VMs in your deployment:
-		<pre class="terminal">$ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate \
+		<pre class="terminal">$ bosh -e DIRECTOR\_IP \
+		--ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
 		-d DEPLOYMENT\_NAME \
 		ssh</pre>
 	1. Select the VM you want to SSH into.

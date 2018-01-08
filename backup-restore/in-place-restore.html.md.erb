@@ -27,7 +27,7 @@ Perform the following steps to retrieve the IP address of your BOSH Director and
 After logging in to your BOSH Director, run `bosh deployments` to identify the name of the BOSH deployment that contains PCF:
 
 <pre class='terminal'>
-$ bosh -e DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate deployments
+$ bosh -e DIRECTOR_IP --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
 
 Name                     Release(s)
 cf-example               push-apps-manager-release/661.1.24
@@ -39,7 +39,7 @@ cf-example               push-apps-manager-release/661.1.24
                          ...
 </pre>
 
-In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
+In the above example, the name of the BOSH deployment that contains PCF is `cf-example`. `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority (CA) certificate for the BOSH Director. For more information, see [Ensure BOSH Director Certificate Availability](./system-setup-bbr.html#root-ca-cert).
 
 ## <a id='restore-ert'></a> Step 4: Restore Elastic Runtime
 
@@ -54,7 +54,7 @@ $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
         --target BOSH-DIRECTOR-IP \
         --username BOSH-CLIENT \
         --deployment DEPLOYMENT-NAME \
-        --ca-cert PATH-TO-BOSH-SERVER-CERT \
+        --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
         restore \
           --artifact-path PATH-TO-ERT-BACKUP
 </pre>
@@ -66,7 +66,7 @@ $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
        You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
     * `BOSH-DIRECTOR-IP`: You retrieved this value in the [Step 2: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 3: Identify Your Deployment](#identify-deployment) section.
-    * `PATH-TO-BOSH-SERVER-CERT`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
+    * `PATH-TO-BOSH-SERVER-CERTIFICATE`: This is the path to the BOSH Director's Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine's certificate chain.
     * `PATH-TO-ERT-BACKUP`: This is the path to the Elastic Runtime backup you want to restore.
 
     <p class="note validation">
@@ -87,7 +87,8 @@ $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
                 -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
           1. Record the MySQL admin credentials from the response to the above request.
   1. List the VMs in your deployment:
-    <pre class="terminal">$ bosh -e DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate \
+    <pre class="terminal">$ bosh -e DIRECTOR-IP \
+    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
     -d DEPLOYMENT-NAME \
     ssh</pre>
   1. Select the `mysql` VM to SSH into.
@@ -100,7 +101,8 @@ $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
   1. Exit the `mysql` VM:
     <pre class="terminal">$ exit</pre>
   1. List the VMs in your deployment:
-    <pre class="terminal">$ bosh -e DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate \
+    <pre class="terminal">$ bosh -e DIRECTOR-IP \
+    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
     -d DEPLOYMENT-NAME \
     ssh</pre>
   1. SSH onto each `diego_database` VM and run the following command:

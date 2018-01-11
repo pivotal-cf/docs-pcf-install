@@ -4,26 +4,23 @@ owner: Ops Manager
 ---
 
 ## <a id="intro"></a>The Max_in_Flight API Endpoint
-The `max_in_flight` variable limits how many instances of a component can restart simultaneously during updates or upgrades. 
+The `max_in_flight` variable limits how many instances of a component can restart simultaneously during updates or upgrades. It can make deployment upgrades run faster. For PCF deployments with hundreds of jobs, upgrading sequentially can take hours. With `max_in_flight`, you can upgrade jobs in batches, which substantially decreases upgrade time.
 
-You set `max_in_flight` as a system-wide value, with optional component-specific overrides. Values for `max_in_flight` can be any integer between 1 and 100, or a percentage of the total number of instances.
+Values for `max_in_flight` can be any integer between 1 and 100, or a percentage of the total number of instances.
+
+## <a id="setting"></a>Setting the Variable
+`Max_in_flight` is a system-wide value with optional component-specific overrides. Set the system-wide value in the deployment manifest, and the value for individual jobs in their manifests or [via an API](https://opsman-dev-api-docs.cfapps.io/#configuring-the-max_in_flight-settings-for-a-product-39-s-jobs) 
+
+For more information about the Ops Manager API, see the [API documentation](https://opsman-dev-api-docs.cfapps.io/).
+
 
 ## <a id="best-practices"></a>Best Practices
 
-As a general rule, `max_in_flight` should be set to a number high enough that the remaining component instances are not overloaded. If component instances are overloaded during updates or upgrades, users may experience downtime. Some more precise guidelines include:
+Set the `max_in_flight` variable high enough that the remaining component instances are not overloaded by typical use. If component instances are overloaded during updates, upgrades, or typical use, users may experience downtime. 
 
-* For host VMs with high resource usage, set `max_in_flight` low. This allows non-migrating cells to pick up the work of cells stopping and restarting for migration. If resource usage is already close to 100%, scale up your host VMs before any updates.
-* For quorum-based components like etcd, consul, and Diego BBS, set `max_in_flight` to 1.
+Some more precise guidelines include:
+
+* For jobs with high resource usage, set `max_in_flight` low. For example, for Diego cells, `max_in_fligh` allows non-migrating cells to pick up the work of cells stopping and restarting during migration. If resource usage is already close to 100%, scale up your jobs before making any updates.
+* For quorum-based components (these are components with odd-numbered settings in the manifest), such as etcd, consul, and Diego BBS, set `max_in_flight` to 1. This preserves quorum and prevents a [split-brain scenario](https://en.wikipedia.org/wiki/Split-brain_(computing)) from occurring as jobs restart.
 * For other components, set `max_in_flight` to the number of instances that you can afford to have down at any one time. The best values for your deployment will vary based on your capacity planning. In a highly redundant deployment, you can make the number high so that updates run faster. If your components are at high utilization, however, you should keep the number low to prevent downtime.
 * Never set `max_in_flight` to a value greater than or equal to the number of instances you have running for a component.
-
-## <a id="troubleshooting"></a>
-For more information, see the [OpsMan API documentation](https://opsman-dev-api-docs.cfapps.io/#configuring-resources-for-a-job).
-
-QUESTIONS:
-
-1. "...or a percentage of the total number of instances." True? Any other configuration options you can use to designate max_in_flight?
-2. "For quorum-based components like etcd, consul, and Diego BBS, set `max_in_flight` to 1.
-" Why?
-3. "Never set `max_in_flight` to a value greater than or equal to the number of instances you have running for a component." What happens if you do this?
-4. What kind of troubleshooting tips, if any, do we need?

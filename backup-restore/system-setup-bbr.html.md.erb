@@ -84,7 +84,7 @@ If you have configured another machine as your jumpbox, run the following comman
   </br># Get UAA token
   $ uaac target $OPSMAN/uaa --skip-ssl-validation
   $ uaac token owner get opsman $OPSMAN_USERNAME -s "" -p $OPSMAN_PASSWORD
-  $ apitoken=uaac contexts | grep $OPSMAN -B6 | grep access_token | cut -d ':' -f 2 | cut -d ' ' -f 2
+  $ apitoken=$(uaac contexts | sed -n "/$OPSMAN/,\$p" | grep -o -P '(?<=access_token:\ ).*(?=)' | head -1)
   </br># Get the certificate (it's a json payload)
   $ export cert=$(curl -k "https://$OPSMAN/api/v0/security/root_ca_certificate" 
   -X GET 

@@ -77,30 +77,38 @@ Perform the following steps:
 		<pre class="terminal">
 		$ curl "http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs/JOB-GUID/resource\_config" \ 
 		    -X PUT \ 
+                    -H "Content-Type: application/json" \
 		    -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
-		    -d '{"nsx\_security\_groups": ["SECURITY-GROUP1", "SECURITY-GROUP2"]}' 
+		    -d '{"instance\_type": {"id": "INSTANCE-TYPE"},
+                         "persistent\_disk": {"size\_mb": "DISK_SIZE"},
+                         "nsx\_security\_groups": ["SECURITY-GROUP1", "SECURITY-GROUP2"]}'
 		</pre>
-		The value for `nsx_security_groups` is a list of the security groups you want to set for the job. To clear all security groups for a job, pass an empty list with the value `[]`.
+		Replace INSTANCE-TYPE with the instance type for the job, or "automatic" for the default instance type.  Replace DISK-SIZE with the disk size for the job, or "automatic" for the default persistent disk size.  You must also set "automatic" for jobs that do not have persistent disks, as it is currently a required parameter.  The value for `nsx_security_groups` is a list of the security groups you want to set for the job. To clear all security groups for a job, pass an empty list with the value `[]`.
 		<br><br>
 	* **Load balancers**: To update the load balancers for your job, use the following command:
 		<pre class="terminal">
 		$ curl "http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs/JOB-GUID/resource\_config" \ 
 		    -X PUT \ 
+                    -H "Content-Type: application/json" \
 		    -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
-		    -d '{"nsx\_lbs": \
-				    { \
-				      "edge\_name": "EDGE-NAME", \
-				      "pool\_name": "POOL-NAME", \
-				      "security\_group": "SECURITY-GROUP", \
-				      "port": "PORT-NUMBER" \
-				    }
+		    -d '{"instance\_type": {"id": "INSTANCE-TYPE"},
+                       "persistent\_disk": {"size\_mb": "DISK_SIZE"},
+                                    "nsx\_lbs": [{
+				      "edge\_name": "EDGE-NAME", 
+				      "pool\_name": "POOL-NAME", 
+				      "security\_group": "SECURITY-GROUP", 
+				      "port": "PORT-NUMBER" 
+				    }]
+                       }'
 		</pre>
-		Replace the placeholder values under `nsx_lbs` as follows:
+		Replace INSTANCE-TYPE with the instance type for the job, or "automatic" for the default instance type.  Replace DISK-SIZE with the disk size for the job, or "automatic" for the default persistent disk size.  You must also set "automatic" for jobs that do not have persistent disks, as it is currently a required parameter.   Replace the placeholder values under `nsx_lbs` as follows:
 
 		* `EDGE-NAME`: The name of the NSX Edge
 		* `POOL-NAME`: The name of the NSX Edge's server pool
 		* `SECURITY-GROUP`: The name of the NSX server pool's target security group
 		* `PORT`: The name of the port that the VM service is listening on, such as `5000`
+
+               More than one load balancer may be configured for a job by adding more of these hashes to the `nsx_lbs` array.
 
 1. Navigate to `OPS-MAN-FQDN` in a browser and log in to the Ops Manager Installation Dashboard.
 

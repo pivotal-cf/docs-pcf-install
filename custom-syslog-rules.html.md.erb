@@ -1,0 +1,104 @@
+---
+title: Customizing Syslog Rules
+owner: Ops Manager
+---
+
+<strong><%= modified_date %></strong>
+
+By default, Pivotal Application Service (PAS) forwards local syslog events to remote syslog endpoints. This process follows the Syslog Protocol defined in [RFC 5424](https://tools.ietf.org/html/rfc5424). 
+
+PAS annotates forwarded messages with structured data that identifies the originating BOSH Director, deployment, availability zone, instance group, and instance ID. Log lines follow the format below by default:
+
+<pre>
+<$PRI>$VERSION $TIMESTAMP $HOST $APP_NAME $PROC_ID $MSG_ID   
+    [instance@ENTERPRISE_NUMBER director="$DIRECTOR" deployment="$DEPLOYMENT" 
+    group="$INSTANCE_GROUP" az="$AVAILABILITY_ZONE" id="$ID"] $MESSAGE
+</pre>
+Example log messages:
+
+<pre>
+<14>1 2017-01-25T13:25:03.18377Z 192.0.2.10 etcd - - [instance@47450 
+    director="test-env" deployment="cf" group="diego_database" az="us-west1-a" 
+    id="83bd66e5-3fdf-44b7-bdd6-508deae7c786"] [INFO] the leader is 
+    [https://diego-database-0.etcd.service.cf.internal:4001]
+<14>1 2017-01-25T13:25:03.184491Z 192.0.2.10 bbs - - [instance@47450 
+    director="test-env" deployment="cf" group="diego_database" az="us-west1-a" 
+    id="83bd66e5-3fdf-44b7-bdd6-508deae7c786"] 
+    {"timestamp":"1485350702.539694548","source":"bbs","message":
+    "bbs.request.start-actual-lrp.starting","log_level":1,"data":
+    {"actual_lrp_instance_key":{"instance_guid":
+    "271f71c7-4119-4490-619f-4f44694717c0","cell_id":
+    "diego_cell-2-41f21178-d619-4976-901c-325bc2d0d11d"},"actual_lrp_key":
+    {"process_guid":"1545ce89-01e6-4b8f-9cb1-5654a3ecae10-137e7eb4-12de-457d-
+	 8e3e-1258e5a74687","index":5,"domain":"cf-apps"},"method":"POST","net_info":
+    {"address":"192.0.2.12","ports":[{"container_port":8080,"host_port":61532},
+    {"container_port":2222,"host_port":61533}]},"request":
+    "/v1/actual_lrps/start","session":"418.1"}}
+</pre>
+
+
+You can change which logs PAS forwards or the format of the logs forwarded by specifying a custom rsyslog rule. 
+
+Reasons to customize syslog rules include the following:
+
+  - You may want to forward only certain logs.
+  - You may want to exclude certain logs from forwarding.
+  - You may want to write logs to a local file.
+  - Some external log parsing services require a customized log format. 
+
+<p class='note'><strong>Note</strong>: If your custom rule is invalid, PAS forwards no logs.</p>
+
+The custom rsyslog rules shown below are written in [RainerScript](http://www.rsyslog.com/doc/v8-stable/rainerscript/index.html
+). 
+
+##<a id='examples'></a>Change Which Logs Are Forwarded
+
+You can specify a custom rule to modify which logs PAS forwards, or instruct PAS to also write logs to a local file.
+
+###<a id='forward-certain'></a>Forward Only Certain Logs
+
+The following example uses the _discard_ command, `~`, to prevent further processing of log lines matching a conditional. This custom rule forwards logs only if they originate from the `uaa` job:
+
+```if ($app-name != "uaa") then ~```
+
+###<a id='exclude'></a>Exclude Certain Logs
+
+The following example uses the _discard_ command, `~`, to prevent further processing of log lines matching a conditional. This custom rule drops `DEBUG` log messages.
+
+```if ($msg contains "DEBUG") then ~```
+
+###<a id='write-local'></a>Write Logs to a Local File
+
+The following example writes log line matching a conditional to a local file. 
+
+```
+if ($app-name != "uaa") then {
+  action(
+    type="omfile"
+    File="/var/log/experimental.log"
+  )
+}
+```
+
+##<a id='change-format'></a>Change Format of Forwarded Logs
+
+You can specify a custom rule to change log formatting.
+
+Every output in rsyslog uses _templates_. Templates specify log formatting, and 
+rsyslog contains hardcoded templates. 
+Specify a template in your custom rule to write logs in a different format than 
+the default. For more information about templates, see 
+[Templates](http://www.rsyslog.com/doc/v8-stable/configuration/templates.html) 
+in the rsyslog documentation.
+
+The following example writes log line containing the string "DEBUG" to a local file using the format specified in the "RSYSLOG_SyslogProtocol23Format" template.
+
+```
+if ($msg contains "DEBUG") then {
+  action(
+    type="omfile" 
+    File="/var/log/debug" 
+    template="RSYSLOG_SyslogProtocol23Format"
+  )
+}
+```

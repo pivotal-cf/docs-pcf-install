@@ -5,7 +5,7 @@ owner: RelEng
 
 <strong><%= modified_date %></strong>
 
-This topic describes the procedure for restoring your critical backend Pivotal Cloud Foundry (PCF) components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments. To perform the procedures in this topic, you must have backed up PCF)by following the steps in the [Backing Up Pivotal Cloud Foundry with BBR](backup-pcf-bbr.html) topic.
+This topic describes the procedure for restoring your critical backend Pivotal Cloud Foundry (PCF) components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments. To perform the procedures in this topic, you must have backed up PCF by following the steps in the [Backing Up Pivotal Cloud Foundry with BBR](backup-pcf-bbr.html) topic.
 
 To view the BBR release notes, see <a href="https://docs.pivotal.io/bbr/bbr-rn.html">BOSH Backup and Restore Release Notes</a>.
 
@@ -15,7 +15,11 @@ The procedures described in this topic prepare your environment for PCF, deploy 
 
 <p class="note warning"><strong>Warning</strong>: When validating your backup, the VMs and disks from the backed-up BOSH Director should not visible to the new BOSH Director. As a result, Pivotal recommends that you deploy the new BOSH Director to a different IaaS network and account than the VMs and disks of the backed up BOSH Director.</p>
 
+<p class="note warning"><strong>Warning</strong>: For PCF v2.0.0, BBR only supports backup and restore of environments with zero or one CredHub instances.</p>
+
 <p class="note"><strong>Note</strong>: BBR is a feature in PCF v1.11. You can only use BBR to back up PCF v1.11 and later. To restore earlier versions of PCF, perform the manual procedure documented for your specific PCF version.</p>
+
+<p class="note"><strong>Note</strong>: If the BOSH Director you are restoring had any deployments that were deployed manually rather than through an Ops Manager Tile, you must restore them manually at the end of the process. For more information, see <a href="#non-tiles">(Optional) Step 14: Restore Non-Tile Deployments</a>.</p>
 
 <p class="note validation"><strong>Note</strong>: If you are restoring in order to validate a backup, look for notes marked <strong>Validation</strong> throughout the topic.</p>
 
@@ -51,7 +55,7 @@ If you recreate your IaaS resources, you must also add those resources to Ops Ma
 
 1. Perform the procedures for your IaaS to deploy Ops Manager:
   * If you configured AWS manually: [Step 12](../pcf-aws-manual-config.html#pcfaws-om-ami) through [Step 19](../pcf-aws-manual-config.html#pcfaws-mysql-rds) of the <em>Manually Configuring AWS for PCF</em> topic.
-  * If you used the CloudFormation template install PCF on AWS: [Deploying BOSH and Ops Manager to AWS](../cloudform-template.html)
+  * If you used the CloudFormation template install PCF on AWS: [Deploying BOSH and Ops Manager to AWS](../aws-terraform.html)
   * [Launching an Ops Manager Director Instance on Azure](../azure-arm-template.html)
   * [Launching an Ops Manager Director Instance on GCP](../gcp-om-deploy.html)
   * [Step 3](../openstack-setup.html#create-om-image) through [Step 7](../openstack-setup.html#dns-entry) of the <em>Provisioning the OpenStack Infrastructure</em> topic.
@@ -102,7 +106,7 @@ If you recreated IaaS resources such as networks and load balancers by following
   $ sudo rm /var/tempest/workspaces/default/deployments/bosh-state.json
   </pre>
 1. Navigate to `YOUR-OPS-MAN-FQDN` in a browser and log into Ops Manager.
-1. Upload the required stemcell for each tile that requires one, excluding PAS. You upload the stemcell for PAS in Step 11.
+1. Upload the required stemcell for each tile that requires one. Each tile that requires an upload displays with an orange indicator at the bottom. When clicked, the Stemcell panel shows an orange circle beside it.
 <p class="note warning"><strong>Warning</strong>: Do not click <strong>Apply Changes</strong> at this point.</p>
 
 ## <a id="bosh-only-deploy"></a> Step 5: Deploy Ops Manager Director
@@ -194,7 +198,7 @@ cf-example               push-apps-manager-release/661.1.24
                          ...
 </pre>
 
-In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
+In the above example, the name of the BOSH deployment that contains PCF is `cf-example`. `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority (CA) certificate for the BOSH Director. For more information, see [Ensure BOSH Director Certificate Availability](./system-setup-bbr.html#root-ca-cert).
 
 ## <a id="bosh-cck"></a> Step 10: Remove Stale Cloud IDs for All Deployments
 
@@ -246,8 +250,7 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
 1. From the Ops Manager Installation Dashboard, navigate to PAS **Resource Config**.
 1. Ensure the number of instances for MySQL Server is set to `1`.
   <p class="note warning"><strong>Warning</strong>: Restore will fail if there is not exactly one MySQL Server instance deployed.</p>
-1. If you are using PCF v1.12.0, ensure that the CredHub process successfully restarts by following the steps in [this PCF Knowledge Base article](https://discuss.pivotal.io/hc/en-us/articles/115012475527).
-  <p class="note warning"><strong>Warning</strong>: Restoring a PCF 1.12.0 deployment will fail if the CredHub process has not been manually restarted.</p>
+1. Ensure that all errands needed by your system are set to run.
 1. Return to the Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
   <p class="note validation"><strong>Validation</strong>: If your PAS uses an external blobstore, ensure that the PAS tile is configured to use a different blobstore before clicking <strong>Apply Changes</strong>. Otherwise it will attempt to connect to the blobstore that the existing PAS is using.</p>
   <p class="note validation"><strong>Validation</strong>: Ensure your **System Domain** and **Apps Domain** under PAS **Domains** are updated to refer to the validation environment.
@@ -261,7 +264,7 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
 
 1. Run the BBR restore command from your jumpbox to restore PAS:
 <pre class="terminal">
-$ BOSH-CLIENT-SECRET=BOSH-PASSWORD \
+$ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
       bbr deployment \
         --target BOSH-DIRECTOR-IP \
         --username BOSH-CLIENT \
@@ -345,7 +348,7 @@ If you have on-demand service instances provisioned by an on-demand service brok
   $ export BOSH-CLIENT=YOUR-CLIENT-ID
   $ export BOSH-CLIENT-SECRET=YOUR-CLIENT-SECRET
   $ bosh alias-env director -e DIRECTOR-IP \
-  --ca-cert /var/tempest/workspaces/default/root_ca_certificate
+  --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE
   </pre>
 1. Using the list of service instance GUIDs gathered above, deploy each instance with the following commands:
   <pre class="terminal">
@@ -360,9 +363,31 @@ If you have on-demand service instances provisioned by an on-demand service brok
   </pre>
 1. Any PAS apps bound to these services will have to be restarted to pick up the recreated service instances.
 
-## <a id="rollback"></a>Rolling Back PAS in the Event of a Failed Upgrade
+## <a id='non-tiles'></a> (Optional) Step 14: Restore Non-Tile Deployments
 
-If you have previously backed up PCF using BBR, you can roll back PAS to an earlier deployment if the PAS upgrade fails. For instructions to roll back the PAS deployment, see the [Rolling Back PAS Deployment to an Earlier Backup with BBR](rollback-ert-bbr.html) topic.
+If you have any deployments that were deployed manually with the BOSH Director rather than through an Ops Manager Tile, perform the following steps to restore the VMs.
+
+1. Identify the names of the deployments that you need to restore. Do not include the deployments from Ops Manager Tiles. Run the following command to obtain a list of all deployments on your BOSH Director:
+  <pre class="terminal">
+  $ bosh -e BOSH-DIRECTOR-IP \
+      --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+      deployments
+  </pre>
+1. Run the following command for each deployment you need to restore:
+  <pre class="terminal">
+  $ bosh -n -e BOSH-DIRECTOR-IP \
+      --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+      -d DEPLOYMENT-NAME \
+      cck --resolution=recreate_vm
+  </pre>
+1. Run the following command to verify the status of the VMs in each deployment:
+  <pre class="terminal">
+  $ bosh -e BOSH-DIRECTOR-IP \
+      --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+      -d DEPLOYMENT-NAME \
+      vms
+  </pre>
+  The process state for all VMs should show as `running`.
 
 ## <a id='removing-disks'></a> Remove Unused Disks
 
@@ -376,7 +401,8 @@ To delete the disks, perform one of the following procedures:
   1. Target the redeployed BOSH Director using the BOSH CLI by performing the procedures in [Step 6: Retrieve BOSH Director Address and Credentials](#retrieve).
   1. List the deployments by running the following command:
     <pre class="terminal">
-    $ bosh -e DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate deployments
+    $ bosh -e DIRECTOR-IP \
+    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
     </pre>
   1. Delete each deployment with the following command:
     <pre class="terminal">
@@ -384,7 +410,8 @@ To delete the disks, perform one of the following procedures:
     </pre>
 * Log in to your IaaS account and delete the disks manually. Run the following command to retrieve a list of disk IDs:
   <pre class="terminal">
-  $ bosh -e DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate instances
+  $ bosh -e DIRECTOR-IP \
+  --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE instances
   </pre>
 
 Once the disks are deleted, continue with [Step 9: Remove Stale Cloud IDs for All Deployments](#bosh-cck).

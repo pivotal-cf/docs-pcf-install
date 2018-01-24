@@ -34,21 +34,32 @@ Before you perform the procedures in this topic, you must have completed the pro
 1. Create a network security group named `pcf-nsg`.
     <pre class="terminal">
     $ az network nsg create --name pcf-nsg \
-    --resource-group $RESOURCE_GROUP \
+    --resource-group $RESOURCE\_GROUP \
     --location $LOCATION
     </pre> 
-1. Add a network security group rule to the `pcf-nsg` group to allow traffic from the public Internet.
+1. Add network security group rules to the `pcf-nsg` group to allow traffic to known ports from the public Internet.
     <pre class="terminal">
-    $ az network nsg rule create --name internet-to-lb \
-    --nsg-name pcf-nsg --resource-group $RESOURCE_GROUP \
+    $ az network nsg rule create --name ssh \
+    --nsg-name pcf-nsg --resource-group $RESOURCE\_GROUP \
     --protocol Tcp --priority 100 \
-    --destination-port-range '*'
+    --destination-port-range '22'
     </pre>
-    <p class="note"><strong>Note</strong>: Because the VMs do not have public IP addresses, this network security group rule only affects the load balancer.</p>
+    <pre class="terminal">
+    $ az network nsg rule create --name http \
+    --nsg-name pcf-nsg --resource-group $RESOURCE\_GROUP \
+    --protocol Tcp --priority 200 \
+    --destination-port-range '80'
+    </pre>
+    <pre class="terminal">
+    $ az network nsg rule create --name https \
+    --nsg-name pcf-nsg --resource-group $RESOURCE\_GROUP \
+    --protocol Tcp --priority 300 \
+    --destination-port-range '443'
+    </pre>
 1. Create a network security group named `opsmgr-nsg`.
     <pre class="terminal">
     $ az network nsg create --name opsmgr-nsg \
-    --resource-group $RESOURCE_GROUP \
+    --resource-group $RESOURCE\_GROUP \
     --location $LOCATION
     </pre> 
 1. Add a network security group rule to the `opsmgr-nsg` group to allow HTTP traffic to the Ops Manager VM.
@@ -358,12 +369,12 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
         $ az vm create --name opsman-2.0.x --resource-group $RESOURCE_GROUP \
         --location $LOCATION \
         --nics opsman-nic \
-        --image https://$STORAGENAME.my-azure-instance.com/opsmanager/opsman-image-2.0.x.vhd \
+        --image https://$STORAGE_NAME.my-azure-instance.com/opsmanager/opsman-image-2.0.x.vhd \
         --os-disk-name opsman-2.0.x-osdisk \
         --os-disk-size-gb 128 \
         --os-type Linux \
         --use-unmanaged-disk \
-        --storage-account $STORAGENAME \
+        --storage-account $STORAGE_NAME \
         --storage-container-name opsmanager \
         --admin-username ubuntu \
         --ssh-key-value PATH-TO-PUBLIC-KEY

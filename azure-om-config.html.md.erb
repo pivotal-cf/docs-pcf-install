@@ -1,6 +1,7 @@
 ---
 title: Configuring Ops Manager on Azure
 owner: Ops Manager
+iaas: Azure
 ---
 
 <strong><%= modified_date %></strong>
@@ -8,11 +9,39 @@ owner: Ops Manager
 
 This topic describes how to configure the Ops Manager Director for Pivotal Cloud Foundry (PCF) on Azure.
 
-Before you perform the procedures in this topic, you must have completed the procedures in the [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic, and either the [Launching an Ops Manager Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching an Ops Manager Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic. 
+## <a id="prerequisites"></a> Prerequisites
 
-After you complete the procedures in this topic, follow the instructions in the [Deploying PAS on Azure](azure-er-config.html) topic.
+Before you perform the procedures in this topic, you must have completed the procedures in the following topics:
+
+* The [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic
+* Either the [Launching an Ops Manager Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching an Ops Manager Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic
 
 <p class="note"><strong>Note</strong>: You can also perform the procedures in this topic using the Ops Manager API. For more information, see the <a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
+
+##<a id="azure-stack"></a> Prerequisites for Azure Stack
+
+Azure Stack uses a different set of VM types than a standard Azure deployment. To install the Ops Manager Director tile on Azure Stack, you must set your virtual machine (VM) types using the Ops Manager API.
+
+Setting VM types with the API modifies the VMs available in the **Resource Config** pane of the tile. For a current list of Azure Stack VM types that you can include in your API call, see [Virtual Machine Sizes](https://docs.microsoft.com/en-us/azure/azure-stack/user/azure-stack-vm-considerations#virtual-machine-sizes) from the Azure Stack documentation. Ensure that you provide at least one `Standard` VM type for use by the **Router** VM of the Pivotal Application Service (PAS) tile. Below is an example command:
+
+<pre class="terminal">
+$ curl -k https://YOUR-OPS-MAN-FQDN/api/v0/vm_types -X 
+PUT -H "Authorization: bearer YOUR-ACCESS-TOKEN" -H 
+"Content-Type: application/json" -d '{"vm_types":[
+{"name":"Standard_DS1_v2","ram":3584,"cpu":1,"ephemeral_disk":51200},
+{"name":"Standard_DS2_v2","ram":7168,"cpu":2,"ephemeral_disk":102400},
+{"name":"Standard_DS3_v2","ram":14336,"cpu":4,"ephemeral_disk":204800},
+{"name":"Standard_DS4_v2","ram":28672,"cpu":8,"ephemeral_disk":409600},
+{"name":"Standard_DS5_v2","ram":57344,"cpu":8,"ephemeral_disk":819200},
+{"name":"Standard_DS11_v2","ram":14336,"cpu":2,"ephemeral_disk":102400},
+{"name":"Standard_DS12_v2","ram":28672,"cpu":4,"ephemeral_disk":204800},
+{"name":"Standard_DS13_v2","ram":57344,"cpu":8,"ephemeral_disk":409600},
+{"name":"Standard_DS14_v2","ram":114688,"cpu":16,"ephemeral_disk":819200}]}'
+</pre>
+
+<p class="note"><strong>Note</strong>: To obtain your authorization token, perform the procedures in the <a href="ops-man-api.html">Using the Ops Manager API</a> topic. 
+
+<p class="note warning"><strong>WARNING:</strong> If you do not set your VM types, the Ops Manager deploy will fail. You must set your VM types before configuring resources and clicking <strong>Apply Changes</strong>.</p>
 
 ## <a id='access-om'></a>Step 1: Access Ops Manager ##
 
@@ -76,7 +105,7 @@ and `xyzdeploymentstorage3`, enter `*deploymentstorage*`. Ops Manager requires
 that you specify an asterisk at both the beginning and the end of the base storage account name.
         <%= image_tag("azure/storage-accounts.png") %>
 
-1. For **Default Security Group**, enter `pcf-nsg`.
+1. (Optional) Enter your **Default Security Group**. For more information about Network Security Groups, see [Filter network traffic with network security groups](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-nsg) in Microsoft Azure's documentation.
     <p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p> 
 
 1. For **SSH Public Key**, copy and paste the contents of your public key in the `opsman.pub` file. You created this file in either the [Launching an Ops Manager Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching an Ops Manager Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic. 
@@ -93,10 +122,10 @@ that you specify an asterisk at both the beginning and the end of the base stora
 
 1. In the **NTP Servers (comma delimited)** field, enter a comma-separated list of valid NTP servers.
 
-1. (Optional) Enter your **JMX Provider IP Address** if you are [Using JMX Bridge](use-metrics.html).
-  <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the PCF JMX Bridge tile for consuming them, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="../pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
+1. Leave the **JMX Provider IP Address** field blank.
+  <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use PCF JMX Bridge for consuming them outside of the Firehose, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="../pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
-1. (Optional) Enter your **Bosh HM Forwarder IP Address** if you are using the BOSH HM Forwarder.
+1. Leave the **Bosh HM Forwarder IP Address** field blank.
   <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the BOSH HM Forwarder for consuming them, you may receive duplicate data. To prevent this, leave the <strong>Bosh HM Forwarder IP Address</strong> field blank. For additional guidance, see <a href="../pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
 1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops
@@ -128,9 +157,7 @@ Manager Resurrector functionality and increase PAS availability.
     * **Password**: Enter the password password for your email server.
     * **Enable TLS**: Select this checkbox to enable Transport Layer Security.
 
-1. For **Blobstore Location**, Pivotal recommends that you keep **Internal** selected. 
-
-     <%= image_tag("azure/blobstore.png") %>
+1. <%= partial "blobstore-location" %>
 
 1. For **Database Location**, Pivotal recommends that you keep **Internal** selected.
 
@@ -145,7 +172,7 @@ Manager Resurrector functionality and increase PAS availability.
      <%= image_tag("director_workers.png") %>
 
 1. (Optional) To disable BOSH DNS, select the **Disable BOSH DNS server for troubleshooting purposes** checkbox. For more information about the BOSH DNS service discovery mechanism, see [BOSH DNS Service Discovery for Application Containers](../pcf-release-notes/runtime-rn.html#bosh-dns) in the Pivotal Application Service (PAS) Release Notes.
-   <p class="note breaking"><strong>Breaking Change</strong>: Do not disable BOSH DNS without consulting Pivotal Support. For more information about disabling BOSH DNS, see [this KB Article](https://discuss.pivotal.io/hc/en-us/articles/115015720428-Disabling-or-Opting-Out-of-BOSH-DNS-in-PCF).</p>
+  <p class="note breaking"><strong>Breaking Change</strong>: Do not disable BOSH DNS without consulting Pivotal Support. For more information about disabling BOSH DNS, see <a href="https://discuss.pivotal.io/hc/en-us/articles/115015720428-Disabling-or-Opting-Out-of-BOSH-DNS-in-PCF">Disabling or Opting Out of BOSH DNS in PCF</a> in the Pivotal Knowledge Base.</p>
 1. (Optional) To set a custom banner that users see when logging in to the Director using SSH, enter text in the **Custom SSH Banner** field.
   <%= image_tag("disable-bosh-dns.png") %>
 
@@ -170,6 +197,7 @@ In this procedure, you create three networks.
    * **DNS**: Enter `168.63.129.16`.
    * **Gateway**: Enter the first IP address of the subnet. For example, `10.0.4.1`.
      <%= image_tag("azure/create-networks-management.png") %>
+1. Click **Save**.
 
 ### <a id='pas'></a> Create the Deployment or PAS Network ###
 
@@ -185,6 +213,7 @@ In this procedure, you create three networks.
    * **DNS**: Enter `168.63.129.16`.
    * **Gateway**: Enter the first IP address of the subnet. For example, `10.0.12.1`.
      <%= image_tag("azure/create-networks-deployment.png") %>
+1. Click **Save**.
 
 ### <a id='services'></a> Create the Services Network ###
 
@@ -238,6 +267,10 @@ choose **Automatic** from the drop-down menu to allocate the recommended resourc
 
     <p class="note"><strong>Note</strong>: If you set a field to <strong>Automatic</strong> and the recommended resource allocation changes in a future version, Ops Manager automatically uses the updated recommended allocation.</p>
 
+1. (Optional) For **Load Balancers**, enter your Azure application gateway name for each associated job.
+  
+    To create an application gateway, follow the procedures in [Configure an application gateway for SSL offload by using Azure Resource Manager](https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-ssl-arm) from the Azure documentation. When you create the application gateway, associate the gateway's IP with your PCF system domain.
+
 1. Click **Save**.
 
 ## <a id='complete-installation'></a>Step 9: Complete the Ops Manager Director Installation
@@ -251,3 +284,6 @@ choose **Automatic** from the drop-down menu to allocate the recommended resourc
 
 1. When Ops Manager finishes deploying, you can optionally [deploy BOSH Add-Ons](./add-ons.html) to your system, and then [install one or more PCF runtime environments](./runtimes.html) to complete your PCF installation.
 
+## <a id="next"></a>What to Do Next
+
+After you complete this procedure, follow the instructions in the [Deploying PAS on Azure](azure-er-config.html) topic.

@@ -1,6 +1,7 @@
 ---
 title: Configuring Ops Manager Director on GCP
 owner: Ops Manager
+iaas: GCP
 ---
 
 <strong><%= modified_date %></strong>
@@ -64,10 +65,10 @@ This topic describes how to configure the Ops Manager Director for Pivotal Cloud
 
     <p class="note"><strong>Note</strong>: To resolve <code>metadata.google.internal</code> as the NTP server hostname, you must provide the two IP addresses for DNS configuration as described in <a href="#network">Step 5: Create Networks Page</a> of this procedure.</p>
 
-1. (Optional) If you are using [JMX Bridge](./../customizing/use-metrics.html), enter your **JMX Provider IP Address**.
-    <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the PCF JMX Bridge tile for consuming them, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="../pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
+1. Leave the **JMX Provider IP Address** field blank.
+    <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use PCF JMX Bridge for consuming them outside of the Firehose, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="../pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
-1. (Optional) Enter your **Bosh HM Forwarder IP Address** if you are using the BOSH HM Forwarder.
+1. Leave the **Bosh HM Forwarder IP Address** field blank.
     <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the BOSH HM Forwarder for consuming them, you may receive duplicate data. To prevent this, leave the <strong>Bosh HM Forwarder IP Address</strong> field blank. For additional guidance, see <a href="../pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
 1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops
@@ -97,7 +98,7 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
     * **Password**: Enter the password password for your email server.
     * **Enable TLS**: Select this checkbox to enable Transport Layer Security.
 
-1. For **Blobstore Location**, select **Internal**.
+1. <%= partial "blobstore-location" %>
 
 1. For **Database Location**, select **Internal**.
 
@@ -110,7 +111,7 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
      <%= image_tag("director_workers.png") %>
 
 1. (Optional) To disable BOSH DNS, select the **Disable BOSH DNS server for troubleshooting purposes** checkbox. For more information about the BOSH DNS service discovery mechanism, see [BOSH DNS Service Discovery for Application Containers](../pcf-release-notes/runtime-rn.html#bosh-dns) in the Pivotal Application Service (PAS) Release Notes.
-   <p class="note breaking"><strong>Breaking Change</strong>: Do not disable BOSH DNS without consulting Pivotal Support. For more information about disabling BOSH DNS, see [this KB Article](https://discuss.pivotal.io/hc/en-us/articles/115015720428-Disabling-or-Opting-Out-of-BOSH-DNS-in-PCF).</p>
+  <p class="note breaking"><strong>Breaking Change</strong>: Do not disable BOSH DNS without consulting Pivotal Support. For more information about disabling BOSH DNS, see <a href="https://discuss.pivotal.io/hc/en-us/articles/115015720428-Disabling-or-Opting-Out-of-BOSH-DNS-in-PCF">Disabling or Opting Out of BOSH DNS in PCF</a> in the Pivotal Knowledge Base.</p>
 1. (Optional) To set a custom banner that users see when logging in to the Director using SSH, enter text in the **Custom SSH Banner** field.
    <%= image_tag("disable-bosh-dns.png") %>
 1. Click **Save**.
@@ -137,8 +138,9 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
     <p class="note"><strong>Note</strong>: To use a shared VPC network, enter the shared VPC host project name before the network name in the format <code>VPC-PROJECT-NAME/NETWORK-NAME/SUBNET-NAME/REGION-NAME</code>.
     For example, <code>vpc-project/opsmgr/central/us-central1</code>.
     For more information, see <a href="./gcp-shared-vpc.html">Configuring a Shared VPC on GCP</a>.</p>
-    <p class="note"><strong>Note</strong>: The <code>169.254.169.254</code> address points to the <a href=
-    "https://cloud.google.com/compute/docs/storing-retrieving-metadata">metadata server</a> that hosts metadata for GCP instances. The <code>8.8.8.8</code> corresponds to Google's public DNS server. Using both addresses provides PCF with the ability to reach external DNS from app containers, but also keeps NTP working in the event that a VM does not have access to the Internet.</p>
+    <p class="note"><strong>Note</strong>: Pivotal recommends using the gateway IP as your default DNS server only if the IP is reachable by all deployed VMs and apps.  
+    If you configure Application Security Groups (ASGs) that do not allow apps to reach the gateway IP, for example, your applications will fail to resolve any DNS entries.
+    In this case, consider using other Google-provided DNS servers such as <code>169.254.169.254</code> or <code>8.8.8.8</code>, as long as these IPs are whitelisted in your configured ASGs.</p>
     <table>
         <tr>
             <th>Network Name</th>
@@ -172,7 +174,7 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
                     </tr>
                     <tr>
                         <th>DNS</th>
-                        <td>Enter <code>169.254.169.254, 8.8.8.8</code>.</td>
+                        <td>Enter the first <code>.1</code> address from the CIDR. For example, if the CIDR is <code>192.168.101.0/26</code>, enter <code>192.168.101.1</code>.</td>
                     </tr>
                     <tr>
                         <th>Gateway</th>
@@ -213,7 +215,7 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
                     </tr>
                     <tr>
                         <th>DNS</th>
-                        <td>Enter <code>169.254.169.254, 8.8.8.8</code>.</td>
+                        <td>Enter the first <code>.1</code> address from the CIDR. For example, if the CIDR is <code>192.168.16.0/22</code>, enter <code>192.168.16.1</code>.</td>
                     </tr>
                     <tr>
                         <th>Gateway</th>
@@ -254,7 +256,7 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
                     </tr>
                     <tr>
                         <th>DNS</th>
-                        <td>Enter <code>169.254.169.254, 8.8.8.8</code>.</td>
+                        <td>Enter the first <code>.1</code> address from the CIDR. For example, if the CIDR is <code>192.168.20.0/22</code>, enter <code>192.168.20.1</code>.</td>
                     </tr>
                     <tr>
                         <th>Gateway</th>

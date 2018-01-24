@@ -1,22 +1,31 @@
 ---
-title: Configuring Ops Manager on AWS
+title: Configuring Ops Manager Director on AWS (Terraform)
 owner: Ops Manager
+iaas: AWS
 ---
 
 <strong><%= modified_date %></strong>
 <html class="list-style-none"></html>
 
-This topic describes how to configure the Ops Manager Director after deploying the CloudFormation template for [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Amazon 
-Web Services (AWS).
-Use this topic after [Deploying BOSH and Ops Manager to AWS](./cloudform-template.html).
+This topic describes how to configure the Ops Manager Director for Pivotal Cloud Foundry (PCF) on Amazon Web Services (AWS) after [Preparing to Deploy PCF on AWS (Terraform)](./aws-prepare-env-terraform.html).
 
-<p class="note"><strong>Note</strong>: You can also perform the procedures in this topic using the Ops Manager API. For more information, see the <a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
+<p class="note"><strong>Note</strong>: You can also perform the procedures in
+this topic using the Ops Manager API. For more information, see the
+<a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
+
+## <a id='prereq'></a>Prerequisite ##
+
+To complete the procedures in this topic, you must have access to the output
+from when you ran `terraform apply` to create resources for this deployment.
+You can view this output at any time by running `terraform output`.
+You use the values in your Terraform output to configure the Ops Manager Director tile.
 
 ## <a id='access-om'></a>Step 1: Access Ops Manager ##
 
-<p class="note"><strong>Note</strong>: For security, Ops Manager 1.7 and later require that you log in using a fully qualified domain name.</a></p> 
+<p class="note"><strong>Note</strong>: For security, Ops Manager v1.7 and later require that you log in using a fully qualified domain name.</a></p> 
 
-1. In a web browser, navigate to the fully qualified domain you created in _Configuring DNS for PCF on AWS_.
+1. In a web browser, navigate to the fully qualified domain name (FQDN) of the Ops Manager director.
+Use the `ops_manager_dns` value from running `terraform output`.
 
 1. When Ops Manager starts for the first time, you must choose one of the following:
     * [Use an Identity Provider](#idp): If you use an Identity Provider, an external identity server maintains your user database.
@@ -54,26 +63,23 @@ Use this topic after [Deploying BOSH and Ops Manager to AWS](./cloudform-templat
     <%= image_tag("cloudform/aws-config.png") %>
 
 1. Select **Use AWS Keys** or **Use AWS Instance Profile**.
-    * If you choose to use AWS keys, complete the fields with information from 
-      the **[Outputs](./../customizing/cloudform-dns-config.html#outputs)** tab for your stack in the AWS Console:
-        * **Access Key ID**: Use the value of **PcfIamUserAccessKey**.
-        * **AWS Secret Key**: Use the value of **PcfIamUserSecretAccessKey**.
-    * If you choose to use an AWS instance profile, enter the name of your AWS 
+    * If you choose to use AWS keys, complete the following fields:
+        * **Access Key ID**: Enter the value of `iam_user_access_key` from the Terraform output.
+        * **AWS Secret Key**: Enter the value of `iam_user_secret_access_key` from the Terraform output.
+    * If you choose to use an AWS instance profile, enter the name of your AWS
       Identity and Access Management (IAM) profile.
 
 1. Complete the remainder of the **AWS Management Console Config** page with the following information.
-    * **VPC ID**: Use the value of **PcfVpc** from your **Outputs** tab.
-    * **Security Group ID**: Use the value of **PcfVmsSecurityGroup** from your **Outputs** tab. 
-    * **Key Pair Name**: Use the name of your pre-existing AWS key pair.
-    * **SSH Private Key**: Open your AWS key pair `.pem` file in a 
-      text editor. Copy the contents of the `.pem` file and paste it into the 
-      **SSH Private Key** field.
+    * **VPC ID**: Enter the value of `vpc_id` from the Terraform output.
+    * **Security Group ID**: Enter the value of `vms_security_group_id` from the Terraform output.
+    * **Key Pair Name**: Enter the value of `ops_manager_ssh_public_key_name` from the Terraform output.
+    * **SSH Private Key**: Enter the value of `ops_manager_ssh_private_key` from the Terraform output.
     * **Region**: Select the region where you deployed Ops Manager.
-    * **Encrypt EBS Volumes**: Select this checkbox to enable full encryption 
-      on persistent disks of all BOSH-deployed virtual machines (VMs), except 
-      for the Ops Manager VM and Director VM. See the [Configuring Amazon EBS 
-      Encryption for PCF on AWS](cloudform-om-ebs-config.html) topic for 
-      details about using EBS encryption.
+    * **Encrypt EBS Volumes**: Select this checkbox to enable full encryption
+      on persistent disks of all BOSH-deployed virtual machines (VMs), except
+      for the Ops Manager VM and Director VM. See the [Configuring Amazon EBS Encryption](cloudform-om-ebs-config.html) topic for
+      details about using Elastic Block Store (EBS) encryption.
+      * **Custom Encryption Key (Optional)** Once you enable EBS encryption, you may want to specify a custom Key Management Service (KMS) encryption key. If you don't enter a value, your custom encryption key will default to the account key. For more information, see [Configuring Amazon EBS Encryption](cloudform-om-ebs-config.html).
 
 1. Click **Save**.
 
@@ -86,10 +92,10 @@ Use this topic after [Deploying BOSH and Ops Manager to AWS](./cloudform-templat
 1. Enter at least two of the following NTP servers in the **NTP Servers (comma
 delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.ntp.org,2.amazon.pool.ntp.org,3.amazon.pool.ntp.org`
 
-1. (Optional) Enter your **JMX Provider IP Address** if you are [Using JMX Bridge](./../customizing/use-metrics.html).
-  <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the PCF JMX Bridge tile for consuming them, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="../pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
+1. Leave the **JMX Provider IP Address** field blank.
+  <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use PCF JMX Bridge for consuming them outside of the Firehose, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="../pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
-1. (Optional) Enter your **Bosh HM Forwarder IP Address** if you are using the BOSH HM Forwarder.
+1. Leave the **Bosh HM Forwarder IP Address** field blank.
   <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the BOSH HM Forwarder for consuming them, you may receive duplicate data. To prevent this, leave the <strong>Bosh HM Forwarder IP Address</strong> field blank. For additional guidance, see <a href="../pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
 1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops
@@ -122,32 +128,18 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
     * **Password**: Enter the password password for your email server.
     * **Enable TLS**: Select this checkbox to enable Transport Layer Security.
 
-1. For **Blobstore Location**, select **S3 Compatible Blobstore** and complete the following steps:
+1. <%= partial "blobstore-location" %>
 
-    <%= image_tag("images/director_blobstore.png") %>
-    * In a browser, reference the [Amazon Simple Storage Service (Amazon S3) table](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region), and find the region for your AWS account.
-    * Prepend `https://` to the **Endpoint** for your region, and copy it into
-    the Ops Manager **S3 Endpoint** field. For example, in the **us-west-2** region, enter `https://s3-us-west-2.amazonaws.com` into the field.
-    * Complete the following fields with information from the **Outputs** tab in the AWS Console:
-        * **Bucket Name**: Use the value of **PcfOpsManagerS3Bucket**.
-        * **Access Key ID**: Use the value of **PcfIamUserAccessKey**.
-        * **AWS Secret Key**: Use the value of **PcfIamUserSecretAccessKey**.
-    * Select **V2 Signature** or **V4 Signature**. If you select **V4 Signature**, enter your **Region**.
-        * *AWS recommends using Signature Version 4 when possible.*
-
-    <p class="note"><strong>Note</strong>: For more information about AWS S3 Signatures, see the AWS <a href="http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html">Authenticating Requests</a> documentation.</p>
-
-
-1. For **Database Location**, select **Internal**. 
+1. For **Database Location**, select **Internal**.
 
 1. (Optional) **Director Workers** sets the number of workers available to execute Director tasks. This field defaults to `5`.
 
 1. (Optional) **Max Threads** sets the maximum number of threads that the Ops Manager Director can run simultaneously. Pivotal recommends that you leave the field blank to use the default value, unless doing so results in rate limiting or errors on your IaaS.
 
-1. (Optional) To add a custom URL for your Ops Manager Director, enter a valid hostname in **Director Hostname**. You can also use this field to configure [a load balancer in front of your Ops Manager Director](https://discuss.pivotal.io/hc/en-us/articles/225420588).
+1. (Optional) To add a custom URL for your Ops Manager Director, enter a valid hostname in **Director Hostname**. You can also use this field to configure a load balancer in front of your Ops Manager Director. For more information, see [How to set up a load balancer in front of Ops Manager Director](https://discuss.pivotal.io/hc/en-us/articles/225420588) in the Pivotal Knowledge Base.
 
-1. (Optional) To disable BOSH DNS, select the **Disable BOSH DNS server for troubleshooting purposes** checkbox. For more information about the BOSH DNS service discovery mechanism, see [BOSH DNS Service Discovery for Application Containers](../pcf-release-notes/runtime-rn.html#bosh-dns) in the Pivotal Application Service (PAS) Release Notes.
-   <p class="note breaking"><strong>Breaking Change</strong>: Do not disable BOSH DNS without consulting Pivotal Support. For more information about disabling BOSH DNS, see [this KB Article](https://discuss.pivotal.io/hc/en-us/articles/115015720428-Disabling-or-Opting-Out-of-BOSH-DNS-in-PCF).</p>
+1. (Optional) To disable BOSH DNS, select the **Disable BOSH DNS server for troubleshooting purposes** checkbox. For more information about the BOSH DNS service discovery mechanism, see [BOSH DNS Service Discovery for Application Containers](../pcf-release-notes/runtime-rn.html#bosh-dns) in the PAS Release Notes.
+  <p class="note breaking"><strong>Breaking Change</strong>: Do not disable BOSH DNS without consulting Pivotal Support. For more information about disabling BOSH DNS, see <a href="https://discuss.pivotal.io/hc/en-us/articles/115015720428-Disabling-or-Opting-Out-of-BOSH-DNS-in-PCF">Disabling or Opting Out of BOSH DNS in PCF</a> in the Pivotal Knowledge Base.</p>
 1. (Optional) To set a custom banner that users see when logging in to the Director using SSH, enter text in the **Custom SSH Banner** field.
   <%= image_tag("disable-bosh-dns.png") %>
 1. Click **Save**.
@@ -162,22 +154,24 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
 
 1. Use the following steps to create three Availability Zones for your apps to use:
     1. Click **Add** three times.
-    1. For **Amazon Availability Zone**, enter the values corresponding to these keys from the **Outputs** tab in the AWS Console. 
-        * **PcfManagementSubnetAZ1AvailabilityZone**
-        * **PcfManagementSubnetAZ2AvailabilityZone**
-        * **PcfManagementSubnetAZ3AvailabilityZone**
-    1. Click **Save**. 
+    1. For **Amazon Availability Zone**, enter the values corresponding
+    to the key `management_subnet_availability_zones` from the Terraform output.
+    1. Click **Save**.
 
 
 ## <a id='om-networks'></a>Step 5: Create Networks Page ##
 
 1. Select **Create Networks**.
 <%= image_tag("cloudform/create-networks.png") %>
+
 1. (Optional) Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
-1. Perform the following steps to add the network configuration you created for your VPC in the [Step 4: Create a VPC](pcf-aws-manual-config.html#pcfaws-vpc) section of the <em>Manually Configuring PCF for AWS</em> topic:
+
+1. Perform the following steps to add the network configuration you created for your VPC:
+
     1. Click **Add Network**.
     1. For **Name**, enter `pcf-management-network`.
-    1. Create a subnet for each availability zone by clicking **Add Subnet**. Refer to the table below for the information required to create all three subnets:
+    1. Create a subnet for each availability zone by clicking **Add Subnet**.
+    Refer to the table below for the information required to create all three subnets:
          <table>
          <tr>
            <th>VPC Subnet ID</th>
@@ -188,34 +182,36 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
            <th>Availability Zones</th>
          </tr>
          <tr>
-           <td>The value of `PcfManagementSubnetAZ1` from the AWS outputs tab.</td>
+           <td>The first value of `management_subnet_ids` from the Terraform output.</td>
            <td>`10.0.16.0/28`</td>
            <td>`10.0.16.0-10.0.16.4`</td>
            <td>`169.254.169.253`</td>
            <td>`10.0.16.1`</td>
-           <td>The value of `PcfManagementSubnetAZ1AvailabilityZone` from the AWS outputs tab. </td>
+           <td>The first value of `management_subnet_availability_zones` from the Terraform output.</td>
          </tr>
          <tr>
-           <td>The value of `PcfManagementSubnetAZ2` from the AWS outputs tab.</td>
+           <td>The second value of `management_subnet_ids` from the Terraform output.</td>
            <td>`10.0.16.16/28`</td>
            <td>`10.0.16.16-10.0.16.20`</td>
            <td>`169.254.169.253`</td>
            <td>`10.0.16.17`</td>
-           <td>The value of `PcfManagementSubnetAZ2AvailabilityZone` from the AWS outputs tab.</td>
+           <td>The second value of `management_subnet_availability_zones` from the Terraform output.</td>
          </tr>
          <tr>
-           <td>The value of `PcfManagementSubnetAZ3` from the AWS outputs tab</td>
+           <td>The third value of `management_subnet_ids` from the Terraform output.</td>
            <td>`10.0.16.32/28`</td>
            <td>`10.0.16.32-10.0.16.36`</td>
            <td>`169.254.169.253`</td>
            <td>`10.0.16.33`</td>
-           <td>The value of `PcfManagementSubnetAZ3AvailabilityZone` from the AWS outputs tab.</td>
+           <td>The third value of `management_subnet_availability_zones` from the Terraform output.</td>
          </tr>
          </table>
     <br><br>
+
     1. Click **Add Network**.
-    1. For **Name**, enter `pcf-ert-network`.
-    1. Create a subnet for each availability zone by clicking **Add Subnet**. Refer to the table below for the information required to create all three subnets:
+    1. For **Name**, enter `pcf-pas-network`.
+    1. Create a subnet for each availability zone by clicking **Add Subnet**.
+    Refer to the table below for the information required to create all three subnets:
          <table>
           <tr>
           <th>VPC Subnet ID</th>
@@ -226,69 +222,71 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
            <th>Availability Zones</th>
          </tr>
          <tr>
-           <td>The value of `PcfERTSubnetAZ1` from the AWS outputs tab.</td>
+           <td>The first value of `pas_subnet_ids` from the Terraform output.</td>
            <td>`10.0.4.0/24`</td>
            <td>`10.0.4.0-10.0.4.4`</td>
            <td>`169.254.169.253`</td>
            <td>`10.0.4.1`</td>
-           <td>The value of `PcfERTSubnetAZ1AvailabilityZone` from the AWS outputs tab.</td>
+           <td>The first value of `pas_subnet_availability_zones` from the Terraform output.</td>
          </tr>
          <tr>
-           <td>The value of `PcfERTSubnetAZ2` from the AWS outputs tab.</td>
+           <td>The second value of `pas_subnet_ids` from the Terraform output.</td>
            <td>`10.0.5.0/24`</td>
            <td>`10.0.5.0-10.0.5.4`</td>
            <td>`169.254.169.253`</td>
            <td>`10.0.5.1`</td>
-           <td>The value of `PcfERTSubnetAZ2AvailabilityZone` from the AWS outputs tab.</td>
+           <td>The second value of `pas_subnet_availability_zones` from the Terraform output.</td>
          </tr>
          <tr>
-           <td>The value of `PcfERTSubnetAZ3` from the AWS outputs tab.</td>
+           <td>The third value of `pas_subnet_ids` from the Terraform output.</td>
            <td>`10.0.6.0/24`</td>
            <td>`10.0.6.0-10.0.6.4`</td>
            <td>`169.254.169.253`</td>
            <td>`10.0.6.1`</td>
-           <td>The value of `PcfERTSubnetAZ3AvailabilityZone` from the AWS outputs tab.</td>
+           <td>The third value of `pas_subnet_availability_zones` from the Terraform output.</td>
          </tr>
          </table>
     <br><br>
+
     1. Click **Add Network**.
-    1. Check the **Service Network** box. This allows you to dynamically provision VMs in this network for use with on-demand services. Ops Manager does not provision VMs within the specified CIDR range.
+    1. Check the **Service Network** box. This allows you to dynamically provision
+    VMs in this network for use with on-demand services. Ops Manager does not provision VMs within the specified CIDR range.
     1. Enter `pcf-services-network` in **Name** field.
     1. Create a subnet for each availability zone by clicking **Add Subnet**. Refer to the table below for the information required to create all three subnets:
-          <table>
-           <tr>
-             <th>VPC Subnet ID</th>
-             <th>CIDR</th>
-             <th>Reserved IP Ranges</th>
-             <th>DNS</th>
-             <th>Gateway</th>
-             <th>Availability Zones</th>
-           </tr>
-           <tr>
-             <td>The value of `PcfServicesSubnetAZ1` from the AWS outputs tab.</td>
-             <td>`10.0.8.0/24`</td>
-             <td>`10.0.8.0-10.0.8.3`</td>
-             <td>`169.254.169.253`</td>
-             <td>`10.0.8.1`</td>
-             <td>The value of `PcfServicesSubnetAZ1AvailabilityZone` from the AWS outputs tab.</td>
-           </tr>
-           <tr>
-             <td>The value of `PcfServicesSubnetAZ2` from the AWS outputs tab.</td>
-             <td>`10.0.9.0/24`</td>
-             <td>`10.0.9.0-10.0.9.3`</td>
-             <td>`169.254.169.253`</td>
-             <td>`10.0.9.1`</td>
-             <td>The value of `PcfServicesSubnetAZ2AvailabilityZone` from the AWS outputs tab.</td>
-           </tr>
-           <tr>
-             <td>The value of `PcfServicesSubnetAZ3` from the AWS outputs tab.</td>
-             <td>`10.0.10.0/24`</td>
-             <td>`10.0.10.0-10.0.10.3`</td>
-             <td>`169.254.169.253`</td>
-             <td>`10.0.10.1`</td>
-             <td>The value of `PcfServicesSubnetAZ3AvailabilityZone` from the AWS outputs tab.</td>
-           </tr>
-           </table>
+        <table>
+         <tr>
+           <th>VPC Subnet ID</th>
+           <th>CIDR</th>
+           <th>Reserved IP Ranges</th>
+           <th>DNS</th>
+           <th>Gateway</th>
+           <th>Availability Zones</th>
+         </tr>
+         <tr>
+           <td>The first value of `services_subnet_ids` from the Terraform output.</td>
+           <td>`10.0.8.0/24`</td>
+           <td>`10.0.8.0-10.0.8.3`</td>
+           <td>`169.254.169.253`</td>
+           <td>`10.0.8.1`</td>
+           <td>The first value of `services_subnet_availability_zones` from the Terraform output.</td>
+         </tr>
+         <tr>
+           <td>The second value of `services_subnet_ids` from the Terraform output.</td>
+           <td>`10.0.9.0/24`</td>
+           <td>`10.0.9.0-10.0.9.3`</td>
+           <td>`169.254.169.253`</td>
+           <td>`10.0.9.1`</td>
+           <td>The second value of `services_subnet_availability_zones` from the Terraform output.</td>
+         </tr>
+         <tr>
+           <td>The third value of `services_subnet_ids` from the Terraform output.</td>
+           <td>`10.0.10.0/24`</td>
+           <td>`10.0.10.0-10.0.10.3`</td>
+           <td>`169.254.169.253`</td>
+           <td>`10.0.10.1`</td>
+           <td>The third value of `services_subnet_availability_zones` from the Terraform output.</td>
+         </tr>
+         </table>
 
 1. Click **Save**.
 
@@ -321,7 +319,10 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
 
     <%= image_tag("../images/resource-config-aws.png") %>
 
-1. Adjust any values as necessary for your deployment. Under the **Instances**, **Persistent Disk Type**, and **VM Type** fields, choose **Automatic** from the drop-down menu to allocate the recommended resources for the job. If the **Persistent Disk Type** field reads **None**, the job does not require persistent disk space.
+1. Adjust any values as necessary for your deployment. Under the **Instances**,
+**Persistent Disk Type**, and **VM Type** fields, choose **Automatic** from
+the drop-down menu to allocate the recommended resources for the job. If the
+**Persistent Disk Type** field reads **None**, the job does not require persistent disk space.
 
     <p class="note"><strong>Note</strong>: If you set a field to <strong>Automatic</strong> and the recommended resource allocation changes in a future version, Ops Manager automatically uses the updated recommended allocation.</p> 
 
@@ -339,4 +340,4 @@ Dashboard.
 
     <%= image_tag("cloudform/ops-manager-complete.png") %>
 
-1. After you complete this procedure, follow the instructions in the [Deploying PAS on AWS CloudFormation](./cloudform-er-config.html) topic.
+1. After you complete this procedure, follow the instructions in the [Deploying PAS on AWS (Terraform)](./aws-er-config-terraform.html) topic.

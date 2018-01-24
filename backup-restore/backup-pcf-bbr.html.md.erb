@@ -19,10 +19,11 @@ During the backup, BBR stops the Cloud Controller API and the Cloud Controller w
   <strong>Warnings</strong>:
   <ul>
     <li><strong>Backup artifacts can contain secrets.</strong> Secure backup artifacts by using encryption or other means. </li>
-    <li><strong>The restore is a destructive operation.</strong> BBR is designed to restore PCF after a disaster. If it fails, the environment may be left in an unusable state and require reprovisioning. The two restore scenarios currently documented are <a href="restore-pcf-bbr.html">Restoring Pivotal Cloud Foundry from Backup with BBR</a> and <a href="rollback-ert-bbr.html">Rolling Back Pivotal Application Service (PAS) Deployment to an Earlier Backup with BBR</a>.</li>
+    <li><strong>The restore is a destructive operation.</strong> BBR is designed to restore PCF after a disaster. If it fails, the environment may be left in an unusable state and require reprovisioning. The two restore scenarios currently documented are <a href="restore-pcf-bbr.html">Restoring Pivotal Cloud Foundry from Backup with BBR</a> and <a href="in-place-restore.html">Restoring a PAS Backup In-Place</a>.</li>
     <li><strong>The Cloud Controller API will stop sending and receiving calls</strong> for the duration of PCF restoration.</li>
     <li><strong>BBR does not back up any service data.</strong></li>
     <li><strong>Using an external blobstore or an external MySQL database results in an unusable restore</strong> even if the restore appears to run successfully.</li>
+    <li><strong>For PCF v2.0.0, BBR only supports backup and restore of environments with zero or one CredHub instances.</strong></li>
   </ul>
 </div>
 
@@ -181,7 +182,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
     You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
     * `BOSH-DIRECTOR-IP`: You retrieved this value in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 6: Identify Your Deployment](#identify-deployment) section.
-    * `PATH-TO-BOSH-SERVER-CERTIFICATE`: This is the path to the BOSH Director's Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain. If you are using the Ops Manager VM as your jumpbox, locate the certificate at `/var/tempest/workspaces/default/root_ca_certificate`.
+    * `PATH-TO-BOSH-SERVER-CERTIFICATE`: This is the path to the Certificate Authority (CA) certificate for the BOSH Director. For more information, see [Ensure BOSH Director Certificate Availability](./system-setup-bbr.html#root-ca-cert).
 
 1. If the pre-backup check succeeds, continue to the [next section](#procedure). If it fails, the deployment you selected may not have the correct backup scripts, or the connection to the BOSH Director may have failed.
 
@@ -189,15 +190,13 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 
 ### <a id='export'></a>Step 7: Export Installation Settings
 
-Pivotal recommends that you back up your installation settings by exporting
+Pivotal recommends that you back up your Ops Manager installation settings by exporting
 frequently. This option is only available after you have deployed at least one time.
-Always export an installation before following the steps in the [Import Installation Settings](./restore-pcf-bbr.html#import) section of the [Restoring Pivotal Cloud Foundry from Backup with BBR](./restore-pcf-bbr.html) topic.
+Always export your installation settings before following the steps in the [Import Installation Settings](./restore-pcf-bbr.html#import) section of the [Restoring Pivotal Cloud Foundry from Backup with BBR](./restore-pcf-bbr.html) topic.
 
-<p class="note"><strong>Note</strong>: Exporting your installation only backs up your installation settings. It does not back up your virtual machines (VMs) or any external MySQL databases.</p>
+<p class="note"><strong>Note</strong>: Exporting your installation settings only backs up the settings you configured in Ops Manager. It does not back up your virtual machines (VMs) or any external MySQL databases.</p>
 
 From the **Installation Dashboard** in the Ops Manager interface, click your user name at the top right navigation. Select **Settings**.
-
-**Export Installation Settings** exports the current PCF installation settings and assets.
 
 <p class="note"><strong>Note</strong>: Ops Manager 1.12 exports installation settings only, so the output is much smaller than in previous Ops Manager versions.</p>
 
@@ -315,7 +314,7 @@ Perform the following steps to spin up a second environment that matches the ori
 
 1. Export your Ops Manager installation by performing the steps in the [Step 8: Export Installation Settings](#export) section.
 1. Create a new Ops Manager VM in a different network to the original. Ensure that the Ops Manager VM has enough persistent disk to accommodate the files exported in the previous step. Consult the topic specific to your IaaS:<br><br>
-  * [Deploying BOSH and Ops Manager to AWS](../cloudform-template.html)
+  * [Deploying BOSH and Ops Manager to AWS](../aws-terraform.html)
 	* [Manually Configuring AWS for PCF](../pcf-aws-manual-config.html)
 	* [Launching an Ops Manager Director Instance with an ARM Template](../azure-arm-template.html)
     * [Launching an Ops Manager Director Instance on GCP](../gcp-om-deploy.html)
@@ -398,11 +397,12 @@ If more logging is needed, use the optional `--debug` flag to print the followin
 
 If you need to cancel a backup, perform the following steps:
 
-1. Terminate the BBR process by pressing Ctrl-C and then typing `yes` to confirm.
+1. Enter `CTRL-C` to terminate the BBR process, then enter `yes` to confirm.
 1. Log in to your BOSH Director with the BOSH CLI by performing the procedures in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section above.
 1. Perform the following steps for each `cloud_controller` VM in your deployment:
 	1. List the VMs in your deployment:
-		<pre class="terminal">$ bosh -e DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate \
+		<pre class="terminal">$ bosh -e DIRECTOR-IP \
+		--ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
 		-d DEPLOYMENT-NAME \
 		ssh</pre>
 	1. Select the VM you want to SSH into.

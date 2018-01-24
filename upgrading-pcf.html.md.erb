@@ -21,7 +21,7 @@ This section contains important preparation steps, **Preps**, that you must foll
 
 Pivotal recommends backing up your PCF deployment before upgrading, to restore in the case of failure. To do this, follow the instructions in the <a href="./backup-restore/backup-pcf-bbr.html">Backing Up Pivotal Cloud Foundry with BBR</a> topic. 
 
-<p class="note breaking"><strong>Breaking Change:</strong> If you have the Single Sign-On (SSO) service tile installed,  you must first upgrade the SSO tile to v1.5.3 before you can upgrade the PAS tile to 2.0. To properly upgrade your SSO tile, see the <a href="https://discuss.pivotal.io/hc/en-us/articles/115015727408">SSO upgrade</a> knowledge article.</p>
+<p class="note breaking"><strong>Breaking Change:</strong> If you have the Single Sign-On (SSO) service tile installed,  you must first upgrade the SSO tile to v1.5.3 and configure the Apps Manager errand before you can upgrade the PAS tile to 2.0. To properly upgrade your SSO tile, see <a href="https://discuss.pivotal.io/hc/en-us/articles/115015727408">Upgrade SSO Service Tile resource instance between PCF 1.12 and PCF 2.0</a> in the Pivotal Knowledge Base.</p>
 
 ### <a id="storage"></a>Prep 1: Review File Storage IOPS and Other Upgrade Limiting Factors
 
@@ -104,21 +104,21 @@ This is the same information you entered at the end of deploying [Ops Manager on
 
 ### <a id="upgrade-mysql"></a>Prep 7: Upgrade MySQL for PCF
 
-If your PCF deployment includes both <strong><a href="../windows2012r2/index.html">PAS for Windows 2012R2</a></strong> and <strong>MySQL for PCF v1.x</strong>, download and upgrade to MySQL for PCF v1.10.3 or later. For instructions on how to upgrade MySQL for PCF, see the 
+If your PCF deployment includes both <strong><a href="../windows2012r2/index.html">PAS for Windows 2012R2</a></strong> and <strong>MySQL for PCF v1.x</strong>, download and upgrade to MySQL for PCF v1.10.6 or later. For instructions on how to upgrade MySQL for PCF, see the 
  <a href="http://docs.pivotal.io/p-mysql/1-10/index.html">MySQL for PCF</a> documentation.
 
 ### <a id="upgrade-rmq"></a>Prep 8: Upgrade and Configure RabbitMQ for PCF
 
-If your PCF deployment contains **RabbitMQ for PCF**, download and upgrade RabbitMQ for PCF to v1.9 or later. For upgrade instructions, see the [RabbitMQ for PCF documentation](https://docs.pivotal.io/rabbitmq-cf/1-10/index.html). As part of the upgrade, ensure that the firewall rules on your Rabbit VM instances allow inbound traffic on port `8301`.  
+If your PCF deployment contains **RabbitMQ for PCF**, download and upgrade RabbitMQ for PCF to v1.11 or later. For upgrade instructions, see the [RabbitMQ for PCF documentation](https://docs.pivotal.io/rabbitmq-cf/index.html). As part of the upgrade, ensure that the firewall rules on your Rabbit VM instances allow inbound traffic on port `8301`.  
 
 ### <a id="upgrade-redis"></a>Prep 9: Upgrade and Configure Redis for PCF
 
 If your PCF deployment contains **Redis for PCF**, download and upgrade to Redis for PCF v1.10. Ensure that you complete the following as part of the upgrade:
  
-* When performing the upgrade, ensure that persistent disk is set to 3.5x the amount of RAM for your Dedicated-VM Redis instances. See [Networks, Security, and Assigning AZs](https://docs.pivotal.io/redis/1-10/installing.html#azs) for more information.
+* When performing the upgrade, ensure that persistent disk is set to 3.5x the amount of RAM for your Dedicated-VM Redis instances. See [Networks, Security, and Assigning AZs](https://docs.pivotal.io/redis/installing.html#azs) for more information.
 * Ensure you have configured [firewall rules](http://docs.pivotal.io/redis/1-10/odnetworking.html#network-rules) on your Redis VM instances.
 
-For upgrade instructions, see the [Redis for PCF documentation](https://docs.pivotal.io/redis/1-10/index.html).
+For upgrade instructions, see the [Redis for PCF documentation](https://docs.pivotal.io/redis/1-11/index.html).
 
 ### <a id="upgrade-add-ons"></a>Prep 10: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
 
@@ -195,7 +195,7 @@ Network](https://network.pivotal.io/products/ops-manager) site.
 1. To avoid conflicts, power off the existing Ops Manager VM.
 
 1. Deploy the new Ops Manager VM by following the steps in one of these topics:
-    * **AWS (CloudFormation)**: [Deploying BOSH and Ops Manager to AWS](./cloudform-template.html) and subsequent topics.
+    * **AWS (Terraform)**: [Deploying BOSH and Ops Manager to AWS](./aws-prepare-env-terraform.html) and subsequent topics.
     * **AWS (Manual)**: [Manually Configuring AWS for PCF](./pcf-aws-manual-om-config.html)
     * **Azure**: [Upgrading Ops Manager Director on Azure](./azure-om-upgrade.html)
     * **GCP**: [Upgrading Ops Manager Director on GCP](./gcp-om-upgrade.html)
@@ -260,12 +260,8 @@ Network](https://network.pivotal.io/products/ops-manager) site.
 
 1. Click each service tile, select the **Status** tab, and confirm that all VMs appear and are in good health.
 
-## <a id="after-upgrade"></a>After you Upgrade 
+## <a id="after-upgrade"></a>After You Upgrade
 
 ### <a id="cli-upgrade"></a>Upgrade cf CLI
 
-To use the experimental push commands, [multiple buildpack](../buildpacks/use-multiple-buildpacks.html) support, and [container networking commands](../devguide/deploy-apps/cf-networking.html#create-policies) in PCF v2.0, make sure you have [the latest version of cf CLI](https://github.com/cloudfoundry/cli#downloads) installed. 
-
-## <a id="rollback"></a>Rolling Back PAS in the Event of a Failed Upgrade
-
-If you have previously backed up PCF using BOSH Backup and Restore, you can roll back PAS to an earlier deployment if the PAS upgrade fails. For instructions about rolling back the PAS deployment, see [Rolling Back PAS Deployment to an Earlier Backup with BBR](backup-restore/rollback-ert-bbr.html).
+To use the experimental push commands, [multiple buildpack](../buildpacks/use-multiple-buildpacks.html) support, and [container networking commands](../devguide/deploy-apps/cf-networking.html#create-policies) in PCF v2.0, make sure you have [the latest version of cf CLI](https://github.com/cloudfoundry/cli#downloads) installed.

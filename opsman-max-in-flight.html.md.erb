@@ -1,0 +1,52 @@
+---
+title: Limiting Component Instances During Restart
+owner: Ops Manager
+---
+
+## <a id="intro"></a>The max\_in\_flight Variable
+The `max_in_flight` variable limits how many instances of a component can restart simultaneously during updates or upgrades. It can make deployment upgrades run faster and prevent system overload. For PCF deployments with hundreds of jobs, upgrading sequentially can take hours. With `max_in_flight`, you can upgrade jobs in batches, which substantially decreases upgrade time.
+
+Values for `max_in_flight` can be any integer between 1 and 100, or a percentage of the total number of instances (for example, a `max_in_flight` value of 20% in a deployment with 10 instances would only allow 2 instances to start at once).
+
+## <a id="setting"></a>Setting the Variable
+The `max_in_flight` is a system-wide value with optional component-specific overrides. You can override the default value for individual jobs using an API endpoint.
+
+### <a id="endpoint"></a>Using the max\_in\_flight API Endpoint
+
+Use the `max_in_flight` API endpoint to configure the maximum value for component instances that can start at a given time. This endpoint overrides product defaults. You can specify values as a percentage or an integer.
+
+Use the string “default” as the `max_in_flight` value to force the component to use the deployment's default value.
+
+<p class="note"><strong>Note:</strong> The example below lists three JOB_GUIDs. These three GUIDs are examples of the three different types of values you can use to configure <code>max_in_flight</code>.  The endpoint only requires one GUID.</p>
+
+<pre class="terminal">
+	curl "https://EXAMPLE.com/api/v0/staged/products/PRODUCT-TYPE1-GUID/max_in_flight" \
+    -X PUT \
+    -H "Authorization: Bearer UAA_ACCESS_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+          "max_in_flight": {
+            "JOB_1_GUID": 1,
+            "JOB_2_GUID": "20%",
+            "JOB_3_GUID": "default"
+          }
+        }'
+</pre>
+
+## <a id="best-practices"></a>Best Practices
+
+Set the `max_in_flight` variable high enough that the remaining component instances are not overloaded by typical use. If component instances are overloaded during updates, upgrades, or typical use, users may experience downtime. 
+
+Some more precise guidelines include:
+
+* For jobs with high resource usage, set `max_in_flight` low. For example, for Diego cells, `max_in_flight` allows non-migrating cells to pick up the work of cells stopping and restarting during migration. If resource usage is already close to 100%, scale up your jobs before making any updates.
+* For quorum-based components (these are components with odd-numbered settings in the manifest), such as etcd, consul, and Diego BBS, set `max_in_flight` to 1. This preserves quorum and prevents a [split-brain scenario](https://en.wikipedia.org/wiki/Split-brain_(computing)) from occurring as jobs restart.
+* For other components, set `max_in_flight` to the number of instances that you can afford to have down at any one time. The best values for your deployment vary based on your capacity planning. In a highly redundant deployment, you can make the number high so that updates run faster. If your components are at high utilization, however, you should keep the number low to prevent downtime.
+* Never set `max_in_flight` to a value greater than or equal to the number of instances you have running for a component.
+
+## <a id="related"></a>Related Links
+
+For more information on `max_in_flight`, see:
+
+* [Upgrade Considerations for Selecting File Storage in Pivotal Cloud Foundry](../opsguide/storage_considerations.html#max_in_flight)
+* [Setting a Maximum Number of Started Containers](../adminguide/max-container-starts.html)

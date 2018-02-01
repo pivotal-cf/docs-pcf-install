@@ -9,7 +9,11 @@ iaas: vSphere
 
 This topic describes how to configure the Ops Manager Director for VMware vSphere.
 
-Before you begin this procedure, ensure that you have successfully completed all steps in the [Deploying Operations Manager to vSphere](deploying-vm.html) topic. After you complete this procedure, follow the instructions in the [Configuring Pivotal Application Service (PAS) for vSphere](config-er-vmware.html) topic.
+Before you begin this procedure, ensure that you have successfully completed all steps in the [Deploying BOSH and Ops Manager to vSphere](deploying-vm.html) topic.
+After you complete this procedure, follow the configuration instructions for the runtime you choose to install.
+For example, to install Pivotal Application Service (PAS), see the [Configuring PAS for vSphere](config-er-vmware.html) topic.
+
+See [Installing Runtimes](runtimes.html) for more information about Pivotal Cloud Foundry (PCF) runtimes.
 
 <p class="note"><strong>Note</strong>: You can also perform the procedures in this topic using the Ops Manager API. For more information, see the <a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
 
@@ -95,8 +99,11 @@ Before you begin this procedure, ensure that you have successfully completed all
 1. Leave the **Bosh HM Forwarder IP Address** field blank.
     <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the BOSH HM Forwarder for consuming them, you may receive duplicate data. To prevent this, leave the <strong>Bosh HM Forwarder IP Address</strong> field blank. For additional guidance, see <a href="https://docs-pcf-staging.cfapps.io/pivotalcf/2-1/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
-1. Select the **Enable VM Resurrector Plugin** to enable Ops Manager Resurrector functionality and increase PAS availability. For more information, see the [Using Ops Manager Resurrector on VMware vSphere](./resurrector.html) topic.
+1. Select the **Enable VM Resurrector Plugin** to enable Ops Manager Resurrector functionality.
+If you are installing PAS, this setting also increases availability in your deployment.
+For more information, see the [Using Ops Manager Resurrector on VMware vSphere](./resurrector.html) topic.
 1. Select **Enable Post Deploy Scripts** to run a post-deploy script after deployment. This script allows the job to execute additional commands against a deployment.
+  <p class="note"><strong>Note</strong>: If you are deploying Pivotal Container Service (PKS), you must enable post-deploy scripts.</p>
 1. Select **Recreate all VMs** to force BOSH to recreate all VMs on the next deploy. This process does not destroy any persistent disk data.
 1. Select **Enable bosh deploy retries** if you want Ops Manager to retry failed BOSH operations up to five times.
 1. Select **Keep Unreachable Director VMs** if you want to preserve Ops Manager Director VMs after a failed deployment for troubleshooting purposes. 
@@ -115,7 +122,7 @@ Before you begin this procedure, ensure that you have successfully completed all
     * **Password**: Enter the password for your email server.
     * **Enable TLS**: Select this checkbox to enable Transport Layer Security.
 1. <%= partial "blobstore-location" %>
-1. By default, Pivotal Cloud Foundry (PCF) deploys and manages an **Internal** database for you. If you choose to use an **External MySQL Database**, complete the associated fields with information obtained from your external MySQL Database provider: **Host**, **Port**, **Username**, **Password**, and **Database**.
+1. By default, PCF deploys and manages an **Internal** database for you. If you choose to use an **External MySQL Database**, complete the associated fields with information obtained from your external MySQL Database provider: **Host**, **Port**, **Username**, **Password**, and **Database**.
 
     <%= image_tag("images/director_database.png") %>
 
@@ -124,6 +131,7 @@ Before you begin this procedure, ensure that you have successfully completed all
 1. (Optional) To add a custom URL for your Ops Manager Director, enter a valid hostname in **Director Hostname**. You can also use this field to configure [a load balancer in front of your Ops Manager Director](https://discuss.pivotal.io/hc/en-us/articles/225420588).
 1. (Optional) To disable BOSH DNS, select the **Disable BOSH DNS server for troubleshooting purposes** checkbox. For more information about the BOSH DNS service discovery mechanism, see [BOSH DNS Service Discovery for Application Containers](https://docs-pcf-staging.cfapps.io/pivotalcf/2-1/pcf-release-notes/runtime-rn.html#bosh-dns) in the PAS Release Notes.
   <p class="note breaking"><strong>Breaking Change</strong>: Do not disable BOSH DNS without consulting Pivotal Support. If you opt out of the BOSH DNS feature, your PCF deployment cannot support <a href="https://docs-pcf-staging.cfapps.io/pivotalcf/2-1/pcf-release-notes/opsmanager-rn.html#nsx">NSX-T networking</a>. For more information about disabling BOSH DNS, see <a href="https://discuss.pivotal.io/hc/en-us/articles/115015720428-Disabling-or-Opting-Out-of-BOSH-DNS-in-PCF">Disabling or Opting Out of BOSH DNS in PCF</a> in the Pivotal Knowledge Base.</p>
+  <p class="note"><strong>Note</strong>: If you are deploying PKS, do not disable BOSH DNS. If PAS and PKS are running on the same instance of Ops Manager, you cannot use the opt-out feature of BOSH DNS for your PAS without breaking PKS. If you want to opt out of BOSH DNS in your PAS deployment, install the tile on a separate instance of Ops Manager.</p>
 1. (Optional) To set a custom banner that users see when logging in to the Director using SSH, enter text in the **Custom SSH Banner** field.
   <%= image_tag("disable-bosh-dns.png") %>
 1. Click **Save**.
@@ -131,7 +139,7 @@ Before you begin this procedure, ensure that you have successfully completed all
 <p class="note"><strong>Note</strong>: After your initial deployment, you will not be able to edit the Blobstore and Database locations.</p>
 
 ## <a id='create-az'></a>Step 4: Create Availability Zone Page
-Ops Manager Availability Zones correspond to your vCenter clusters and resource pools. Multiple Availability Zones allow you to provide high-availability and load balancing to your applications. When you run more than one instance of an application, Ops Manager balances those instances across all of the Availability Zones assigned to the application. At least three availability zones are recommended for a highly available installation of PAS.
+Ops Manager Availability Zones correspond to your vCenter clusters and resource pools. Multiple Availability Zones allow you to provide high-availability and load balancing to your applications. When you run more than one instance of an application, Ops Manager balances those instances across all of the Availability Zones assigned to the application. At least three availability zones are recommended for a highly available installation of your chosen runtime.
 
 1. Select **Create Availability Zones**.
     

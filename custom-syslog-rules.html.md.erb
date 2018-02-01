@@ -37,14 +37,12 @@ Example log messages:
 </pre>
 
 
-You can change which logs PAS forwards or the format of the logs forwarded by specifying a custom rsyslog rule. 
+You can change which logs PAS forwards by specifying a custom rsyslog rule. 
 
 Reasons to customize syslog rules include the following:
 
   - To forward only certain logs
   - To exclude certain logs from forwarding
-  - To write logs to a local file
-  - To provide a customized format required by an external log parsing service
   
 <p class='note'><strong>Note</strong>: If your custom rule is invalid, PAS forwards no logs.</p>
 
@@ -66,39 +64,3 @@ The following example uses the _discard_ command, `~`, to prevent further proces
 The following example uses the _discard_ command, `~`, to prevent further processing of log lines matching a conditional. This custom rule drops `DEBUG` log messages.
 
 ```if ($msg contains "DEBUG") then ~```
-
-###<a id='write-local'></a>Write Logs to a Local File
-
-The following example writes log line matching a conditional to a local file. 
-
-```
-if ($app-name != "uaa") then {
-  action(
-    type="omfile"
-    File="/var/log/experimental.log"
-  )
-}
-```
-
-##<a id='change-format'></a>Change Format of Forwarded Logs
-
-You can specify a custom rule to change log formatting.
-
-Every output in rsyslog uses _templates_. Templates specify log formatting, and 
-rsyslog contains hardcoded templates. 
-Specify a template in your custom rule to write logs in a different format than 
-the default. For more information about templates, see 
-[Templates](http://www.rsyslog.com/doc/v8-stable/configuration/templates.html) 
-in the rsyslog documentation.
-
-The following example writes log line containing the string "DEBUG" to a local file using the format specified in the "RSYSLOG_SyslogProtocol23Format" template.
-
-```
-if ($msg contains "DEBUG") then {
-  action(
-    type="omfile" 
-    File="/var/log/debug" 
-    template="RSYSLOG_SyslogProtocol23Format"
-  )
-}
-```

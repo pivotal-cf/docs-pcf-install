@@ -278,14 +278,20 @@ If you configured automatic backups, perform the following steps to restore your
 
 If you performed a manual backup, perform the following steps to restore your MySQL server:
 
+1. If you are running a highly available ERT MySQL cluster, perform the following steps to reduce the size of the cluster to a single node:
+    1. From the Ops Manager Installation Dashboard, click the **Elastic Runtime** tile.
+    1. Click **Resource Config**.
+    1. Set the number of instances for **MySQL Server** to `1`.
+    1. Click **Save**.
+    1. Return to the Ops Manager Installation Dashboard and click **Apply Changes**.
 1. Retrieve the IP address of the MySQL server by navigating to the **Elastic Runtime** tile in the Ops Manager Installation Dashboard and clicking the **Status** tab.
 1. Set the IP address of the MySQL server as an environment variable:
   <pre class="terminal">$ MYSQL\_NODE\_IP='YOUR-MYSQL-IP'</pre>
 1. Retrieve the MySQL VM credentials and the MySQL Admin credentials by navigating to the **Elastic Runtime** tile and clicking the **Credentials** tab.
-1. Locate the `user_databases.sql` backup file that you created when performing a [manual backup](backup-pcf.html#manual-mysql).
+1. Locate the `ert_databases.sql` backup file that you created when performing a [manual backup](backup-pcf.html#manual-mysql).
 1. Use `scp` to send the backup file to the MySQL Database VM: 
   <pre class='terminal'>
-  $ scp user_databases.sql vcap@$MYSQL\_NODE\_IP:~/.
+  $ scp ert_databases.sql vcap@$MYSQL\_NODE\_IP:~/.
   </pre>
 1. SSH into the MySQL Database VM, providing the MySQL VM password when prompted:
   <pre class='terminal'>
@@ -297,7 +303,7 @@ If you performed a manual backup, perform the following steps to restore your My
   </pre>
 1. Use the MySQL password and IP address to restore the MySQL database by running the following command.
   <pre class='terminal'>
-  $ mysql -h $MYSQL\_NODE\_IP -u root -p < ~/.user_databases.sql
+  $ mysql -h $MYSQL\_NODE\_IP -u root -p < ~/.ert_databases.sql
   </pre>
 1. Use the MySQL password and IP address to restore original storage engine restriction.
   <pre class='terminal'>
@@ -308,6 +314,12 @@ If you performed a manual backup, perform the following steps to restore your My
   $ mysql -u root -p -h
   mysql > flush privileges;
   </pre>
+1. If you are restoring a highly available ERT MySQL cluster, perform the following steps to increase the size of the cluster back to three:
+    1. From the Ops Manager Installation Dashboard, click the **Elastic Runtime** tile.
+    1. Click **Resource Config**.
+    1. Set the number of instances for **MySQL Server** to `3`.
+    1. Click **Save**.
+    1. Return to the Ops Manager Installation Dashboard and click **Apply Changes**.
 
 ## <a id='cc-start-2'></a>Step 6: Start Cloud Controller ###
 

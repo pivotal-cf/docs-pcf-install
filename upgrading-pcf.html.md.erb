@@ -51,11 +51,14 @@ Depending on the requirements of your deployment, you may need to rotate your Ce
 
 <p class="note"><strong>Note</strong>: PCF uses SHA-2 certificates and hashes by default. You can convert existing SHA-1 hashes into SHA-2 hashes by rotating your Ops Manager certificates using the procedure described in <a href="../security/pcf-infrastructure/api-cert-rotation.html">Regenerating and Rotating Non-Configurable TLS/SSL Certificates</a>.</p>
 
-On the command line, run `GET /api/v0/deployed/certificates?expires_within=MY-TIME` to retrieve information about the RSA and CA certificates for your deployment, including whether they are set to expire. Replace `MY-TIME` with an integer and a letter code. Valid letter codes are `d` for days, `w` for weeks, `m` for months, and `y` for years.
+To retrieve information about all the RSA and CA certificates for the BOSH Director and other products in your deployment, you can use the `GET /api/v0/deployed/certificates?expires_within=TIME` request of the Ops Manager API.
 
-For example, to search for certificates expiring within one month, replace `MY-TIME` with `1m` as follows:
+In this request, the `expires_within` parameter is optional. Valid values for the parameter are `d` for days, `w` for weeks, `m` for months, and `y` for years. For example, to search for certificates expiring within one month, replace `TIME` with `1m`:
 
-<pre class="terminal">$ GET /api/v0/deployed/certificates?expires_within=1m</pre>
+<pre class="terminal">$ curl "https://OPS-MAN-FQDN/api/v0/deployed/certificates?expires_within=1m" \
+ -X GET \
+ -H "Authorization: Bearer UAA_ACCESS_TOKEN"
+</pre>
 
 For information about regenerating and rotating CA certificates, see [Managing Non-Configurable TLS/SSL Certificates](../security/pcf-infrastructure/api-cert-rotation.html).
 

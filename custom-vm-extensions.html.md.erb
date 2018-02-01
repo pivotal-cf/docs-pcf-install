@@ -1,0 +1,117 @@
+---
+title: Managing Custom VM Extensions
+owner: Ops Manager
+---
+
+VM extensions allow you to specify IaaS-specific configurations for your VM such as associated security groups and load balancers. You can create custom VM extensions and associate them with jobs by using the Ops Manager API. 
+
+## <a id="prerequisites"></a> Prerequisites
+
+To manage custom VM extensions, you will need the following:
+
+- **Access to the Ops Manager API:** For more information on how to get started with the Ops Manager API, see [Using the Ops Manager API](ops-man-api.html).
+- **Your UAA Access Token Value:** Follow the procedure in [Access the API](ops-man-api.html#access-api) in the _Using the Ops Manager API_ topic to retrieve your access token. In each example you see `UAA_ACCESS_TOKEN`, replace with the value of your access token.
+- **Knowledge of your IaaS-specific configurations**: To find configurations you can set for custom VM extensions, see the _VM Types_ section of your IaaS CPI in the [BOSH documentation](http://bosh.io/docs). For example, see [VM Types](http://bosh.io/docs/aws-cpi.html#resource-pools) in the AWS CPI docs for a list of AWS VM extension options.
+
+## <a id="create-vm-extension"></a> Create or Update a VM Extension
+
+From the `/api/v0/staged/vm_extensions/:name` endpoint, use `PUT` to enter your custom VM extension. Enter the following properties:
+
+- `name`: Enter a memorable string value that will be the name of your new VM extension. You will later associate this name to a job.
+- `cloud_properties`: Enter your IaaS-specific VM extension properties.
+<p class="note"><strong>Note: </strong> If you are updating a custom VM extension rather than creating a new one, enter the name of the VM extension you want to override.</strong></p>
+
+See the following AWS example:
+<pre class="terminal">
+curl "https://example.com/api/v0/staged/vm_extensions/example_vm_extension_name" \
+    -X PUT \
+    -H "Authorization: Bearer UAA\_ACCESS\_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"name": "example\_vm\_extension\_name", "cloud\_properties": { "source\_dest_check": false }}'
+</pre>
+
+For more information on this command, see [Creating a new vm extension](https://opsman-dev-api-docs.cfapps.io/#creating-a-new-vm-extension) in the Ops Manager API documentation.
+
+## <a id="delete-vm-exension"></a> Delete a VM Extension
+
+From the `/api/v0/staged/vm_extensions/:name` endpoint, use `DELETE` to delete a custom VM extension by `name`.
+
+See the following example:
+
+<pre class="terminal">
+curl "https://example.com/api/v0/staged/vm_extensions/vm_ext1" \
+    -X DELETE \
+    -H "Authorization: Bearer UAA_ACCESS_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"name": "vm_ext1"}'
+</pre>
+
+For more information on this command, see [Deleting a vm extension](https://opsman-dev-api-docs.cfapps.io/#deleting-a-vm-extension) in the Ops Manager API docs.
+
+## <a id="apply-vm-extensions"></a> Apply VM Extensions to a Job
+
+From the `/api/v0/staged/products/:product_guid/jobs/:job_id/resource_config` endpoint, use `PUT` to configure a job with the names of your VM extensions.
+
+For the `additional_vm_extension` property, list the names of each of the custom VM extensions you want to associate with that job.
+
+See the following GCP example:
+
+<pre class="terminal">
+curl "https://example.com/api/v0/staged/products/product-type1-guid/jobs/example-job-guid/resource_config" \
+    -X PUT \
+    -H "Authorization: Bearer UAA_ACCESS_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{
+          "instances": 1,
+          "instance_type": {
+            "id": "automatic"
+          },
+          "persistent_disk": {
+            "size_mb": "20480"
+          },
+          "internet_connected": true,
+          "elb_names": ["tcp:load_balancer_1", "http:load_balancer_2"],
+          "additional_vm_extensions": ["vm_ext_setting_automatic_restart", "vm_ext_setting_on_host_maintenance"]
+        }'
+</pre>
+
+<p class="note"><strong>Note: </strong>You must apply changes in order for the new custom VM extension to take effect. For more information, see <a href="deploy-ops-man-director.html">Applying Changes to Ops Manager Director</a>.</p>
+
+For more information on this command, see [Configuring resources for a job](https://opsman-dev-api-docs.cfapps.io/#configuring-resources-for-a-job) in the Ops Manager API docs.
+
+## <a id="deployed-vm-extensions"></a> See Deployed VM Extensions
+
+From the `/api/v0/deployed/vm_extensions` endpoint, use `GET` to see your applied custom VM extensions.
+
+See the following example command:
+
+<pre class="terminal">
+curl "https://example.com/api/v0/deployed/vm_extensions" \
+    -X GET \
+    -H "Authorization: Bearer UAA_ACCESS_TOKEN"
+</pre>
+
+The output will list all your VM extension names and its associated custom properties defined in `cloud_properties`.
+
+See the following example output:
+
+<pre class="terminal">
+{
+  "vm_extensions": [
+    {
+      "name": "vm_ext1",
+      "cloud_properties": {
+        "source_dest_check": false
+      }
+    },
+    {
+      "name": "vm_ext2",
+      "cloud_properties": {
+        "key_name": "operations_keypair"
+      }
+    }
+  ]
+}
+</pre>
+
+For more information on this command, see [Deployed VM Extensions](https://opsman-dev-api-docs.cfapps.io/#deployed-vm-extensions) in the Ops Manager API docs.

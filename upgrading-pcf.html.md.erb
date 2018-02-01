@@ -57,11 +57,14 @@ If your deployment contains PCF Log Search, you must remove the product tile bef
 
 Depending on the requirements of your deployment, you may need to rotate your Certificate Authority (CA) certificates. The non-configurable certificates in your deployment expire every two years. You must regenerate and rotate them so that critical components do not face a complete outage.
 
-On the command line, run `GET /api/v0/deployed/certificates?expires_within=TIME` to retrieve information about all the RSA and CA certificates for your deployment, including whether they are set to expire. Replace `TIME` with an integer and a letter code. Valid letter codes are `d` for days, `w` for weeks, `m` for months, and `y` for years.
+To retrieve information about all the RSA and CA certificates for the BOSH Director and other products in your deployment, you can use the `GET /api/v0/deployed/certificates?expires_within=TIME` request of the Ops Manager API. 
 
-For example, to search for certificates expiring within one month, replace `TIME` with `1m` as follows:
+In this request, the `expires_within` parameter is optional. Valid values for this parameter are `d` for days, `w` for weeks, `m` for months, and `y` for years. For example, to search for certificates expiring within one month, replace `TIME` with `1m`:
 
-<pre class="terminal">$ GET /api/v0/deployed/certificates?expires_within=1m</pre>
+<pre class="terminal">$ curl GET /api/v0/deployed/certificates?expires_within=1m \
+ -X GET \
+ -H "Authorization: Bearer UAA_ACCESS_TOKEN"
+</pre>
 
 For information about how to regenerate and rotate CA certificates, see [Managing Non-Configurable TLS/SSL Certificates](https://docs.pivotal.io/pivotalcf/1-12/security/pcf-infrastructure/api-cert-rotation.html).
 

@@ -1,13 +1,25 @@
 ---
-title: Customizing Syslog Rules
-owner: Ops Manager
+title: Customizing Platform Log Forwarding
+owner: Platform Logging
 ---
 
 <strong><%= modified_date %></strong>
 
-By default, Pivotal Application Service (PAS) forwards local syslog events to remote syslog endpoints. This process follows the Syslog Protocol defined in [RFC 5424](https://tools.ietf.org/html/rfc5424). 
+Pivotal Application Service (PAS) [can be configured](./logging-config-opsman.html#syslog-forward)
+to forward logs to remote endpoints
+using the Syslog protocol defined in [RFC 5424](https://tools.ietf.org/html/rfc5424). 
 
-PAS annotates forwarded messages with structured data that identifies the originating BOSH Director, deployment, availability zone, instance group, and instance ID. Log lines follow the format below by default:
+PAS annotates forwarded messages with structured data.
+The structured data identifies the originating BOSH Director, deployment, instance group, availability zone, and instance ID.
+All logs forwarded from BOSH jobs have their PRI set to 14
+(facility: user, severity: info),
+which may not reflect the originally intended PRI of the log.
+
+Logs forwarded from other sources,
+such as kernel logs,
+retain their original PRI information.
+
+Log lines use the format below:
 
 <pre>
 <$PRI>$VERSION $TIMESTAMP $HOST $APP_NAME $PROC_ID $MSG_ID   
@@ -36,31 +48,43 @@ Example log messages:
     "/v1/actual_lrps/start","session":"418.1"}}
 </pre>
 
+##<a id='examples'></a>Change Which Logs Are Forwarded
+When log forwarding is enabled,
+all log lines written to disk in the /var/vcap/sys/log directories
+will be fowarded from all CF job VMs.
 
-You can change which logs PAS forwards by specifying a custom rsyslog rule. 
+You can specify a custom rule to modify which logs PAS forwards.
 
-Reasons to customize syslog rules include the following:
+The custom rsyslog rules shown below are written in [RainerScript](http://www.rsyslog.com/doc/v8-stable/rainerscript/index.html).
+The custom rules are inserted before the rule that forwards logs.
+The the _discard_ command,`~`,
+prevents logs from reaching the forwarding rule,
+and thus filters them out.
 
-  - To forward only certain logs
-  - To exclude certain logs from forwarding
-  
+Logs filtered out before forwarding remain on the local disk,
+where the BOSH job originally wrote them,
+and may remain available for download from Ops Manager,
+or accessible via SSH.
+
 <p class='note'><strong>Note</strong>: If your custom rule is invalid, PAS forwards no logs.</p>
 
-The custom rsyslog rules shown below are written in [RainerScript](http://www.rsyslog.com/doc/v8-stable/rainerscript/index.html
-). 
+###<a id='forward-job'></a>Forward Only Logs From a Certain Job
 
-##<a id='examples'></a>Change Which Logs Are Forwarded
+This rule filters logs out unless they originate from the `uaa` job:
 
-You can specify a custom rule to modify which logs PAS forwards, or instruct PAS to also write logs to a local file.
+```
+if ($app-name != "uaa") then ~
+```
 
-###<a id='forward-certain'></a>Forward Only Certain Logs
+###<a id='exclude-content'></a>Exclude Logs With Certain Content
 
-The following example uses the _discard_ command, `~`, to prevent further processing of log lines matching a conditional. This custom rule forwards logs only if they originate from the `uaa` job:
+This rule filters out logs that contain "DEBUG" in the body.
 
-```if ($app-name != "uaa") then ~```
+```
+if ($msg contains "DEBUG") then ~
+```
 
-###<a id='exclude'></a>Exclude Certain Logs
-
-The following example uses the _discard_ command, `~`, to prevent further processing of log lines matching a conditional. This custom rule drops `DEBUG` log messages.
-
-```if ($msg contains "DEBUG") then ~```
+<p class='note'><strong>Note</strong>:
+In the above example, "DEBUG" is in the message body.
+Not all logs that are originally intended to be DEBUG logs will have this string in their body.
+</p>

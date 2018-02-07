@@ -67,17 +67,17 @@ The command returns output similar to the following:
     <pre class="terminal">$ export OPS_MAN_IMAGE_URL="YOUR-OPS-MAN-IMAGE-URL"</pre>
     This command overrides the old Ops Manager image URL with the new Ops Manager image URL.
 
-1. Copy the Ops Manager image into your storage account.
+1. Copy the Ops Manager image into your storage account.  For compatibility when upgrading to future versions of Ops Manager, choose a unique name for the image that includes the Ops Manager version number. For example, replace <code>opsman-image-version</code> in the following examples with <code>opsman-image-2.0.1</code>.
     <pre class="terminal">
     $ az storage blob copy start --source-uri $OPS_MAN_IMAGE_URL \
     --connection-string $AZURE_STORAGE_CONNECTION_STRING \
     --destination-container opsmanager \
-    --destination-blob image.vhd 
+    --destination-blob opsman-image-version.vhd
     </pre>
 
 1. Copying the image may take several minutes. Run the following command and examine the output under `"copy"`:
     <pre class="terminal">
-    $ az storage blob show --name image.vhd \
+    $ az storage blob show --name opsman-image-version.vhd \
     --container-name opsmanager \
     --account-name $STORAGE_NAME
     ...
@@ -85,7 +85,7 @@ The command returns output similar to the following:
       "completionTime": "2017-06-26T22:24:11+00:00",
       "id": "b9c8b272-a562-4574-baa6-f1a04afcefdf",
       "progress": "53687091712/53687091712",
-      "source": "http<span>s:/</span>/opsmanagerwestus.blob.core.windows.net/images/ops-manager-1.11.3.vhd",
+      "source": "http<span>s:/</span>/opsmanagerwestus.blob.core.windows.net/images/ops-manager-2.0.x.vhd",
       "status": "success",
       "statusDescription": null
     },
@@ -149,9 +149,9 @@ You have two choices for the Ops Manager IP address. Choose one of the following
     --name ops-manager-nic-new --location $LOCATION
     </pre>
 
-1. Shut down your old Ops Manager VM:
+1. Shut down your old Ops Manager VM, if it still exists:
     <pre class="terminal">
-    $ az vm stop --name ops-manager --resource-group $RESOURCE_GROUP 
+    $ az vm deallocate --name ops-manager --resource-group $RESOURCE_GROUP
     </pre>
     If your Ops Manager VM is not named `ops-manager`, provide the correct name. To list all VMs in your account, use `az vm list`.
 
@@ -166,27 +166,62 @@ You have two choices for the Ops Manager IP address. Choose one of the following
    <br>
    When prompted for a passphrase, press the `enter` key to provide an empty passphrase.
 
-1. Create a managed disk from the Ops Manager image:
-    <pre class="terminal">
-    $ az disk create --resource-group $RESOURCE_GROUP \
-    --name opsman-disk \
-    --source https://$STORAGE_NAME.blob.core.windows.net/opsmanager/image.vhd \
-    --location $LOCATION --size-gb 120
-    </pre>
-    <br>
-    If you are using Azure China, Azure Government Cloud, or Azure Germany, replace `blob.core.windows.net` with the following:
-    <br><br>
-    * For Azure China, use `blob.core.chinacloudapi.cn`. See the [Azure documentation](https://msdn.microsoft.com/en-us/library/azure/dn578439.aspx) for more information.
-    * For Azure Government Cloud, use `blob.core.usgovcloudapi.net`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-government/documentation-government-services-storage) for more information.
-    * For Azure Germany, use `blob.core.cloudapi.de`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/germany/germany-developer-guide) for more information.
+1. Create the Ops Manager VM.
+    * If you are using unmanaged disks, run the following command to create your Ops Manager VM, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key .pub file, and replacing `opsman-image-version` with the version of Ops Manager you are deploying, for example `opsman-image-2.0.1`:
+        <pre class="terminal">
+        $ az vm create --name opsman-version --resource-group $RESOURCE_GROUP \
+        --location $LOCATION \
+        --nics opsman-nic \
+        --image https://$STORAGE_NAME.my-azure-instance.com/opsmanager/opsman-image-version.vhd \
+        --os-disk-name opsman-version-osdisk \
+        --os-disk-size-gb 128 \
+        --os-type Linux \
+        --use-unmanaged-disk \
+        --storage-account $STORAGENAME \
+        --storage-container-name opsmanager \
+        --admin-username ubuntu \
+        --ssh-key-value PATH-TO-PUBLIC-KEY
+        </pre>
+        Replace `my-azure-instance.com` with the URL of your Azure instance. Find the complete source URL in the Azure UI by viewing the **Blob properties** of the Ops Manager image you created earlier in this procedure.<br><br>
+    * If you are using Azure managed disks, perform the following steps, replacing `opsman-image-version` with the version of Ops Manager you are deploying, for example `opsman-image-2.0.1`.:
+        1. Create a managed image from the Ops Manager VHD file:
+            <pre class="terminal">
+            $ az image create --resource-group $RESOURCE\_GROUP \
+            --name opsman-image-version \
+            --source https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/opsman-image-version.vhd \
+            --location $LOCATION \
+            --os-type Linux
+            </pre>
+            If you are using Azure China, Azure Government Cloud, or Azure Germany, replace `blob.core.windows.net` with the following:
+            * For Azure China, use `blob.core.chinacloudapi.cn`. See the [Azure documentation](https://msdn.microsoft.com/en-us/library/azure/dn578439.aspx) for more information.
+            * For Azure Government Cloud, use `blob.core.usgovcloudapi.net`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-government/documentation-government-services-storage) for more information.
+            * For Azure Germany, use `blob.core.cloudapi.de`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/germany/germany-developer-guide) for more information.
+        1. Create your Ops Manager VM, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file, and replacing `opsman-version` and `opsman-image-version` with the version of Ops Manager you are deploying, for example `opsman-2.0.1`, `opsman-2.0.1-osdisk`, and `opsman-image-2.0.1`.
+            <pre class="terminal">
+             $ az vm create --name opsman-version --resource-group $RESOURCE\_GROUP \
+             --location $LOCATION \
+             --nics opsman-nic \
+             --image opsman-image-version \
+             --os-disk-name opsman-version-osdisk \
+             --admin-username ubuntu \
+             --size Standard\_DS2_v2 \
+             --storage-sku Standard\_LRS \
+             --ssh-key-value PATH-TO-PUBLIC-KEY
+            </pre>
 
-1. Create your Ops Manager VM, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file.
+1. If you have deployed more than one tile in this Ops Manager installation, perform the following steps to increase the size of the Ops Manager VM disk. You can repeat this process and increase the disk again at a later time if necessary.
+    <p class="note"><strong>Note</strong>: If you use Azure Stack, you must increase the Ops Manager VM disk size using the Azure Stack UI.</p>
+    1. Run the following command to stop the VM and detach the disk, replacing `opsman-version` with the version of Ops Manager you are deploying, for example `opsman-2.0.1`:
     <pre class="terminal">
-     $ az vm create --name ops-manager --resource-group $RESOURCE_GROUP \
-     --location $LOCATION --os-type linux \
-     --nics ops-manager-nic \
-     --attach-os-disk opsman-disk \
-     --admin-username ubuntu \
-     --size Standard_DS2_v2 \
-     --ssh-key-value PATH-TO-PUBLIC-KEY
-    </pre> 
+    $ az vm deallocate --name opsman-version \
+    --resource-group $RESOURCE\_GROUP
+    </pre>
+    1. Run the following command to resize the disk to 128&nbsp;GB, replacing `opsman-version` with the version of Ops Manager you are deploying, for example `opsman-2.0.1`:
+    <pre class="terminal">
+    $ az disk update --size-gb 128 --name opsman-version-osdisk \
+    --resource-group $RESOURCE\_GROUP
+    </pre>
+    1. Run the following command to start the VM, replacing `opsman-version` with the version of Ops Manager you are deploying, for example `opsman-2.0.1`:
+    <pre class="terminal">
+    $ az vm start --name opsman-version --resource-group $RESOURCE\_GROUP
+    </pre>

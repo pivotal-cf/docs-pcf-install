@@ -91,7 +91,7 @@ If you recreated IaaS resources such as networks and load balancers by following
 1. Navigate to the Ops Manager Installation Dashboard and click the Ops Manager Director tile.
 1. Click **Create Networks** and update the network names to reflect the network names for the new environment.
 1. If running on GCP, click **Google Config** and update the **Project ID** to reflect the new GCP project ID.
-1. Return to the Ops Manager Installation Dashboard and click the Pivotal Application Service (PAS) tile.
+1. Return to the Ops Manager Installation Dashboard and click the Elastic Runtime tile.
 1. Click **Resource Config**. If necessary for your IaaS, enter the name of your new load balancers in the **Load Balancers** column.
 1. If necessary, click **Networking** and update the load balancer SSL certificate and private key under **Router SSL Termination Certificate and Private Key**.
 1. If your environment has a new DNS address, update the old environment DNS entries to point to the new load balancer addresses. For more information, see the [Step 4: Configure Networking](../custom-load-balancer.html#configure-networking) section of the <em>Using Your Own Load Balancer</em> topic and follow the link to the instructions for your IaaS.
@@ -116,7 +116,7 @@ Perform the steps in the [Applying Changes to Ops Manager Director](../deploy-op
 
 ## <a id="artifacts-jumpbox"></a> Step 6: Transfer Artifacts to Jumpbox
 
-In the [Step 9: Back Up Your PAS Deployment](./backup-pcf-bbr.html#bbr-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic, in the <em>After Taking the Backups</em> section you moved the TAR and metadata files of the backup artifacts off your jumpbox to your preferred storage space. Now you must transfer those files back to your jumpbox.
+In the [Step 9: Back Up Your Elastic Runtime Deployment](./backup-pcf-bbr.html#bbr-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic, in the <em>After Taking the Backups</em> section you moved the TAR and metadata files of the backup artifacts off your jumpbox to your preferred storage space. Now you must transfer those files back to your jumpbox.
 
 For instance, you could SCP the backup artifact to your jumpbox:
   <pre class="terminal">$ scp LOCAL-PATH-TO-BACKUP-ARTIFACT JUMPBOX-USER/JUMPBOX-ADDRESS</pre>
@@ -217,11 +217,11 @@ If the <code>bosh cloud-check</code> command does not successfully delete disk r
 Scanning 19 persistent disks: 19 OK, 0 missing ...
 </pre>
 
-## <a id='redeploy-ert'></a> Step 11: Redeploy PAS
+## <a id='redeploy-ert'></a> Step 11: Redeploy Elastic Runtime
 
-1. Perform the following steps to determine which stemcell is used by PAS:
+1. Perform the following steps to determine which stemcell is used by Elastic Runtime:
   1. Navigate to the Ops Manager Installation Dashboard.
-  1. Click the PAS tile.
+  1. Click the Elastic Runtime tile.
   1. Click **Stemcell** and record the release number included in the displayed filename:
       <%= image_tag('images/stemcell.png') %>
     In the screenshot above, the stemcell release number is **3421.9**.
@@ -238,7 +238,7 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
 
 1. Download the stemcell from [Pivotal Network](https://network.pivotal.io/products/stemcells).
 
-1. Run the following command to upload the stemcell used by PAS:
+1. Run the following command to upload the stemcell used by Elastic Runtime:
   <pre class="terminal">
   $ bosh -e BOSH-DIRECTOR-IP \
       -d DEPLOYMENT-NAME \
@@ -246,23 +246,23 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
       <%= vars.bosh_upload_stemcell %> \
       --fix PATH-TO-STEMCELL
   </pre>
-1. If you have any other tiles installed, ensure you upload their stemcells if they are different from the PAS stemcell. Upload stemcells to the BOSH Director with `bosh <%= vars.bosh_upload_stemcell %> --fix PATH-TO-STEMCELL`, as in the command above.
-1. From the Ops Manager Installation Dashboard, navigate to PAS **Resource Config**.
+1. If you have any other tiles installed, ensure you upload their stemcells if they are different from the Elastic Runtime stemcell. Upload stemcells to the BOSH Director with `bosh <%= vars.bosh_upload_stemcell %> --fix PATH-TO-STEMCELL`, as in the command above.
+1. From the Ops Manager Installation Dashboard, navigate to Elastic Runtime **Resource Config**.
 1. Ensure the number of instances for MySQL Server is set to `1`.
   <p class="note warning"><strong>Warning</strong>: Restore will fail if there is not exactly one MySQL Server instance deployed.</p>
 1. Ensure that all errands needed by your system are set to run.
 1. Return to the Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
-  <p class="note validation"><strong>Validation</strong>: If your PAS uses an external blobstore, ensure that the PAS tile is configured to use a different blobstore before clicking <strong>Apply Changes</strong>. Otherwise it will attempt to connect to the blobstore that the existing PAS is using.</p>
-  <p class="note validation"><strong>Validation</strong>: Ensure your **System Domain** and **Apps Domain** under PAS **Domains** are updated to refer to the validation environment.
+  <p class="note validation"><strong>Validation</strong>: If your Elastic Runtime uses an external blobstore, ensure that the Elastic Runtime tile is configured to use a different blobstore before clicking <strong>Apply Changes</strong>. Otherwise it will attempt to connect to the blobstore that the existing Elastic Runtime uses.</p>
+  <p class="note validation"><strong>Validation</strong>: Ensure your **System Domain** and **Apps Domain** under Elastic Runtime **Domains** are updated to refer to the validation environment.
   </p>
 
-## <a id='restore-ert'></a> Step 12: Restore PAS
+## <a id='restore-ert'></a> Step 12: Restore Elastic Runtime
 
 <p class="note validation"><strong>Validation</strong>: If your apps must not be running after a restore run <code>bosh stop</code> on each <code>diego_cell</code> VM in the deployment.</p>
 
-1. If you use an external blobstore and copied it during the backup, restore the external blobstore with your IAAS specific tools before running PAS restore.
+1. If you use an external blobstore and copied it during the backup, restore the external blobstore with your IAAS specific tools before running Elastic Runtime restore.
 
-1. Run the BBR restore command from your jumpbox to restore PAS:
+1. Run the BBR restore command from your jumpbox to restore Elastic Runtime:
 <pre class="terminal">
 $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
       bbr deployment \
@@ -271,7 +271,7 @@ $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
         --deployment DEPLOYMENT-NAME \
         --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
         restore \
-          --artifact-path PATH-TO-PAS-BACKUP
+          --artifact-path PATH-TO-ELASTIC-RUNTIME-BACKUP
 </pre>
 
     Replace the placeholder values as follows:
@@ -282,13 +282,13 @@ $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
     * `BOSH-DIRECTOR-IP`: You retrieved this value in the [Step 6: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 8: Identify Your Deployment](#identify-deployment) section.
     * `PATH-TO-BOSH-SERVER-CERTIFICATE`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
-    * `PATH-TO-PAS-BACKUP`: This is the path to the PAS backup you want to restore.
+    * `PATH-TO-ELASTIC-RUNTIME-BACKUP`: This is the path to the Elastic Runtime backup you want to restore.
 
     <p class="note validation">
       <strong>Validation</strong>: If you ran <code>bosh stop</code> on each <code>diego_cell</code> before running <code>bbr restore</code>, you can now run <code>cf stop</code> on all apps and then run <code>bosh start</code> on each <code>diego_cell</code>. After this, all apps will be deployed in a stopped state.
     </p>
 
-1. If desired, scale the MySQL Server job back up to its previous number of instances by navigating to the **Resource Config** section of the PAS tile. After scaling the job, return to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy.
+1. If desired, scale the MySQL Server job back up to its previous number of instances by navigating to the **Resource Config** section of the Elastic Runtime tile. After scaling the job, return to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy.
 
 ##<a id='odb'></a> (Optional) Step 13: Restore On-Demand Service Instances
 
@@ -361,7 +361,7 @@ If you have on-demand service instances provisioned by an on-demand service brok
   <pre class="terminal">
   $ rm /tmp/manifest.yml
   </pre>
-1. Any PAS apps bound to these services will have to be restarted to pick up the recreated service instances.
+1. Any Elastic Runtime apps bound to these services will have to be restarted to pick up the recreated service instances.
 
 ## <a id='non-tiles'></a> (Optional) Step 14: Restore Non-Tile Deployments
 

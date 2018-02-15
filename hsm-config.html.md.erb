@@ -22,14 +22,9 @@ At the end of this topic, you will have collected or created the following resou
 Complete the following steps for your HSM.
 
 #### SSH onto the HSM
-<ol>
-<li>Get the HSM IP.
-<pre class="terminal">$ cloudhsm describe-hsm -H HSM-ARN -r AWS-REGION</pre>
-</li>
-<li>SSH onto the HSM.
+
+SSH onto the HSM.
 <pre class="terminal">$ ssh -i path/to/ssh-key.pem manager@HSM-IP</pre>
-</li>
-</ol>
 
 #### Initialize and Set Policies
 
@@ -78,9 +73,9 @@ Fetch the certificate from the HSM. This is used to validate the identity of the
 </li>
 </ol>
 
-## <a id='create-register-hsm'></a>Create and Register HSM Clients 
+## <a id='create-register-hsm'></a>Create and Register HSM Your Client 
 
-Clients that communicate with the HSM must provide a client certificate to establish a client-authenticated session. You must set up each client's certificate on the HSM and assign access rights for each partition they access.
+Clients that communicate with the HSM must provide a client certificate to establish a client-authenticated session. You must set up each client's certificate on the HSM and assign access rights for your partition.
 
 #### Establish a Network Trust Link between the Client and the HSMs
 <ol>
@@ -98,7 +93,7 @@ $ openssl req \
   -out    CLIENT-HOSTNAME-OR-IP.pem
 </pre>
 </li>
-<li>Copy the client certificate to each HSM.
+<li>Copy the client certificate to your HSM.
 
 <pre class="terminal">
 $ scp -i path/to/ssh-key.pem \
@@ -111,7 +106,7 @@ $ scp -i path/to/ssh-key.pem \
 #### Register HSM Client Host and Partitions
 
 <ol>
-<li>Create a client. The client hostname is the hostname of the planned CredHub instance(s).
+<li>Create a client. The client hostname is the hostname of the planned CredHub instances.
 
 <pre class="terminal">lunash:> client register -client CLIENT-NAME -hostname CLIENT-HOSTNAME</pre>
 
@@ -126,111 +121,3 @@ If you're only planning to run one CredHub instance, it's possible to register a
 </pre>
 </li>
 </ol>
-## <a id="hsm-encryption-keys"></a>Encryption Keys on the HSM
-
-Set which key used for encryption operations by defining the encryption key name in the deploy manifest. By default, a key that exists on the HSM is used for encryption operations. If a key does not exist on the HSM, CredHub creates it automatically in the referenced partition. 
-
-When you generate a new key, review the list of keys on each HSM to validate that key replication is occurring. If new keys do not propagate among the HSMs, you could get locked out of HSMs. 
-
-To review stored keys on a partition:
-
-<pre class="terminal">lunash:> partition showContents -partition PARTITION-NAME
-</pre>
-
-## <a id='ready-deployment'></a>Ready for Deployment 
-
-To review, you have collected and created the following resources:
-
-1. <a href="#hsm-encryption-keys">Encryption Key Name</a>
-1. <a href="#retrieve-hsm-certificate">HSM Certificate</a>
-1. <a href="#cloning">Partition name and password</a>
-1. <a href="#establish-network-trust-link">Client certificate and private key</a>
-1. <a href="#create-hsm-partition">Partition serial numbers</a>
-
-Enter these in the manifest as shown below.
-
-<pre><code>
-yaml
-credhub: 
-  properties: 
-    encryption:
-      keys:
-        - provider_name: primary
-          encryption_key_name: ENCRYPTION-KEY-NAME
-          active: true
-      providers:
-        - name: primary
-          type: hsm
-          partition: PARTITION-NAME
-          partition_password: PARTITION-PASSWORD
-          client_certificate: CLIENT-CERTIFICATE
-          client_key: CLIENT-PRIVATE-KEY
-          servers: 
-          - host: 10.0.0.1
-            port: 1792
-            certificate: HSM-CERTIFICATE
-            partition_serial_number: PARTITION-SERIAL-NUMBER
-          - host: 10.0.0.10
-            port: 1792
-            certificate: HSM-CERTIFICATE
-            partition_serial_number: PARTITION-SERIAL-NUMBER
-</code>
-</pre>
-
-## <a id='renew-rotate'></a>Renew or Rotate a Client Certificate 
-
-The generated client certificate has a fixed expiration date after which the HSM no longer accepts it. Rotate or renew this certificate at any time by following the steps detailed below.
-
-<ol>
-<li>Generate a new certificate for the client.
-
-<pre class="terminal">
-$ openssl req \
-  -x509   \
-  -newkey rsa:4096 \
-  -days   NUMBER-OF-DAYS \
-  -sha256 \
-  -nodes  \
-  -subj   "/CN=CLIENT-HOSTNAME-OR-IP" \
-  -keyout CLIENT-HOSTNAME-OR-IPKey.pem \
-  -out    CLIENT-HOSTNAME-OR-IP.pem
-</pre>
-</li>
-<li>Copy the client certificate to each HSM.
-
-<pre class="terminal">
-$ scp -i path/to/ssh-key.pem \
-    CLIENT-HOSTNAME-OR-IP.pem \
-    manager@HSM-IP:CLIENT-HOSTNAME-OR-IP.pem
-</pre>
-</li>
-<li>(Optional) Review the client's partition assignments. 
-
-<pre class="terminal">lunash:> client show -client CLIENT-NAME
-</pre>
-</li>  
-<li>Remove the existing client. 
-
-<p class="note"><strong>Note:</strong> All partition assignments will be deleted.</p>
-
-<pre class="terminal">lunash:> client delete -client CLIENT-NAME
-</pre>
-</li>  
-<li>Re-register the client.
-
-<pre class="terminal">lunash:> client register -client CLIENT-NAME -ip CLIENT-IP
-</pre>
-</li>  
-<li>Re-assign partition assignments.
-
-<pre class="terminal">lunash:> client assignPartition -client CLIENT-NAME -partition PARTITION-NAME
-</pre>
-</li>  
-<li>(Optional) Validate the new certificate fingerprint.
-
-<pre class="terminal">lunash:> client fingerprint -client CLIENT-NAME
-</pre>
-
-If you need to, you can compare the fingerprint to your locally stored certificate: 
-
-<pre class="terminal">$ openssl x509 -in clientcert.pem -outform DER | md5sum</pre></li></ol>

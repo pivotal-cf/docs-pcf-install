@@ -5,17 +5,19 @@ owner: CredHub
 
 This topic describes how to prepare a Hardware Security Module (HSM) to store CredHub encryption keys.
 
+For Ops Manager v2.1 and later, Luna SafeNet HSM is the only CredHub encryption provider offered. For more information about Luna HSM, see the product page at [SafeNet Luna Network HSMs](https://safenet.gemalto.com/data-encryption/hardware-security-modules-hsms/safenet-network-hsm/).
+
 Once you complete each item in the [Preparation Checklist](#checklist) below, configure your HSM in the **Director Config** pane of Ops Manager by setting the **CredHub Encryption Provider**. For more information on configuring your HSM with Ops Manager, see [Director Config Page](gcp-om-config.html#director-config).
 
 ## <a id='checklist'></a>Preparation Checklist
 
-At the end of this topic, you will have collected or created the following resources:
+As you follow the procedure in this topic, record the following resources:
 
-1. <a href="#hsm-encryption-keys">Encryption Key Name</a>
-1. <a href="#retrieve-hsm-certificate">HSM Certificate</a>
-1. <a href="#cloning">Partition name and password</a>
-1. <a href="#establish-network-trust-link">Client certificate and private key</a>
-1. <a href="#create-hsm-partition">Partition serial numbers</a>
+1. Encryption Key Name
+1. HSM Certificate
+1. Partition name and password
+1. Client certificate and private key
+1. Partition serial numbers
 
 ## <a id="initialize-and-configure"></a>Initialize and Configure New HSMs
 
@@ -51,7 +53,7 @@ If <code>SO can reset partition PIN</code> is set to <strong>On</strong>, the pa
 <pre class="terminal">lunash:> hsm changePolicy -policy 15 -value 1</pre>
 </li>
 </ol>
-#### Retrieve HSM Certificate
+#### <a id="retrieve-hsm-certificate"></a> Retrieve HSM Certificate
 
 Fetch the certificate from the HSM. This is used to validate the identity of the HSM when connecting to it.
 
@@ -60,9 +62,9 @@ Fetch the certificate from the HSM. This is used to validate the identity of the
     HSM-IP.pem
 </pre>
 
-#### Create an HSM Partition
+#### <a id="create-an-hsm-partition"></a> Create an HSM Partition
 <ol>
-<li>Create a partition to hold the encryption keys. The partition password must be the same for all partitions in the HA partition group. The cloning domain must be <a href="#cloning">the same as earlier</a>.
+<li>Create a partition to hold the encryption keys. The partition password must be the same for all partitions in the HA partition group.
 
 <pre class="terminal">lunash:> partition create -partition PARTITION-NAME -domain CLONING-DOMAIN</pre>
 </li>
@@ -121,3 +123,14 @@ If you're only planning to run one CredHub instance, it's possible to register a
 </pre>
 </li>
 </ol>
+
+## <a id="hsm-encryption-keys"></a>Encryption Keys on the HSM
+
+Set which key used for encryption operations by defining the encryption key name in the Ops Manager **Director Config** pane. By default, a key that exists on the HSM is used for encryption operations. If a key does not exist on the HSM, CredHub creates it automatically in the referenced partition. 
+
+When you generate a new key, review the list of keys on each HSM to validate that key replication is occurring. If new keys do not propagate among the HSMs, you could get locked out of HSMs. 
+
+To review stored keys on a partition:
+
+<pre class="terminal">lunash:> partition showContents -partition PARTITION-NAME
+</pre>

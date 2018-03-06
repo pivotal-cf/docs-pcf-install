@@ -61,27 +61,43 @@ If you recreate your IaaS resources, you must also add those resources to Ops Ma
   * [Step 3](../openstack-setup.html#create-om-image) through [Step 7](../openstack-setup.html#dns-entry) of the <em>Provisioning the OpenStack Infrastructure</em> topic.
   * [Deploying Operations Manager to vSphere](../deploying-vm.html)
 
-1. Access your new Ops Manager by navigating to `YOUR-OPS-MAN-FQDN` in a browser.
+1. Import your installation settings. This can be done in two ways:
 
-1. On the **Welcome to Ops Manager** page, click **Import Existing Installation**.
+    1. Using the Ops Manager UI
 
-    <%= image_tag("../images/upgrading/welcome.png") %>
+        1. Access your new Ops Manager by navigating to `YOUR-OPS-MAN-FQDN` in a browser.
 
-1. In the import panel, perform the following tasks:
-  * Enter your **Decryption Passphrase**.
-  * Click **Choose File** and browse to the installation zip file that you exported in the <a href='./backup-pcf-bbr.html#export'>Step 7: Export Installation Settings</a> section of the <i>Backing Up Pivotal Cloud Foundry with BBR</i> topic.
+        1. On the **Welcome to Ops Manager** page, click **Import Existing Installation**.
 
-    <%= image_tag("../images/upgrading/decryption_passphrase.png") %>
+            <%= image_tag("../images/upgrading/welcome.png") %>
 
-1. Click **Import**.
+        1. In the import panel, perform the following tasks:
+          * Enter your **Decryption Passphrase**.
+          * Click **Choose File** and browse to the installation zip file that you exported in the <a href='./backup-pcf-bbr.html#export'>Step 7: Export Installation Settings</a> section of the <i>Backing Up Pivotal Cloud Foundry with BBR</i> topic.
 
-    <p class="note"><strong>Note</strong>:
-      Some browsers do not provide feedback on the status of the import process,
-      and may appear to hang. The import process takes at least 10 minutes, and takes longer the more tiles that were present on the backed-up Ops Manager.</p>
+            <%= image_tag("../images/upgrading/decryption_passphrase.png") %>
 
-1. A **Successfully imported installation** message appears upon completion.
+        1. Click **Import**.
 
-    <%= image_tag("../images/upgrading/success.png") %>
+            <p class="note"><strong>Note</strong>:
+              Some browsers do not provide feedback on the status of the import process,
+              and may appear to hang. The import process takes at least 10 minutes, and takes longer the more tiles that were present on the backed-up Ops Manager.</p>
+
+        1. A **Successfully imported installation** message appears upon completion.
+
+            <%= image_tag("../images/upgrading/success.png") %>
+
+    1. Using the Ops Manager API:
+
+        ```
+        curl OPSMAN-URL/api/v1/installation_asset_collection \
+          -X POST \
+          -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
+          -F 'installation[file]=@installation_settings.zip' \
+          -F 'passphrase=DECRYPTION-PASSPHRASE' > installation_settings.zip
+        ```
+
+        See [_Using the Ops Manager API_](https://docs.pivotal.io/pivotalcf/latest/customizing/ops-man-api.html) for instructions on how to authenticate and retrieve the `UAA-ACCESS-TOKEN`.
 
 ## <a id="config-new-resources"></a> (Optional) Step 3: Configure Ops Manager for New Resources
 

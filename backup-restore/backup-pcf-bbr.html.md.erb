@@ -42,11 +42,14 @@ BBR is a binary that can back up and restore BOSH deployments and BOSH Directors
 
 BBR backs up the following PCF components:
 
-* **PAS**: PAS must be configured with either an internal MySQL database or a [supported external database](https://docs.cloudfoundry.org/bbr/cf-backup.html#supported-external-databases) plus a WebDAV/NFS blobstore. BBR does not support PAS with an external blobstore.
+* **PAS**: PAS must be configured with either an internal MySQL database or a supported external database in conjunction with either a WebDAV/NFS blobstore or a versioned S3 compatible external blobstore. BBR does not support PAS with other external blobstores. For a list of supported external databases, see the _Supported Databases_ section of the [Configuring Cloud Foundry for BOSH Backup and Restore (Experimental)](https://docs.cloudfoundry.org/bbr/cf-backup.html#supported-external-databases) topic.
 
-  <ul class="note warning"><strong>Warning</strong>: The following guidelines apply when you are using BBR to back up PCF and have configured an external blobstore and/or unsupported external database in PAS:<ul>
-    <li> If you configured an internal database and an external blobstore in PAS, then follow the PCF backup process, and copy the external blobstore via the IaaS. There may be inconsistencies between the blobstore and database, which may result in some apps not coming up during a restore. Those apps can be repushed. </li>
-    <li>If you configured an unsupported external database and an external blobstore in PAS, then follow the PCF backup process, but skip the backup of PAS. Copy the external database and blobstore via the IaaS. There may be inconsistencies  between the blobstore and database, which may result in some apps not coming up during a restore. Those apps can be repushed.</li></ul></ul>
+  <ul class="note warning"><strong>Warning</strong>: The following guidelines apply when you are using BBR to back up PCF and have configured an unsupported external blobstore and/or unsupported external database in PAS:<ul>
+  <li> If you configured a supported database and an unsupported external blobstore in PAS, then follow the PCF backup process, and copy the external blobstore via the IaaS. 
+  <li> If you configured an unsupported external database and a supported blobstore in PAS, then follow the PCF backup process, and copy the external database via the IaaS. 
+  <li>If you configured both an unsupported external database and an unsupported external blobstore in PAS, then follow the PCF backup process, but skip the backup of PAS. Copy the external database and blobstore via the IaaS.</ul> 
+  There may be inconsistencies between the blobstore and database, which may result in some apps not coming up during a restore. Those apps can be repushed.
+  </ul>
 
 * **BOSH Director**: The BOSH Director must have an internal Postgres database to be backed up and restored with BBR. As part of backing up the BOSH Director, BBR backs up the BOSH UAA database and the CredHub database.
 
@@ -253,9 +256,7 @@ $ bbr director \
 </pre>
 ### <a id='bbr-backup'></a> Step 9: Back Up Your PAS Deployment
 
-1.  If you are using an external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup may be slightly inconsistent with your PAS backup depending on the duration of time between performing the backups.
-
-1.  If you are using an external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup may be slightly inconsistent with your PAS backup depending on the duration of time between performing the backups.
+1.  (Optional) If you are not using an internal blobstore or a versioned S3-compatible external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup may be slightly inconsistent with your PAS backup depending on the duration of time between performing the backups.
 
 1. Run the BBR backup command from your jumpbox to back up your PAS deployment:
   <pre class="terminal">

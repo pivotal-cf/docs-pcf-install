@@ -317,27 +317,30 @@ $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
                 -X GET \
                 -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
           1. Record the MySQL admin credentials from the response to the above request.
-  1. List the VMs in your deployment:
-
+  1. List the MySQL Server instances in your deployment:
     <pre class="terminal">$ bosh -e DIRECTOR-IP \
     --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
     -d DEPLOYMENT-NAME \
-    ssh</pre>
-  1. Select the `mysql` VM to SSH into.
-  1. From the `mysql` VM, run the following command:
+    instances | grep mysql</pre>
+  1. SSH into a MySQL Server instance:
+    <pre class="terminal">$ bosh -e DIRECTOR-IP \
+    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+    -d DEPLOYMENT-NAME \
+    ssh mysql/INSTANCE-GUID</pre>
+  1. From the MySQL Server instance, run the following command:
     <pre class="terminal">$ sudo /var/vcap/packages/mariadb/bin/mysql -u root -p</pre> When prompted, enter the MySQL admin password.<br><br>
-  1. At the MySQL prompt, run the following command:
+  1. At the `mysql` prompt, run the following command:
     <pre class="terminal">mysql> use silk; drop table if exists subnets; drop table if exists gorp_migrations;</pre>
-  1. Exit MySQL:
+  1. Exit `mysql`:
     <pre class="terminal">mysql> exit</pre>
-  1. Exit the `mysql` VM:
+  1. Exit the MySQL Server SSH session:
     <pre class="terminal">$ exit</pre>
-  1. List the VMs in your deployment:
+  1. List the Diego Database instances in your deployment:
     <pre class="terminal">$ bosh -e DIRECTOR-IP \
     --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
     -d DEPLOYMENT-NAME \
-    ssh</pre>
-  1. SSH onto each `diego_database` VM and run the following command:
+    instances | grep diego_database</pre>
+  1. SSH into each Diego Database instance and run the following command:
     <pre class="terminal">$ sudo monit restart silk-controller</pre>
 
       Restored apps will begin to start. The amount of time it takes for all apps to start depends on the number of app instances, the resources available to the underlying infrastructure, and the value of the **Max Inflight Container Starts** field in the Elastic Runtime tile.

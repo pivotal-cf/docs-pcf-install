@@ -7,7 +7,7 @@ iaas: Azure
 <strong><%= modified_date %></strong>
 <html class="list-style-none"></html>
 
-This topic describes how to configure the BOSH Director for Pivotal Cloud Foundry (PCF) on Azure after [Preparing to Deploy PCF on Azure (Terraform)](./aws-prepare-env-terraform.html).
+This topic describes how to configure the BOSH Director for Pivotal Cloud Foundry (PCF) on Azure after [Launching a BOSH Director Instance on Azure using Terraform](./azure-deploy-terraform.html).
 
 <p class="note"><strong>Note</strong>: You can also perform the procedures in
 this topic using the Ops Manager API. For more information, see the
@@ -147,14 +147,12 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
 
 ## <a id='om-networks'></a>Step 4: Create Networks Page ##
 
-1. Select **Create Networks**.
+Select **Create Networks** and follow the procedures in this section to add the network configuration you created for your VPC.
 
-1. (Optional) Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
-
-1. Perform the following steps to add the network configuration you created for your VPC:
+### <a id='management'></a> Create the Management Network
 
 1. Click **Add Network**.
-1. Select **Enable ICMP checks** if you want to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
+1. (Optional) Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
 1. For **Name**, enter the name of the network you want to create. For example, `Management`.
 1. Under **Subnets**, complete the following fields:
    * **Azure Network Name**: Enter `NETWORK-NAME/SUBNET-NAME`, where `NETWORK-NAME` is the `network_name` output from Terraform and `SUBNET-NAME` is the `management_subnet_name` output from Terraform.
@@ -166,10 +164,10 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
      <%= image_tag("azure/create-networks-management.png") %>
 1. Click **Save**.<p class="note"><strong>Note:</strong> After you deploy Ops Manager, you can add more than one subnet to your network. For more information on how to configure additional subnets, see <a href="./add-subnets.html">Expanding Your Network with Additional Subnets</a>.</p>
 
-### <a id='pas'></a> Create the Deployment or PAS Network ###
+### <a id='deployment'></a> Create the Deployment Network
 
 1. Click **Add Network**.
-1. Select **Enable ICMP checks** if you want to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
+1. (Optional) Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
 1. For **Name**, enter the name of the network you want to create. For example, `Deployment`.
 1. Under **Subnets**, complete the following fields:
    * **Azure Network Name**: Enter `NETWORK-NAME/SUBNET-NAME`, where `NETWORK-NAME` is the `network_name` output from Terraform and `SUBNET-NAME` is the `pas_subnet_name` output from Terraform.
@@ -183,7 +181,7 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
 ### <a id='services'></a> Create the Services Network ###
 
 1. Click **Add Network**.
-1. Select **Enable ICMP checks** if you want to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
+1. (Optional) Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
 1. For **Name**, enter the name of the network you want to create. For example, `Services`.
 1. Under **Subnets**, complete the following fields:
    * **Azure Network Name**: Enter `NETWORK-NAME/SUBNET-NAME`, where `NETWORK-NAME` is the `network_name` output from Terraform and `SUBNET-NAME` is the `services_subnet_name` output from Terraform.
@@ -194,14 +192,13 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
      <%= image_tag("azure/create-networks-services.png") %>
 1. Click **Save**. If you do not have **Enable ICMP checks** selected, you may see red warnings which you can safely ignore.
 
-
 ## <a id="assign-azs"></a>Step 5: Assign Networks Page##
 
 1. Select **Assign Networks**.
 
 	<%= image_tag("azure/assign-networks.png") %>
 
-1. Use the drop-down menu to select `pcf-management-network` for your BOSH Director.
+1. Use the drop-down menu to select the `management` network for your BOSH Director.
 1. Click **Save**.
 
 ## <a id='security'></a>Step 6: Security Page ##
@@ -231,8 +228,8 @@ choose **Automatic** from the drop-down menu to allocate the recommended resourc
     <p class="note"><strong>Note</strong>: If you set a field to <strong>Automatic</strong> and the recommended resource allocation changes in a future version, Ops Manager automatically uses the new recommended allocation.</p>
 
 1. (Optional) For **Load Balancers**, enter your Azure application gateway name for each associated job.
-  
-    To create an application gateway, follow the procedures in [Configure an application gateway for SSL offload by using Azure Resource Manager](https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-ssl-arm) from the Azure documentation. When you create the application gateway, associate the gateway's IP with your PCF system domain.
+To create an application gateway, follow the procedures in [Configure an application gateway for SSL offload by using Azure Resource Manager](https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-ssl-arm) from the Azure documentation.
+When you create the application gateway, associate the gateway's IP with your PCF system domain.
 
 1. Click **Save**.
 

@@ -22,11 +22,14 @@ In addition to fulfilling the prerequisites listed in the [Installing Pivotal Cl
 * The [Terraform CLI](https://www.terraform.io/intro/getting-started/install.html)
 * In your Azure project, ensure you have completed the steps in [Preparing to Deploy PCF on Azure](./azure-prepare-env.html) to create a service principal.
 
-## <a id="download"></a>Step 1: Download and Edit the Terraform Variables File ##
+## <a id="download"></a>Step 1: Download and Edit the Terraform Variables File
 
 Before you can run Terraform commands to create infrastructure resources, you must fill out a template variables file.
 
-1. Navigate to the Pivotal Application Service (PAS) release on [Pivotal Network](https://network.pivotal.io).
+1. Navigate to the runtime release on [Pivotal Network](https://network.pivotal.io).
+For more information about the runtimes you can deploy for PCF, see [Installing Runtimes](runtimes.html).
+
+1. Select *Pivotal Application Service*. The Pivotal Application Service page opens.
 
 1. Download the Azure Terraform zip file.
 
@@ -35,7 +38,7 @@ Before you can run Terraform commands to create infrastructure resources, you mu
 1. From a terminal window, navigate to the folder:
   <pre class="terminal">$ cd ~/workspace/TERRAFORMING-AZURE-FOLDER</pre>
 
-1. Create a new file named `terraform.tfvars`.
+1. Create a new file named `terraform.tfvars`:
   <pre class="terminal">$ touch terraform.tfvars</pre>
 
 1. Open the `terraform.tfvars` file and paste in the following contents:
@@ -61,19 +64,19 @@ Before you can run Terraform commands to create infrastructure resources, you mu
     </tr>
     <tr>
       <td><code>YOUR-SUBSCRIPTION-ID</code></td>
-      <td>Enter the subscription ID of your Azure service principal which Terraform will use to create resources.</td>
+      <td>Enter the subscription ID of your Azure service principal. Terraform uses this ID when creating resources.</td>
     </tr>
     <tr>
       <td><code>YOUR-TENANT-ID</code></td>
-      <td>Enter the tenant ID of your Azure service principal which Terraform will use to create resources.</td>
+      <td>Enter the tenant ID of your Azure service principal. Terraform uses this ID when creating resources.</td>
     </tr>
     <tr>
       <td><code>YOUR-CLIENT-ID</code></td>
-      <td>Enter the client ID of your Azure service principal which Terraform will use to create resources.</td>
+      <td>Enter the client ID of your Azure service principal. Terraform uses this ID when creating resources.</td>
     </tr>
     <tr>
       <td><code>YOUR-CLIENT-SECRET</code></td>
-      <td>Enter the client secret of your Azure service principal which Terraform will use to create resources.</td>
+      <td>Enter your Azure service client secret. Terraform requires this secret to create resources.</td>
     </tr>
     <tr>
       <td><code>YOUR-ENVIRONMENT-NAME</code></td>
@@ -89,7 +92,7 @@ Before you can run Terraform commands to create infrastructure resources, you mu
     </tr>
     <tr>
       <td><code>YOUR-DNS-SUFFIX</code></td>
-      <td>Enter a domain name to use as part of the system domain for your PCF deployment. Terraform creates DNS records in Azure using <code>YOUR-ENVIRONMENT-NAME</code> and <code>YOUR-DNS-SUFFIX</code>. For example, if you enter <code>example.com</code> for your DNS suffix and have <code>pcf</code> as your environment name, Terraform will create DNS records at <code>pcf.example.com</code>.</td>
+      <td>Enter a domain name to use as part of the system domain for your PCF deployment. Terraform creates DNS records in Azure using <code>YOUR-ENVIRONMENT-NAME</code> and <code>YOUR-DNS-SUFFIX</code>. For example, if you enter <code>example.com</code> for your DNS suffix and have <code>pcf</code> as your environment name, Terraform creates DNS records at <code>pcf.example.com</code>.</td>
     </tr>
     <tr>
       <td><code>YOUR-ADMIN-USERNAME</code></td>
@@ -97,47 +100,42 @@ Before you can run Terraform commands to create infrastructure resources, you mu
     </tr>
   </table>
 
-## <a id="download"></a>Step 2: Add Optional Variables ##
+## <a id="variables"></a>Step 2: (Optional) Add Variables for Isolation Segment
 
-Complete this step if you want to do any of the following:
-
-- Deploy the Isolation Segment tile
-
-In your `terraform.tfvars` file, specify the appropriate variables from the sections below.
+Complete this section if you plan to deploy the Isolation Segment tile.
 
 <p class="note"><strong>Note</strong>: You can see the configurable options by opening the <code>variables.tf</code> file and looking for variables with default values.</p>
 
-### <a id="iso_seg"></a> Isolation Segments
-
-If you plan to deploy the Isolation Segment tile, add the following variable to your `terraform.tfvars` file.
-This causes terraform to create an additional HTTP load balancer and DNS record to use for the Isolation Segment tile. 
+Add the following variable to your `terraform.tfvars` file.
+This causes Terraform to create an additional HTTP load balancer and DNS record to use for the Isolation Segment tile.
 
 ```
 isolation_segment = "true"
 ```
 
-## <a id="download"></a>Step 3: Create Azure Resources with Terraform ##
+## <a id="resources"></a>Step 3: Create Azure Resources with Terraform ##
 
 Follow these steps to use the Terraform CLI to create resources on Azure:
 
-1. From the directory that contains the Terraform files, run `terraform init` to initialize the directory based on the information you specified in the `terraform.tfvars` file. 
+1. From the directory that contains the Terraform files, run `terraform init` to initialize the directory based on the information you specified in the `terraform.tfvars` file.
   <pre class="terminal">$ terraform init</pre>
 
-1. Run `terraform plan -out=plan` to create the execution plan for Terraform.
+1. Run the following command to create the execution plan for Terraform.
   <pre class="terminal">$ terraform plan -out=plan</pre>
 
-1. Run `terraform apply plan` to execute the plan from the previous step. It may take several minutes for Terraform to create all the resources in Azure. 
+1. Run the following command to execute the plan from the previous step.
+It may take several minutes for Terraform to create all the resources in Azure.
   <pre class="terminal">$ terraform apply plan</pre>
 
 ## <a id="dns"></a>Step 5: Create DNS Record ##
 
 1. In a browser, navigate to the DNS provider for the DNS suffix you entered in your `terraform.tfvars` file.
 
-1. Create a new NS (Name server) record for your PCF system domain. Your system domain is `YOUR-ENVIRONMENT-NAME.YOUR-DNS-SUFFIX`.
+1. Create a new NS (Name server) record for your PCF system domain.
+Your system domain is `YOUR-ENVIRONMENT-NAME.YOUR-DNS-SUFFIX`.
 
 1. In this record, enter the name servers included in `env_dns_zone_name_servers` from your Terraform output.
 
 ## <a id="next"></a> What to Do Next ##
 
-Proceed to the next step in the deployment, [Configuring BOSH Director on Azure (Terraform)](./azure-om-config-terraform.html). 
-
+Proceed to the next step in the deployment, [Configuring BOSH Director on Azure (Terraform)](./azure-om-config-terraform.html).

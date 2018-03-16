@@ -47,7 +47,7 @@ Before you can run Terraform commands to create infrastructure resources, you mu
 
 1. Navigate to the runtime release on [Pivotal Network](https://network.pivotal.io). For more information about the runtimes you can deploy for PCF, see [Installing Runtimes](runtimes.html).
 
-1. Select *Pivotal Application Service*. The Pivotal Application Service page opens.ß
+1. Select *Pivotal Application Service*. The Pivotal Application Service page opens.
 
 1. Download the GCP Terraform zip file. 
 
@@ -56,7 +56,7 @@ Before you can run Terraform commands to create infrastructure resources, you mu
 1. From a terminal window, navigate to the folder:
   <pre class="terminal">$ cd ~/workspace/TERRAFORMING-GCP-FOLDER</pre>
 
-1. Create a new file named `terraform.tfvars`. 
+1. Create a new file named `terraform.tfvars`:
   <pre class="terminal">$ touch terraform.tfvars</pre>
 
 1. Open the `terraform.tfvars` file and paste in the following contents:
@@ -114,7 +114,7 @@ Before you can run Terraform commands to create infrastructure resources, you mu
     </tr>
     <tr>
       <td><code>YOUR-DNS-SUFFIX</code></td>
-      <td>Enter a domain name to use as part of the system domain for your PCF deployment. Terraform creates DNS records in GCP using <code>YOUR-ENVIRONMENT-NAME</code> and <code>YOUR-DNS-SUFFIX</code>. For example, if you enter <code>example.com</code> for your DNS suffix and have <code>pcf</code> as your environment name, Terraform will create DNS records at <code>pcf.example.com</code>.</td>
+      <td>Enter a domain name to use as part of the system domain for your PCF deployment. Terraform creates DNS records in GCP using <code>YOUR-ENVIRONMENT-NAME</code> and <code>YOUR-DNS-SUFFIX</code>. For example, if you enter <code>example.com</code> for your DNS suffix and have <code>pcf</code> as your environment name, Terraform creates DNS records at <code>pcf.example.com</code>.</td>
     </tr>
     <tr>
       <td><code>YOUR-CERTIFICATE</code></td>
@@ -134,7 +134,7 @@ Before you can run Terraform commands to create infrastructure resources, you mu
     </tr>
   </table>
 
-## <a id="download"></a>Step 3: Add Optional Variables ##
+## <a id="variables"></a>Step 3: Add Optional Variables ##
 
 Complete this step if you want to do any of the following:
 
@@ -142,7 +142,7 @@ Complete this step if you want to do any of the following:
 - Deploy the Isolation Segment tile
 - Specify a host for the external Google Cloud SQL database
 - Use external Google Storage buckets
-- Create GCP Service Account Key for Blobstore
+- Disable generated GCP service account key for blobstore
 
 In your `terraform.tfvars` file, specify the appropriate variables from the sections below.
 
@@ -160,7 +160,7 @@ services_cidr = YOUR-SERVICES-CIDR
 
 ### <a id="iso_seg"></a> Isolation Segments
 
-If you plan to deploy the Isolation Segment tile, add the following variables to your `terraform.tfvars` file, replacing `YOUR-CERTIFICATE` and `YOUR-PRIVATE-KEY` with a certificate and private key. This causes terraform to create an additional HTTP load balancer across three availability zones to use for the Isolation Segment tile. 
+If you plan to deploy the Isolation Segment tile, add the following variables to your `terraform.tfvars` file, replacing `YOUR-CERTIFICATE` and `YOUR-PRIVATE-KEY` with a certificate and private key. This causes Terraform to create an additional HTTP load balancer across three availability zones to use for the Isolation Segment tile. 
 
 ```
 isolation_segment = true
@@ -193,26 +193,26 @@ If you want to use Google Cloud Storage buckets for the PAS Cloud Controller, ad
 pas_sql_db_host = true
 ```
 
-### <a id="gcs"></a> Create GCP Service Account Key for Blobstore
+### <a id="gcs"></a> GCP Service Account Key for Blobstore
 
-If you don't want to use a generated service account for blob storage, but instead would like to provide your own:
+If you want to provide your own service account for blob storage instead of using a generated service account, add the following to your `terraform.tfvars` file:
+
 ```
 create_blobstore_service_account_key = false
 ```
 
-
-## <a id="download"></a>Step 4: Create GCP Resources with Terraform ##
+## <a id="resources"></a>Step 4: Create GCP Resources with Terraform ##
 
 Follow these steps to use the Terraform CLI to create resources on GCP:
 
 1. From the directory that contains the Terraform files, run the following command to initialize the directory based on the information you specified in the `terraform.tfvars` file. 
   <pre class="terminal">$ terraform init</pre>
 
-1. Run the following command. It will create the execution plan for Terraform.
+1. Run the following command to create the execution plan for Terraform.
   <pre class="terminal">$ terraform plan -out=plan</pre>
 
-1. Run the following command. It will execute the plan from the previous step. 
-  It may take several minutes for Terraform to create all the resources in GCP. 
+1. Run the following command to execute the plan from the previous step.
+It may take several minutes for Terraform to create all the resources in GCP.
   <pre class="terminal">$ terraform apply plan</pre>
 
 ## <a id="dns"></a>Step 5: Create DNS Record ##

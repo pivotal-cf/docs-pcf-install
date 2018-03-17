@@ -11,14 +11,14 @@ The apps in your deployment continue to run during the upgrade. However, you can
 
 **Important**: Read the [Release Notes](http://docs.pivotal.io/pivotalcf/2-1/pcf-release-notes/index.html) and [Breaking Changes](http://docs.pivotal.io/pivotalcf/2-1/pcf-release-notes/breaking-changes.html) for this release, including the Known Issues sections, before starting the upgrade process.
 
-For more details about the impact of upgrading on individual PCF components, see the <a href="../opsguide/single-component.html" class="subnav">Understanding the Effects of Single Components on a Pivotal Cloud Foundry Upgrade</a> topic.
+For more details about the impact of upgrading on individual PCF components, see the [Understanding the Effects of Single Components on a Pivotal Cloud Foundry Upgrade](https://docs.pivotal.io/pivotalcf/2-1/opsguide/single-component.html) topic.
 
 
 ## <a id="beforeupgrade"></a> Before You Upgrade
 
 This section contains important preparation steps, **Preps**, that you must follow before beginning an upgrade to Ops Manager v2.1. Failure to follow these instructions may jeopardize your existing deployment data and cause your upgrade to fail.
 
-Pivotal recommends backing up your PCF deployment before upgrading, to restore in the case of failure. To do this, follow the instructions in the [Backing Up Pivotal Cloud Foundry with BBR](./backup-restore/backup-pcf-bbr.html) topic. 
+Pivotal recommends backing up your PCF deployment before upgrading, to restore in the case of failure. To do this, follow the instructions in the [Backing Up Pivotal Cloud Foundry with BBR](https://docs.pivotal.io/pivotalcf/2-1/customizing/backup-restore/backup-pcf-bbr.html) topic. 
 
 <p class="note breaking"><strong>Breaking Change:</strong> If you have the Single Sign-On (SSO) service tile installed,  you must first upgrade the SSO tile to v6.0 and configure the Apps Manager errand before you can upgrade the PAS tile to 2.1. To properly upgrade your SSO tile, see <a href="https://docs.pivotal.io/p-identity/1-5/installation.html">Installation</a>.</p>
 
@@ -26,17 +26,17 @@ Pivotal recommends backing up your PCF deployment before upgrading, to restore i
 
 During the PCF upgrade process, a large quantity of data is moved around on disk. 
 
-To ensure a successful upgrade of PCF, verify that your underlying PAS file storage is performant enough to handle the upgrade. For more information about the configurations to evaluate, see <a href="../opsguide/storage_considerations.html" class="subnav">Upgrade Considerations for Selecting Pivotal Cloud Foundry Storage</a>.
+To ensure a successful upgrade of PCF, verify that your underlying PAS file storage is performant enough to handle the upgrade. For more information about the configurations to evaluate, see [Upgrade Considerations for Selecting Pivotal Cloud Foundry Storage](https://docs.pivotal.io/pivotalcf/2-1/opsguide/storage_considerations.html).
 
 In addition to file storage IOPS, consider additional existing deployment factors that can impact overall upgrade duration and performance:
 
 |**Factor**|**Impact**|
 |----------|----------|
 |**Network latency** | Network latency can contribute to how long it takes to move app instance data to new containers. |
-|**Number of ASGs**| A large number of [Application Security Groups](../concepts/asg.html) in your deployment can contribute to an increase in app instance container startup time.|
+|**Number of ASGs**| A large number of [Application Security Groups](https://docs.pivotal.io/pivotalcf/2-1/concepts/asg.html) in your deployment can contribute to an increase in app instance container startup time.|
 |**Number of app instances and application growth**| A large increase in the number of app instances and average droplet size since the initial deployment can increase the upgrade impact on your system. |
 
-To review example upgrade-related performance measurements of an existing production Cloud Foundry deployment, see the <a href="../opsguide/pws_upgrade_load.html" class="subnav">Pivotal Web Services Performance During Upgrade</a> topic. 
+To review example upgrade-related performance measurements of an existing production Cloud Foundry deployment, see the [Pivotal Web Services Performance During Upgrade](https://docs.pivotal.io/pivotalcf/2-1/opsguide/pws_upgrade_load.html) topic. 
 
 ### <a id="app_usage"></a> Prep 2: Verify App Usage Service Remedial Steps
 
@@ -48,7 +48,7 @@ If you are upgrading from a PCF deployment that at one point included Elastic Ru
 
 Depending on the requirements of your deployment, you may need to rotate your Certificate Authority (CA) certificates. The non-configurable certificates in your deployment expire every two years. You must regenerate and rotate them so that critical components do not face a complete outage.
 
-<p class="note"><strong>Note:</strong> PCF uses SHA-2 certificates and hashes by default. You can convert existing SHA-1 hashes into SHA-2 hashes by rotating your Ops Manager certificates using the procedure described in <a href="../security/pcf-infrastructure/api-cert-rotation.html">Regenerating and Rotating Non-Configurable TLS/SSL Certificates</a>.</p>
+<p class="note"><strong>Note:</strong> PCF uses SHA-2 certificates and hashes by default. You can convert existing SHA-1 hashes into SHA-2 hashes by rotating your Ops Manager certificates using the procedure described in [Regenerating and Rotating Non-Configurable TLS/SSL Certificates](https://docs.pivotal.io/pivotalcf/2-1/security/pcf-infrastructure/api-cert-rotation.html).</p>
 
 To retrieve information about all the RSA and CA certificates for the BOSH Director and other products in your deployment, you can use the `GET /api/v0/deployed/certificates?expires_within=TIME` request of the Ops Manager API.
 
@@ -75,11 +75,11 @@ At the minimum, you must download PAS v2.1.
 
 1. Install the releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.9 and you are upgrading to v2.1, you must sequentially install v1.10, v1.11, v1.12, and v2.0 before proceeding with the upgrade to v2.1.
 
-1. If you have disabled lifecycle errands for any installed product to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. For more information, see the [Adding and Deleting Products](./add-delete.html#add-import) topic.
+1. If you have disabled lifecycle errands for any installed product to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. For more information, see the [Adding and Deleting Products](https://docs.pivotal.io/pivotalcf/2-1/customizing/add-delete.html#add-import) topic.
 
 1. <%= partial 'check_disk_before_upgrade' %>
 
-1. In PCF 2.1, the Gorouter can communicate with app instances via TLS, which improves security but also increases resource usage. Prior versions of PCF did not support this feature, but PCF 2.1 enables it by default. See [HTTP Routing](../concepts/http-routing.html#tls-to-back-end) for more information.
+1. In PCF 2.1, the Gorouter can communicate with app instances via TLS, which improves security but also increases resource usage. Prior versions of PCF did not support this feature, but PCF 2.1 enables it by default. See [HTTP Routing](https://docs.pivotal.io/pivotalcf/2-1/concepts/http-routing.html#tls-to-back-end) for more information.
     * **To support TLS routing** you should ensure that you have enough available memory capacity for app instances.
     * **To disable TLS routing** and avoid needing additional resources, disable the **Router uses TLS to verify application identity** checkbox in the PAS and Isolation Segment tile **Application Containers** pane.
 
@@ -90,13 +90,13 @@ At the minimum, you must download PAS v2.1.
    4. Click **Save**.
    5. Return to the **Installation Dashboard** and click **Apply Changes**.
 
-1. If your original PAS deployment was PCF 1.6 or earlier, rotate non-configurable Director certificates using the Ops Manager API. Follow Step 3 of the [Managing Non-Configurable TLS/SSL Certificates](../security/pcf-infrastructure/api-cert-rotation.html) topic to regenerate certificates, or begin with Step 1 to also update the certificate authority (CA).
+1. If your original PAS deployment was PCF v1.6 or earlier, rotate non-configurable Director certificates using the Ops Manager API. Follow Step 3 of the [Managing Non-Configurable TLS/SSL Certificates](https://docs.pivotal.io/pivotalcf/2-1/security/pcf-infrastructure/api-cert-rotation.html) topic to regenerate certificates, or begin with Step 1 to also update the certificate authority (CA).
 
 1. Check the required machine specifications for Ops Manager v2.1. These specifications are specific [to your IaaS](gcp-om-deploy.html#start-vm). If these specifications do not match your existing Ops Manager, modify the values of your Ops Manager VM instance. For example, if the boot disk of your existing Ops Manager is 50 GB and the new Ops Manager requires 100 GB, then increase the size of your Ops Manager boot disk to 100 GB. 
 
 1. If you are upgrading a vSphere environment, ensure that you have the following information about your existing environment before starting the upgrade:
   * Record the following IP addresses, which you can find in the vSphere web client under **Manage** > **Settings** > **vApp Options**. 
-This is the same information you entered at the end of deploying [Ops Manager on vSphere](./deploying-vm.html). 
+This is the same information you entered at the end of deploying [Ops Manager on vSphere](https://docs.pivotal.io/pivotalcf/2-1/customizing/deploying-vm.html). 
      * IP Address of the Ops Manager
      * Netmask
      * Default Gateway
@@ -124,7 +124,7 @@ See the [Redis for PCF documentation](https://docs.pivotal.io/redis/1-11/index.h
 
 ### <a id="upgrade-add-ons"></a> Prep 10: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
 
- Before upgrading to PCF v2.1, operators who have deployed any PCF add-ons (such as **IPsec for PCF**, **ClamAV for PCF**, or **File Integrity Monitoring for PCF**) and who have deployed or are planning to deploy [PAS for Windows 2012R2](../windows2012r2/index.html) must modify the add-on manifest to specify a compatible OS stemcell. 
+ Before upgrading to PCF v2.1, operators who have deployed any PCF add-ons (such as **IPsec for PCF**, **ClamAV for PCF**, or **File Integrity Monitoring for PCF**) and who have deployed or are planning to deploy [PAS for Windows 2012R2](https://docs.pivotal.io/pivotalcf/2-1/windows2012r2/index.html) must modify the add-on manifest to specify a compatible OS stemcell. 
 
  For example, **File Integrity Monitor for PCF** (FIM) is not supported on Windows. Therefore, the manifest must use an `include` directive to specify the target OS stemcell of `ubuntu-trusty`. 
 
@@ -145,12 +145,12 @@ See the [Redis for PCF documentation](https://docs.pivotal.io/redis/1-11/index.h
 
 ### <a id="check-health"></a> Prep 11: Check System Health Before Upgrade
 
-1. Run `bosh <%= vars.bosh_cloud_check %>` to confirm that the VMs are healthy. For more information, see the [BOSH Cloudcheck](./trouble-advanced.html#cck) topic.
+1. Run `bosh <%= vars.bosh_cloud_check %>` to confirm that the VMs are healthy. For more information, see the [BOSH Cloudcheck](https://docs.pivotal.io/pivotalcf/2-1/customizing/trouble-advanced.html#cck) topic.
 
 1. Check the system health of installed products. In the **Installation Dashboard**, select the **Status** tab for each service tile. Confirm that all jobs are healthy.
 
 1. (Optional) Check the logs for errors before proceeding with the upgrade.
-For more information, see the [Viewing Logs in the Command Line Interface](../devguide/deploy-apps/streaming-logs.html#view) topic.  
+For more information, see the [Viewing Logs in the Command Line Interface](https://docs.pivotal.io/pivotalcf/2-1/devguide/deploy-apps/streaming-logs.html#view) topic.  
 
 1. Confirm there are no outstanding changes in Ops Manager or any other tile. All tiles should be **green**. Click **Apply Changes** if necessary. 
 
@@ -194,12 +194,12 @@ When you export an installation, the export contains the base VM images and nece
 1. To avoid conflicts, power off the existing Ops Manager VM.
 
 1. Deploy the new Ops Manager VM by following the steps in one of these topics:
-    * **AWS (Terraform)**: [Deploying BOSH and Ops Manager to AWS](./aws-prepare-env-terraform.html) and subsequent topics.
-    * **AWS (Manual)**: [Manually Configuring AWS for PCF](./pcf-aws-manual-om-config.html)
-    * **Azure**: [Upgrading BOSH Director on Azure](./azure-om-upgrade.html)
-    * **GCP**: [Upgrading BOSH Director on GCP](./gcp-om-upgrade.html)
-    * **OpenStack**: [Provisioning the OpenStack Infrastructure](./openstack-setup.html)
-    * **vSphere**: [Deploying Operations Manager to vSphere](./deploying-vm.html)
+    * **AWS (Terraform)**: [Deploying BOSH and Ops Manager to AWS](https://docs.pivotal.io/pivotalcf/2-1/customizing/aws-prepare-env-terraform.html) and subsequent topics.
+    * **AWS (Manual)**: [Manually Configuring AWS for PCF](https://docs.pivotal.io/pivotalcf/2-1/customizing/pcf-aws-manual-om-config.html)
+    * **Azure**: [Upgrading BOSH Director on Azure](https://docs.pivotal.io/pivotalcf/2-1/customizing/azure-om-upgrade.html)
+    * **GCP**: [Upgrading BOSH Director on GCP](https://docs.pivotal.io/pivotalcf/2-1/customizing/gcp-om-upgrade.html)
+    * **OpenStack**: [Provisioning the OpenStack Infrastructure](https://docs.pivotal.io/pivotalcf/2-1/customizing/openstack-setup.html)
+    * **vSphere**: [Deploying Operations Manager to vSphere](https://docs.pivotal.io/pivotalcf/2-1/customizing/deploying-vm.html)
 
 1. When redirected to the **Welcome to Ops Manager** page, select **Import Existing Installation**.
 
@@ -232,7 +232,7 @@ When you export an installation, the export contains the base VM images and nece
 
 1. Click the newly added tile to review any configurable options.
 
-1. (Optional) If you are using other service tiles, you can upgrade them following the same procedure. See the <a href="./upgrading-products.html" class="subnav">Upgrading PAS and Other Pivotal Cloud Foundry Products</a> topic for more information.
+1. (Optional) If you are using other service tiles, you can upgrade them following the same procedure. See the [Upgrading PAS and Other Pivotal Cloud Foundry Products](https://docs.pivotal.io/pivotalcf/2-1/customizing/upgrading-products.html) topic for more information.
 
 ### <a id="perform-upgrade"></a> Step 4: Perform Your Upgrade
 

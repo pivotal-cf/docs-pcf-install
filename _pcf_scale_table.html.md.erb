@@ -7,71 +7,47 @@ The following table provides recommended instance counts for a high-availability
     <th><strong>Minimum Instance Number</strong></th>
     <th><strong>Notes</strong></th>
   </tr>
-  <tr>
-    <td>Diego Cell</td>
-    <td>&ge; 3</td>
-    <td>1</td>
-    <td>The optimal balance between CPU/memory sizing and instance count depends on the performance characteristics of the apps that run on Diego cells. Scaling vertically with larger Diego cells makes for larger points of failure, and more apps go down when a cell fails. On the other hand, scaling horizontally decreases the speed at which the system rebalances apps. Rebalancing 100 cells takes longer and demands more processing overhead than rebalancing 20 cells.</td>
-  </tr>
-  <tr>
-    <td>Diego Brain</td>
-    <td>&ge; 2</td>
-    <td>1</td>
-    <td>For high availability, use at least one per AZ, or at least two if only one AZ.</td>
-  </tr>
-  <tr>
-    <td>Diego BBS</td>
-    <td>&ge; 2</td>
-    <td>1</td>
-    <td>For high availability in a multi-AZ deployment, use at least one instance per AZ. Scale Diego BBS to at least two instances for high availability in a single-AZ deployment.</td>
-  </tr>
-  <tr>
+    <tr>
     <td>Consul</td>
     <td>&ge; 3</td>
     <td>1</td>
     <td>Set this to an odd number equal to or one greater than the number of AZs you have, in order to maintain quorum. Distribute the instances evenly across the AZs, at least one instance per AZ.</td>
   </tr>
-  <tr>
-    <td>MySQL Server</td>
-    <td>3</td>
+    <tr>
+    <td>NATS Server</td>
+    <td>&ge; 2</td>
     <td>1</td>
-    <td>If you use an <a href="./../customizing/pcf-aws-manual-er-config.html#sys-db">external database</a> in your deployment, then you can set the MySQL Server instance count to <code>0</code>. For instructions about scaling down an internal MySQL cluster, see <a href="../opsguide/scaling-down-mysql.html">Scaling Down Your MySQL Cluster</a>.</td>
+    <td>In a high-availability deployment, you might run a single NATS instance if your deployment lacks the resources to deploy two stable NATS servers. Components using NATS are resilient to message failures and the BOSH resurrector recovers the NATS VM quickly if it becomes non-responsive.</td>
   </tr>
-  <tr>
+    <tr>
+    <td>File Storage</td>
+    <td>1</td>
+    <td>1</td>
+    <td></td>
+  </tr>
+    <tr>
     <td>MySQL Proxy</td>
     <td>2</td>
     <td>1</td>
     <td>If you use an <a href="./../customizing/pcf-aws-manual-er-config.html#sys-db">external database</a> in your deployment, then you can set the MySQL Proxy instance count to <code>0</code>.</td>
   </tr>
-  <tr>
-    <td>NATS Server</td>
-    <td>&ge; 2</td>
+    <tr>
+    <td>MySQL Server</td>
+    <td>3</td>
     <td>1</td>
-    <td>In a high availability deployment, you might run a single NATS instance if your deployment lacks the resources to deploy two stable NATS servers. Components using NATS are resilient to message failures and the BOSH resurrector recovers the NATS VM quickly if it becomes non-responsive.</td>
+    <td>If you use an <a href="./../customizing/pcf-aws-manual-er-config.html#sys-db">external database</a> in your deployment, then you can set the MySQL Server instance count to <code>0</code>. For instructions about scaling down an internal MySQL cluster, see <a href="https://docs.pivotal.io/pivotalcf/2-0/opsguide/scaling-down-mysql.html">Scaling Down Your MySQL Cluster</a>.</td>
   </tr>
-  <tr>
-    <td>Cloud Controller</td>
-    <td>&ge; 2</td>
+    <tr>
+    <td>Backup Prepare Node</td>
     <td>1</td>
-    <td>Scale the Cloud Controller to accommodate the number of requests to the API and the number of apps in the system.</td>
-  </tr>
-  <tr>
-    <td>Clock Global</td>
-    <td>2</td>
     <td>1</td>
-    <td>For a high availability deployment, scale the Clock Global job to a value of `2` or greater, or to the number of your AZs.
+    <td></td>
   </tr>
-  <tr>
-    <td>Router</td>
-    <td>&ge; 2</td>
-     <td>1</td>
-    <td>Scale the router to accommodate the number of incoming requests. Additional instances increase available bandwidth. In general, this load is much less than the load on Diego cells.</td>
-  </tr>
-  <tr>
-    <td>HAProxy</td>
-    <td>0 or &ge; 2</td>
-    <td>0 or 1</td>
-    <td>For environments that require high availability, you can scale HAProxy to <code>0</code> and then configure a high-availability load balancer (LB) to point directly to each Gorouter instance. Alternately, you can also configure the high availability LB to point to HAProxy instance scaled at <code>&ge; 2</code>. Either way, an LB is required to host Cloud Foundry domains at a single IP address.</td>
+    <tr>
+    <td>Diego BBS</td>
+    <td>&ge; 3</td>
+    <td>1</td>
+    <td>For high availability in a multi-AZ deployment, use at least one instance per AZ. Scale Diego BBS to at least two instances for high availability in a single-AZ deployment.</td>
   </tr>
   <tr>
     <td>UAA</td>
@@ -80,22 +56,88 @@ The following table provides recommended instance counts for a high-availability
     <td></td>
   </tr>
   <tr>
-    <td>Doppler Server</td>
+    <td>Cloud Controller</td>
     <td>&ge; 2</td>
     <td>1</td>
-    <td>Deploying additional Doppler servers splits traffic across them. For a high availability deployment, Pivotal recommends at least two per Availability Zone.</td>
+    <td>Scale the Cloud Controller to accommodate the number of requests to the API and the number of apps in the system.</td>
+  </tr>
+  <tr>
+    <td>HAProxy</td>
+    <td>1</td>
+    <td>1</td>
+    <td>For environments that require high availability, you can scale HAProxy to <code>0</code> and then configure a high-availability load balancer (LB) to point directly to each Gorouter instance. Alternately, you can also configure the high-availability LB to point to HAProxy instance scaled at <code>&ge; 2</code>. Either way, an LB is required to host Cloud Foundry domains at a single IP address.</td>
+  </tr>
+  <tr>
+    <td>Router</td>
+    <td>&ge; 3</td>
+    <td>3</td>
+    <td>Scale the router to accommodate the number of incoming requests. Additional instances increase available bandwidth. In general, this load is much less than the load on Diego cells.</td>
+  </tr>
+  <tr>
+    <td>MySQL Monitor</td>
+    <td>1</td>
+    <td>1</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Clock Global</td>
+    <td>1</td>
+    <td>1</td>
+    <td>For a high-availability deployment, scale the Clock Global job to a value of `1` or greater, or to the number of your AZs.</td>
+  </tr>
+  <tr>
+    <td>Cloud Controller Worker</td>
+    <td>2</td>
+    <td>1</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Diego Brain</td>
+    <td>&ge; 3</td>
+    <td>1</td>
+    <td>For a high-availability deployment, use at least one per AZ, or at least two if only one AZ.</td>
+  </tr>
+  <tr>
+    <td>Diego Cell</td>
+    <td>&ge; 3</td>
+    <td>1</td>
+    <td>The optimal balance between CPU/memory sizing and instance count depends on the performance characteristics of the apps that run on Diego cells. Scaling vertically with larger Diego cells makes for larger points of failure, and more apps go down when a cell fails. On the other hand, scaling horizontally decreases the speed at which the system rebalances apps. Rebalancing 100 cells takes longer and demands more processing overhead than rebalancing 20 cells.</td>
   </tr>
   <tr>
     <td>Loggregator Trafficcontroller</td>
-    <td>&ge; 2</td>
+    <td>&ge; 3</td>
     <td>1</td>
-    <td>Deploying additional Loggregator Traffic Controllers allows you to direct traffic to them in a round-robin manner. For a high availability deployment, Pivotal recommends at least two per Availability Zone.</td>
+    <td>Deploying additional Loggregator Traffic Controllers allows you to direct traffic to them in a round-robin manner. For a high-availability deployment, Pivotal recommends at least two per Availability Zone.</td>
   </tr>
   <tr>
+    <td>Syslog Adapter</td>
+    <td>&ge; 3</td>
+    <td>1</td>
+    <td></td>
+  </tr>
+    <tr>
     <td>Syslog Scheduler</td>
     <td>&ge; 2</td>
     <td>1</td>
-    <td>The Syslog Scheduler is a scalable component. For high availability, use at least one instance per AZ, or at least two instances if only one AZ is present.</td>
+    <td>The Syslog Scheduler is a scalable component. For a high-availability deployment, use at least one instance per AZ, or at least two instances if only one AZ is present.</td>
+  </tr>
+  <tr>
+    <td>Doppler Server</td>
+    <td>&ge; 3</td>
+    <td>1</td>
+    <td>Deploying additional Doppler servers splits traffic across them. For a high-availability deployment, Pivotal recommends at least two per Availability Zone.</td>
+  </tr>
+    <tr>
+    <td>TCP Router</td>
+    <td>1</td>
+    <td>1</td>
+    <td></td>
+  </tr>
+    <tr>
+    <td>CredHub</td>
+    <td>2</td>
+    <td>1</td>
+    <td></td>
   </tr>
 </table>
 

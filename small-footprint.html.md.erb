@@ -11,12 +11,12 @@ Use Small Footprint PAS for testing or small on-site data centers where performa
 
 ## <a id='compare'></a>Differentiate Small Footprint PAS and PAS
 
-The Small Footprint PAS is a repackaging of the Pivotal Application Service (PAS) components into a smaller and more efficient deployment. A standard PAS deployment must have at least 24 virtual machines (VMs), but the Small Footprint PAS requires only four.   
+The Small Footprint PAS is a repackaging of the Pivotal Application Service (PAS) components into a smaller and more efficient deployment. A standard PAS deployment must have at least 14 virtual machines (VMs), but the Small Footprint PAS requires only four.   
 
 The following image displays a comparison of the number of VMs deployed by PAS and Small Footprint PAS. 
 
-![PAS VMs](ert-vms.png)
-[//]: https://docs.google.com/a/pivotal.io/drawings/d/15aWhXxONKb-yJcFMvDwgnwbzdyKbxZHfQ3_OOi6OkVQ/edit?usp=sharing
+<%= image_tag("ert-vms-2.0.png", :class => "no-border", :alt => "VM comparison between PAS and Small Footprint PAS. PAS has 14 required VMs and 7 optional VMs. Small Footprint PAS, on the other hand, has 4 required VMs and 5 optional VMs")%>
+[//]: https://docs.google.com/drawings/d/19V1SY4BGW2T--c4Y8Jm26CkA8C-6jIHXl7gpEzYlTmY/edit?usp=sharing
 
 ### <a id='usecase'></a>Use Cases
 
@@ -49,7 +49,7 @@ You can deploy the Small Footprint PAS tile with a minimum of four VMs, as shown
 
 <p class="note"><strong>Note</strong>: The following image assumes that you are using an external blobstore.</p>
 
-![SRT VMS](srt-vms.png)
+<%= image_tag("srt-vms.png", :class => "no-border", :alt => "Small Footprint PAS has 4 required VMs and 5 optional VMs")%>
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/13ycJou77RzIb3DeLF1rUOdmEiokNj3_-VTkmILcr6dM/edit?usp=sharing
 
 To reduce the number of VMs required for Small Footprint PAS, the _Control_ and _Database_ VMs include colocated jobs that run on a single VM in PAS. See the next sections for details. 
@@ -62,7 +62,7 @@ The Control VM includes the PAS jobs that handle management plane operations, ap
 
 The following image shows all the jobs from PAS that are colocated on the Control VM in Small Footprint PAS. 
 
-![Control VMs](control-vms.png)
+<%= image_tag("control-vms-2.0.png", :class => "no-border", :alt => "Small Footprint PAS Condenses 10 PAS VMs onto 1 VM called Control")%>
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/17AZ5xT_K8O0cATDZARPtgTEDV2cy6OfEbZybv81gqAg/edit?usp=sharing
 
 ### <a id='dbvm'></a>Database VM
@@ -70,23 +70,159 @@ The following image shows all the jobs from PAS that are colocated on the Contro
 The database VM includes the PAS jobs that handle internal storage and messaging. 
 
 The following image shows all the jobs from PAS that are colocated on the Database VM in Small Footprint PAS.
-
-![DB VMs](db-vms.png) 
+ 
+<%= image_tag("db-vms.png", :class => "no-border", :alt => "Small Footprint PAS Condenses 4 PAS VMs onto 1 VM called Database")%>
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/12UkinQ58ejlq9AZQvwq6r7Ghtp4RnTopI_-gTGerpU4/edit?usp=sharing
 
 ### <a id='computevm'></a>Compute VM
 
 The _Compute_ VM is the same as the Diego Cell VM in PAS. 
 
-![Compute VMs](compute-vms.png) 
+<%= image_tag("compute-vms.png", :class => "no-border", :alt => "Small Footprint PAS calls the Diego Cell VM the Compute VM")%>
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/1xOx5V1TGLoCCgIXuixTM1K9PlSTypmwHdt4xbN81BNY/edit?usp=sharing
 
 ### <a id='othervms'></a>Other VMs (Unchanged)
 
 The following image shows the VMs performs the same functions in both versions of the PAS tile. 
 
-![Unchanged VMs](unchanged-vms.png) 
+<%= image_tag("unchanged-vms.png", :class => "no-border", :alt => "The Router, File Storage, HAProxy, Backup Prepare Node, MySQL Monitor, and TCP Router VMs are the same in both PAS and small footprint PAS.")%>
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/12vWg66BUjOsSK4qC9vMqNxO9Ea1kdzfM2cH4yEAEgsg/edit?usp=sharing
+
+## <a id='requirements'></a>Requirements
+
+The tables below list the minimum VM resources needed to run Small Footprint PAS and Ops Manager on the public IaaSes that PCF supports.
+
+### <a id='aws-requirements'></a>Amazon Web Services (AWS) Requirements
+
+<table id='aws-requirements' border="1" class="nice">
+  <tr>
+  	<th>AWS Requirements</th>
+    <th>VM Type</th>
+    <th>VM Count</th>
+    <th>Notes</th>
+  </tr><tr>
+    <th rowspan=4>Small Footprint PAS</th>
+    <td>m4.large</td>
+    <td>1</td>
+    <td></td>
+  </tr><tr>
+    <td>r4.large</td>
+    <td>1</td>
+    <td></td>
+  </tr><tr>
+    <td>r4.xlarge</td>
+    <td>4</td>
+    <td></td>
+  </tr><tr>
+    <td>t2.micro</td>
+    <td>4</td>
+    <td>Add 1 to count if using HAProxy</td>
+  </tr><tr>
+  	<th rowspan=2>Ops Manager</th>
+    <td>m4.large</td>
+    <td>1</td>
+    <td></td>
+  </tr><tr>
+    <td>c4.xlarge</td>
+    <td>4</td>
+    <td></td>
+  </tr>
+</table>
+
+### <a id='azure-requirements'></a>Azure Requirements
+
+<table id='azure-requirements' border="1" class="nice">
+  <tr>
+  </tr></tr>
+    <th>Azure Requirements</th>
+    <th>VM Type</th>
+    <th>VM Count</th>
+    <th>Notes</th>
+  </tr><tr>
+    <th rowspan=4>Small Footprint PAS</th>
+    <td>DS11 v2</td>
+    <td>1</td>
+    <td></td>
+  </tr><tr>
+    <td>DS12 v2</td>
+    <td>2</td>
+    <td></td>
+  </tr><tr>
+    <td>F2s</td>
+    <td>0</td>
+    <td>Add 1 to count if using HAProxy</td>
+  </tr><tr>
+    <td>F1s</td>
+    <td>5</td>
+    <td></td>
+  </tr><tr>
+  	<th rowspan=2>Ops Manager</th>
+    <td>DS2 v2</td>
+    <td>1</td>
+    <td></td>
+  </tr><tr>
+    <td>F4s</td>
+    <td>4</td>
+    <td></td>
+  </tr>
+</table>
+
+### <a id='gcp-requirements'></a>Google Cloud Platform (GCP) Requirements
+
+<table id='gcp-requirements' border="1" class="nice">
+  <tr>
+    <th>GCP Requirements</th>
+    <th>VM Type</th>
+    <th>Number of VMs</th>
+    <th>CPU Count (vCPU)</th>
+    <th>RAM (GB)</th>
+    <th>Notes</th>
+  </tr><tr>
+    <th rowspan=5>Small Footprint PAS</th>
+    <td>micro</td>
+    <td>4</td>
+    <td>1</td>
+    <td>1</td>
+    <td>Add 1 to count if using HAProxy</td>
+  </tr><tr>
+    <td>xlarge.disk</td>
+    <td>1</td>
+    <td>4</td>
+    <td>16</td>
+    <td></td>
+  </tr><tr>
+    <td>xlarge</td>
+    <td>1</td>
+    <td>4</td>
+    <td>16</td>
+    <td></td>
+  </tr><tr>
+    <td>medium.mem</td>
+    <td>1</td>
+    <td>1</td>
+    <td>6</td>
+    <td></td>
+  </tr><tr>
+    <td>large.disk</td>
+    <td>1</td>
+    <td>2</td>
+    <td>8</td>
+    <td></td>
+  </tr><tr>
+    <th rowspan=2>Ops Manager</th>
+    <td>large.disk</td>
+    <td>1</td>
+    <td>2</td>
+    <td>8</td>
+    <td></td>
+  </tr><tr>
+    <td>large.cpu</td>
+    <td>4</td>
+    <td>4</td>
+    <td>4</td>
+    <td></td>
+  </tr>
+</table>
 
 ## <a id='install'></a>Installing Small Footprint PAS
 

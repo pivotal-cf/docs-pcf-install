@@ -40,16 +40,98 @@ You can request a quota increase on the [GCP Quotas page](https://console.cloud.
   <p class="note"><strong>Note</strong>: When you deploy PCF, the deployment processes run under a [separate service account](./gcp-prepare-env.html#iam_account) with the minimum permissions required to install Ops Manager and ERT.</p>
 
 * The [Google Cloud SDK](https://cloud.google.com/sdk/) installed on your machine and authenticated to your GCP account.
-* Sufficiently high instance limits, or no instance limits, on your GCP account. The exact number of instances depends on the number of tiles and availability zones you plan to deploy. At a minimum, a new GCP deployment requires the following `custom` VMs:
+* Sufficiently high VM instance limits, or no instance limits, on your GCP account. The exact number of VMs depends on the number of tiles and availability zones you plan to deploy.
+  - **Elastic Runtime**: At a minimum, a new GCP deployment requires the following `custom` VMs for Elastic Runtime:
 <table border='1' class='nice'>
-<tr><th>VM Count</th><th>Machine type</th><th>Memory (in GB)</th> </tr>
-<tr><td>30</td><td>1vCPU</td><td>1.00</td></tr>
-<tr><td>3</td><td>1vCPU</td><td>2.00</td></tr>
-<tr><td>4</td><td>2vCPU</td><td>4.00</td></tr>
-<tr><td>3</td><td>2vCPU</td><td>8.00</td></tr>
-<tr><td>3</td><td>4vCPU</td><td>16.00</td></tr>
+  <tr>
+    <th rowspan=6>Elastic Runtime and Ops Manager</th>
+    <th>VM Count</th>
+    <th>vCPU Count per VM</th>
+    <th>RAM (GB)</th>
+  </tr><tr>
+    <td>30</td>
+    <td>1</td>
+    <td>1</td>
+  </tr><tr>
+    <td>3</td>
+    <td>1</td>
+    <td>2</td>
+  </tr><tr>
+    <td>4</td>
+    <td>2</td>
+    <td>4</td>
+  </tr><tr>
+    <td>3</td>
+    <td>2</td>
+    <td>8</td>
+  </tr><tr>
+    <td>3</td>
+    <td>4</td>
+    <td>16</td>
+  </tr>
 </table>
-	By default, Elastic Runtime deploys the number of VM instances required to run a highly available configuration of PCF. If you are deploying a test or sandbox PCF that does not require HA, then you can scale down the number of instances in your deployment. For information about the number of instances required to run a minimal, non-HA PCF deployment, see [Scaling Elastic Runtime](../opsguide/scaling-ert-components.html).
+By default, Elastic Runtime deploys the number of VM instances required to run a highly available configuration of PCF. If you are deploying a test or sandbox PCF that does not require HA, then you can scale down the number of instances in your deployment. For information about the number of instances required to run a minimal, non-HA PCF deployment, see [Scaling Elastic Runtime](../opsguide/scaling-ert-components.html).
+  - **Small Footprint Runtime**: To run Small Footprint Runtime, a new GCP deployment requires:
+<table id='small-footprint' border="1" class="nice">
+  <tr>
+    <th></th>
+    <th>VM Type</th>
+    <th>VM Count</th>
+    <th>vCPU Count per VM</th>
+    <th>RAM (GB)</th>
+    <th>Notes</th>
+  </tr><tr>
+    <th rowspan=6>Small Footprint PAS</th>
+    <td>micro</td>
+    <td>12</td>
+    <td>1</td>
+    <td>1</td>
+    <td>Add 1 to VM count if using HAProxy</td>
+  </tr><tr>
+    <td>small</td>
+    <td>3</td>
+    <td>1</td>
+    <td>2</td>
+    <td></td>
+  </tr><tr>
+    <td>xlarge.disk</td>
+    <td>1</td>
+    <td>4</td>
+    <td>16</td>
+    <td></td>
+  </tr><tr>
+    <td>xlarge</td>
+    <td>1</td>
+    <td>4</td>
+    <td>16</td>
+    <td></td>
+  </tr><tr>
+    <td>medium.mem</td>
+    <td>1</td>
+    <td>1</td>
+    <td>6</td>
+    <td></td>
+  </tr><tr>
+    <td>large.disk</td>
+    <td>1</td>
+    <td>2</td>
+    <td>8</td>
+    <td></td>
+  </tr><tr>
+    <th rowspan=2>Ops Manager</th>
+    <td>large.disk</td>
+    <td>1</td>
+    <td>2</td>
+    <td>8</td>
+    <td></td>
+  </tr><tr>
+    <td>large.cpu</td>
+    <td>4</td>
+    <td>4</td>
+    <td>4</td>
+    <td></td>
+  </tr>
+</table>
 	
 * Administrative rights to a domain for your PCF installation. You need to be able to add wildcard records to this domain. You specify this registered domain when configuring the SSL certificate and Cloud Controller for your deployment. For more information see the [Providing a Certificate for your SSL Termination Point](../opsguide/security_config.html) topic. </td>
 * An SSL certificate for your PCF domain. This can be a self-signed certificate, which Ops Manager can generate for you, but Pivotal recommends using a self-signed certificate for development and testing purposes only. If you plan to deploy PCF into a production environment, you must obtain a certificate from your Certificate Authority. 

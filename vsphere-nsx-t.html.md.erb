@@ -1,0 +1,125 @@
+---
+title: Deploying PAS on NSX-T
+owner: Ops Manager
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes how to install Pivotal Application Service (PAS) on vSphere with NSX-T using the Network Address Translation (NAT) topology.
+
+##<a id='requirements'></a>Requirements
+
+* PCF 2.0: PAS 2.0 and Ops Manager 2.0 installed and configured, except for the BOSH Director tile > **Networking** pane
+  - See [Deploying BOSH and Ops Manager to vSphere](./deploying-vm.html)
+* VMWare NSX-T container plugin for PCF 2.1.0 tile: downloaded from [Pivotal Network](https://network.pivotal.io).
+* NSX-T 2.1 environment with NSX-T components installed and configured: see the [NSX-T Cookbook](https://docs.google.com/document/d/1hw7USpyMZpKoT5MvSaP9NcnTHsdvMd_w0EGZ19cL8nQ).
+
+##<a id='architecture'></a>Architecture
+
+The following figure shows the NAT deployment architecture:
+
+![NSX &amp; PAS Overview](nsx-t/nsx-t-refarch.png)
+
+##<a id='install'></a> Install and Configure PAS and NSX-T
+
+To install PAS with NSX-T, you do the following:
+
+1. Install and configure the NSX-T tile
+
+1. Enable **NSX-T Mode** in the BOSH Director tile
+
+1. Enable **External Networking** in the PAS tile
+
+1. Set up NSX-T to integrate with PAS
+
+These procedures are described below.
+
+##<a id='nsx-t-tile'></a> Install and Configure the NSX-T tile
+
+Deploy VMware NSX-T 2.1.0 tile
+https://network.pivotal.io/products/vmware-nsx-t
+
+![Ops Manager Installation Dashboard with NSX-T tile](nsx-t/nsx-t-install-dash.png)
+
+NSX -T Tile Configuration
+
+1. NSX Manager Configuration
+  - NSX Manager Address :  NSX Manager host address or IP address                            
+  - Use Client certificates or Username password : Select Basic Authentication and password: provide NSX-Manager admin user name and password credentials.
+  - NSX Manager CA-Cert :  Obtain this certificate from NSX Manager  by ssh into NSX Manager and retrieve certificate using cli : execute following command
+  - get certificate api thumbprint
+![NSX-T tile configuration](nsx-t/nsx-t-tile-config.png)
+
+1. NCP Configuration
+  - Specify PAS Foundation name :  unique string specified on tile should match the tag name that specified in NSX-T “t0 router” configurations.  
+  - Subnet prefix for container network :  specify  /24 network
+  - SNAT for container network : Enable
+
+1. NSX Node Agent configuration
+  - Enable  debug logging for NSX node agent 
+
+##<a id='nsx-t-mode'></a> Enable NSX-T Mode in BOSH
+
+##<a id='external-net'></a> Enable External Networking in PAS
+
+Configure Container Networking Interface Plugin :  Under Networking section - Container Networking Interface Plugin section - select **External**. This configures NSX-T integration with PAS.  This option requires NSX-T tile configured in Ops Manager.
+
+![NSX ](nsx-t/nsx-t-pas-cni.png)
+
+##<a id='nsx-t-setup'></a> Set Up NSX-T
+
+1. Create Logical Network Switch for PCF 
+  - Create 4 logical switch each corresponds to Infrastructure(bosh, Opsman), Deployment(PAS), Services and Dynamic Services network in PCF.  
+  - Login into NSX-Manager UI and traverse to Switching and add a new logical switch  -  infrastructure-ls.
+  - Repeat adding logical switch for deployment, services and dynamic  services network.
+![NSX ](nsx-t/nsx-t-logical-switch.png)
+
+1. Create Tier-0 NAT Entries for OpsMan and Bosh Director NAT Entries facilitates the communication between Opsman and Bosh director.
+  - Prerequisite: Tier 0 router and router port created and configured.
+  - Steps:
+      1. Select your Tier-0 Router and navigate to Services -> NAT
+      1. Add two new entries, one for DNAT and one for SNAT.
+![NSX ](nsx-t/nsx-t-dnat-rule.png)
+![NSX ](nsx-t/nsx-t-snat-rule.png)
+
+1. Create T1 Routers for PAS
+  Once the Tier-0 Router is setup, you will need to create the Tier-1 Routers that will connect to the Tier-0 Router. You will create four Tier-1 routers, one for each of the PCF Networks recommended by the reference architecture.
+  - In the NSX Manager UI, navigate to **Routing** > **Routers** > **Add** > **Tier-1 Router**.
+  - Here is an example for the Infrastructure Network
+![NSX ](nsx-t/nsx-t-t1-router.png)
+
+1. Create T1 router ports for PAS
+Once the Tier-1 Routers are created, you will need to add a **New Router Port** to each one to allow traffic in and out. Select the Tier-1 Router in the NSX Manager UI and go to **Configuration** > **Router Ports** and add a new one. Make sure to connect to the appropriate logical switch.
+![NSX ](nsx-t/nsx-t-router-port.png)
+
+1. Advertise the T1 routes for each PAS T1 routers
+  - The final step for configuring the Tier-1 Routers is to advertise their routes to the Tier-0 router. This allows the Tier-0 router to know which Tier-1 to route requests to as they come in based on the destination IP address.
+  - Select your Tier-1 Router and go to **Routing** > **Route Advertisement** and edit the configuration. 
+![NSX ](nsx-t/nsx-t-route-advertise.png)
+
+1. Manage Tags - T0 routers
+  - From NSX- Manager UI - router-t0 - Manage Tags -  Add a new tag
+For t0 router
+![NSX ](nsx-t/nsx-t-t0-router-tags.png)
+
+1. IP Block for PAS Orgs
+  - Add a new IPAM Block - from NSX -Manager UI - DDI - IPAM -  New IP block.  This is where IP addresses comes from when a new ORG is created in PAS.
+![NSX ](nsx-t/nsx-t-ip-block.png)
+  - Add a tag to newly created IP block
+![NSX ](nsx-t/nsx-t-t0-router.png)
+
+1. Create new switching profile
+  - Create a new switching profile `ncp-ha` of Type `Spoof Guard` and add two tags as shown below
+![NSX ](nsx-t/nsx-t-switching-profile.png)
+
+1. Create External SNAT IP Pool
+  - Create external SNAT IP pool (**Inventory** > **Groups** > **IP Pools**) and add two tags
+![NSX ](nsx-t/nsx-t-edit-ips.png)
+  - Add Tags to SNAT IP Pool
+![NSX ](nsx-t/nsx-t-external-ip-tags.png)
+
+##<a id='automation'></a>⚙ Automation
+
+* [Concourse Pipelines: Configure NSX-T for PAS](https://github.com/pivotalservices/concourse-pipeline-samples/tree/master/pipelines/pcf/vsphere/nsxt): This sample Concourse pipeline provides jobs setup switches, routers, an IP block, and an IP pool to be used by PAS.
+ 
+* [PyNSXT](https://github.com/pivotalservices/pynsxt): This is a Python library that can be used as a CLI to run commands against a VMWare NSX-T installation. It exposes operations for working with logical switches, logical routers, and pools. It uses version 2.1 of NSX-T for the swagger client.

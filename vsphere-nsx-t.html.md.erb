@@ -16,7 +16,7 @@ PAS 2.0 uses a Container Network Interface (CNI) plugin to support secure and di
 
 ##<a id='requirements'></a>Requirements
 
-* PCF 2.0: PAS 2.0 and Ops Manager 2.0 installed on vSphere and configured, except for the BOSH Director tile > **Networking** pane
+* PCF 2.0: PAS 2.0 and Ops Manager 2.0 installed on vSphere and configured, except for the BOSH Director tile > **Networking** pane.
   - See [Deploying BOSH and Ops Manager to vSphere](./deploying-vm.html)
 * VMWare NSX-T container plugin for PCF 2.1.0 tile: downloaded from [Pivotal Network](https://network.pivotal.io).
 * NSX-T 2.1 environment with NSX-T components installed and configured: see the [NSX-T Cookbook](https://docs.google.com/document/d/1hw7USpyMZpKoT5MvSaP9NcnTHsdvMd_w0EGZ19cL8nQ).
@@ -29,51 +29,62 @@ The following figure shows the network architecture for deploying PAS across mul
 
 ##<a id='install'></a> Install and Configure PAS and NSX-T
 
-To install PAS with NSX-T, you do the following:
+Installing PAS with NSX-T requires the following actions, which are described below:
 
-1. Install and configure the NSX-T tile
+1. [Install and Configure the NSX-T Tile](#nsx-t-tile)
 
-1. Enable **NSX-T Mode** in the BOSH Director tile
+1. [Enable NSX-T Mode in the BOSH Director](#nsx-t-mode)
 
-1. Enable **External Networking** in the PAS tile
+1. [Enable External Networking in PAS](#external-net)
 
-1. Set up NSX-T to integrate with PAS
+1. [Set up NSX-T to Integrate with PAS](#nsx-to-setup)
 
-These procedures are described below.
+###<a id='nsx-t-tile'></a> Install and Configure the NSX-T tile
 
-##<a id='nsx-t-tile'></a> Install and Configure the NSX-T tile
-
-Deploy VMware NSX-T 2.1.0 tile
-https://network.pivotal.io/products/vmware-nsx-t
-
+1. Download and install the VMware NSX-T tile from [Pivotal Network](https://network.pivotal.io/products/vmware-nsx-t). See [Adding and Importing Products](./add-delete.html#add-import) for how to install Pivotal product tiles onto the Ops Manager **Installation Dashboard**.
 ![Ops Manager Installation Dashboard with NSX-T tile](nsx-t/nsx-t-install-dash.png)
 
-NSX -T Tile Configuration
-
-1. NSX Manager Configuration
-  - NSX Manager Address :  NSX Manager host address or IP address                            
-  - Use Client certificates or Username password : Select Basic Authentication and password: provide NSX-Manager admin user name and password credentials.
-  - NSX Manager CA-Cert :  Obtain this certificate from NSX Manager  by ssh into NSX Manager and retrieve certificate using cli : execute following command
-  - get certificate api thumbprint
+1. Click the **VMware NSX-T** tile to open its **Settings** tab, and configure the **NSX Manager** pane as follows:
+  - **NSX Manager Address**:  NSX Manager host address or IP address                            
+  - **Use Client Certificates or Username/Password**: Select **Basic Authentication with Username and Password** and enter **NSX Manager Admin Username** and **Admin Password** credentials in the fields underneath.
+  - **NSX Manager CA Cert**: Obtain this certificate from NSX Manager as follows:
+      1. `ssh` into NSX Manager
+      1. From the NSX Manager command line, run `get certificate api thumbprint` to retrieve the certificate.
 ![NSX-T tile configuration](nsx-t/nsx-t-tile-config.png)
 
-1. NCP Configuration
-  - Specify PAS Foundation name :  unique string specified on tile should match the tag name that specified in NSX-T “t0 router” configurations.  
+1. Open and configure the **NCP** pane as follows:
+  - **PAS Foundation Name**: Unique string specified on tile should match the tag name that specified in NSX-T `t0 router` configurations.  
   - Subnet prefix for container network :  specify  /24 network
   - SNAT for container network : Enable
 
-1. NSX Node Agent configuration
-  - Enable  debug logging for NSX node agent 
+1. In the **NSX Node Agent** pane, enable the **Debug Logging for NSX Node Agent** checkbox.
 
-##<a id='nsx-t-mode'></a> Enable NSX-T Mode in BOSH
+###<a id='nsx-t-mode'></a> Enable NSX-T Mode in the BOSH Director
 
-##<a id='external-net'></a> Enable External Networking in PAS
+1. From the Ops Manager **Installation Dashboard**, open the **BOSH Director** tile.
 
-Configure Container Networking Interface Plugin :  Under Networking section - Container Networking Interface Plugin section - select **External**. This configures NSX-T integration with PAS.  This option requires NSX-T tile configured in Ops Manager.
+1. In the **vCenter Config** pane, select **NSX Networking**.
+![Configure NSX-T mode in BOSH tile](NSXdirectorconfig.png)
 
+1. Configure NSX networking by entering the following:
+    * **NSX Mode**: Select **NSX-T**.
+    * **NSX Address**: Enter the address of the NSX Manager.
+    * **NSX Username**: Enter the username to connect to the NSX Manager.
+    * **NSX Password**: The password for the username specified above.
+    * **NSX CA Cert**: A CA certificate in PEM format that authenticates to the NSX server.
+    If the NSX Manager generated a self-signed certificate, you can retrieve the CA certificate using OpenSSL with the command `openssl s_client -host NSX-ADDRESS -port 443 -prexit -showcerts`.
+    <p class="note"><strong>Note</strong>: To update NSX security group and load balancer information, see the <a href="update-nsx.html">Updating NSX Security Group and Load Balancer Information</a> topic.</p>
+
+###<a id='external-net'></a> Enable External Networking in PAS
+
+1. From the Ops Manager **Installation Dashboard**, open the **Pivotal Application Service** tile.
+
+1. Open the **Networking** pane.
+
+1. Under **Container Networking Interface Plugin**, select **External**.
 ![NSX ](nsx-t/nsx-t-pas-cni.png)
 
-##<a id='nsx-t-setup'></a> Set Up NSX-T
+###<a id='nsx-t-setup'></a> Set up NSX-T to Integrate with PAS
 
 1. Create Logical Network Switch for PCF 
   - Create 4 logical switch each corresponds to Infrastructure(bosh, Opsman), Deployment(PAS), Services and Dynamic Services network in PCF.  

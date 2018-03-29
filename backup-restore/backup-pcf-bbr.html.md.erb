@@ -22,8 +22,6 @@ During the backup, BBR stops the Cloud Controller API and the Cloud Controller w
     <li><strong>The restore is a destructive operation.</strong> BBR is designed to restore PCF after a disaster. If it fails, the environment may be left in an unusable state and require reprovisioning. The two restore scenarios currently documented are <a href="restore-pcf-bbr.html">Restoring Pivotal Cloud Foundry from Backup with BBR</a> and <a href="in-place-restore.html">Restoring a PAS Backup In-Place</a>.</li>
     <li><strong>The Cloud Controller API will stop sending and receiving calls</strong> for the duration of PCF restoration.</li>
     <li><strong>BBR does not back up any service data.</strong></li>
-    <li><strong>Using an external blobstore or an external MySQL database results in an unusable restore</strong> even if the restore appears to run successfully.</li>
-    <li><strong>For PCF v2.0.0, BBR only supports backup and restore of environments with zero or one CredHub instances.</strong></li>
   </ul>
 </div>
 
@@ -44,12 +42,46 @@ BBR is a binary that can back up and restore BOSH deployments and BOSH Directors
 
 BBR backs up the following PCF components:
 
-* **PAS**: PAS must be configured with an internal MySQL database and a WebDAV/NFS blobstore to be backed up and restored with BBR. BBR does not support PAS with an external blobstore or an external MySQL database.
-  <ul class="note warning"><strong>Warning</strong>: The following guidelines apply when you are using BBR to back up PCF and have configured an external blobstore and/or external database in PAS:<ul>
-    <li> If you configured an internal database and an external blobstore in PAS, then follow the PCF backup process, and copy the external blobstore via the IaaS. There may be inconsistencies between the blobstore and database, which may result in some apps not coming up during a restore. Those apps can be repushed. </li>
-    <li>If you configured an external database and an external blobstore in PAS, then follow the PCF backup process, but skip the backup of PAS. Copy the external database and blobstore via the IaaS. There may be inconsistencies  between the blobstore and database, which may result in some apps not coming up during a restore. Those apps can be repushed.</li></ul></ul>
+* **PAS**: You can configure PAS with either an internal MySQL database or a supported external database. You can configure PAS with either WebDAV/NFS blobstore or a versioned S3-compatible external blobstore.
+    * **External databases:** For a list of supported external databases, see [Supported Databases](https://docs.cloudfoundry.org/bbr/cf-backup.html#supported-external-databases) in the *Configuring Cloud Foundry for BOSH Backup and Restore* topic.
+    * **External blobstores:** BBR only supports PAS with versioned S3-compatible external blobstores. For more information, see [BBR external blobstores documentation](https://docs.cloudfoundry.org/bbr/external-blobstores.html). To configure your PCF installation to use an external blobstore, see the _External S3 or Ceph Filestore_ section of the [filestore configuration documentation](../pcf-aws-manual-er-config.html#external_s3).
+    <%= partial '../bbr_s3_versioned_blobstore_warning' %>
+* **BOSH Director**: The BOSH Director must have an internal Postgres database and an internal blobstore to be backed up and restored with BBR. As part of backing up the BOSH Director, BBR backs up the BOSH UAA database and the CredHub database.
 
-* **BOSH Director**: The BOSH Director must have an internal Postgres database to be backed up and restored with BBR. As part of backing up the BOSH Director, BBR backs up the BOSH UAA database and the CredHub database.
+<div class="note">
+  <strong>Note:</strong>
+  <ul>
+    <li>Backup artifacts of external, S3-compatible, versioned blobstores do not contain the physical blobs. BBR requires that the original buckets still exist to be restored.</li>
+    <li>To protect yourself from losing a bucket, see <a href="https://docs.cloudfoundry.org/bbr/external-blobstores.html#enable-replication">Enable Replication on Your External Blobstore</a> in the Cloud Foundry documentation.</li>
+  </ul>
+</div>
+
+### <a id="guidelines"></a> Unsupported Blobstores and Databases in PAS
+
+If you configured an unsupported external blobstore or an unsupported external database in PAS, see the following guidelines to perform backup successfully:
+
+<table>
+  <tr>
+    <th>Scenario</th>
+    <th>Action</th>
+  </tr>
+  <tr>
+    <td>You configured a supported database and an unsupported external blobstore in PAS.</td>
+    <td>Follow the PCF backup process, and copy the external blobstore by using the IaaS-specific tool.</td>
+  </tr>
+  <tr>
+    <td>You configured an unsupported external database and a supported blobstore in PAS.</td>
+    <td>Follow the PCF backup process, and copy the external database by using the IaaS-specific tool.</td>
+  </tr>
+  <tr>
+    <td>You configured both an unsupported external database and an unsupported external blobstore in PAS.</td>
+    <td>Follow the PCF backup process, but skip [Step 9: Back Up Your PAS Deployment](#bbr-backup). Copy the external database and blobstore by using the IaaS-specific tool.</td>
+  </tr>
+</table>
+
+<div class="note warning">
+  <strong>WARNING</strong>: You may encounter inconsistencies between the blobstore and database. If apps do not appear during a restore, repush those apps.
+</div>
 
 ### Backing Up Services
 
@@ -102,7 +134,7 @@ restoring your installation.
 
 ### <a id="retrieve"></a> Step 3: Retrieve BOSH Director Address and Credentials
 
-Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in from the Ops Manager Director tile:
+Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in from the BOSH Director tile:
 
 <%= partial 'bosh_target_director_bbr' %>
 
@@ -167,7 +199,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 
 1. From your jumpbox, run the BBR pre-backup check:
 	<pre class="terminal">
-  $ BOSH-CLIENT-SECRET=BOSH-PASSWORD \
+  $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
       bbr deployment \
       --target BOSH-DIRECTOR-IP \
       --username BOSH-CLIENT \
@@ -178,7 +210,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 
     Replace the placeholder values as follows:
     <br><br>
-    * `BOSH-CLIENT`, `BOSH-PASSWORD`: From the Ops Manager Installation Dashboard, click **Ops Manager Director**, navigate to the **Credentials** tab, and click **Uaa Bbr Client Credentials** to retrieve the BOSH UAA credentials.<br><br>
+    * `BOSH-CLIENT`, `BOSH-PASSWORD`: From the Ops Manager Installation Dashboard, click **BOSH Director**, navigate to the **Credentials** tab, and click **Uaa Bbr Client Credentials** to retrieve the BOSH UAA credentials.<br><br>
     You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
     * `BOSH-DIRECTOR-IP`: You retrieved this value in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 6: Identify Your Deployment](#identify-deployment) section.
@@ -194,13 +226,30 @@ Pivotal recommends that you back up your Ops Manager installation settings by ex
 frequently. This option is only available after you have deployed at least one time.
 Always export your installation settings before following the steps in the [Import Installation Settings](./restore-pcf-bbr.html#import) section of the [Restoring Pivotal Cloud Foundry from Backup with BBR](./restore-pcf-bbr.html) topic.
 
-<p class="note"><strong>Note</strong>: Exporting your installation settings only backs up the settings you configured in Ops Manager. It does not back up your virtual machines (VMs) or any external MySQL databases.</p>
+<div class="note">
+  <strong>Notes</strong>:
+  <ul>
+    <li>Exporting your installation settings only backs up the settings you configured in Ops Manager. It does not back up your VMs or any external MySQL databases.</li>
+    <li>Ops Manager v1.12 and later export installation settings only, so the output is much smaller than in previous Ops Manager versions.</li>
+  </ul>
+</div>
 
-From the **Installation Dashboard** in the Ops Manager interface, click your user name at the top right navigation. Select **Settings**.
+There are two ways to export the installation settings.
 
-<p class="note"><strong>Note</strong>: Ops Manager 1.12 exports installation settings only, so the output is much smaller than in previous Ops Manager versions.</p>
+1. Using the Ops Manager UI:
 
-<%= image_tag("settings.png") %>
+    From the **Installation Dashboard** in the Ops Manager interface, click your user name at the top right navigation. Select **Settings**.
+
+    <%= image_tag("settings.png") %>
+
+1. Using the Ops Manager API:
+
+    ```
+    curl OPSMAN-URL/api/v1/installation_asset_collection \
+      -H "Authorization: Bearer UAA-ACCESS-TOKEN" > installation_settings.zip
+    ```
+
+    See [_Using the Ops Manager API_](https://docs.pivotal.io/pivotalcf/latest/customizing/ops-man-api.html) for instructions on how to authenticate and retrieve the `UAA-ACCESS-TOKEN`.
 
 ### <a id='bbr-backup-director'></a> Step 8: Back Up Your BOSH Director
 
@@ -237,13 +286,11 @@ $ bbr director \
 </pre>
 ### <a id='bbr-backup'></a> Step 9: Back Up Your PAS Deployment
 
-1.  If you are using an external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup may be slightly inconsistent with your PAS backup depending on the duration of time between performing the backups.
-
-1.  If you are using an external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup may be slightly inconsistent with your PAS backup depending on the duration of time between performing the backups.
+1.  (Optional) If you are not using an internal blobstore or a versioned S3-compatible external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup may be slightly inconsistent with your PAS backup depending on the duration of time between performing the backups.
 
 1. Run the BBR backup command from your jumpbox to back up your PAS deployment:
   <pre class="terminal">
-  $ BOSH-CLIENT-SECRET=BOSH-PASSWORD \
+  $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
     nohup bbr deployment \
     --target BOSH-DIRECTOR-IP \
     --username BOSH-CLIENT \
@@ -253,7 +300,7 @@ $ bbr director \
     * Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
     * Use the optional `--with-manifest` flag to ensure that BBR downloads your current deployment manifest when backing up. These manifests are included in the Ops Manager export, but are useful for reference. For example:
       <pre class="terminal">
-      $ BOSH-CLIENT-SECRET=BOSH-PASSWORD \
+      $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
         nohup bbr deployment \
         --target BOSH-DIRECTOR-IP \
         --username BOSH-CLIENT \
@@ -265,7 +312,6 @@ $ bbr director \
   <ul>
     <li>Backing up PAS takes at least 10 minutes and can take considerably longer with larger blobstores or slow network connections. The backup also incurs around 10 minutes of Cloud Controller downtime during which users are unable to push, scale, or delete apps. Your apps will not be affected.</li>
     <li>Because the BBR backup command can take a long time to complete, Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</li>
-    <li>The backup artifact will contain one or more empty UAA tar files. This is an extraneous artifact. The UAA backup is included in the MySQL backup.</li>
   </ul>
 </div>
 
@@ -273,7 +319,7 @@ If the command fails, do the following:
 
 1. Run backup-cleanup:
   <pre class="terminal">
-  $ BOSH-CLIENT-SECRET=BOSH-PASSWORD \
+  $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
      bbr deployment \
     --target BOSH-DIRECTOR-IP \
     --username BOSH-CLIENT \
@@ -296,7 +342,7 @@ If the commands complete successfully, perform the following steps:
 
 If you want to validate your backup, follow the instructions that correspond to your use case:
 
-* **Production environments**: [Validate Your Entire Backup](#full-validate) 
+* **Production environments**: [Validate Your Entire Backup](#full-validate)
 * **Sandbox and other non-production environments**: [Validate Only Your PAS Backup](#ert-validate)
 
 #### <a id='full-validate'></a> Validate Your Entire Backup
@@ -316,8 +362,8 @@ Perform the following steps to spin up a second environment that matches the ori
 1. Create a new Ops Manager VM in a different network to the original. Ensure that the Ops Manager VM has enough persistent disk to accommodate the files exported in the previous step. Consult the topic specific to your IaaS:<br><br>
   * [Deploying BOSH and Ops Manager to AWS](../aws-terraform.html)
 	* [Manually Configuring AWS for PCF](../pcf-aws-manual-config.html)
-	* [Launching an Ops Manager Director Instance with an ARM Template](../azure-arm-template.html)
-    * [Launching an Ops Manager Director Instance on GCP](../gcp-om-deploy.html)
+	* [Launching a BOSH Director Instance with an ARM Template](../azure-arm-template.html)
+    * [Launching a BOSH Director Instance on GCP](../gcp-om-deploy.html)
     * [Provisioning the OpenStack Infrastructure](../openstack-setup.html)
     * [Deploying Operations Manager to vSphere](../deploying-vm.html)
 
@@ -368,10 +414,10 @@ For example, the exit code `5` indicates that the pre-backup lock failed and a g
 
 To check that a bit is set, use bitwise AND, as demonstrated by the following example of exit code `20`:
 
-<pre class="highlight ruby"><code><span class="mi">20</span> <span class="o">|</span> <span class="mi">1</span>  <span class="o">==</span> <span class="mi">1</span>    <span class="c1"># false</span>
-<span class="mi">20</span> <span class="o">|</span> <span class="mi">4</span>  <span class="o">==</span> <span class="mi">4</span>    <span class="c1"># true; lock failed</span>
-<span class="mi">20</span> <span class="o">|</span> <span class="mi">8</span>  <span class="o">==</span> <span class="mi">8</span>    <span class="c1"># false</span>
-<span class="mi">20</span> <span class="o">|</span> <span class="mi">16</span> <span class="o">==</span> <span class="mi">16</span>   <span class="c1"># true; cleanup failed</span>
+<pre class="highlight ruby"><code><span class="mi">20</span> <span class="o">&amp;</span> <span class="mi">1</span>  <span class="o">==</span> <span class="mi">1</span>    <span class="c1"># false</span>
+<span class="mi">20</span> <span class="o">&amp;</span> <span class="mi">4</span>  <span class="o">==</span> <span class="mi">4</span>    <span class="c1"># true; lock failed</span>
+<span class="mi">20</span> <span class="o">&amp;</span> <span class="mi">8</span>  <span class="o">==</span> <span class="mi">8</span>    <span class="c1"># false</span>
+<span class="mi">20</span> <span class="o">&amp;</span> <span class="mi">16</span> <span class="o">==</span> <span class="mi">16</span>   <span class="c1"># true; cleanup failed</span>
 </code>
 </pre>
 

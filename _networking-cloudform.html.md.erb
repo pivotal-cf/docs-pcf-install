@@ -9,9 +9,19 @@ section of this topic for more information.</p></li>
   <li><%= partial 'min_tls_version' %></li>
   <li><%= partial 'xforwarded_client_cert_xfcc' %></li>
   <li><%= partial 'gorouter_client_cert_validation' %></li>
-  <li><%= partial 'tls_cipher_suites_router' %></li>
+  <li>In the <strong>TLS Cipher Suites for Router</strong> field, review the TLS cipher suites for TLS handshakes between Gorouter and front-end clients such as load balancers or HAProxy. The default value for this field is <code>ECDHE-RSA-AES128-GCM-SHA256:TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</code>.
+  <p class='note'><strong>Note:</strong> AWS Classic Load Balancers do not support PCF's default cipher suites.
+  See <a href="../adminguide/securing-traffic.html#default">TLS Cipher Suite Support by AWS Load Balancers</a>
+  for information about configuring your AWS load balancers and Gorouter.</p>
+  If you want to modify the default configuration,
+  use an ordered, colon-delimited list of Golang-supported TLS cipher suites in the OpenSSL format.
+  <br> Operators should verify that the ciphers are supported by any clients or front-end components that will initiate TLS handshakes with Gorouter. For a list of TLS ciphers supported by Gorouter, see <a href="../adminguide/securing-traffic.html#ciphers">Securing Traffic into Cloud Foundry</a>.
+    <%= image_tag 'networking_tls_router.png' %>
+  Verify that every client participating in TLS handshakes with Gorouter has at least one cipher suite in common with Gorouter.
+  <p class="note"><strong>Note</strong>: Specify cipher suites that are supported by the versions configured in the <strong>Minimum version of TLS supported by HAProxy and Router</strong> field.</p></li>
   <li><%= partial 'tls_cipher_suites_haproxy' %>  </li>
   <li><%= partial 'haproxy_router_tls_forward' %></li>
+  <li><%= partial 'haproxy_hsts_config_cloudform' %></li>
   <li><%= partial 'ssl_verification' %></li>
   <li><%= partial 'http_disable' %></li>
   <li><%= partial 'insecure_cookies' %> </li>
@@ -24,19 +34,15 @@ section of this topic for more information.</p></li>
       <li><a href="../customizing/installing-pcf-is.html">Installing PCF Isolation Segment</a></li>
       <li><a href="../adminguide/routing-is.html#sharding-routers-isolation-segment">Sharding Routers for Isolation Segments</a></li>
      </ul></li>
+  <li><%= partial 'enable-proxy-support' %></li>    
   <li><%= partial 'route_services' %></li>
   <li><%= partial 'max_connections_backend' %></li>
-  <li>Enter a value for <strong>Router Max Idle Keepalive Connections</strong> See <a href="../adminguide/routing-keepalive.html#considerations">Considerations for Configuring max_idle_connections</a>.
-
-    <%= image_tag 'images/keepalive.png' %></li>
-
+  <li><%= partial 'keepalive_connections' %></li>
   <li><%= partial 'router_timeout_backend' %></li>
   <li><%= partial 'frontend_idle_timeout' %></li>
   <li><%= partial 'lb_unhealthy_threshold' %>  </li>
-  <li><%= partial 'lb_healthy_threshold' %>
-
-    <%= image_tag 'images/router_lb_thresholds.png' %></li>
-
+  <li><%= partial 'lb_healthy_threshold' %></li>
+    <img alt="LB Healthy Threshold Field" src="images/router_lb_thresholds.png">
   <li><%= partial 'http_headers_to_log' %></li>
     <img alt="Http Headers to Log" src="images/headers_to_log.png">
   <li><%= partial 'haproxy_request_max_buffer' %></li>
@@ -51,14 +57,9 @@ section of this topic for more information.</p></li>
       <li><%= partial 'app_mtu' %> </li>
       <li><%= partial 'c2c-overlay' %></li>
       <li><%= partial 'c2c-vxlan' %></li>
-      <%= partial 'log-app-traffic-enable' %>
+      <%= partial 'log-app-traffic-enable' %><li><%= partial 'dns-servers' %></li>
     </ol>
   </li>
-
-  
-
-  
-
   <li>TCP Routing is disabled by default. To enable this feature, perform the following steps:
     <ol>
       <li>Select <strong>Enable TCP Routing</strong> </li>

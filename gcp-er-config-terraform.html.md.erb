@@ -1,5 +1,5 @@
 ---
-title: Deploying PAS on GCP (Terraform)
+title: Deploying PAS on GCP using Terraform
 owner: Ops Manager
 ---
 
@@ -8,13 +8,13 @@ owner: Ops Manager
 
 This topic describes how to install and configure Pivotal Application Service (PAS) on Google Cloud Platform (GCP).
 
-Before beginning this procedure, ensure that you have successfully completed the [Configuring Ops Manager Director on GCP (Terraform)](./gcp-om-config-terraform.html) topic.
+Before beginning this procedure, ensure that you have successfully completed the [Configuring BOSH Director on GCP (Terraform)](./gcp-om-config-terraform.html) topic.
 
 <p class="note"><strong>Note</strong>: If you plan to <a href="http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the PAS tile.</p> 
 
 ## <a id='prereq'></a>Prerequisite ##
 
-To complete the procedures in this topic, you must have access to the output from when you ran `terraform apply` to create resources for this deployment. You can view this output at any time by running `terraform output`. You use the values in your Terraform output to configure the Ops Manager Director tile. 
+To complete the procedures in this topic, you must have access to the output from when you ran `terraform apply` to create resources for this deployment. You can view this output at any time by running `terraform output`. You use the values in your Terraform output to configure the BOSH Director tile. 
 
 ## <a id='download-er'></a> Step 1: Download the PAS Tile ##
 
@@ -39,7 +39,7 @@ To complete the procedures in this topic, you must have access to the output fro
 
 ## <a id='assign-az'></a> Step 3: Assign Availability Zones and Networks ##
 
-1. Select **Assign AZ and Networks**. These are the Availability Zones that you [create](./gcp-om-config-terraform.html#az) when configuring Ops Manager Director.
+1. Select **Assign AZ and Networks**. These are the Availability Zones that you [create](./gcp-om-config-terraform.html#az) when configuring BOSH Director.
 
 1. Select the first Availability Zone under **Place singleton jobs**. Ops Manager runs any job with a single instance in this Availability Zone.
 
@@ -47,7 +47,7 @@ To complete the procedures in this topic, you must have access to the output fro
 
     <p class="note"><strong>Note</strong>: For production deployments, Pivotal recommends at least three Availability Zones for a highly available installation of PAS.</p>
 
-1. From the **Network** drop-down box, choose the `pas` network you created when [configuring Ops Manager Director](./gcp-om-config-terraform.html#network).
+1. From the **Network** drop-down box, choose the `pas` network you created when [configuring BOSH Director](./gcp-om-config-terraform.html#network).
 
 1. Click **Save**.
 
@@ -81,6 +81,7 @@ To complete the procedures in this topic, you must have access to the output fro
 1. <%= partial 'tls_cipher_suites_router' %>
 1. <%= partial 'tls_cipher_suites_haproxy' %>
 1. <%= partial 'haproxy_router_tls_forward' %>
+1. <%= partial 'haproxy_hsts_config' %>
 1. <%= partial 'ssl_verification' %>
 1. <%= partial 'http_disable' %>
 1. <%= partial 'insecure_cookies' %> 
@@ -93,10 +94,7 @@ To complete the procedures in this topic, you must have access to the output fro
   * [Sharding Routers for Isolation Segments](../adminguide/routing-is.html#sharding-routers-isolation-segment).
 1. <%= partial 'route_services' %>
 1. <%= partial 'max_connections_backend' %> 
-1. Enter a value for **Router Max Idle Keepalive Connections**. See [Considerations for Configuring max\_idle\_connections](../adminguide/routing-keepalive.html#considerations).
-
-    <%= image_tag 'images/keepalive.png' %>
-
+1. <%= partial 'keepalive_connections' %>
 1. <%= partial 'router_timeout_backend' %>
 1. <%= partial 'frontend_idle_timeout' %>
 1. <%= partial 'lb_unhealthy_threshold' %>
@@ -117,6 +115,7 @@ To complete the procedures in this topic, you must have access to the output fro
       <li><%= partial 'c2c-overlay' %></li>
       <li><%= partial 'c2c-vxlan' %></li>
       <%= partial 'log-app-traffic-enable' %>
+      <li><%= partial 'dns-servers' %></li>
     </ol>
   </li>
 
@@ -164,7 +163,7 @@ You can configure PAS to use Google Cloud SQL for the databases required by PAS.
 
 <%= partial 'ert_database_internal' %>
 
-Then proceed to [Step 14: (Optional) Configure Internal MySQL](#internal-mysql) to configure high availability and automatic backups for your internal MySQL databases.
+Then proceed to [Step 14: (Optional) Configure Internal MySQL](#internal-mysql) to configure high availability for your internal MySQL databases.
 
 ###<a id='create-dbs'></a> External Database Configuration
 
@@ -198,7 +197,7 @@ To specify your PAS databases, perform the following steps:
 
 <%= partial 'filestore_config_terraform_gcp' %>
 
-For production-level PCF deployments on GCP, Pivotal recommends selecting **External Google Cloud Storage**. For more information about production-level PCF deployments on GCP, see the [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html).
+For production-level PCF deployments on GCP, Pivotal recommends selecting **External Google Cloud Storage** to minimize downtime. For more information about production-level PCF deployments on GCP, see the [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html).
 
 For additional factors to consider when selecting file storage, see the <a href="../opsguide/storage_considerations.html">Considerations for Selecting File Storage in Pivotal Cloud Foundry</a> topic. 
 
@@ -245,23 +244,27 @@ end-user self-registration.
 settings using this form, the administrator must create orgs and users using
 the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating and Managing Users with the cf CLI</a> for more information.</p>
 
-## <a id='config-cc'></a>Step 19: Configure Cloud Controller##
+## <a id='config-autoscaler'></a>Step 19: (Optional) Configure App Autoscaler
+
+<%= partial 'app-autoscaler' %>
+
+## <a id='config-cc'></a>Step 20: Configure Cloud Controller##
 
 <%= partial 'cloud-controller' %>
 
-## <a id='config-smoke-test'></a>Step 20: Configure Smoke Tests##
+## <a id='config-smoke-test'></a>Step 21: Configure Smoke Tests##
 
 <%= partial 'smoketests' %>
 
-## <a id='advanced-features'></a>Step 21: (Optional) Enable Advanced Features ##
+## <a id='advanced-features'></a>Step 22: (Optional) Enable Advanced Features ##
 
 <%= partial 'advanced-features' %>
 
-## <a id='errands'></a>Step 22: Configure Errands ##
+## <a id='errands'></a>Step 23: Configure Errands ##
 
 <%= partial 'errands' %>
 
-## <a id='config-lb'></a>Step 23: Configure Load Balancers ##
+## <a id='config-lb'></a>Step 24: Configure Load Balancers ##
 
 1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-delimited list consisting of the values of `ws_router_pool` and `http_lb_backend_name` from your Terraform output. For example, `tcp:pcf-cf-ws,http:pcf-httpslb`. These are the names of the TCP WebSockets and HTTP(S) load balancers for your deployment. 
 
@@ -279,31 +282,15 @@ the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating a
 
 1. Click **Save**.
 
-## <a id='disable-resources'></a>Step 24: (Optional) Scale Down and Disable Resources ##
+## <a id='disable-resources'></a>Step 25: (Optional) Scale Down and Disable Resources ##
 
 <%= partial 'disable_resources' %>
 
-## <a id='stemcell'></a>Step 25: Verify and Download Stemcell Version##
+## <a id='stemcell'></a>Step 26: Download Stemcell ##
 
-Verify whether Ops Manager is providing the stemcell version required by PAS. If the correct version is already present, you do not need to download a new stemcell.
+<%= partial "download-stemcell" %>
 
-1. In the PAS tile, select **Stemcell**.
-
-1. Verify that the version indicated in the filename matches the version of stemcell required by PAS. 
-  * If PAS detects that a stemcell `.tgz` file is present in the Ops Manager Director VM at `/var/tempest/stemcells/`, the Stemcell screen displays filename information.
-  <%= image_tag("stemcell_18.png") %>
-  * If PAS cannot detect a stemcell `.tgz` file, the following message displays:
-  <%= image_tag("stemcell_not_found.png") %>
-
-1. If the version of the stemcell file that is loaded does not match the required version listed in the <a href="http://network.pivotal.io">Pivotal Network</a> download page for PAS, or cannot be found by Ops Manager, perform the following steps to download and import a new stemcell file:
-
-  1. Log in to the [Pivotal Network](https://network.pivotal.io/products/pivotal-cf) and click **Stemcells**.
-
-  1. Download the appropriate stemcell version targeted for your IaaS.
-
-  1. In the **Stemcell** section of the PAS tile, click **Import Stemcell** to import the downloaded stemcell <code>.tgz</code> file.
-
-## <a id='complete'></a>Step 26: Complete the PAS Installation ##
+## <a id='complete'></a>Step 27: Complete the PAS Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.

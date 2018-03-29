@@ -3,12 +3,29 @@ title: Preparing GCP
 owner: Ops Manager
 ---
 
-<strong><%= modified_date %></strong>
-<html class="list-style-none"></html>
+<script>
+function openDocs(evt, tabId) {
+   // Declare all variables
+   var i, tabcontent, tablinks;
+   // Get all elements with class="tabcontent" and hide them
+   tabcontent = document.getElementsByClassName("tabcontent");
+   for (i = 0; i < tabcontent.length; i++) {
+       tabcontent[i].style.display = "none";
+   }
+   // Get all elements with class="tablinks" and remove the class "active"
+   tablinks = document.getElementsByClassName("tablinks");
+   for (i = 0; i < tablinks.length; i++) {
+       tablinks[i].className = tablinks[i].className.replace(" active", "");
+   }
+   // Show the current tab, and add an "active" class to the button that opened the tab
+   document.getElementById(tabId).style.display = "block";
+   evt.currentTarget.className += " active";
+}
+</script>
 
 This guide describes the preparation steps required to install Pivotal Cloud Foundry (PCF) on Google Cloud Platform (GCP).
 
-In addition to fulfilling the prerequisites listed in the [Installing Pivotal Cloud Foundry on GCP](./gcp.html) topic, you must create resources in GCP such as a new network, firewall rules, load balancers, and a service account before deploying PCF. Follow these procedures to prepare your GCP environment. 
+In addition to fulfilling the prerequisites listed in the [Installing Pivotal Cloud Foundry on GCP](./gcp.html) topic, you must create resources in GCP such as a new network, firewall rules, load balancers, and a service account before deploying PCF. Follow these procedures to prepare your GCP environment.
 
 When deploying PCF on GCP, Pivotal recommends using the following GCP components:
 
@@ -16,34 +33,53 @@ When deploying PCF on GCP, Pivotal recommends using the following GCP components
   * [NAT Gateway Instances](https://cloud.google.com/solutions/connecting-securely#natgateway) to limit the number of VMs with public IP addresses
   * [Google Cloud Storage](https://cloud.google.com/storage/) for external filestorage in PAS
 
-For more information, review the different deployment options and recommendations in the [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html). 
+For more information, review the different deployment options and recommendations in the [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html).
 
-## <a id="iam_account"></a>Step 1: Set up an IAM Service Account ##
 
-1. From the GCP Console, select **IAM & Admin**, then **Service accounts**. 
+## <a id="iam_account"></a> Step 1: Set up an IAM Service Account
+
+1. From the GCP Console, select **IAM & Admin**, then **Service accounts**.
 1. Click **Create Service Account**: 
   * **Service account name**: Enter a name. For example, `bosh`.
-  * **Role**: Select the following roles for the service account:
+  * **Role**: To determine which roles to assign the service account, select the runtime you are installing from the following table:
+      <div class="tab" role="group">
+       <button type="button" class="tablinks" onclick="openDocs(event, 'PAS')">PAS and Other Runtimes</button>
+       <button type="button" class="tablinks" onclick="openDocs(event, 'PKS')">PKS Only</button>
+      </div>
+      <div id="PAS" class="tabcontent" style="display: none">
+       <p>If you intend to deploy Pivotal Application Service (PAS), or PAS plus additional runtimes, grant the following roles to the service account. For more information about the runtimes you can deploy to PCF, see [Installing Runtimes](runtimes.html).
+        <ul><li><strong>Project</strong> > <strong>Service Account Actor</strong></li></ul>
+        <ul><li><strong>Compute Engine</strong> > <strong>Compute Instance Admin</strong></li></ul>
+        <ul><li><strong>Compute Engine</strong> > <strong>Compute Network Admin</strong></li></ul>
+        <ul><li><strong>Compute Engine</strong> > <strong>Compute Storage Admin</strong></li></ul>
+        <ul><li><strong>Storage</strong> > <strong>Storage Admin</strong></li></ul>
+        <p class="note">The <strong>Service Account Actor</strong> role is only required if you plan to use [**The Ops Manager VM Service Account**](./gcp-om-config.html#gcp-config) to deploy Ops Manager.</p>
+       </p>
+      </div>
+      <div id="PKS" class="tabcontent" style="display: none">
+       <p>If you intend to deploy only Pivotal Container Service (PKS) to this Ops Manager instance, grant the following roles to the service account:
+        <ul><li><strong>Compute Engine</strong> > <strong>Compute Instance Admin</strong></li></ul>
+        <ul><li><strong>Compute Engine</strong> > <strong>Compute Security Admin</strong></li></ul>
+        <ul><li><strong>Compute Engine</strong> > <strong>Compute Storage Admin</strong></li></ul>
+        <ul><li><strong>Compute Engine</strong> > <strong>Compute Network Admin</strong></li></ul>
+        <ul><li><strong>Compute Engine</strong> > <strong>Compute Viewer</strong></li></ul>
+       </p> 
+      </div>
      <p class="note">You must scroll down in the pop-up windows to select all required roles.</p>
-     * **Project** > **Service Account Actor** 
-     * **Compute Engine** > **Compute Instance Admin**
-     * **Compute Engine** > **Compute Network Admin**
-     * **Compute Engine** > **Compute Storage Admin**
-     * **Storage** > **Storage Admin**
-     <p class="note">The **Service Account Actor** role is only required if you plan to use [**The Ops Manager VM Service Account**](./gcp-om-config.html#gcp-config) to deploy Ops Manager.</p>
-  * **Service account ID**: The field automatically generates a unique ID based on the username. 
+  * **Service account ID**: The field automatically generates a unique ID based on the username.
   * **Furnish a new private key**: Select this checkbox and JSON as the **Key type**.
-    <%= image_tag("gcp/iam_account.png") %>
+    <%= image_tag("gcp/iam_account_2.png") %>
 
 1. Click **Create**. Your browser automatically downloads a JSON file with a private key for this account. Save this file in a secure location.
 
-## <a id="enable_compute_resource_api"></a>Step 2: Enable Google Cloud APIs ##
+
+## <a id="enable_compute_resource_api"></a> Step 2: Enable Google Cloud APIs
 
 Ops Manager manages GCP resources using the Google Compute Engine and Cloud Resource Manager APIs. To enable these APIs, perform the following steps:
 
 1. Log in to the Google Developers console at [https://console.developers.google.com](https://console.developers.google.com).
 
-1. In the console, navigate to the GCP project where you want to install PCF. 
+1. In the console, navigate to the GCP project where you want to install PCF.
 
 1. Select **API Manager > Library**.
 
@@ -51,7 +87,7 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
 
 1. On the **Google Compute Engine API** page, click **Enable**.
 
-1. In the search field, enter `Google Cloud Resource Manager API`. 
+1. In the search field, enter `Google Cloud Resource Manager API`.
 
 1. On the **Google Cloud Resource Manager API** page, click **Enable**.
 
@@ -70,7 +106,8 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
     
     This command lists the projects where you enabled Google Cloud APIs.
 
-## <a id="create_network"></a>Step 3: Create a GCP Network with Subnets ##
+
+## <a id="create_network"></a> Step 3: Create a GCP Network with Subnets
 
 1. Log in to the [GCP Console](https://console.cloud.google.com/).
  
@@ -81,7 +118,7 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
 1. In the **Name** field, enter `MY-PCF-virt-net`.<br>
      `MY-PCF` is a prefix to help you identify resources for this PCF deployment in the GCP console. 
      ![Enter VPC Name](gcp/gcp-vpc-name.png)
-  1. Under **Subnets** complete the form as follows:
+  1. Under **Subnets**, complete the form as follows to create an infrastructure subnet for Ops Manager and NAT instances:
       <table>
         <tr>
           <th style="width:25%">Name</th>
@@ -93,16 +130,18 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
         </tr>
         <tr>
         <th>IP address range</th>
-        <td>A CIDR ending in `/26`</td>
+        <td>A CIDR ending in `/26`<br>
+        Example: `192.168.101.0/26`</td>
         </tr>
       </table><br>
       See the following image for an example:
       ![Create VPC Subnet](gcp/gcp-vpc-subnet.png)
-    1. Click **Add subnet** to add a second subnet with the following details:
+    1. Click **Add subnet** to add a second subnet for the BOSH Director and components specific to your runtime. Complete the form as follows:
       <table>
         <tr>
           <th style="width:25%">Name</th>
-          <td><code>MY-PCF-subnet-ert-MY-GCP-REGION</code></td>
+          <td><code>MY-PCF-subnet-RUNTIME-MY-GCP-REGION</code><br>
+          Example: <code>MY-PCF-subnet-pas-us-west1</code></td>
         </tr>
         <tr>
           <th>Region</th>
@@ -118,7 +157,8 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
       <table>
         <tr>
           <th style="width:25%">Name</th>
-          <td><code>MY-PCF-subnet-services-MY-GCP-REGION</code></td>
+          <td><code>MY-PCF-subnet-services-MY-GCP-REGION</code><br>
+          Example: <code>MY-PCF-subnet-services-us-west1</code></td>
         </tr>
         <tr>
           <th>Region</th>
@@ -137,7 +177,8 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
 
 1. Click **Create**.
 
-## <a id="create_nat"></a>Step 4: Create NAT Instances ##
+
+## <a id="create_nat"></a> Step 4: Create NAT Instances
 
 Use NAT instances when you want to expose only a minimal number of public IP addresses. 
 
@@ -151,7 +192,8 @@ For more information, see the [Reference Architecture for Pivotal Cloud Foundry 
 
 1. Complete the following fields:
   * **Name**: Enter `MY-PCF-nat-gateway-pri`. <br>
-    This is the first, or primary, of three NAT instances you need. 
+    This is the first, or primary, of three NAT instances you need.
+    If you are using a single AZ, you need only one NAT instance.
   * **Zone**: Select the first zone from your region.<br>
     Example: For region `us-west1`, select zone `us-west1-a`.
   * **Machine type**: Select `n1-standard-4`.
@@ -170,10 +212,13 @@ For more information, see the [Reference Architecture for Pivotal Cloud Foundry 
 1. Click **Networking** to open additional network configuration fields:
   ![NAT Networking settings](gcp/gcp-nat-network.png) 
     1. In the **Network tags** field, add the following: `nat-traverse` and `MY-PCF-nat-instance`. 
-    1. Click the pencil icon to edit the **Network interface**. 
+    1. Click on the **Networking** tab and the pencil icon to edit the **Network interface**. 
     1. For **Network**, select `MY-PCF-virt-net`. You created this network in [Step 1: Create a GCP Network with Subnets](#create-net).
     1. For **Subnetwork**, select `MY-PCF-subnet-infrastructure-MY-GCP-REGION`.
-    1. For **Primary internal IP**, select `Ephemeral (Custom)`. Enter an IP address (for example, `192.168.101.2`) in the **Custom ephemeral IP address** field. Specify an internal IP address located within the reserved IP range that you will [configure in Ops Manager Director](./gcp-om-config.html#network). Do not use the **Gateway** IP, for example `192.168.101.1`.
+    1. For **Primary internal IP**, select `Ephemeral (Custom)`. Enter an IP address (for example, `192.168.101.2`) in the **Custom ephemeral IP address** field. The IP address must meet the following requirements: 
+      - The IP address must exist in the CIDR range you set for the `MY-PCF-subnet-infrastructure-GCP-REGION` subnet. 
+      - The IP address must exist in a reserved IP range set later in BOSH Director. The reserved range is typically the first `.1` through `.9` addresses in the CIDR range you set for the `MY-PCF-subnet-infrastructure-GCP-REGION` subnet. 
+      - The IP address cannot be the same as the Gateway IP address set later in Ops Manager. The Gateway IP address is typically the first `.1` address in the CIDR range you set for the `MY-PCF-subnet-infrastructure-GCP-REGION` subnet.
     1. For **External IP**, select `Ephemeral`.
     <p class="note"><strong>Note</strong>: If you select a static external IP address for the NAT instance, then you can use the static IP to further secure access to your CloudSQL instances.</p>
     1. Set **IP forwarding** to `On`. 
@@ -183,28 +228,51 @@ For more information, see the [Reference Architecture for Pivotal Cloud Foundry 
 
 1. Repeat steps 2-6 to create two additional NAT instances with the names and zones specified in the table below. The rest of the configuration remains the same. 
     <table>
-    <tr>
-      <th>Instance 2</th>
-      <td>
-        <strong>Name</strong>: <code>MY-PCF-nat-gateway-sec</code>.<br>
-        <strong>Zone</strong>: Select the second zone from your region.<br>
-        Example: For region <code>us-west1</code>, select zone <code>us-west1-b</code>.<br>
-        <strong>Internal IP</strong>: Select <code>Custom</code> and enter an IP address (for example, <code>192.168.101.3</code>) in the <strong>Internal IP address</strong> field. Specify an internal IP address located within the reserved IP range that you will [configure in Ops Manager Director](./gcp-om-config.html#network). Do not use the **Gateway** IP, for example `192.168.101.1`.
-      </td>
-    </tr>
-    <tr>
-      <th>Instance 3</th>
-      <td>
-        <strong>Name</strong>: <code>MY-PCF-nat-gateway-ter</code>.<br>
-        <strong>Zone</strong>: Select the third zone from your region.<br>
-        Example: For region <code>us-west1</code>, select zone <code>us-west1-c</code>.
-        <br>
-        <strong>Internal IP</strong>: Select <code>Custom</code> and enter an IP address (for example, <code>192.168.101.4</code>) in the <strong>Internal IP address</strong> field. Specify an internal IP address located within the reserved IP range that you will [configure in Ops Manager Director](./gcp-om-config.html#network). Do not use the **Gateway** IP, for example `192.168.101.1`.
-      </td>
-    </tr>
+      <tr>
+        <th rowspan="3" width="15%">Instance 2</th>
+        <td width="15%"><strong>Name</strong></td>
+        <td>
+          <code>MY-PCF-nat-gateway-sec</code>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Zone</strong></td>
+        <td>
+          Select the second zone from your region.<br>
+          Example: For region <code>us-west1</code>, select zone <code>us-west1-b</code>.<br>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Internal IP</strong></td>
+        <td>
+          Select <code>Custom</code> and enter an IP address in the <strong>Internal IP address</strong> field. Example: <code>192.168.101.3</code>.
+          <br><br>As described above, this address must in the CIDR range you set for the <code>MY-PCF-subnet-infrastructure-GCP-REGION</code> subnet, must exist in a reserved IP range set later in BOSH Director, and cannot be the same as the Gateway IP address set later in Ops Manager.
+        </td>
+      </tr>
+      <tr>
+        <th rowspan="3">Instance 3</th>
+        <td><strong>Name</strong></td>
+        <td>
+          <code>MY-PCF-nat-gateway-ter</code>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Zone</strong></td>
+        <td>
+          Select the third zone from your region.<br>
+          Example: For region <code>us-west1</code>, select zone <code>us-west1-c</code>.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Internal IP</strong></td>
+        <td>
+          Select <code>Custom</code> and enter an IP address in the <strong>Internal IP address</strong> field. Example: <code>192.168.101.4</code>.
+          <br><br>As described above, this address must in the CIDR range you set for the <code>MY-PCF-subnet-infrastructure-GCP-REGION</code> subnet, must exist in a reserved IP range set later in BOSH Director, and cannot be the same as the Gateway IP address set later in Ops Manager.
+        </td>
+      </tr>
     </table>
 
-### <a id="nat-routes"></a>Create Routes for NAT Instances
+### <a id="nat-routes"></a> Create Routes for NAT Instances
 
 1. In the GCP console, navigate to **VPC Networks** > **Routes**. 
   ![NAT Routes](gcp/gcp-vpc-routes.png)
@@ -240,102 +308,171 @@ For more information, see the [Reference Architecture for Pivotal Cloud Foundry 
     </tr>
     </table>
 
-## <a id="firewall_rules"></a>Step 5: Create Firewall Rules for the Network
 
-GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-resources#tags) to virtual machine (VM) instances and create firewall rules that apply to VMs based on their tags. This step assigns tags and firewall rules to Ops Manager components and VMs that handle incoming traffic. 
+## <a id="firewall_rules"></a> Step 5: Create Firewall Rules for the Network
 
-1. In the **Networking** pane, select **Firewall rules**. 
+GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-resources#tags) to virtual machine (VM) instances and create firewall rules that apply to VMs based on their tags.
+This step assigns tags and firewall rules to Ops Manager components and VMs that handle incoming traffic.
 
-1. Create firewall rules according to the table below: 
-  <p class="note"><strong>Note</strong>: If you want your firewalls rules to only allow traffic within your private network, modify the <strong>Source IP Ranges</strong> from the table accordingly.</p>
-  <table>
-  <tr><th colspan="2" style="text-align: center;">Firewall Rules</th></tr>
-   <tr>
-    <tr>
-      <th>Rule 1</th>
-      <td>
-        This rule allows SSH from public networks.<br><br>
-        <strong>Name</strong>: <code>MY-PCF-allow-ssh</code><br>
-        <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
-        <strong>Allowed protocols and ports</strong>: <code>tcp:22</code><br>
-        <strong>Source filter</strong>: IP ranges<br>
-        <strong>Source IP ranges</strong>: <code>0.0.0.0/0</code><br>
-        <strong>Target tags</strong>: <code>allow-ssh</code>
-      </td>
-    </tr>
-    <tr>
-      <th>Rule 2</th>
-      <td>
-        This rule allows HTTP from public networks.<br><br>
-        <strong>Name</strong>: <code>MY-PCF-allow-http</code><br>
-        <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
-        <strong>Allowed protocols and ports</strong>: <code>tcp:80</code><br>
-        <strong>Source filter</strong>: IP ranges<br>
-        <strong>Source IP ranges</strong>: <code>0.0.0.0/0</code><br>
-        <strong>Target tags</strong>: <code>allow-http</code>, <code>router</code>
-      </td>
-    </tr>
-    <tr>
-      <th>Rule 3</th>
-      <td>
-        This rule allows HTTPS from public networks.<br><br>
-        <strong>Name</strong>: <code>MY-PCF-allow-https</code><br>
-        <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
-        <strong>Allowed protocols and ports</strong>: <code>tcp:443</code><br>
-        <strong>Source filter</strong>: IP ranges<br>
-        <strong>Source IP ranges</strong>: <code>0.0.0.0/0</code><br>
-        <strong>Target tags</strong>: <code>allow-https</code>, <code>router</code>
-      </td>
-    </tr>
-    <tr>
-      <th>Rule 4</th>
-      <td>
-        This rule allows Gorouter health checks.<br><br>
-        <strong>Name</strong>: <code>MY-PCF-allow-http-8080</code><br>
-        <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
-        <strong>Allowed protocols and ports</strong>: <code>tcp:8080</code><br>
-        <strong>Source filter</strong>: IP ranges<br>
-        <strong>Source IP Ranges</strong>: <code>0.0.0.0/0</code><br>
-        <strong>Target tags</strong>: <code>router</code>
-      </td>
-    </tr>
-    <tr>
-      <th>Rule 5</th>
-      <td>
-        This rule allows communication between BOSH-deployed PAS jobs.<br><br>
-        <strong>Name</strong>: <code>MY-PCF-allow-ert-all</code><br>
-        <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
-        <strong>Allowed protocols and ports</strong>: <code>tcp;udp;icmp</code><br>
-        <strong>Source filter</strong>: Source tags<br>
-        <strong>Target tags</strong>: <code>MY-PCF</code>, <code>MY-PCF-opsman</code>, <code>nat-traverse</code><br>
-        <strong>Source tags</strong>: <code>MY-PCF</code>, <code>MY-PCF-opsman</code>, <code>nat-traverse</code>
-      </td>
-    </tr>
-    <tr>
-      <th>Rule 6 (Optional)</th>
-      <td>
-        This rule allows access to the TCP router.<br><br>
-        <strong>Name</strong>: <code>MY-PCF-allow-cf-tcp</code><br>
-        <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
-        <strong>Source filter</strong>: IP ranges<br>
-        <strong>Source IP ranges</strong>: <code>0.0.0.0/0</code><br>
-        <strong>Allowed protocols and ports</strong>: <code>tcp:1024-65535</code><br>
-        <strong>Target tags</strong>: <code>MY-PCF-cf-tcp</code>
-      </td>
-    </tr>
-    <tr>
-      <th>Rule 7 (Optional)</th>
-      <td>
-        This rule allows access to the SSH proxy.<br><br>
-        <strong>Name</strong>: <code>MY-PCF-allow-ssh-proxy</code><br>
-        <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
-        <strong>Source filter</strong>: IP ranges<br>
-        <strong>Source IP ranges</strong>: <code>0.0.0.0/0</code><br>
-        <strong>Allowed protocols and ports</strong>: <code>tcp:2222</code><br>
-        <strong>Target tags</strong>: <code>MY-PCF-ssh-proxy</code>, <code>diego-brain</code><br>
-      </td>
-    </tr>
-  </table>
+1. In the **Networking** >> **VPC network** pane, select **Firewall rules**.
+
+1. Select the runtime you are installing from the following table to determine which firewall rules you need to apply:
+    <div class="tab">
+      <button class="tablinks" onclick="openDocs(event, 'PAS-firewall')">PAS and Other Runtimes</button>
+      <button class="tablinks" onclick="openDocs(event, 'PKS-firewall')">PKS Only</button>
+    </div>
+    <div id="PAS-firewall" class="tabcontent" style="display: none">
+      <p>If you intend to deploy Pivotal Application Service (PAS), or PAS plus additional runtimes, create and apply the firewall rules according to the table below.
+         For more information about the runtimes you can deploy to PCF, see <a href="runtimes.html">Installing Runtimes</a>.<br>
+        <table>
+        <tr><th colspan="2" style="text-align: center;">Firewall Rules</th></tr>
+         <tr>
+          <tr>
+            <th>Rule 1</th>
+            <td>
+              This rule allows SSH from public networks.<br><br>
+              <strong>Name</strong>: <code>MY-PCF-allow-ssh</code><br>
+              <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
+              <strong>Allowed protocols and ports</strong>: <code>tcp:22</code><br>
+              <strong>Source filter</strong>: IP ranges<br>
+              <strong>Source IP ranges</strong>: <code>0.0.0.0/0</code><br>
+              <strong>Target tags</strong>: <code>allow-ssh</code>
+            </td>
+          </tr>
+          <tr>
+            <th>Rule 2</th>
+            <td>
+              This rule allows HTTP from public networks.<br><br>
+              <strong>Name</strong>: <code>MY-PCF-allow-http</code><br>
+              <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
+              <strong>Allowed protocols and ports</strong>: <code>tcp:80</code><br>
+              <strong>Source filter</strong>: IP ranges<br>
+              <strong>Source IP ranges</strong>: <code>0.0.0.0/0</code><br>
+              <strong>Target tags</strong>: <code>allow-http</code>, <code>router</code>
+            </td>
+          </tr>
+          <tr>
+            <th>Rule 3</th>
+            <td>
+              This rule allows HTTPS from public networks.<br><br>
+              <strong>Name</strong>: <code>MY-PCF-allow-https</code><br>
+              <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
+              <strong>Allowed protocols and ports</strong>: <code>tcp:443</code><br>
+              <strong>Source filter</strong>: IP ranges<br>
+              <strong>Source IP ranges</strong>: <code>0.0.0.0/0</code><br>
+              <strong>Target tags</strong>: <code>allow-https</code>, <code>router</code>
+            </td>
+          </tr>
+          <tr>
+            <th>Rule 4</th>
+            <td>
+              This rule allows Gorouter health checks.<br><br>
+              <strong>Name</strong>: <code>MY-PCF-allow-http-8080</code><br>
+              <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
+              <strong>Allowed protocols and ports</strong>: <code>tcp:8080</code><br>
+              <strong>Source filter</strong>: IP ranges<br>
+              <strong>Source IP Ranges</strong>: <code>0.0.0.0/0</code><br>
+              <strong>Target tags</strong>: <code>router</code>
+            </td>
+          </tr>
+          <tr>
+            <th>Rule 5</th>
+            <td>
+              This rule allows communication between BOSH-deployed jobs.<br><br>
+              <strong>Name</strong>: <code>MY-PCF-allow-pas-all</code><br>
+              <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
+              <strong>Allowed protocols and ports</strong>: <code>tcp;udp;icmp</code><br>
+              <strong>Source filter</strong>: Source tags<br>
+              <strong>Target tags</strong>: <code>MY-PCF</code>, <code>MY-PCF-opsman</code>, <code>nat-traverse</code><br>
+              <strong>Source tags</strong>: <code>MY-PCF</code>, <code>MY-PCF-opsman</code>, <code>nat-traverse</code>
+            </td>
+          </tr>
+          <tr>
+            <th>Rule 6 (Optional)</th>
+            <td>
+              This rule allows access to the TCP router.<br><br>
+              <strong>Name</strong>: <code>MY-PCF-allow-cf-tcp</code><br>
+              <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
+              <strong>Source filter</strong>: IP ranges<br>
+              <strong>Source IP ranges</strong>: <code>0.0.0.0/0</code><br>
+              <strong>Allowed protocols and ports</strong>: <code>tcp:1024-65535</code><br>
+              <strong>Target tags</strong>: <code>MY-PCF-cf-tcp</code>
+            </td>
+          </tr>
+          <tr>
+            <th>Rule 7 (Optional)</th>
+            <td>
+              This rule allows access to the SSH proxy.<br><br>
+              <strong>Name</strong>: <code>MY-PCF-allow-ssh-proxy</code><br>
+              <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
+              <strong>Source filter</strong>: IP ranges<br>
+              <strong>Source IP ranges</strong>: <code>0.0.0.0/0</code><br>
+              <strong>Allowed protocols and ports</strong>: <code>tcp:2222</code><br>
+              <strong>Target tags</strong>: <code>MY-PCF-ssh-proxy</code>, <code>diego-brain</code><br>
+            </td>
+          </tr>
+        </table>
+      </p>
+    </div>
+    <div id="PKS-firewall" class="tabcontent" style="display: none">
+     <p>If you intend to deploy only Pivotal Container Service (PKS) to this Ops Manager instance, apply the following firewall rules:
+      <table>
+        <tr><th colspan="2" style="text-align: center;">Firewall Rules</th></tr>
+         <tr>
+          <tr>
+            <th>Rule 1</th>
+            <td>
+              This rule allows SSH from public networks.<br><br>
+              <strong>Name</strong>: <code>MY-PCF-allow-ssh</code><br>
+              <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
+              <strong>Allowed protocols and ports</strong>: <code>tcp:22</code><br>
+              <strong>Source filter</strong>: IP ranges<br>
+              <strong>Source IP ranges</strong>: <code>0.0.0.0/0</code><br>
+              <strong>Target tags</strong>: <code>allow-ssh</code>
+            </td>
+          </tr>
+          <tr>
+            <th>Rule 2</th>
+            <td>
+              This rule allows HTTP from public networks.<br><br>
+              <strong>Name</strong>: <code>MY-PCF-allow-http</code><br>
+              <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
+              <strong>Allowed protocols and ports</strong>: <code>tcp:80</code><br>
+              <strong>Source filter</strong>: IP ranges<br>
+              <strong>Source IP ranges</strong>: <code>0.0.0.0/0</code><br>
+              <strong>Target tags</strong>: <code>allow-http</code>, <code>router</code>
+            </td>
+          </tr>
+          <tr>
+            <th>Rule 3</th>
+            <td>
+              This rule allows HTTPS from public networks.<br><br>
+              <strong>Name</strong>: <code>MY-PCF-allow-https</code><br>
+              <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
+              <strong>Allowed protocols and ports</strong>: <code>tcp:443</code><br>
+              <strong>Source filter</strong>: IP ranges<br>
+              <strong>Source IP ranges</strong>: <code>0.0.0.0/0</code><br>
+              <strong>Target tags</strong>: <code>allow-https</code>, <code>router</code>
+            </td>
+          </tr>
+          <tr>
+            <th>Rule 4</th>
+            <td>
+              This rule allows communication between BOSH-deployed jobs.<br><br>
+              <strong>Name</strong>: <code>MY-PCF-allow-pks-all</code><br>
+              <strong>Network</strong>: <code>MY-PCF-virt-net</code><br>
+              <strong>Allowed protocols and ports</strong>: <code>tcp;udp;icmp</code><br>
+              <strong>Source filter</strong>: Source tags<br>
+              <strong>Target tags</strong>: <code>MY-PCF</code>, <code>MY-PCF-opsman</code>, <code>nat-traverse</code><br>
+              <strong>Source tags</strong>: <code>MY-PCF</code>, <code>MY-PCF-opsman</code>, <code>nat-traverse</code>
+            </td>
+          </tr>
+        </table>
+     </p> 
+    </div>
+    <p class="note"><strong>Note</strong>: If you want your firewall rules to only allow traffic within your private network, modify the <strong>Source IP Ranges</strong> from the table accordingly.</p>
+
+
 1. If you are only using your GCP project to deploy PCF, then you can delete the following default firewall rules:
    * `default-allow-http`
    * `default-allow-https`
@@ -344,10 +481,13 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
    * `default-allow-rdp`
    * `default-allow-ssh`
 
+If you are deploying **PKS only**, continue to [Deploying BOSH and Ops Manager to GCP](gcp-om-deploy.html).
 
-## <a id="dbs"></a>Step 6: Create Database Instance and Databases ##
+If you are deploying **PAS or other runtimes**, proceed to the following step.
 
-### Create Database Instance  
+## <a id="dbs"></a> Step 6: Create Database Instance and Databases
+
+### <a id='create-dbs-instance'></a> Create Database Instance  
 
 1. From the GCP Console, select **SQL** and click **CREATE INSTANCE**. 
 1. Ensure **MySQL** is selected and click **Next**. 
@@ -365,7 +505,7 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
   <p class="note"><strong>Note</strong>: If you assigned static IP addresses to your NAT instances, you can instead limit access to the database instances by specifying the NAT IP addresses.</p>
 1. Click **Create**. 
 
-### Create Databases
+### <a id='create-dbs'></a> Create Databases
 
 1. From the **Instances** page, select the database instance you just created. 
 1. Select the **Databases** tab. 
@@ -387,7 +527,8 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
 1. Select the **USERS** tab. 
 1. Use the **Create user account** button to create a unique username and password for each database you created above. For **Host name**, select **Allow any host**. You must create a total of 13 user accounts. 
 
-## <a id="buckets"></a>Step 7: Create Storage Buckets ##
+
+## <a id="buckets"></a> Step 7: Create Storage Buckets
 
 1. From the GCP Console, select **Storage** > **Browser**.
 1. Using **CREATE BUCKET**, create buckets with the following names. For **Default storage class**, select **Multi-Regional**:
@@ -397,9 +538,9 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
   * `MY-PCF-resources`
 
     
-## <a id="http_loadbalancers"></a>Step 8: Create HTTP Load Balancer ##
+## <a id="http_loadbalancers"></a> Step 8: Create HTTP Load Balancer
 
-### Create Instance Group
+### <a id='create-instance-group'></a> Create Instance Group
 
 1. Navigate to **Compute Engine** > **Instance groups**. 
 1. Click **CREATE INSTANCE GROUP**.
@@ -429,7 +570,7 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
   * **Network**: Select `MY-PCF-virt-net`. 
   * **Subnetwork**: Select the `MY-PCF-subnet-ert-MY-GCP-REGION` subnet that you created previously.  
 
-### Create Health Check
+### <a id='create-health-check'></a> Create Health Check
 
 1. Navigate to **Compute Engine** > **Health checks**. 
 1. Click **CREATE HEALTH CHECK**. 
@@ -443,7 +584,7 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
   * **Unhealthy threshold**: `2`
 1. Click **Create**. 
 
-### Configure Backend
+### <a id='config-backend'></a> Configure Backend
 
 1. Navigate to **Network services** > **Load balancing**. 
 1. Click **CREATE LOAD BALANCER**. 
@@ -463,7 +604,7 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
     * **Cloud CDN**: Ensure Cloud CDN is disabled. 
  1. Click **Create**. 
 
-### Configure Frontend
+### <a id='config-frontend'></a> Configure Frontend
 
 1. Click **Host and path rules** to populate the default fields and a green check mark.
 
@@ -498,6 +639,7 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
 1. Click **Review and finalize** to verify your configuration.
 
 1. Click **Create**.
+
 
 ## <a id="tcp_websockets_lb"></a> Step 9: Create TCP WebSockets Load Balancer
 
@@ -542,6 +684,7 @@ The load balancer for tailing logs with WebSockets for PCF on GCP operates on TC
   <%= image_tag "gcp/websockets_lb_finalize.png" %>
 1. Click **Create**.
 
+
 ## <a id="ssh_lb"></a> Step 10: Create SSH Proxy Load Balancer
 
 1. From the GCP Console, select **Network services > Load balancing > Create load balancer**.
@@ -575,6 +718,7 @@ The load balancer for tailing logs with WebSockets for PCF on GCP operates on TC
 1. Optionally, review and finalize your load balancer. 
 
 1. Click **Create**.
+
 
 ## <a id="tcp_lb"></a> Step 11: Create Load Balancer for TCP Router 
 
@@ -619,7 +763,8 @@ To create a load balancer for TCP routing in GCP, perform the following steps:
 
 1. Click **Create**.
 
-## <a id='cname'></a> Step 12: Add DNS Records for Your Load Balancers ##
+
+## <a id='cname'></a> Step 12: Add DNS Records for Your Load Balancers
 
 In this step you redirect queries for your domain to the IP addresses of your load balancers.
 
@@ -689,9 +834,9 @@ In this step you redirect queries for your domain to the IP addresses of your lo
 ;; ANSWER SECTION:
 xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 
-## <a id="next"></a> What to Do Next ###
+
+## <a id="next"></a> What to Do Next
 
 * (Optional) To save time during the final stage of the installation process, you can start downloading the PAS tile. See [Step 1: Download the PAS Tile](./gcp-er-config.html#download-er) of the _Deploying PAS on GCP_ topic.
 
-* Proceed to the next step in the deployment, [Launching an Ops Manager Director Instance on GCP](./gcp-om-deploy.html). 
-
+* Proceed to the next step in the deployment, [Launching a BOSH Director Instance on GCP](./gcp-om-deploy.html).

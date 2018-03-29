@@ -8,7 +8,7 @@ owner: Ops Manager
 
 This topic describes how to install and configure Pivotal Application Service (PAS) on Google Cloud Platform (GCP).
 
-Before beginning this procedure, ensure that you have successfully completed the [Configuring Ops Manager Director on GCP](./gcp-om-config.html) topic.
+Before beginning this procedure, ensure that you have successfully completed the [Configuring BOSH Director on GCP](./gcp-om-config.html) topic.
 
 <p class="note"><strong>Note</strong>: If you plan to <a href="http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the PAS tile. </p> 
 
@@ -35,7 +35,7 @@ Before beginning this procedure, ensure that you have successfully completed the
 
 ## <a id='assign-az'></a> Step 3: Assign Availability Zones and Networks ##
 
-1. Select **Assign AZ and Networks**. These are the Availability Zones that you [create](./gcp-om-config.html#az) when configuring Ops Manager Director.
+1. Select **Assign AZ and Networks**. These are the Availability Zones that you [create](./gcp-om-config.html#az) when configuring the BOSH Director.
 
 1. Select an the first Availability Zone under **Place singleton jobs**. Ops Manager runs any job with a single instance in this Availability Zone.
 
@@ -43,7 +43,7 @@ Before beginning this procedure, ensure that you have successfully completed the
 
     <p class="note"><strong>Note</strong>: For production deployments, Pivotal recommends at least three Availability Zones for a highly available installation of PAS.</p>
 
-1. From the **Network** drop-down box, choose the `ert` network you created when [configuring Ops Manager Director](./gcp-om-config.html#network).
+1. From the **Network** drop-down box, choose the `ert` network you created when [configuring BOSH Director](./gcp-om-config.html#network).
 
 1. Click **Save**.
 
@@ -145,6 +145,7 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 1. <%= partial 'tls_cipher_suites_router' %>
 1. <%= partial 'tls_cipher_suites_haproxy' %>
 1. <%= partial 'haproxy_router_tls_forward' %>
+1. <%= partial 'haproxy_hsts_config' %>
 1. <%= partial 'ssl_verification' %>
 1. <%= partial 'http_disable' %>
 1. <%= partial 'insecure_cookies' %> 
@@ -155,12 +156,10 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
   Do not enable this option without deploying routers for each isolation segment. See the following topics for more information:
   * [Installing PCF Isolation Segment](../customizing/installing-pcf-is.html)
   * [Sharding Routers for Isolation Segments](../adminguide/routing-is.html#sharding-routers-isolation-segment).
+1. <%= partial 'enable-proxy-support' %>
 1. <%= partial 'route_services' %>
 1. <%= partial 'max_connections_backend' %> 
-1. Enter a value for **Router Max Idle Keepalive Connections**. See [Considerations for Configuring max\_idle\_connections](../adminguide/routing-keepalive.html#considerations).
-
-    <%= image_tag 'images/keepalive.png' %>
-
+1. <%= partial 'keepalive_connections' %>
 1. <%= partial 'router_timeout_backend' %>
 1. <%= partial 'frontend_idle_timeout' %>
 1. <%= partial 'lb_unhealthy_threshold' %>
@@ -181,6 +180,7 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
       <li><%= partial 'c2c-overlay' %></li>
       <li><%= partial 'c2c-vxlan' %></li>
       <%= partial 'log-app-traffic-enable' %>
+      <li><%= partial 'dns-servers' %></li>
     </ol>
   </li>
 
@@ -214,10 +214,16 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 1. If the private key specified under **Service Provider Credentials** is password-protected, enter the password under **SAML Service Provider Key Password**.
     <%= image_tag("service-provider.png") %>
 
+1. (Optional) To override the default value, enter a custom SAML Entity ID in the **SAML Entity ID Override** field. By default, the SAML Entity ID is `http://login.YOUR-SYSTEM-DOMAIN` where `YOUR-SYSTEM-DOMAIN` is set in the **Domains** > **System Domain** field.
+
 1. For **Signature Algorithm**, choose an algorithm from the dropdown menu to use for signed requests and assertions. The default value is `SHA256`.
 
 1. (Optional) In the **Apps Manager Access Token Lifetime**, **Apps Manager Refresh Token Lifetime**, **Cloud Foundry CLI Access Token Lifetime**, and **Cloud Foundry CLI Refresh Token Lifetime** fields, change the lifetimes of tokens granted for Apps Manager and Cloud Foundry Command Line Interface (cf CLI) login access and refresh. Most deployments use the defaults. 
     <%= image_tag("authsso-uaa-bottom.png") %>
+
+1. (Optional) In the **Global Login Session Max Timeout** and **Global Login Session Idle Timeout** fields, change the maximum number of seconds before a global login times out. These fields apply to the following:
+  * **Default zone sessions**:  Sessions in Apps Manager, PCF Metrics, and other web UIs that use the UAA default zones
+  * **Identity zone sessions**: Sessions in apps that use a UAA identity zone, such as a Single Sign-On service plan
 
 1. (Optional) Customize the text prompts used for username and password from the cf CLI and Apps Manager login popup by entering values for **Customize Username Label (on login page)** and **Customize Password Label (on login page)**.
 
@@ -235,7 +241,7 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 
 1. Click **Save**.
 
-1. Ensure that you complete the "Configure Internal MySQL" step later in this topic to configure high availability and automatic backups for your internal MySQL databases.
+1. Ensure that you complete the "Configure Internal MySQL" step later in this topic to configure high availability for your internal MySQL databases.
 
 ###<a id='uaa-external'></a> External Database Configuration
 
@@ -266,7 +272,7 @@ You can configure PAS to use Google Cloud SQL for the databases required by PAS.
 
 <%= partial 'ert_database_internal' %>
 
-Then proceed to [Step 14: (Optional) Configure Internal MySQL](#internal-mysql) to configure high availability and automatic backups for your internal MySQL databases.
+Then proceed to [Step 14: (Optional) Configure Internal MySQL](#internal-mysql) to configure high availability for your internal MySQL databases.
 
 ###<a id='create-dbs'></a> External Database Configuration
 
@@ -302,7 +308,6 @@ To specify your PAS databases, perform the following steps:
   <%= image_tag("mysql-config.png") %>
 
 1. For **MySQL Service Hostname**, enter an IP address or hostname for your load balancer. If a MySQL proxy fails, the load balancer re-routes connections to a healthy proxy. If you leave this field blank, components are configured with the IP address of the first proxy instance entered above.
-
   <p class="note warning"><strong>Warning</strong>: You must configure a load balancer to achieve complete high-availability.</p>
 
 1. In the **Replication canary time period** field, leave the default of 30 seconds or modify the value based on the needs of your deployment. Lower numbers cause the canary to run more frequently, which means that the canary reacts more quickly to replication failure but adds load to the database.
@@ -316,48 +321,7 @@ To specify your PAS databases, perform the following steps:
 1. To allow the admin and roadmin to connect from any remote host, enable the **Allow Remote Admin Access** checkbox. When the checkbox is disabled, admins must `bosh ssh` into each MySQL VM to connect as the MySQL super user.<p class="note"><strong>Note: </strong>Network configuration and Application Security Groups restrictions may still limit a client’s ability to establish a connection with the databases.</p>
 
 1. For **Cluster Probe Timeout**, enter the maximum amount of time, in seconds, that a new node will search for existing cluster nodes. If left blank, the default value is 10 seconds.
-
   <%= image_tag("mysql-replication-canary.png") %>
-
-1. Under **Automated Backups Configuration**, choose one of five options for MySQL backups:
-  * **Disable automatic backups of MySQL** disables automatic backups, but you can still deploy the Backup Prepare Node if you use BOSH Backup and Restore to back up your MySQL database. For more information, see the [Backing Up Pivotal Cloud Foundry with BBR](./backup-restore/backup-pcf-bbr.html) topic.
-  * **Enable automated backups from MySQL to an S3 bucket or other S3-compatible file store** saves your backups to an existing Amazon Web Services (AWS) or <a href="http://ceph.com/">Ceph</a> S3-compatible blobstore.
-    <%= image_tag("mysql-backups-s3.png") %>
-    This option requires the following fields:
-    * For **S3 Bucket Name**, enter the name of your S3 bucket. Do not include an `s3://` prefix, a trailing `/`, or underscores. If the bucket does not already exist, it will be created automatically.
-    * For **Bucket Path**, specify a folder within the bucket to hold your MySQL backups. Do not include a trailing `/`.
-    * For **S3 Bucket Region**, enter the AWS region where the bucket is located, such as `us-east-1`.
-    * For **AWS Access Key ID** and **AWS Secret Access Key**, enter your AWS or Ceph credentials.
-    * For **Cron Schedule**, enter a valid [cron](https://godoc.org/github.com/robfig/cron) expression to schedule your automated backups. Cron uses your computer's local time zone.
-    * Enable **Backup All Nodes** to make unique backups from each instance of the MySQL server rather than just the first MySQL server instance.
-  * **Enable automated backups from MySQL to Google Cloud Storage** saves your backups to Google Cloud Storage.
-    <%= image_tag("mysql-backups-gcs.png") %>
-    This option requires the following fields:
-    * For **GCP Service Account Key JSON**, enter the name of a Google Cloud Platform (GCP) service account key with access to the project and bucket specified below. This key must be in JSON format.
-    * For **GCP Project ID**, enter the project ID of your GCP project. You can find the project ID on the Dashboard of the GCP Console. 
-    * For **GCP Storage Bucket Name**, enter the name of a bucket in Google Cloud Storage where your backups will be uploaded. If the bucket does not already exist, it will be created automatically.
-    * For **Cron Schedule**, enter a valid [cron](https://godoc.org/github.com/robfig/cron) expression to schedule your automated backups. Cron uses your computer's local time zone.
-    * Enable **Backup All Nodes** to make unique backups from each instance of the MySQL server rather than just the first MySQL server instance.
-  * **Enable automated backups from MySQL to Azure** saves your backups to Azure.
-    <%= image_tag("mysql-backups-azure.png") %>
-    This option requires the following fields:
-    * For **Azure Storage Account**, enter the name of an existing Azure storage account where backups will be uploaded. For more information about creating and managing an Azure storage account, see the [Azure documentation](https://docs.microsoft.com/en-us/azure/storage/common/storage-create-storage-account).
-    * For **Azure Storage Access Key**, enter an Azure storage access key for the storage account.
-    * For **Azure Storage Container**, enter the name of an existing Azure storage container that will store the backups.
-    * For **Backup Path**, enter the path within the Azure storage container where backups will be uploaded.
-    * For **Cron Schedule**, enter a valid [cron](https://godoc.org/github.com/robfig/cron) expression to schedule your automated backups. Cron uses your computer's local time zone.
-    * Enable **Backup All Nodes** to make unique backups from each instance of the MySQL server rather than just the first MySQL server instance.
-  * **Enable automated backups from MySQL to a remote host via SCP** saves your backups to a remote host using secure copy protocol (SCP).
-    <%= image_tag("mysql-backups-scp.png") %>
-    This option requires the following fields:
-    * For **Hostname**, enter the name of your SCP host.
-    * For **Port**, enter your SCP port. This should be the TCP port that your SCP host uses for SSH. The default port is `22`.
-    * For **Username**, enter your SSH username for the SCP host.
-    * For **Private key**, paste in your SSH private key.
-    * For **Destination directory**, enter the directory on the SCP host where you want to save backup files.
-    * For **Cron Schedule**, enter a valid [cron](https://godoc.org/github.com/robfig/cron) expression to schedule your automated backups. Cron uses your computer's local time zone.
-    * Enable **Backup All Nodes** to make unique backups from each instance of the MySQL server rather than just the first MySQL server instance.
-<p class="note"><strong>Note</strong>: If you choose to enable automated MySQL backups, set the number of instances for the **Backup Prepare Node** under the **Resource Config** section of the Pivotal Application Service (PAS) tile to `1`.</p>
 
 1. If you want to log audit events for internal MySQL, select **Enable server activity logging** under **Server Activity Logging**.
   1. For the **Event types** field, you can enter the events you want the MySQL service to log. By default, this field includes `connect` and `query`, which tracks who connects to the system and what queries are processed. For more information, see the [Logging Events](https://mariadb.com/kb/en/mariadb/about-the-mariadb-audit-plugin/#logging-events) section of the MariaDB documentation.
@@ -424,23 +388,27 @@ end-user self-registration.
 settings using this form, the administrator must create orgs and users using
 the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating and Managing Users with the cf CLI</a> for more information.</p>
 
-## <a id='config-cc'></a>Step 19: Configure Cloud Controller##
+## <a id='config-autoscaler'></a>Step 19: (Optional) Configure App Autoscaler
+
+<%= partial 'app-autoscaler' %>
+
+## <a id='config-cc'></a>Step 20: Configure Cloud Controller##
 
 <%= partial 'cloud-controller' %>
 
-## <a id='config-smoke-test'></a>Step 20: Configure Smoke Tests##
+## <a id='config-smoke-test'></a>Step 21: Configure Smoke Tests##
 
 <%= partial 'smoketests' %>
 
-## <a id='advanced-features'></a>Step 21: (Optional) Enable Advanced Features ##
+## <a id='advanced-features'></a>Step 22: (Optional) Enable Advanced Features ##
 
 <%= partial 'advanced-features' %>
 
-## <a id='errands'></a>Step 22: Configure Errands ##
+## <a id='errands'></a>Step 23: Configure Errands ##
 
 <%= partial 'errands' %>
 
-## <a id='config-lb'></a>Step 23: Configure Load Balancers ##
+## <a id='config-lb'></a>Step 24: Configure Load Balancers ##
 
 1. Navigate to the GCP Console and click **Load balancing**.
 
@@ -475,31 +443,15 @@ the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating a
 
 1. Click **Save**.
 
-## <a id='disable-resources'></a>Step 24: (Optional) Scale Down and Disable Resources ##
+## <a id='disable-resources'></a>Step 25: (Optional) Scale Down and Disable Resources ##
 
 <%= partial 'disable_resources' %>
 
-## <a id='stemcell'></a>Step 25: Verify and Download Stemcell Version##
+## <a id='stemcell'></a>Step 26: Download Stemcell ##
 
-Verify whether Ops Manager is providing the stemcell version required by PAS. If the correct version is already present, you do not need to download a new stemcell.
+<%= partial "download-stemcell" %>
 
-1. In the PAS tile, select **Stemcell**.
-
-1. Verify that the version indicated in the filename matches the version of stemcell required by PAS. 
-  * If PAS detects that a stemcell `.tgz` file is present in the Ops Manager Director VM at `/var/tempest/stemcells/`, the Stemcell screen displays filename information.
-  <%= image_tag("stemcell_18.png") %>
-  * If PAS cannot detect a stemcell `.tgz` file, the following message displays:
-  <%= image_tag("stemcell_not_found.png") %>
-
-1. If the version of the stemcell file that is loaded does not match the required version listed in the <a href="http://network.pivotal.io">Pivotal Network</a> download page for PAS, or cannot be found by Ops Manager, perform the following steps to download and import a new stemcell file:
-
-  1. Log in to the [Pivotal Network](https://network.pivotal.io/products/pivotal-cf) and click **Stemcells**.
-
-  1. Download the appropriate stemcell version targeted for your IaaS.
-
-  1. In the **Stemcell** section of the PAS tile, click **Import Stemcell** to import the downloaded stemcell <code>.tgz</code> file.
-
-## <a id='complete'></a>Step 26: Complete the PAS Installation ##
+## <a id='complete'></a>Step 27: Complete the PAS Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.

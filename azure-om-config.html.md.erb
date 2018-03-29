@@ -1,25 +1,26 @@
 ---
-title: Configuring Ops Manager on Azure
+title: Configuring BOSH Director on Azure
 owner: Ops Manager
+iaas: Azure
 ---
 
 <strong><%= modified_date %></strong>
 <html class="list-style-none"></html>
 
-This topic describes how to configure the Ops Manager Director for Pivotal Cloud Foundry (PCF) on Azure.
+This topic describes how to use Pivotal Cloud Foundry (PCF) Ops Manager to configure the BOSH Director on Azure.
 
 ## <a id="prerequisites"></a> Prerequisites
 
 Before you perform the procedures in this topic, you must have completed the procedures in the following topics:
 
 * The [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic
-* Either the [Launching an Ops Manager Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching an Ops Manager Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic
+* Either the [Launching a BOSH Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching a BOSH Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic
 
 <p class="note"><strong>Note</strong>: You can also perform the procedures in this topic using the Ops Manager API. For more information, see the <a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
 
 ##<a id="azure-stack"></a> Prerequisites for Azure Stack
 
-Azure Stack uses a different set of VM types than a standard Azure deployment. To install the Ops Manager Director tile on Azure Stack, you must set your virtual machine (VM) types using the Ops Manager API.
+Azure Stack uses a different set of VM types than a standard Azure deployment. To install the BOSH Director tile on Azure Stack, you must set your virtual machine (VM) types using the Ops Manager API.
 
 Setting VM types with the API modifies the VMs available in the **Resource Config** pane of the tile. For a current list of Azure Stack VM types that you can include in your API call, see [Virtual Machine Sizes](https://docs.microsoft.com/en-us/azure/azure-stack/user/azure-stack-vm-considerations#virtual-machine-sizes) from the Azure Stack documentation. Ensure that you provide at least one `Standard` VM type for use by the **Router** VM of the Pivotal Application Service (PAS) tile. Below is an example command:
 
@@ -44,7 +45,7 @@ PUT -H "Authorization: bearer YOUR-ACCESS-TOKEN" -H
 
 ## <a id='access-om'></a>Step 1: Access Ops Manager ##
 
-1. In a web browser, navigate to the fully qualified domain name (FQDN) of Ops Manager that you set up in either the [Launching an Ops Manager Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching an Ops Manager Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic. 
+1. In a web browser, navigate to the fully qualified domain name (FQDN) of Ops Manager that you set up in either the [Launching a BOSH Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching a BOSH Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic. 
 1. When Ops Manager starts for the first time, you must choose one of the following:
     * [Use an Identity Provider](#idp): If you use an Identity Provider, an external identity server maintains your user database.
     * [Internal Authentication](#internal): If you use Internal Authentication, PCF maintains your user database.
@@ -72,7 +73,7 @@ PUT -H "Authorization: bearer YOUR-ACCESS-TOKEN" -H
 
 ## <a id='azure-config'></a>Step 2: Azure Config Page ##
 
-1. Click the **Ops Manager Director** tile.
+1. Click the **BOSH Director** tile.
 
     <%= image_tag("azure/azure-om-tile.png") %>
 
@@ -107,7 +108,7 @@ that you specify an asterisk at both the beginning and the end of the base stora
 1. (Optional) Enter your **Default Security Group**. For more information about Network Security Groups, see [Filter network traffic with network security groups](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-nsg) in Microsoft Azure's documentation.
     <p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p> 
 
-1. For **SSH Public Key**, copy and paste the contents of your public key in the `opsman.pub` file. You created this file in either the [Launching an Ops Manager Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching an Ops Manager Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic. 
+1. For **SSH Public Key**, copy and paste the contents of your public key in the `opsman.pub` file. You created this file in either the [Launching a BOSH Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching a BOSH Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic. 
 
 1. For **SSH Private Key**, copy and paste the contents of your private key in the `opsman` file. 
 
@@ -122,10 +123,10 @@ that you specify an asterisk at both the beginning and the end of the base stora
 1. In the **NTP Servers (comma delimited)** field, enter a comma-separated list of valid NTP servers.
 
 1. Leave the **JMX Provider IP Address** field blank.
-  <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use PCF JMX Bridge for consuming them outside of the Firehose, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="../pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
+  <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use PCF JMX Bridge for consuming them outside of the Firehose, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
 1. Leave the **Bosh HM Forwarder IP Address** field blank.
-  <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the BOSH HM Forwarder for consuming them, you may receive duplicate data. To prevent this, leave the <strong>Bosh HM Forwarder IP Address</strong> field blank. For additional guidance, see <a href="../pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
+  <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the BOSH HM Forwarder for consuming them, you may receive duplicate data. To prevent this, leave the <strong>Bosh HM Forwarder IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
 1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops
 Manager Resurrector functionality and increase PAS availability.
@@ -136,7 +137,7 @@ Manager Resurrector functionality and increase PAS availability.
 
 1. Select **Enable bosh deploy retries** if you want Ops Manager to retry failed BOSH operations up to five times.
 
-1. Select **Keep Unreachable Director VMs** if you want to preserve Ops Manager Director VMs after a failed deployment for troubleshooting purposes. 
+1. Select **Keep Unreachable Director VMs** if you want to preserve BOSH Director VMs after a failed deployment for troubleshooting purposes. 
 
 1. (Optional) Select **HM Pager Duty Plugin** to enable Health Monitor integration with PagerDuty.
 
@@ -156,9 +157,9 @@ Manager Resurrector functionality and increase PAS availability.
     * **Password**: Enter the password password for your email server.
     * **Enable TLS**: Select this checkbox to enable Transport Layer Security.
 
-1. For **Blobstore Location**, Pivotal recommends that you keep **Internal** selected. 
+1. <%= partial "credhub-encryption" %>
 
-     <%= image_tag("azure/blobstore.png") %>
+1. <%= partial "blobstore-location" %>
 
 1. For **Database Location**, Pivotal recommends that you keep **Internal** selected.
 
@@ -166,13 +167,13 @@ Manager Resurrector functionality and increase PAS availability.
 
 1. (Optional) **Director Workers** sets the number of workers available to execute Director tasks. This field defaults to `5`.
 
-1. (Optional) **Max Threads** sets the maximum number of threads that the Ops Manager Director can run simultaneously. Pivotal recommends that you leave the field blank to use the default value unless doing so results in rate limiting or errors on your IaaS.
+1. (Optional) **Max Threads** sets the maximum number of threads that the BOSH Director can run simultaneously. Pivotal recommends that you leave the field blank to use the default value unless doing so results in rate limiting or errors on your IaaS.
 
-1. (Optional) To add a custom URL for your Ops Manager Director, enter a valid hostname in **Director Hostname**. You can also use this field to configure [a load balancer in front of your Ops Manager Director](https://discuss.pivotal.io/hc/en-us/articles/225420588). 
+1. (Optional) To add a custom URL for your BOSH Director, enter a valid hostname in **Director Hostname**. You can also use this field to configure [a load balancer in front of your BOSH Director](https://discuss.pivotal.io/hc/en-us/articles/225420588). 
 
      <%= image_tag("director_workers.png") %>
 
-1. (Optional) To disable BOSH DNS, select the **Disable BOSH DNS server for troubleshooting purposes** checkbox. For more information about the BOSH DNS service discovery mechanism, see [BOSH DNS Service Discovery for Application Containers](../pcf-release-notes/runtime-rn.html#bosh-dns) in the Pivotal Application Service (PAS) Release Notes.
+1. (Optional) To disable BOSH DNS, select the **Disable BOSH DNS server for troubleshooting purposes** checkbox. For more information about the BOSH DNS service discovery mechanism, see [BOSH DNS Service Discovery for Application Containers](http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-dns) in the Pivotal Application Service (PAS) Release Notes.
   <p class="note breaking"><strong>Breaking Change</strong>: Do not disable BOSH DNS without consulting Pivotal Support. For more information about disabling BOSH DNS, see <a href="https://discuss.pivotal.io/hc/en-us/articles/115015720428-Disabling-or-Opting-Out-of-BOSH-DNS-in-PCF">Disabling or Opting Out of BOSH DNS in PCF</a> in the Pivotal Knowledge Base.</p>
 1. (Optional) To set a custom banner that users see when logging in to the Director using SSH, enter text in the **Custom SSH Banner** field.
   <%= image_tag("disable-bosh-dns.png") %>
@@ -189,7 +190,6 @@ In this procedure, you create three networks.
 1. Click **Add Network**.
 1. Select **Enable ICMP checks** if you want to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
 1. For **Name**, enter the name of the network you want to create. For example, `Management`.
-1. Leave the **Service Network** checkbox deselected.
 1. Under **Subnets**, complete the following fields:
    * **Azure Network Name**: Enter `PCF/Management`. You can use either the `NETWORK-NAME/SUBNET-NAME` format or the `RESOURCE-GROUP/NETWORK-NAME/SUBNET-NAME` format. If you specify a resource group, it must exist under the same subscription ID you provided in the [Azure Config](#azure-config) page.
      <p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p>
@@ -198,14 +198,13 @@ In this procedure, you create three networks.
    * **DNS**: Enter `168.63.129.16`.
    * **Gateway**: Enter the first IP address of the subnet. For example, `10.0.4.1`.
      <%= image_tag("azure/create-networks-management.png") %>
-1. Click **Save**.
+1. Click **Save**.<%= vars.expand_network_azs %>
 
 ### <a id='pas'></a> Create the Deployment or PAS Network ###
 
 1. Click **Add Network**.
 1. Select **Enable ICMP checks** if you want to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
 1. For **Name**, enter the name of the network you want to create. For example, `Deployment`.
-1. Leave the **Service Network** checkbox deselected.
 1. Under **Subnets**, complete the following fields:
    * **Azure Network Name**: Enter `PCF/Deployment`. You can use either the `NETWORK-NAME/SUBNET-NAME` format or the `RESOURCE-GROUP/NETWORK-NAME/SUBNET-NAME` format. If you specify a resource group, it must exist under the same subscription ID you provided in the [Azure Config](#azure-config) page.
      <p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p>
@@ -221,7 +220,6 @@ In this procedure, you create three networks.
 1. Click **Add Network**.
 1. Select **Enable ICMP checks** if you want to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
 1. For **Name**, enter the name of the network you want to create. For example, `Services`.
-1. If you want to dynamically provision VMs in this network for use with on-demand services, select the **Service Networks** checkbox. When the checkbox is selected, Ops Manager does not provision VMs within the specified CIDR range.
 1. Under **Subnets**, complete the following fields:
    * **Azure Network Name**: Enter `PCF/Services`. You can use either the `NETWORK-NAME/SUBNET-NAME` format or the `RESOURCE-GROUP/NETWORK-NAME/SUBNET-NAME` format. If you specify a resource group, it must exist under the same subscription ID you provided in the [Azure Config](#azure-config) page.
     <p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p>
@@ -268,14 +266,22 @@ choose **Automatic** from the drop-down menu to allocate the recommended resourc
 
     <p class="note"><strong>Note</strong>: If you set a field to <strong>Automatic</strong> and the recommended resource allocation changes in a future version, Ops Manager automatically uses the updated recommended allocation.</p>
 
+1. (Optional) For **Load Balancers**, enter your Azure application gateway name for each associated job.
+  
+    To create an application gateway, follow the procedures in [Configure an application gateway for SSL offload by using Azure Resource Manager](https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-ssl-arm) from the Azure documentation. When you create the application gateway, associate the gateway's IP with your PCF system domain.<p class="note warning"><strong>WARNING: </strong> This feature is not recommended for production use. The Azure load balancer does not support an override port in the healthcheck configuration.</p>
+
 1. Click **Save**.
 
-## <a id='complete-installation'></a>Step 9: Complete the Ops Manager Director Installation
+## <a id="custom-vm-extensions"></a> Step 9: (Optional) Add Custom VM Extensions
+
+<%= partial "vm-extension-config"  %>
+
+## <a id='complete-installation'></a>Step 10: Complete the BOSH Director Installation
 
 1. Click **Apply Changes**. If a red ICMP error message appears and you have disabled ICMP, click
 **Ignore errors and start the install**.
 
-1. Ops Manager Director installs. This may take a few moments. When the installation process successfully completes, the **Changes Applied** window appears.
+1. BOSH Director installs. This may take a few moments. When the installation process successfully completes, the **Changes Applied** window appears.
 
 1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
 

@@ -1,0 +1,92 @@
+---
+title: Customizing Platform Log Forwarding
+owner: Platform Logging
+---
+
+<strong><%= modified_date %></strong>
+
+You can configure Pivotal Application Service (PAS) to forward logs to remote 
+endpoints using the Syslog protocol defined in 
+[RFC 5424](https://tools.ietf.org/html/rfc5424). For more information, see [Enable Syslog Forwarding](../opsguide/logging-config-opsman.html#syslog-forward) in 
+_Configuring Logging in PAS_.
+
+PAS annotates forwarded messages with structured data.
+This structured data identifies the originating BOSH Director, deployment, instance group, availability zone, and instance ID.
+All logs forwarded from BOSH jobs have their PRI set to 14
+(facility: user, severity: info),
+which may not reflect the originally intended PRI of the log.
+
+Logs forwarded from other sources,
+such as kernel logs,
+retain their original PRI information.
+
+Log lines use the format below:
+
+<pre>
+<$PRI>$VERSION $TIMESTAMP $HOST $APP_NAME $PROC_ID $MSG_ID   
+    [instance@ENTERPRISE_NUMBER director="$DIRECTOR" deployment="$DEPLOYMENT" 
+    group="$INSTANCE_GROUP" az="$AVAILABILITY_ZONE" id="$ID"] $MESSAGE
+</pre>
+Example log messages:
+
+<pre>
+<14>1 2017-01-25T13:25:03.18377Z 192.0.2.10 etcd - - [instance@47450 
+    director="test-env" deployment="cf" group="diego_database" az="us-west1-a" 
+    id="83bd66e5-3fdf-44b7-bdd6-508deae7c786"] [INFO] the leader is 
+    [https://diego-database-0.etcd.service.cf.internal:4001]
+<14>1 2017-01-25T13:25:03.184491Z 192.0.2.10 bbs - - [instance@47450 
+    director="test-env" deployment="cf" group="diego_database" az="us-west1-a" 
+    id="83bd66e5-3fdf-44b7-bdd6-508deae7c786"] 
+    {"timestamp":"1485350702.539694548","source":"bbs","message":
+    "bbs.request.start-actual-lrp.starting","log_level":1,"data":
+    {"actual_lrp_instance_key":{"instance_guid":
+    "271f71c7-4119-4490-619f-4f44694717c0","cell_id":
+    "diego_cell-2-41f21178-d619-4976-901c-325bc2d0d11d"},"actual_lrp_key":
+    {"process_guid":"1545ce89-01e6-4b8f-9cb1-5654a3ecae10-137e7eb4-12de-457d-
+	 8e3e-1258e5a74687","index":5,"domain":"cf-apps"},"method":"POST","net_info":
+    {"address":"192.0.2.12","ports":[{"container_port":8080,"host_port":61532},
+    {"container_port":2222,"host_port":61533}]},"request":
+    "/v1/actual_lrps/start","session":"418.1"}}
+</pre>
+
+##<a id='examples'></a>Change Which Logs Are Forwarded
+
+When you enable log forwarding,
+all log lines written to disk in the `/var/vcap/sys/log` directories
+are forwarded from all Cloud Foundry job virtual machines (VMs).
+
+You can specify a custom rule to modify which logs PAS forwards.
+
+The custom rsyslog rules shown below are written in [RainerScript](http://www.rsyslog.com/doc/v8-stable/rainerscript/index.html).
+The custom rules are inserted before the rule that forwards logs.
+The _stop_ command, `stop`,
+prevents logs from reaching the forwarding rule. 
+This filters out these logs.
+
+Logs filtered out before forwarding remain on the local disk,
+where the BOSH job originally wrote them,
+and may remain available for download from Ops Manager,
+or accessible through SSH.
+
+<p class='note'><strong>Note</strong>: If your custom rule is invalid, PAS forwards no logs.</p>
+
+###<a id='forward-job'></a>Forward Only Logs From a Certain Job
+
+This rule filters logs out unless they originate from the `uaa` job:
+
+```
+if ($app-name != "uaa") then stop
+```
+
+###<a id='exclude-content'></a>Exclude Logs With Certain Content
+
+This rule filters out logs that contain "DEBUG" in the body.
+
+```
+if ($msg contains "DEBUG") then stop
+```
+
+<p class='note'><strong>Note</strong>: 
+In the above example, "DEBUG" is in the message body.
+Not all logs that are originally intended as to be DEBUG logs will have this string in their body.
+</p>

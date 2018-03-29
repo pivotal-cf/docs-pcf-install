@@ -80,22 +80,24 @@ Perform the following steps to configure the PCF Isolation Segment tile:
   * For **LDAP Service Account User**, enter the username of the service account in LDAP that  will manage volume services.
   * For **LDAP Service Account Password**, enter the password for the service account.
   * For **LDAP Server Host**, enter the hostname or IP address of the LDAP server.
-  * For **LDAP Server Port**, enter the LDAP server port number. If you do not specify a port number, Ops Manager uses 389.
+  * For **LDAP Server Port**, enter the LDAP server port number. If you do not specify a port number, Ops Manager uses port `389`.
   * For **LDAP Server Protocol**, enter the server protocol. If you do not specify a protocol, Ops Manager uses TCP.
   * For **LDAP User Fully-Qualified Domain Name**, enter the fully qualified path to the LDAP service account. For example, if you have a service account called `volume-services` that belongs to organizational units (OU) called `service-accounts` and `my-company`, and your domain is called `domain`, the fully qualified path looks like the following:
   <pre>CN=volume-services,OU=service-accounts,OU=my-company,DC=domain,DC=com</pre>
 
 1. By default, PAS manages container images using the [GrootFS](../concepts/architecture/garden.html#garden-rootfs) plugin for Garden-runC. If you experience issues with GrootFS, you can disable the plugin and use the image plugin built into Garden-runC.
 
+1. To enable Gorouter to verify app identity using TLS, select the **Router uses TLS to verify application identity** checkbox. Verifying app identity using TLS improves resiliency and consistency for app routes. For more information about Gorouter route consistency modes, see [Preventing Misrouting](../concepts/http-routing.html#consistency) in _HTTP Routing_.
+
 1. Click **Save**.
  
 ### <a id='syslog'></a> System Logging
 
-1. In the **System Logging** menu, select an option from the  **Do you want to configure syslog for system components?** menu. **No** is selected by default. 
+1. In the **System Logging** menu, select an option underneath **Do you want to configure syslog for system components?**. **No** is selected by default. This setting only affects Diego cell, router, and HAProxy components within the isolation segment, not shared PAS system components.
 <%= image_tag('./images/iso-logging-no.png') %>
 
 1. If you want to use syslog, select **Yes.**
-<%= image_tag('./images/iso-logging-yes.png') %>
+<%= image_tag('./images/ist-tcp-log-export.png') %>
 
 1. Enter the address of your external syslog aggregation service in the **Address** field. The address can be a hostname or IP address.
 
@@ -108,6 +110,8 @@ Perform the following steps to configure the PCF Isolation Segment tile:
 1. Enter a **Permitted Peer.**
 
 1. Paste the certificate for your TLS certificate authority (CA) in the **TLS CA Certificate** field.
+
+1. (Optional) Select the **Use TCP for file forwarding local transport** to transmit logs over TCP, rather than UDP. This prevents log truncation, but may cause performance issues.
 
 1. Click **Save.**
 
@@ -128,10 +132,6 @@ Edit the configurations in **Advanced Features** as desired.
       * Specify **Router IPs**.
       * Attach the IP addresses to your load balancer manually.
 1. If you are not using HAProxy for this isolation segment, set the number of **Instances** to `0`. 
-
-### <a id='stemcell'></a> Stemcell
-
-Optionally, edit the **Stemcell** configuration.
 
 ### <a id='after_config'></a> After Tile Configuration
 

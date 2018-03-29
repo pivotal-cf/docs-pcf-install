@@ -1,5 +1,5 @@
 ---
-title: Deploying PAS on AWS (Terraform)
+title: Deploying PAS on AWS using Terraform
 owner: Ops Manager
 ---
 <strong><%= modified_date %></strong>
@@ -7,7 +7,7 @@ owner: Ops Manager
 
 This topic describes how to install and configure Pivotal Application Service (PAS) on Amazon Web Services (AWS).
 
-Before beginning this procedure, ensure that you have successfully completed the [Configuring Ops Manager Director on AWS (Terraform)](./aws-om-config-terraform.html) topic.
+Before beginning this procedure, ensure that you have successfully completed the [Configuring BOSH Director on AWS (Terraform)](./aws-om-config-terraform.html) topic.
 
 <p class="note"><strong>Note</strong>: If you plan to <a href = "http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the PAS tile.</p>
 
@@ -36,7 +36,7 @@ Dashboard.
 
 1. Select all three Availability Zones under **Balance other jobs**. Ops Manager balances instances of jobs with more than one instance across the Availability Zones that you specify.
 
-1. From the **Network** drop-down box, choose the `pcf-pas-network` you created when configuring the Ops Manager Director tile.
+1. From the **Network** drop-down box, choose the `pcf-pas-network` you created when configuring the BOSH Director tile.
 	<%= image_tag("er-az.png") %>
 
 1. Click **Save**.
@@ -51,7 +51,7 @@ Dashboard.
 
 1. Enter the system and application domains.
     * For **System Domain**, enter the value of `sys_domain` from the Terraform output. This defines your target when you push apps to PAS.
-    * For **Apps Domain**, enter the value of `app_domain` from the Terraform output. This defines where PAS should serve your apps.
+    * For **Apps Domain**, enter the value of `apps_domain` from the Terraform output. This defines where PAS should serve your apps.
 
     <p class="note"><strong>Note</strong>: You configured a wildcard DNS record
     for these domains in an earlier step.</p>
@@ -97,7 +97,7 @@ You can configure PAS to use the internal MySQL database provided with PCF, or y
 
 <%= partial 'ert_database_internal' %>
 
-Then proceed to [Step 12: (Optional) Configure Internal MySQL](#internal-mysql) to configure high availability and automatic backups for your internal MySQL databases.
+Then proceed to [Step 12: (Optional) Configure Internal MySQL](#internal-mysql) to configure high availability for your internal MySQL databases.
 
 ### <a id='create-dbs'></a> Create External System Databases ###
 
@@ -200,7 +200,7 @@ For additional factors to consider when selecting file storage, see the <a href=
 To use an external S3-compatible filestore for your PAS file storage, perform the following steps:
 
 1. In the PAS tile, select **File Storage**.
-    <%= image_tag("cloudform/external_filestore_config.png") %>
+    <%= image_tag("images/external-s3-filestore.png") %>
 1. Select the **External S3-Compatible Filestore** option and complete the following fields:
     * For **URL Endpoint**:
         1. In a browser, open the [Amazon Simple Storage Service (Amazon S3) table](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region).
@@ -211,39 +211,45 @@ To use an external S3-compatible filestore for your PAS file storage, perform th
 		      `https://s3-us-west-2.amazonaws.com/`.
     * For **S3 Signature Version** and **Region**, use the **V4 Signature** values. AWS recommends using [Signature Version 4](http://docs.aws.amazon.com/general/latest/gr/signing_aws_api_requests.html#signature-versions).
     * Select **Server-side Encryption (available for AWS S3 only)** to encrypt the contents of your S3 filestore. See the [AWS S3 documentation](http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingServerSideEncryption.html) for more information.
-    * Complete the following fields:
-    <table border="1" class="nice" >
-      <tr>
-        <th>Ops Manager Field</th>
-        <th>terraform output</th>
-      </tr>
-      <tr>
-        <td>Buildpacks Bucket Name</td>
-        <td>`pas_buildpackets_bucket`</td>
-      </tr>
-      <tr>
-        <td>Droplets Bucket Name</td>
-        <td>`pas_droplets_bucket`</td>
-      </tr>
-      <tr>
-        <td>Packages Bucket Name</td>
-        <td>`pas_packages_bucket`</td>
-      </tr>
-      <tr>
-        <td>Resources Bucket Name</td>
-        <td>`pas_resources_bucket`</td>
-      </tr>
-      <tr>
-        <td>Access Key ID</td>
-        <td>`iam_user_access_key`</td>
-      </tr>
-      <tr>
-        <td>AWS Secret Key</td>
-        <td>`iam_user_secret_access_key`</td>
-      </tr>
-    </table>
+    * (Optional) If you selected **Server-side Encryption**, you can also specify a **KMS Key ID**. You can find this value under the `blobstore_kms_key_id` in the Terraform output. PAS uses the KMS key to encrypt files uploaded to the blobstore. If you do not provide a KMS Key ID, PAS uses the default AWS key. For more information, see [Protecting Data Using Server-Side Encryption with AWS KMS–Managed Keys (SSE-KMS)](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html). 
+    * (Optional) Enable **Versioning is enabled for all buckets listed below** for S3 blobstore backup and restore, if your buckets have versioning enabled.
+    <p class="note"><strong>Note:</strong> Backup and restore only supports versioned S3-compatible blobstores. For more information on setting up versioning for your blobstore, see <a href="https://docs.cloudfoundry.org/bbr/external-blobstores.html#enable-versioning">Enable Versioning on Your External Blobstore</a> in the <em>Backup and Restore with External Blobstores</em> topic of the Cloud Foundry documentation.
+</p>
+<%= partial 'bbr_s3_versioned_blobstore_warning'%>
+          <li> Complete the following fields:
 
-    <p class="note"><strong>Note</strong>: For more information regarding AWS S3 Signatures, see the <a href="http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html">Authenticating Requests</a> documentation.</p>
+          <table border="1" class="nice" >
+            <tr>
+              <th>Ops Manager Field</th>
+              <th>terraform output</th>
+            </tr>
+            <tr>
+              <td>Buildpacks Bucket Name</td>
+              <td><code>pas\_buildpackets\_bucket</code></td>
+            </tr>
+            <tr>
+              <td>Droplets Bucket Name</td>
+              <td><code>pas\_droplets\_bucket</code></td>
+            </tr>
+            <tr>
+              <td>Packages Bucket Name</td>
+              <td><code>pas\_packages\_bucket</code></td>
+            </tr>
+            <tr>
+              <td>Resources Bucket Name</td>
+              <td><code>pas\_resources\_bucket</code></td>
+            </tr>
+            <tr>
+              <td>Access Key ID</td>
+              <td><code>iam\_user\_access\_key</code></td>
+            </tr>
+            <tr>
+              <td>AWS Secret Key</td>
+              <td><code>iam\_user_secret\_access\_key</code></td>
+            </tr>
+          </table>
+          <p class="note"><strong>Note</strong>: For more information regarding AWS S3 Signatures, see the <a href="http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html">Authenticating Requests</a> documentation.
+          </p>
 1. Click **Save**.
 
 ### <a id='other'></a> Other IaaS Storage Options
@@ -279,23 +285,27 @@ end-user self-registration.
 settings using this form, the administrator must create orgs and users using
 the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating and Managing Users with the cf CLI</a> for more information.</p>
 
-## <a id='config-cc'></a>Step 18: Configure Cloud Controller##
+## <a id='config-autoscaler'></a>Step 18: (Optional) Configure App Autoscaler
+
+<%= partial 'app-autoscaler' %>
+
+## <a id='config-cc'></a>Step 19: Configure Cloud Controller##
 
 <%= partial 'cloud-controller' %>
 
-## <a id='config-smoke-test'></a>Step 19: Configure Smoke Tests##
+## <a id='config-smoke-test'></a>Step 20: Configure Smoke Tests##
 
 <%= partial '_smoketests' %>
 
-## <a id='advanced-features'></a>Step 20: (Optional) Enable Advanced Features ##
+## <a id='advanced-features'></a>Step 21: (Optional) Enable Advanced Features ##
 
 <%= partial '_advanced-features' %>
 
-## <a id='errands'></a>Step 21: Configure Errands ##
+## <a id='errands'></a>Step 22: Configure Errands ##
 
 <%= partial 'errands' %>
 
-## <a id='config-elb'></a>Step 22: Configure Router (or HAProxy) to Elastic Load Balancer ##
+## <a id='config-elb'></a>Step 23: Configure Router (or HAProxy) to Elastic Load Balancer ##
 
 1. In the PAS tile, click **Resource Config**.
   <%= image_tag("pcfaws/er-aws-resource-config.png") %>
@@ -313,25 +323,15 @@ instead of the **Router** row. For a high availability configuration, scale up t
 
 1. Click **Save**.
 
-## <a id='disable-resources'></a>Step 23: (Optional) Scale Down and Disable Resources ##
+## <a id='disable-resources'></a>Step 24: (Optional) Scale Down and Disable Resources ##
 
 <%= partial 'disable_resources' %>
 
-## <a id='stemcell'></a>Step 24: Download Stemcell ##
+## <a id='stemcell'></a>Step 25: Download Stemcell ##
 
-This step is only required if your Ops Manager does not already have the Stemcell version required by PAS.
+<%= partial "download-stemcell" %>
 
-1. Select **Stemcell**.
-
-1. Log into the [Pivotal Network](https://network.pivotal.io/products/pivotal-cf) and click on **Stemcells**.
-
-1. Download the appropriate stemcell version targeted for your IaaS.
-
-1. In Ops Manager, import the downloaded stemcell <code>.tgz</code> file.
-
-    <%= image_tag("stemcell_18.png") %>
-
-## <a id='complete'></a>Step 25: Complete the PAS Installation ##
+## <a id='complete'></a>Step 26: Complete the PAS Installation ##
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.

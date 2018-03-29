@@ -30,7 +30,7 @@ This section is for guidance only, and Pivotal highly recommends that operators 
 
 Consult the following restrictions for a backup artifact to be restorable:
 
-+ **CIDR ranges**: BBR requires the IP ranges to be the same in the restore environment as it was in the backup environment.
++ **CIDR ranges**: BBR requires the IP address ranges to be the same in the restore environment as in the backup environment.
 + **Topology**: BBR requires the BOSH topology of a deployment to be the same in the restore environment as it was in the backup environment.
 + **Naming of instance groups and jobs**: For any deployment that implements the backup and restore scripts, the instance groups and jobs must have the same names.
 + **Number of instance groups and jobs**: For instance groups and jobs that have backup and restore scripts, there must be the same number of instances.
@@ -57,46 +57,62 @@ If you recreate your IaaS resources, you must also add those resources to Ops Ma
 1. Perform the procedures for your IaaS to deploy Ops Manager:
   * If you configured AWS manually: [Step 12](../pcf-aws-manual-config.html#pcfaws-om-ami) through [Step 19](../pcf-aws-manual-config.html#pcfaws-mysql-rds) of the <em>Manually Configuring AWS for PCF</em> topic.
   * If you used the CloudFormation template install PCF on AWS: [Deploying BOSH and Ops Manager to AWS](../aws-terraform.html)
-  * [Launching an Ops Manager Director Instance on Azure](../azure-arm-template.html)
-  * [Launching an Ops Manager Director Instance on GCP](../gcp-om-deploy.html)
+  * [Launching a BOSH Director Instance on Azure](../azure-arm-template.html)
+  * [Launching a BOSH Director Instance on GCP](../gcp-om-deploy.html)
   * [Step 3](../openstack-setup.html#create-om-image) through [Step 7](../openstack-setup.html#dns-entry) of the <em>Provisioning the OpenStack Infrastructure</em> topic.
   * [Deploying Operations Manager to vSphere](../deploying-vm.html)
 
-1. Access your new Ops Manager by navigating to `YOUR-OPS-MAN-FQDN` in a browser.
+1. Import your installation settings. This can be done in two ways:
 
-1. On the **Welcome to Ops Manager** page, click **Import Existing Installation**.
+    1. Using the Ops Manager UI
 
-    <%= image_tag("../images/upgrading/welcome.png") %>
+        1. Access your new Ops Manager by navigating to `YOUR-OPS-MAN-FQDN` in a browser.
 
-1. In the import panel, perform the following tasks:
-  * Enter your **Decryption Passphrase**.
-  * Click **Choose File** and browse to the installation zip file that you exported in the <a href='./backup-pcf-bbr.html#export'>Step 7: Export Installation Settings</a> section of the <i>Backing Up Pivotal Cloud Foundry with BBR</i> topic.
+        1. On the **Welcome to Ops Manager** page, click **Import Existing Installation**.
 
-    <%= image_tag("../images/upgrading/decryption_passphrase.png") %>
+            <%= image_tag("../images/upgrading/welcome.png") %>
 
-1. Click **Import**.
+        1. In the import panel, perform the following tasks:
+          * Enter your **Decryption Passphrase**.
+          * Click **Choose File** and browse to the installation zip file that you exported in the <a href='./backup-pcf-bbr.html#export'>Step 7: Export Installation Settings</a> section of the <i>Backing Up Pivotal Cloud Foundry with BBR</i> topic.
 
-    <p class="note"><strong>Note</strong>:
-      Some browsers do not provide feedback on the status of the import process,
-      and may appear to hang. The import process takes at least 10 minutes, and takes longer the more tiles that were present on the backed-up Ops Manager.</p>
+            <%= image_tag("../images/upgrading/decryption_passphrase.png") %>
 
-1. A **Successfully imported installation** message appears upon completion.
+        1. Click **Import**.
 
-    <%= image_tag("../images/upgrading/success.png") %>
+            <p class="note"><strong>Note</strong>:
+              Some browsers do not provide feedback on the status of the import process,
+              and may appear to hang. The import process takes at least 10 minutes, and takes longer the more tiles that were present on the backed-up Ops Manager.</p>
+
+        1. A **Successfully imported installation** message appears upon completion.
+
+            <%= image_tag("../images/upgrading/success.png") %>
+
+    1. Using the Ops Manager API:
+
+        ```
+        curl OPSMAN-URL/api/v1/installation_asset_collection \
+          -X POST \
+          -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
+          -F 'installation[file]=@installation_settings.zip' \
+          -F 'passphrase=DECRYPTION-PASSPHRASE' > installation_settings.zip
+        ```
+
+        See [_Using the Ops Manager API_](https://docs.pivotal.io/pivotalcf/latest/customizing/ops-man-api.html) for instructions on how to authenticate and retrieve the `UAA-ACCESS-TOKEN`.
 
 ## <a id="config-new-resources"></a> (Optional) Step 3: Configure Ops Manager for New Resources
 
 If you recreated IaaS resources such as networks and load balancers by following the steps in the [(Optional) Step 1: Prepare Your Environment](#prepare-env) section above, perform the following steps to update Ops Manager with your new resources:
 
 1. Enable Ops Manager advanced mode by following the instructions in this [Knowledge Base article](https://discuss.pivotal.io/hc/en-us/articles/219118768-How-to-enable-advanced-mode-in-the-Ops-Manager).
-1. Navigate to the Ops Manager Installation Dashboard and click the Ops Manager Director tile.
+1. Navigate to the Ops Manager Installation Dashboard and click the BOSH Director tile.
 1. Click **Create Networks** and update the network names to reflect the network names for the new environment.
 1. If running on GCP, click **Google Config** and update the **Project ID** to reflect the new GCP project ID.
 1. Return to the Ops Manager Installation Dashboard and click the Pivotal Application Service (PAS) tile.
 1. Click **Resource Config**. If necessary for your IaaS, enter the name of your new load balancers in the **Load Balancers** column.
 1. If necessary, click **Networking** and update the load balancer SSL certificate and private key under **Router SSL Termination Certificate and Private Key**.
 1. If your environment has a new DNS address, update the old environment DNS entries to point to the new load balancer addresses. For more information, see the [Step 4: Configure Networking](../custom-load-balancer.html#configure-networking) section of the <em>Using Your Own Load Balancer</em> topic and follow the link to the instructions for your IaaS.
-1. If you are using Google Cloud Platform (GCP), navigate to the **Google Config** section of the Ops Manager Director tile and update the **Default Deployment Tag** to reflect the new environment.
+1. If you are using Google Cloud Platform (GCP), navigate to the **Google Config** section of the BOSH Director tile and update the **Default Deployment Tag** to reflect the new environment.
 1. Disable Ops Manager advanced mode as recommended in the [Knowledge Base article](https://discuss.pivotal.io/hc/en-us/articles/219118768-How-to-enable-advanced-mode-in-the-Ops-Manager).
 
 ## <a id="bosh-state"></a> Step 4: Remove BOSH State File
@@ -107,13 +123,13 @@ If you recreated IaaS resources such as networks and load balancers by following
   $ sudo rm /var/tempest/workspaces/default/deployments/bosh-state.json
   </pre>
 1. Navigate to `YOUR-OPS-MAN-FQDN` in a browser and log into Ops Manager.
-1. Upload the required stemcell for each tile that requires one. Each tile that requires an upload displays with an orange indicator at the bottom. When clicked, the Stemcell panel shows an orange circle beside it.
+1. Import the required stemcell for each tile that requires one. For more information on importing stemcells, see [Importing and Managing Stemcells](../../opsguide/managing-stemcells.html).
 <p class="note warning"><strong>Warning</strong>: Do not click <strong>Apply Changes</strong> at this point.</p>
 
-## <a id="bosh-only-deploy"></a> Step 5: Deploy Ops Manager Director
+## <a id="bosh-only-deploy"></a> Step 5: Deploy the BOSH Director
 
-Perform the steps in the [Applying Changes to Ops Manager Director](../deploy-ops-man-director.html) topic to use the Ops Manager API to only deploy the Ops Manager Director.
-<p class="note"><strong>Validation</strong>: If your BOSH Director has an external hostname, you should change it in **Ops Manager Director > Director Config > Directory Hostname** to ensure it does not conflict with the hostname of the backed up Director.</p>
+Perform the steps in the [Applying Changes to BOSH Director](../deploy-ops-man-director.html) topic to use the Ops Manager API to only deploy the BOSH Director.
+<p class="note"><strong>Validation</strong>: If your BOSH Director has an external hostname, you should change it in **BOSH Director > Director Config > Director Hostname** to ensure it does not conflict with the hostname of the backed up Director.</p>
 
 ## <a id="artifacts-jumpbox"></a> Step 6: Transfer Artifacts to Jumpbox
 
@@ -124,7 +140,7 @@ For instance, you could SCP the backup artifact to your jumpbox:
 
 ## <a id="retrieve"></a> Step 7: Retrieve BOSH Director Address and Credentials
 
-Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in from the Ops Manager Director tile:
+Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in from the BOSH Director tile:
 
 <%= partial 'bosh_target_director_bbr' %>
 
@@ -221,11 +237,8 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
 ## <a id='redeploy-ert'></a> Step 11: Redeploy PAS
 
 1. Perform the following steps to determine which stemcell is used by PAS:
-  1. Navigate to the Ops Manager Installation Dashboard.
-  1. Click the PAS tile.
-  1. Click **Stemcell** and record the release number included in the displayed filename:
-      <%= image_tag('images/stemcell.png') %>
-    In the screenshot above, the stemcell release number is **3421.9**.
+  1. Navigate to **Manage Stemcells** from the **Installation Dashboard**
+  1. Record the PAS stemcell release number from the **Staged** column. For more information on stemcells in Ops Manager, see [Importing and Managing Stemcells](../../opsguide/managing-stemcells.html).
     <br><br>
     You can also retrieve the stemcell release using the BOSH CLI:
       <pre class="terminal">
@@ -261,7 +274,7 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
 
 <p class="note validation"><strong>Validation</strong>: If your apps must not be running after a restore run <code>bosh stop</code> on each <code>diego_cell</code> VM in the deployment.</p>
 
-1. If you use an external blobstore and copied it during the backup, restore the external blobstore with your IAAS specific tools before running PAS restore.
+1. If you use a non-versioned or non-S3-compatible external blobstore and copied it during the backup, restore the external blobstore with your IaaS specific tools before running PAS restore.
 
 1. Run the BBR restore command from your jumpbox to restore PAS:
 <pre class="terminal">
@@ -344,10 +357,10 @@ If you have on-demand service instances provisioned by an on-demand service brok
      select(.name == "broker").properties.bosh.authentication.uaa )'
     </pre>
 1. SSH into your Ops Manager VM. For more information, see the [SSH into Ops Manager](../trouble-advanced.html#ssh) section of the <em>Advanced Troubleshooting with the BOSH CLI</em> topic.
-1. Using the BOSH credentials retrieved above, authenticate with your BOSH Director by running the following commands with the [BOSH CLI v2](https://bosh.io/docs/cli-v2.html):
+1. Using the BOSH credentials retrieved above, authenticate with your BOSH Director by running the following commands with BOSH CLI v2 or later. For more information about BOSH CLI, see [CLI v2+](https://bosh.io/docs/cli-v2.html) in the BOSH documentation.
   <pre class="terminal">
   $ export BOSH-CLIENT=YOUR-CLIENT-ID
-  $ export BOSH-CLIENT-SECRET=YOUR-CLIENT-SECRET
+  $ export BOSH_CLIENT_SECRET=YOUR-CLIENT-SECRET
   $ bosh alias-env director -e DIRECTOR-IP \
   --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE
   </pre>

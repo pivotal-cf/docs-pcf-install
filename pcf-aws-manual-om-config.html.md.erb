@@ -12,7 +12,6 @@ This topic describes how to configure Ops Manager to deploy Pivotal Cloud Foundr
 Before beginning this procedure, ensure that you have successfully completed all of the steps in the [Manually Configuring AWS for PCF](pcf-aws-manual-config.html) topic. After completing the procedures in this topic, proceed to the [Manually Configuring PAS for AWS](pcf-aws-manual-er-config.html) topic to continue deploying PCF.
 
 ## <a id='pcfaws-om-access'></a>Step 1: Access Ops Manager ##
-
 <p class="note"><strong>Note</strong>: For security, Ops Manager 1.7 and later require that you log in using a fully qualified domain name to access Ops Manager.</a></p>
 
 1. In a web browser, navigate to the fully qualified domain you created in the <a href="pcf-aws-manual-om-config.html#pcfaws-dns">Step 16: Configure DNS Records</a> section of the <em>Manually Configuring AWS for PCF</em> topic.
@@ -168,7 +167,7 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
 1. Select **Create Networks**.
 <%= image_tag("cloudform/create-networks.png") %>
 1. (Optional) Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
-1. Perform the following steps to add the network configuration you created for your VPC in the [Step 4: Create a VPC](pcf-aws-manual-config.html#pcfaws-vpc) section of the <em>Manually Configuring PCF for AWS</em> topic:
+1. Perform the following steps to add the network configuration you created for your VPC in the [Step 4: Create a VPC](pcf-aws-manual-config.html#pcfaws-vpc) section of the <em>Manually Configuring PCF for AWS</em> topic. Record your VPC CIDR if you set a CIDR other than the recommendation.
     1. Click **Add Network**.
     1. For **Name**, enter `pcf-management-network`.
     1. Create a subnet for each availability zone by clicking **Add Subnet**. Refer to the table below for the information required to create all three subnets:
@@ -185,7 +184,7 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
            <td>`pcf-management-subnet-az0`</td>
            <td>`10.0.16.0/28`</td>
            <td>`10.0.16.0-10.0.16.4`</td>
-           <td>`169.254.169.253`</td>
+           <td style="white-space:nowrap">`10.0.0.2`<strong>\*</strong></td>
            <td>`10.0.16.1`</td>
            <td>`REGION-#a` (for example, `us-west-2a`)</td>
          </tr>
@@ -193,7 +192,7 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
            <td>`pcf-management-subnet-az1`</td>
            <td>`10.0.16.16/28`</td>
            <td>`10.0.16.16-10.0.16.20`</td>
-           <td>`169.254.169.253`</td>
+           <td>`10.0.0.2`<strong>\*</strong></td>
            <td>`10.0.16.17`</td>
            <td>`REGION-#b` (for example, `us-west-2b`)</td>
          </tr>
@@ -201,11 +200,12 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
            <td>`pcf-management-subnet-az2`</td>
            <td>`10.0.16.32/28`</td>
            <td>`10.0.16.32-10.0.16.36`</td>
-           <td>`169.254.169.253`</td>
+           <td>`10.0.0.2`<strong>\*</strong></td>
            <td>`10.0.16.33`</td>
            <td>`REGION-#c` (for example, `us-west-2c`)</td>
          </tr>
          </table>
+         <p><strong>\*</strong> If you set a VPC CIDR other than recommended, enter the second IP in your VPC CIDR. For example, for a <code>10.0.0.0/24</code> VPC CIDR, enter <code>10.0.0.2</code> in each subnet.</p>
     <br><br>
     1. Click **Add Network**.
     1. For **Name**, enter `pcf-ert-network`.
@@ -223,7 +223,7 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
            <td>`pcf-ert-subnet-az0`</td>
            <td>`10.0.4.0/24`</td>
            <td>`10.0.4.0-10.0.4.4`</td>
-           <td>`169.254.169.253`</td>
+           <td style="white-space:nowrap">`10.0.0.2`<strong>\*</strong></td>
            <td>`10.0.4.1`</td>
            <td>`REGION-#a` (for example, `us-west-2a`)</td>
          </tr>
@@ -231,7 +231,7 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
            <td>`pcf-ert-subnet-az1`</td>
            <td>`10.0.5.0/24`</td>
            <td>`10.0.5.0-10.0.5.4`</td>
-           <td>`169.254.169.253`</td>
+           <td>`10.0.0.2`<strong>\*</strong></td>
            <td>`10.0.5.1`</td>
            <td>`REGION-#b` (for example, `us-west-2b`)</td>
          </tr>
@@ -239,11 +239,12 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
            <td>`pcf-ert-subnet-az2`</td>
            <td>`10.0.6.0/24`</td>
            <td>`10.0.6.0-10.0.6.4`</td>
-           <td>`169.254.169.253`</td>
+           <td>`10.0.0.2`<strong>\*</strong></td>
            <td>`10.0.6.1`</td>
            <td>`REGION-#c` (for example, `us-west-2c`)</td>
          </tr>
          </table>
+         <p><strong>\*</strong> If you set a VPC CIDR other than recommended, enter the second IP in your VPC CIDR. For example, for a <code>10.0.0.0/24</code> VPC CIDR, enter <code>10.0.0.2</code> in each subnet.</p>
     <br><br>
     1. Click **Add Network**.
     1. Enter `pcf-services-network` in **Name** field.
@@ -261,7 +262,7 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
              <td>`pcf-services-subnet-az0`</td>
              <td>`10.0.8.0/24`</td>
              <td>`10.0.8.0-10.0.8.3`</td>
-             <td>`169.254.169.253`</td>
+             <td style="white-space:nowrap">`10.0.0.2`<strong>\*</strong></td>
              <td>`10.0.8.1`</td>
              <td>`REGION-#a` (for example, `us-west-2a`)</td>
            </tr>
@@ -269,7 +270,7 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
              <td>`pcf-services-subnet-az1`</td>
              <td>`10.0.9.0/24`</td>
              <td>`10.0.9.0-10.0.9.3`</td>
-             <td>`169.254.169.253`</td>
+             <td>`10.0.0.2`<strong>\*</strong></td>
              <td>`10.0.9.1`</td>
              <td>`REGION-#b` (for example, `us-west-2b`)</td>
            </tr>
@@ -277,11 +278,12 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
              <td>`pcf-services-subnet-az2`</td>
              <td>`10.0.10.0/24`</td>
              <td>`10.0.10.0-10.0.10.3`</td>
-             <td>`169.254.169.253`</td>
+             <td>`10.0.0.2`<strong>\*</strong></td>
              <td>`10.0.10.1`</td>
              <td>`REGION-#c` (for example, `us-west-2c`)</td>
            </tr>
            </table>
+           <p><strong>\*</strong> If you set a VPC CIDR other than recommended, enter the second IP in your VPC CIDR. For example, for a <code>10.0.0.0/24</code> VPC CIDR, enter <code>10.0.0.2</code> in each subnet.</p>
 
 1. Click **Save**.<%= vars.expand_network_azs %>
 

@@ -1,63 +1,128 @@
 ---
-title: Deploying PAS on NSX-T
+title: Deploying PAS with NSX-T Networking
 owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
 
-This topic describes how to install Pivotal Application Service (PAS) on vSphere with NSX-T.
+This topic describes how to install Pivotal Application Service (PAS) on vSphere with NSX-T internal networking, using the VMware NSX-T Container Plug-in for PCF.
 
 ##<a id='introduction'></a>Introduction
 
 PAS 2.0 uses a Container Network Interface (CNI) plugin to support secure and direct internal communication between containers. This plugin can be:
 
 * The internal Silk plugin that comes packaged with PAS, or
-* On vSphere, the [VMware NSX-T Container Plug-in for PCF](https://network.pivotal.io/products/vmware-nsx-t), which installs as an Ops Manager tile.
+* On vSphere, [VMware NSX-T Container Plug-in for PCF](https://network.pivotal.io/products/vmware-nsx-t), which installs as an Ops Manager tile.
 
 ##<a id='requirements'></a>Requirements
 
-* PCF 2.0: PAS 2.0 and Ops Manager 2.0 installed on vSphere and configured, except for the BOSH Director tile > **Networking** pane.
-  - See [Deploying BOSH and Ops Manager to vSphere](./deploying-vm.html)
-* VMWare NSX-T container plugin for PCF 2.1.0 tile: downloaded from [Pivotal Network](https://network.pivotal.io).
-* NSX-T 2.1 environment with NSX-T components installed and configured: see the [NSX-T Cookbook](https://docs.google.com/document/d/1hw7USpyMZpKoT5MvSaP9NcnTHsdvMd_w0EGZ19cL8nQ).
+* An NSX-T 2.1 environment with NSX-T components installed and configured. See the [NSX-T Cookbook](https://docs.google.com/document/d/1hw7USpyMZpKoT5MvSaP9NcnTHsdvMd_w0EGZ19cL8nQ) for directions.
+* BOSH and Ops Manager v2.0 or later installed and configured on vSphere.
+  - See [Deploying BOSH and Ops Manager to vSphere](./deploying-vm.html) for directions.
+* The [VMWare NSX-T Container Plug-in for PCF tile](https://network.pivotal.io/products/vmware-nsx-t) downloaded from Pivotal Network and imported to the Ops Manager **Installation Dashboard**.
+  - See [Adding and Importing Products](./add-delete.html#add-import) for how to download and import Pivotal products to the **Installation Dashboard**.
+* The [PAS tile](https://network.pivotal.io/products/elastic-runtime) downloaded from Pivotal Network and imported to the Ops Manager **Installation Dashboard**.
+  - The PAS tile must be in one of the following two states:
+      * Not deployed yet; you have not yet run **Apply Changes** on this version of PAS.
+      * Deployed previously, with the **Networking** pane > **Container Network Interface Plugin** set to **External**.
+      <p class="note"><strong>Note</strong>: Deploying PAS with its Container Network Interface (CNI) set to **Silk** configures Diego cells to use an internally-managed container network. Subsequently switching the CNI interface to **External** NSX-T leads to errors.</p>  
 
 ##<a id='architecture'></a>Architecture
 
-The following figure shows the network architecture for deploying PAS across multiple hardware clusters:
+The following diagram shows how to deploy an NSX-T machine to run PAS across multiple vSphere hardware clusters. NSX-T runs a Tier-0 (T0) router and multiple Tier-1 (T1) routers, each connecting to a network within Pivotal Cloud Foundry. Each vSphere hardware column cluster corresponds to an Availability Zone in PCF:
 
 ![NSX &amp; PAS Overview](nsx-t/nsx-t-refarch.png)
 
+When a developer pushes an app to a new Org for the first time, the NSX-T plugin triggers NSX-T to create a new T1 router and allocate an address range for the Org, on demand.
+
 ##<a id='install'></a> Install and Configure PAS and NSX-T
 
-Installing PAS with NSX-T requires the following actions, which are described below:
+Installing NSX-T to run with PAS requires the following actions, which are described below:
 
-1. [Install and Configure the NSX-T Tile](#nsx-t-tile)
+1. [Set up NSX-T to Integrate with PAS](#nsx-t-setup)
 
 1. [Enable NSX-T Mode in the BOSH Director](#nsx-t-mode)
 
-1. [Enable External Networking in PAS](#external-net)
+1. [Configure PAS for External Container Networking](#external-net)
 
-1. [Set up NSX-T to Integrate with PAS](#nsx-to-setup)
+1. [Install and Configure the NSX-T Tile](#nsx-t-tile)
 
-###<a id='nsx-t-tile'></a> Install and Configure the NSX-T tile
+###<a id='nsx-t-setup'></a> Set up NSX-T to Integrate with PAS
 
-1. Download and install the VMware NSX-T tile from [Pivotal Network](https://network.pivotal.io/products/vmware-nsx-t). See [Adding and Importing Products](./add-delete.html#add-import) for how to install Pivotal product tiles onto the Ops Manager **Installation Dashboard**.
-![Ops Manager Installation Dashboard with NSX-T tile](nsx-t/nsx-t-install-dash.png)
+1.  In vSphere, create logical network switches to correspond to the networks that PCF uses.
+  1. Log into the **NSX Manager Dashboard**.  
+  1. Open the **Switching** tab.
+  1. For each of these networks...
+      - **Infrastructure** (BOSH and Ops Manager, defined in BOSH Director tile > **Assign AZs and Networks** pane)
+      - **Deployment** (PAS, defined in PAS tile > **Assign AZs and Networks** pane)
+      - **Services** and **Dynamic Services** (marketplace services and on-demand services, also defined in the PAS tile)
+      - **Isolation Segment** (optional, defined in the Isolation Segment tile > **Assign AZs and Networks** pane)  
+...do the following:
+          1. Click **Add New Logical Switch**.
+          1. Enter a name for the logical switch (e.g. `infrastructure-ls`, `deployment-ls`).
+          1. Click **Save**.
+![NSX ](nsx-t/nsx-t-logical-switch.png)
 
-1. Click the **VMware NSX-T** tile to open its **Settings** tab, and configure the **NSX Manager** pane as follows:
-  - **NSX Manager Address**:  NSX Manager host address or IP address                            
-  - **Use Client Certificates or Username/Password**: Select **Basic Authentication with Username and Password** and enter **NSX Manager Admin Username** and **Admin Password** credentials in the fields underneath.
-  - **NSX Manager CA Cert**: Obtain this certificate from NSX Manager as follows:
-      1. `ssh` into NSX Manager
-      1. From the NSX Manager command line, run `get certificate api thumbprint` to retrieve the certificate.
-![NSX-T tile configuration](nsx-t/nsx-t-tile-config.png)
+1. Create T0 network address translation (NAT) rules to facilitate communication between Ops Manager and the BOSH Director.
+  1. Create and configure a T0 router and router port for PCF.
+  1. In NSX Manager, select your T0 Router and navigate to **Services** > **NAT**.
+  1. Add a rule for destination NAT (DNAT) with:
+      - The externally-specified destination IP address of incoming requests
+      - The internal network address to translate the external address to
+![NSX ](nsx-t/nsx-t-dnat-rule.png)
+  1. Add a rule for source NAT (SNAT) with:
+      - The range of internal addresses that outgoing traffic may come from
+      - The external IP address to put in each outgoing packet header, indicating its source
+![NSX ](nsx-t/nsx-t-snat-rule.png)
 
-1. Open and configure the **NCP** pane as follows:
-  - **PAS Foundation Name**: Unique string specified on tile should match the tag name that specified in NSX-T `t0 router` configurations.  
-  - Subnet prefix for container network :  specify  /24 network
-  - SNAT for container network : Enable
+1. Create T1 Routers for PAS.
+  - Create T1 routers that connect from the T0 router. For each PCF network, Infrastructure, Deployment, and so on, create a T1 router as follows: 
+      1. In the NSX Manager UI, navigate to **Routing** > **Routers**
+      1. Click **Add** > **Tier-1 Router**.
+      1. Configure the router. For example, the Infrastructure network router configuration might look like:
+![NSX ](nsx-t/nsx-t-t1-router.png)
 
-1. In the **NSX Node Agent** pane, enable the **Debug Logging for NSX Node Agent** checkbox.
+1. Create T1 router ports for PAS.
+  - For each T1 router you created, add a **New Router Port** as follows, to to allow traffic in and out:
+      1. In the NSX Manager UI, select the T1 router.
+      1. In **Configuration** > **Router Ports**, add a new router port.
+      1. For **Logical Switch**, enter the name of the logical switch you defined for the network in **Add New Logical Switch**, above.
+![NSX ](nsx-t/nsx-t-router-port.png)
+
+1. Advertise the T1 routes for each PAS T1 router.
+  - Advertise the routes of the T1 routers to the T0 router, so that it can correctly route incoming requests based on their destination IP address:
+      1. Select your T1 Router and navigate to **Routing** > **Route Advertisement**.
+      1. Under **Edit Route Advertisement Configuration**, enable route advertisement by setting **Status** to **Enabled**.
+      1. Set **Advertise All NSX Connected Routes** to **Yes**.
+![NSX ](nsx-t/nsx-t-route-advertise.png)
+
+1. Add a tag for the T0 router.
+  1. From NSX Manager, click **router-t0 - Manage Tags**
+  1. Click **+ ADD** and enter a unique identifier for the router, to associate it with PAS.
+![NSX ](nsx-t/nsx-t-t0-router-tags.png)
+
+1. Allocate an IP Block for PAS Orgs.
+  1. From NSX Manager, navigate to **DDI** > **IPAM** > **New IP block**.
+  1. Enter a description, such as `This is where IP addresses come from when a new Org is created in PAS.`
+  1. Enter a CIDR to allocate an address block large enough to accommodate all PAS apps.
+![NSX ](nsx-t/nsx-t-ip-block.png)
+  - Add a tag to the newly-created IP block.
+![NSX ](nsx-t/nsx-t-t0-router.png)
+
+1. Create a switching profile.
+  - Create a new switching profile with the following fields and tags:
+      - **Name**: `ncp-ha`
+      - **Type**: `Spoof Guard`
+      - **Tags**: Add a tag with **Scope** `ncp/ha`, **Tag** `True`
+      - **Tags**: Add a second tag with the **Scope** and **Tag** name of the T0 router tag you defined above.
+![NSX ](nsx-t/nsx-t-switching-profile.png)
+
+1. Create an external SNAT IP pool.
+  1. Navigate to **Inventory** > **Groups** > **IP Pools** > **New IP Pool**.
+  1. Enter a name and a description.
+![NSX ](nsx-t/nsx-t-edit-ips.png)
+  1. Add two tags to the SNAT IP pool.
+![NSX ](nsx-t/nsx-t-external-ip-tags.png)
 
 ###<a id='nsx-t-mode'></a> Enable NSX-T Mode in the BOSH Director
 
@@ -75,73 +140,39 @@ Installing PAS with NSX-T requires the following actions, which are described be
     If the NSX Manager generated a self-signed certificate, you can retrieve the CA certificate using OpenSSL with the command `openssl s_client -host NSX-ADDRESS -port 443 -prexit -showcerts`.
     <p class="note"><strong>Note</strong>: To update NSX security group and load balancer information, see the <a href="update-nsx.html">Updating NSX Security Group and Load Balancer Information</a> topic.</p>
 
-###<a id='external-net'></a> Enable External Networking in PAS
+###<a id='external-net'></a> Configure PAS for External Container Networking
 
-1. From the Ops Manager **Installation Dashboard**, open the **Pivotal Application Service** tile.
+1. If you have not already done so, download the PAS tile from [Pivotal Network](https://network.pivotal.io/products/elastic-runtime) and import it to the **Installation Dashboard**. See [Adding and Importing Products](./add-delete.html#add-import) for directions.
+![Ops Manager Installation Dashboard with NSX-T tile](nsx-t/nsx-t-install-dash.png)
 
-1. Open the **Networking** pane.
-
-1. Under **Container Networking Interface Plugin**, select **External**.
+1. Configure PAS, following the directions in [Configuring PAS for vSphere](./config-er-vmware.html). When you configure **Networking**, select **External** under **Container Networking Interface Plugin**.<br>
 ![NSX ](nsx-t/nsx-t-pas-cni.png)
 
-###<a id='nsx-t-setup'></a> Set up NSX-T to Integrate with PAS
+###<a id='nsx-t-tile'></a> Install and Configure the NSX-T tile
 
-1.  In vSphere, create logical network switches to correspond to the networks that PCF uses:
-  1. Log into the **NSX Manager Dashboard**.  
-  1. Open the **Switching** tab.
-  1. For each of these four networks...
-      - Infrastructure (BOSH and Ops Manager)
-      - Deployment (PAS)
-      - Services
-      - On-Demand Services  
-...do the following:
-          1. Click **Add New Logical Switch**.
-          1. Enter a name for the logical switch (e.g. `infrastructure-ls`, `deployment-ls`).
-          1. Click **Save**.
-![NSX ](nsx-t/nsx-t-logical-switch.png)
+1. If you have not already done so, download the VMware NSX-T tile from [Pivotal Network](https://network.pivotal.io/products/vmware-nsx-t) and import it to the **Installation Dashboard**. See [Adding and Importing Products](./add-delete.html#add-import) for directions.
+![Ops Manager Installation Dashboard with NSX-T tile](nsx-t/nsx-t-install-dash.png)
 
-1. Create Tier-0 NAT rules to facilitate communication between Ops Manager and the BOSH Director.
-  1. Create and configure a Tier-0 router and router port for PCF.
-  1. In NSX Manager, select your Tier-0 Router and navigate to **Services** > **NAT**.
-  1. Add two new NAT rules, one for DNAT and one for SNAT.
-![NSX ](nsx-t/nsx-t-dnat-rule.png)
-![NSX ](nsx-t/nsx-t-snat-rule.png)
+1. Click the **VMware NSX-T** tile to open its **Settings** tab, and configure the **NSX Manager** pane as follows:
+  - **NSX Manager Address**:  NSX Manager host address or IP address                            
+  - **Use Client Certificates or Username/Password**: Select **Basic Authentication with Username and Password** and enter **NSX Manager Admin Username** and **Admin Password** credentials in the fields underneath.
+  - **NSX Manager CA Cert**: Obtain this certificate from NSX Manager as follows:
+      1. `ssh` into NSX Manager using the admin account that you created when you deployed NSX Manager.
+      1. From the NSX Manager command line, run `get certificate api` to retrieve the certificate.
+![NSX-T tile config: NSX Manager](nsx-t/nsx-t-tile-config-mgr.png)
 
-1. Create T1 Routers for PAS
-  Once the Tier-0 Router is setup, you will need to create the Tier-1 Routers that will connect to the Tier-0 Router. You will create four Tier-1 routers, one for each of the PCF Networks recommended by the reference architecture.
-  - In the NSX Manager UI, navigate to **Routing** > **Routers** > **Add** > **Tier-1 Router**.
-  - Here is an example for the Infrastructure Network
-![NSX ](nsx-t/nsx-t-t1-router.png)
+1. Open and configure the **NCP** (NSX-T Container Plugin) pane as follows:
+  - **PAS Foundation Name**: The tag string you gave to the `t0 router` in NSX Manager, above.  
+  - **Subnet Prefix of Container Networks**: Subnet mask to set the address range size for apps in a single org. Defaults to `24`. This number must be higher than the mask for all PAS orgs in the NSX Manager **New IP Block** pane, to define a each Org's fraction of the total PAS address space.
+  - **Enable SNAT for Container Network**: Enable this checkbox.
+![NSX-T tile config: NCP](nsx-t/nsx-t-tile-config-ncp.png)
 
-1. Create T1 router ports for PAS
-Once the Tier-1 Routers are created, you will need to add a **New Router Port** to each one to allow traffic in and out. Select the Tier-1 Router in the NSX Manager UI and go to **Configuration** > **Router Ports** and add a new one. Make sure to connect to the appropriate logical switch.
-![NSX ](nsx-t/nsx-t-router-port.png)
+1. In the **NSX Node Agent** pane, enable the **Enable Debug Level of Logging for NSX Node Agent** checkbox.
+![NSX-T tile config: NSX Node Agent](nsx-t/nsx-t-tile-config-agent.png)
 
-1. Advertise the T1 routes for each PAS T1 routers
-  - The final step for configuring the Tier-1 Routers is to advertise their routes to the Tier-0 router. This allows the Tier-0 router to know which Tier-1 to route requests to as they come in based on the destination IP address.
-  - Select your Tier-1 Router and go to **Routing** > **Route Advertisement** and edit the configuration. 
-![NSX ](nsx-t/nsx-t-route-advertise.png)
+1. Click **Save** and return to the **Installation Dashboard**.
 
-1. Manage Tags - T0 routers
-  - From NSX- Manager UI - router-t0 - Manage Tags -  Add a new tag
-For t0 router
-![NSX ](nsx-t/nsx-t-t0-router-tags.png)
-
-1. IP Block for PAS Orgs
-  - Add a new IPAM Block - from NSX -Manager UI - DDI - IPAM -  New IP block.  This is where IP addresses comes from when a new ORG is created in PAS.
-![NSX ](nsx-t/nsx-t-ip-block.png)
-  - Add a tag to newly created IP block
-![NSX ](nsx-t/nsx-t-t0-router.png)
-
-1. Create new switching profile
-  - Create a new switching profile `ncp-ha` of Type `Spoof Guard` and add two tags as shown below
-![NSX ](nsx-t/nsx-t-switching-profile.png)
-
-1. Create External SNAT IP Pool
-  - Create external SNAT IP pool (**Inventory** > **Groups** > **IP Pools**) and add two tags
-![NSX ](nsx-t/nsx-t-edit-ips.png)
-  - Add Tags to SNAT IP Pool
-![NSX ](nsx-t/nsx-t-external-ip-tags.png)
+1. After you have configured both the **PAS** tile and the **VMware NSX-T** tile, click **Apply Changes** to deploy PAS with NSX-T networking.
 
 ##<a id='automation'></a>⚙ Automation
 

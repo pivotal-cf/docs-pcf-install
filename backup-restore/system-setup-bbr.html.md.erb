@@ -59,23 +59,23 @@ Transfer the BBR binary to your jumpbox:
 
 If the certificate chain on your local machine cannot verify the Certificate Authority (CA) certificate for the BOSH Director, you must have the path to the root CA certificate to run BBR commands.
 
-If you have configured the Ops Manager VM as your jumpbox, the path to the root CA certificate is `/var/tempest/workspaces/default/root_ca_certificate`. 
+If you have configured the Ops Manager VM as your jumpbox, the path to the root CA certificate is `/var/tempest/workspaces/default/root_ca_certificate`.
 
 If you have configured another machine as your jumpbox, run the following commands on the jumpbox to copy the CA certificate from your Ops Manager VM.
 
 <pre class="terminal">
-  $ brew install jq
-  $ export OPSMAN=127.0.0.1 # Ops Manager DNS name or IP address
-  $ export OPSMAN_USERNAME=OPSMANAGER-USERNAME # Ops Manager admin username
-  $ export OPSMAN_PASSWORD=OPSMANAGER-PASSWORD # Ops Manager admin password
-  # Get UAA token
-  $ uaac target $OPSMAN/uaa --skip-ssl-validation
-  $ uaac token owner get opsman $OPSMAN_USERNAME -s "" -p $OPSMAN_PASSWORD
-  $ apitoken=$(uaac contexts | grep access_token | cut -d ':' -f 2 | cut -d ' ' -f 2)
-  # Get the certificate (it's a json payload)
-  $ export cert=$(curl -k "https://$OPSMAN/api/v0/security/root_ca_certificate" \
-  -X GET \
-  -H "Authorization: Bearer $apitoken" \
-  | jq '.root_ca_certificate_pem')
-  $ echo -e $cert > PATH-TO-BOSH-SERVER-CERTIFICATE
+$ OPSMAN=127.0.0.1 # Ops Manager DNS name or IP address
+$ OPSMAN_USERNAME=OPSMANAGER-USERNAME # Ops Manager admin username
+$ OPSMAN_PASSWORD=OPSMANAGER-PASSWORD # Ops Manager admin password
+
+# Get UAA token
+$ uaac target $OPSMAN/uaa --skip-ssl-validation
+$ uaac token owner get opsman $OPSMAN_USERNAME -s "" -p $OPSMAN_PASSWORD
+$ API_TOKEN=$(uaac contexts | grep $OPSMAN -A6 | grep access_token \
+  | cut -d ':' -f 2 | cut -d ' ' -f 2)
+
+# Get BOSH Server certificate
+$ curl -k "https://$OPSMAN/api/v0/security/root_ca_certificate" \
+  -H "Authorization: Bearer $API_TOKEN" \
+  | jq --raw-output '.root_ca_certificate_pem' > PATH-TO-BOSH-SERVER-CERTIFICATE
 </pre>

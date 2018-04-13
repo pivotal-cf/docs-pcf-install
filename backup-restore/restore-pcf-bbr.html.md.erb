@@ -350,76 +350,15 @@ $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
 
 ##<a id='odb'></a> (Optional) Step 13: Restore On-Demand Service Instances
 
-<p class="note"><strong>Note</strong>: These procedures restore the on-demand service instances but do not restore service instance data.</p>
+If you have on-demand service instances provisioned by an on-demand service broker, perform the following steps to restore them after successfully restoring PAS:
 
-If you have on-demand service instances provisioned by an on-demand service broker, perform the following steps to restore them after successfully restoring PCF:
-
-1. Use the Cloud Foundry Command Line Interface (cf CLI) to target your PCF deployment:
-  <pre class="terminal">
-  $ cf api api.YOUR-SYSTEM-DOMAIN
-  </pre>
-1. Log in:
-  <pre class="terminal">
-  $ cf login
-  </pre>
-1. Perform the following steps to make a list of all the service instances provisioned by your on-demand service broker:
-  1. List your service offerings:
-    <pre class="terminal">
-    $ cf curl /v2/services
-    </pre>
-  1. Record the GUID of the on-demand service offering you want to restore by examining the value for `guid` under `metadata`:
-    <pre class="terminal">
-     "metadata": {
-        "guid": "ab2b01cc-2a22-525a-a333-e6e666a6aa66",
-        "url": "/v2/services/ab2b01cc-2a22-525a-a333-e6e666a6aa66",
-        "created_at": "2017-02-10T18:19:35Z",
-        "updated_at": "2017-02-10T18:19:35Z"
-    </pre>
-  1. List all service plans for the service offering, replacing `SERVICE-OFFERING-GUID` with the GUID obtained in the previous step:
-    <pre class="terminal">
-    $ cf curl /v2/services/SERVICE-OFFERING-GUID/service_plans
-    </pre>
-  1. Record the GUID of each service plan by examining the value for `guid` under `metadata`.
-  1. For each service plan, list all service instances:
-    <pre class="terminal">
-    $ cf curl /v2/service_plans/SERVICE-PLAN-GUID/service_instances
-    </pre>
-  1. Record the GUID of each service instance by examining the value for `guid` under `metadata`.
-1. Perform the following steps to obtain the BOSH credentials used by your on-demand service broker:
-  1. Navigate to `https://YOUR-OPS-MAN-FQDN/api/v0/staged/products` in a browser to obtain the product GUID of your tile.
-  1. Navigate to `https://YOUR-OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/manifest` to obtain your product's staged manifest.
-  1. Copy the manifest into a file on your local machine called `manifest.json`.
-  1. Run the following command to find the name of the deployment's on-demand broker instance group:
-    <pre class="terminal">
-    $ cat manifest.json | jq '(.instance_groups[].name )' | grep on-demand-broker | grep -v -E "register|smoke"
-    > redis-on-demand-broker
-    </pre>
-  1. Run the following command to extract the BOSH credentials:
-    <pre class="terminal">
-    $ cat manifest.json | jq '(.instance_groups[] |
-     select(.name == "redis-on-demand-broker").jobs[] |
-     select(.name == "broker").properties.bosh.authentication.uaa )'
-    </pre>
-1. SSH into your Ops Manager VM. For more information, see the [SSH into Ops Manager](../trouble-advanced.html#ssh) section of the <em>Advanced Troubleshooting with the BOSH CLI</em> topic.
-1. Using the BOSH credentials retrieved above, authenticate with your BOSH Director by running the following commands with BOSH CLI v2 or later. For more information about BOSH CLI, see [CLI v2+](https://bosh.io/docs/cli-v2.html) in the BOSH documentation.
-  <pre class="terminal">
-  $ export BOSH-CLIENT=YOUR-CLIENT-ID
-  $ export BOSH_CLIENT_SECRET=YOUR-CLIENT-SECRET
-  $ bosh alias-env director -e BOSH-DIRECTOR-IP \
-  --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE
-  </pre>
-1. Using the list of service instance GUIDs gathered above, deploy each instance with the following commands:
-  <pre class="terminal">
-  $ bosh -e director manifest \
-  -d service-instance_SERVICE-INSTANCE-GUID > /tmp/manifest.yml
-  $ bosh -e director \
-  -d service-instance_SERVICE-INSTANCE-GUID deploy /tmp/manifest.yml
-  </pre>
-1. After deploying all service instances, remove the manifest from `tmp`.
-  <pre class="terminal">
-  $ rm /tmp/manifest.yml
-  </pre>
-1. Any PAS apps bound to these services will have to be restarted to pick up the recreated service instances.
+1. Navigate to an on-demand service tile in the **Installation Dashboard**.
+1. Select the **Errands** tab.
+1. Ensure the **Upgrade All Service Instances** errand is **On**.
+1. Repeat for all on-demand service tiles.
+1. Return to the **Installation Dashboard** and run **Apply Changes**. This will include running the Upgrade All Service Instances errand for the on-demand service, which will redeploy the on-demand service instances.
+1. (Optional) Restore service data to every on-demand service instance.
+1. Any app on PAS bound to an on-demand service instance may need to be restarted to start consuming the restored on-demand service instances.
 
 ## <a id='non-tiles'></a> (Optional) Step 14: Restore Non-Tile Deployments
 

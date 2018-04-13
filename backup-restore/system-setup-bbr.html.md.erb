@@ -78,17 +78,18 @@ If you have configured the Ops Manager VM as your jumpbox, the path to the root 
 If you have configured another machine as your jumpbox, run the following commands on the jumpbox to copy the CA certificate from your Ops Manager VM.
 
 <pre class="terminal">
+  $ brew install jq
   $ export OPSMAN=127.0.0.1 # Ops Manager DNS name or IP address
   $ export OPSMAN_USERNAME=OPSMANAGER-USERNAME # Ops Manager admin username
   $ export OPSMAN_PASSWORD=OPSMANAGER-PASSWORD # Ops Manager admin password
-  </br># Get UAA token
+  # Get UAA token
   $ uaac target $OPSMAN/uaa --skip-ssl-validation
   $ uaac token owner get opsman $OPSMAN_USERNAME -s "" -p $OPSMAN_PASSWORD
-  $ apitoken=uaac contexts | grep $OPSMAN -B6 | grep access_token | cut -d ':' -f 2 | cut -d ' ' -f 2
-  </br># Get the certificate (it's a json payload)
-  $ export cert=$(curl -k "https://$OPSMAN/api/v0/security/root_ca_certificate" 
-  -X GET 
-  -H "Authorization: Bearer $apitoken" 
+  $ apitoken=$(uaac contexts | grep access_token | cut -d ':' -f 2 | cut -d ' ' -f 2)
+  # Get the certificate (it's a json payload)
+  $ export cert=$(curl -k "https://$OPSMAN/api/v0/security/root_ca_certificate" \
+  -X GET \
+  -H "Authorization: Bearer $apitoken" \
   | jq '.root_ca_certificate_pem')
-  </br>$ echo -e $cert > PATH-TO-BOSH-SERVER-CERTIFICATE
+  $ echo -e $cert > PATH-TO-BOSH-SERVER-CERTIFICATE
 </pre>

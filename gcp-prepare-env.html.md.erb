@@ -30,11 +30,10 @@ In addition to fulfilling the prerequisites listed in the [Installing Pivotal Cl
 When deploying PCF on GCP, Pivotal recommends using the following GCP components:
 
   * [Google Cloud SQL](https://cloud.google.com/sql/docs/) for external Pivotal Application Service (PAS) database services
-  * [NAT Gateway Instances](https://cloud.google.com/solutions/connecting-securely#natgateway) to limit the number of VMs with public IP addresses
+  * [NAT Gateway Instances](https://cloud.google.com/solutions/connecting-securely#natgateway) to limit the number of virtual machines (VMs) with public IP addresses
   * [Google Cloud Storage](https://cloud.google.com/storage/) for external filestorage in PAS
 
-For more information, review the different deployment options and recommendations in the [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html).
-
+For more information, review the different deployment options and recommendations in [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html).
 
 ## <a id="iam_account"></a> Step 1: Set up an IAM Service Account
 
@@ -47,14 +46,14 @@ For more information, review the different deployment options and recommendation
        <button type="button" class="tablinks" onclick="openDocs(event, 'PKS')">PKS Only</button>
       </div>
       <div id="PAS" class="tabcontent" style="display: none">
-       <p>If you intend to deploy Pivotal Application Service (PAS), or PAS plus additional runtimes, grant the following roles to the service account. For more information about the runtimes you can deploy to PCF, see [Installing Runtimes](runtimes.html).
+       <p>If you intend to deploy PAS, or PAS and additional runtimes, grant the following roles to the service account. For more information about the runtimes you can deploy to PCF, see [Installing Runtimes](runtimes.html).
         <ul><li><strong>Service Accounts</strong> > <strong>Service Account User</strong></li></ul>
         <ul><li><strong>Service Accounts</strong> > <strong>Service Account Token Creator</strong></li></ul>
         <ul><li><strong>Compute Engine</strong> > <strong>Compute Instance Admin (v1)</strong></li></ul>
         <ul><li><strong>Compute Engine</strong> > <strong>Compute Network Admin</strong></li></ul>
         <ul><li><strong>Compute Engine</strong> > <strong>Compute Storage Admin</strong></li></ul>
         <ul><li><strong>Storage</strong> > <strong>Storage Admin</strong></li></ul>
-        <p class="note">The <strong>Service Account User</strong> role is only required if you plan to use [**The Ops Manager VM Service Account**](./gcp-om-config.html#gcp-config) to deploy Ops Manager.</p>
+        <p class="note">The <strong>Service Account User</strong> role is only required if you plan to use <strong>The Ops Manager VM Service Account</strong> to deploy Ops Manager. For more information about <strong>The Ops Manager VM Service Account</strong>, see <a href="./gcp-om-config.html#gcp-config">Step 2: Google Cloud Platform Config</a> in <em>Configuring BOSH Director on GCP</em>.</p>
        </p>
       </div>
       <div id="PKS" class="tabcontent" style="display: none">
@@ -72,7 +71,6 @@ For more information, review the different deployment options and recommendation
     <%= image_tag("gcp/iam_account_2.png") %>
 
 1. Click **Create**. Your browser automatically downloads a JSON file with a private key for this account. Save this file in a secure location.
-
 
 ## <a id="enable_compute_resource_api"></a> Step 2: Enable Google Cloud APIs
 
@@ -127,12 +125,12 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
         </tr>
         <tr>
           <th>Region</th>
-          <td>A region that supports three availability zones. For help selecting the correct region for your deployment, see the [Google documentation on regions and zones](https://cloud.google.com/compute/docs/regions-zones/regions-zones).</td>
+          <td>A region that supports three availability zones. For help selecting the correct region for your deployment, see the <a href="https://cloud.google.com/compute/docs/regions-zones/regions-zones">Google documentation about regions and zones.</td>
         </tr>
         <tr>
         <th>IP address range</th>
-        <td>A CIDR ending in `/26`<br>
-        Example: `192.168.101.0/26`</td>
+        <td>A CIDR ending in <code>/26</code><br>
+        Example: <code>192.168.101.0/26</code></td>
         </tr>
       </table><br>
       See the following image for an example:
@@ -150,8 +148,8 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
         </tr>
         <tr>
         <th>IP address range</th>
-        <td>A CIDR ending in `/22`<br>
-            Example: `192.168.16.0/22`</td>
+        <td>A CIDR ending in <code>/22</code><br>
+            Example: <code>192.168.16.0/22</code></td>
         </tr>
       </table><br>
     1. Click **Add subnet** to add a third **Subnet** with the following details:
@@ -167,8 +165,8 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
         </tr>
         <tr>
         <th>IP address range</th>
-        <td>A CIDR in `/22`<br>
-            Example: `192.168.20.0/22`</td>
+        <td>A CIDR in <code>/22</code><br>
+            Example: <code>192.168.20.0/22</code></td>
         </tr>
       </table><br>
       See the following image for an example:
@@ -186,7 +184,7 @@ Use NAT instances when you want to expose only a minimal number of public IP add
 Creating NAT instances permits Internet access from cluster VMs. 
 You might, for example, need this Internet access for pulling Docker images or enabling Internet access for your workloads. 
 
-For more information, see the [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html#common_network) and [GCP documentation](https://cloud.google.com/solutions/connecting-securely#natgateway).
+For more information, see [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html#common_network) and [GCP documentation](https://cloud.google.com/solutions/connecting-securely#natgateway).
 
 1. In the console, navigate to **Compute Engine** > **VM instances**. 
   ![Compute Instance](gcp/gcp-vm-instances.png)
@@ -197,7 +195,7 @@ For more information, see the [Reference Architecture for Pivotal Cloud Foundry 
 1. Complete the following fields:
   * **Name**: Enter `MY-PCF-nat-gateway-pri`. <br>
     This is the first, or primary, of three NAT instances you need.
-    If you are using a single AZ, you need only one NAT instance.
+    If you use a single AZ, you need only one NAT instance.
   * **Zone**: Select the first zone from your region.<br>
     Example: For region `us-west1`, select zone `us-west1-a`.
   * **Machine type**: Select `n1-standard-4`.
@@ -219,7 +217,7 @@ For more information, see the [Reference Architecture for Pivotal Cloud Foundry 
     1. Click on the **Networking** tab and the pencil icon to edit the **Network interface**. 
     1. For **Network**, select `MY-PCF-virt-net`. You created this network in [Step 1: Create a GCP Network with Subnets](#create-net).
     1. For **Subnetwork**, select `MY-PCF-subnet-infrastructure-MY-GCP-REGION`.
-    1. For **Primary internal IP**, select `Ephemeral (Custom)`. Enter an IP address (for example, `192.168.101.2`) in the **Custom ephemeral IP address** field. The IP address must meet the following requirements: 
+    1. For **Primary internal IP**, select `Ephemeral (Custom)`. Enter an IP address, for example, `192.168.101.2`, in the **Custom ephemeral IP address** field. The IP address must meet the following requirements: 
       - The IP address must exist in the CIDR range you set for the `MY-PCF-subnet-infrastructure-GCP-REGION` subnet. 
       - The IP address must exist in a reserved IP range set later in BOSH Director. The reserved range is typically the first `.1` through `.9` addresses in the CIDR range you set for the `MY-PCF-subnet-infrastructure-GCP-REGION` subnet. 
       - The IP address cannot be the same as the Gateway IP address set later in Ops Manager. The Gateway IP address is typically the first `.1` address in the CIDR range you set for the `MY-PCF-subnet-infrastructure-GCP-REGION` subnet.
@@ -315,18 +313,18 @@ For more information, see the [Reference Architecture for Pivotal Cloud Foundry 
 
 ## <a id="firewall_rules"></a> Step 5: Create Firewall Rules for the Network
 
-GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-resources#tags) to virtual machine (VM) instances and create firewall rules that apply to VMs based on their tags.
+GCP lets you assign tags to VM instances and create firewall rules that apply to VMs based on their tags. For more information about tags, see [Labeling Resources](https://cloud.google.com/compute/docs/labeling-resources) in the Google Cloud documentation.
 This step assigns tags and firewall rules to Ops Manager components and VMs that handle incoming traffic.
 
-1. In the **Networking** >> **VPC network** pane, select **Firewall rules**.
+1. In the **Networking** > **VPC network** pane, select **Firewall rules**.
 
-1. Select the runtime you are installing from the following table to determine which firewall rules you need to apply:
+1. Select the runtime you want to install from the following table to determine which firewall rules you must apply:
     <div class="tab">
       <button class="tablinks" onclick="openDocs(event, 'PAS-firewall')">PAS and Other Runtimes</button>
       <button class="tablinks" onclick="openDocs(event, 'PKS-firewall')">PKS Only</button>
     </div>
     <div id="PAS-firewall" class="tabcontent" style="display: none">
-      <p>If you intend to deploy Pivotal Application Service (PAS), or PAS plus additional runtimes, create and apply the firewall rules according to the table below.
+      <p>If you intend to deploy PAS, or PAS plus additional runtimes, create and apply the firewall rules according to the table below.
          For more information about the runtimes you can deploy to PCF, see <a href="runtimes.html">Installing Runtimes</a>.<br>
         <table>
         <tr><th colspan="2" style="text-align: center;">Firewall Rules</th></tr>
@@ -419,7 +417,7 @@ This step assigns tags and firewall rules to Ops Manager components and VMs that
       </p>
     </div>
     <div id="PKS-firewall" class="tabcontent" style="display: none">
-     <p>If you intend to deploy only Pivotal Container Service (PKS) to this Ops Manager instance, apply the following firewall rules:
+     <p>If you intend to deploy only PKS to this Ops Manager instance, apply the following firewall rules:
       <table>
         <tr><th colspan="2" style="text-align: center;">Firewall Rules</th></tr>
          <tr>
@@ -530,7 +528,7 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
   * `uaa`
   * `credhub`
 1. Select the **USERS** tab. 
-1. Use the **Create user account** button to create a unique username and password for each database you created above. For **Host name**, select **Allow any host**. You must create a total of 13 user accounts.
+1. Use the **Create user account** button to create a unique username and password for each database you created above. For **Host name**, select **Allow any host**. You must create a total of thirteen user accounts.
 
 
 ## <a id="buckets"></a> Step 7: Create Storage Buckets
@@ -556,7 +554,7 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
     Example: For region `us-west1`, select zone `us-west1-a`.
   * Under **Group type**, select **Unmanaged instance group**. 
   * For **Network**, select `MY-PCF-virt-net`. 
-  * For **Subnetwork**, select the `MY-PCF-subnet-pas-MY-GCP-REGION` subnet that you created previously.  
+  * For **Subnetwork**, select the `MY-PCF-subnet-pas-MY-GCP-REGION` subnet that you created previously.
   * Click **Create**. 
 1. Create a second instance group with the following details:
   * **Name**: `MY-PCF-http-lb`
@@ -565,7 +563,7 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
     Example: For region `us-west1`, select zone `us-west1-b`.
   * **Group type**: Select **Unmanaged instance group**. 
   * **Network**: Select `MY-PCF-virt-net`. 
-  * **Subnetwork**: Select the `MY-PCF-subnet-pas-MY-GCP-REGION` subnet that you created previously.  
+  * **Subnetwork**: Select the `MY-PCF-subnet-pas-MY-GCP-REGION` subnet that you created previously.
 1. Create a third instance group with the following details:
   * **Name**: `MY-PCF-http-lb`
   * **Location**: **Single-zone**
@@ -573,7 +571,7 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
     Example: For region `us-west1`, select zone `us-west1-c`.
   * **Group type**: Select **Unmanaged instance group**. 
   * **Network**: Select `MY-PCF-virt-net`. 
-  * **Subnetwork**: Select the `MY-PCF-subnet-pas-MY-GCP-REGION` subnet that you created previously.  
+  * **Subnetwork**: Select the `MY-PCF-subnet-pas-MY-GCP-REGION` subnet that you created previously.
 
 ### <a id='create-health-check'></a> Create Health Check
 
@@ -622,7 +620,7 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
        1. Click **Reserve**.
    * **Port**: `80`
 
-1. If you are using a trusted SSL certificate or already have a self-signed certificate, proceed to step 5. 
+1. If you use a trusted SSL certificate or already have a self-signed certificate, proceed to step 5.
 
 1. If you want to use a self-signed certificate generated during [PAS network configuration](gcp-er-config.html#networking), skip over the next step of adding the HTTPS frontend configuration until after you generate the certificate in PAS. After you generate the certificate, return to step 5 using the following guidelines: 
    * Copy and paste the generated contents of the **Router SSL Termination Certificate and Private Key** fields from PAS into the public certificate and private key fields. 
@@ -637,7 +635,7 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
      * In the **Name** field, enter a name for the certificate.
      <%= image_tag "gcp/lb_frontend_cert.png" %>
      * In the **Public key certificate** field, copy in the contents of your public certificate, or upload your certificate as a .pem file.
-     * In the **Certificate chain** field, enter or upload your certificate chain in the .pem format. If you are using a self-signed certificate, you do not need to populate this field.
+     * In the **Certificate chain** field, enter or upload your certificate chain in the .pem format. If you use a self-signed certificate, you do not need to populate this field.
      * In the **Private key** field, copy in the contents or upload the .pem file of the private key for the certificate.
 1. Review the completed frontend configuration. 
 
@@ -768,8 +766,7 @@ To create a load balancer for TCP routing in GCP, perform the following steps:
 
 1. Click **Create**.
 
-
-## <a id='cname'></a> Step 12: Add DNS Records for Your Load Balancers
+## <a id='cname'></a> Step 12: Add DNS Records for Your Load Balancers ##
 
 In this step you redirect queries for your domain to the IP addresses of your load balancers.
 
@@ -844,4 +841,4 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 
 * (Optional) To save time during the final stage of the installation process, you can start downloading the PAS tile. See [Step 1: Download the PAS Tile](./gcp-er-config.html#download-er) of the _Deploying PAS on GCP_ topic.
 
-* Proceed to the next step in the deployment, [Launching a BOSH Director Instance on GCP](./gcp-om-deploy.html).
+* Proceed to the next step in the deployment, [Launching a BOSH Director Instance on GCP](./gcp-om-deploy.html). 

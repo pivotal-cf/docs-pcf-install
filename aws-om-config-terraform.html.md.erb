@@ -72,7 +72,7 @@ Use the `ops_manager_dns` value from running `terraform output`.
 1. Complete the remainder of the **AWS Management Console Config** page with the following information.
     * **Security Group ID**: Enter the value of `vms_security_group_id` from the Terraform output.
     * **Key Pair Name**: Enter the value of `ops_manager_ssh_public_key_name` from the Terraform output.
-    * **SSH Private Key**: Enter the value of `ops_manager_ssh_private_key` from the Terraform output.
+    * **SSH Private Key**: Run `terraform output` to view the value of `ops_manager_ssh_private_key`	and enter it into this field. `ops_manager_ssh_private_key` is a `sensitive` value and does not display when you run `terraform apply`.
     * **Region**: Select the region where you deployed Ops Manager.
     * **Encrypt EBS Volumes**: Select this checkbox to enable full encryption
       on persistent disks of all BOSH-deployed virtual machines (VMs), except
@@ -92,10 +92,10 @@ Use the `ops_manager_dns` value from running `terraform output`.
 delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.ntp.org,2.amazon.pool.ntp.org,3.amazon.pool.ntp.org`
 
 1. Leave the **JMX Provider IP Address** field blank.
-  <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use PCF JMX Bridge for consuming them outside of the Firehose, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
+  <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported component metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use PCF JMX Bridge for consuming them outside of the Firehose, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
 1. Leave the **Bosh HM Forwarder IP Address** field blank.
-  <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported system metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the BOSH HM Forwarder for consuming them, you may receive duplicate data. To prevent this, leave the <strong>Bosh HM Forwarder IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
+  <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported component metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the BOSH HM Forwarder for consuming them, you may receive duplicate data. To prevent this, leave the <strong>Bosh HM Forwarder IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
 1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops
 Manager Resurrector functionality and increase Pivotal Application Service (PAS) availability.
@@ -131,7 +131,13 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
 
 1. <%= partial "blobstore-location" %>
 
-1. For **Database Location**, select **Internal**.
+
+1. For **Database Location**, if you choose to configure an external MySQL database with Amazon Relational Database Service (RDS) or another service, select **External MySQL Database** and complete the fields below. Otherwise, select **Internal**. For more information about creating a RDS MySQL instance, see [Creating a MySQL DB Instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_GettingStarted.CreatingConnecting.MySQL.html#CHAP_GettingStarted.Creating.MySQL) in the AWS documentation.
+    * **Host**: Enter the value of your host.
+    * **Port**: Enter your port number. For example, `3306`. 
+    * **Username**: Enter your username.
+    * **Password**: Enter your password.
+    * **Database**: Enter your database name.
 
 1. (Optional) **Director Workers** sets the number of workers available to execute Director tasks. This field defaults to `5`.
 
@@ -305,13 +311,7 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
 
 ## <a id='security'></a>Step 7: Security Page ##
 
-1. Select **Security**.
-
-    <%= image_tag("../images/om-security.png") %>
-
-1. In **Trusted Certificates**, enter a custom certificate authority (CA) certificate to insert into your organization's certificate trust chain. This feature enables all BOSH-deployed components in your deployment to trust a custom root certificate. If you want to use Docker Registries for running app instances in Docker containers, use this field to enter your certificate for your private Docker Registry. See the [Using Docker Registries](../opsguide/docker-registry.html) topic for more information.
-1. Choose **Generate passwords** or **Use default BOSH password**. Pivotal recommends that you use the **Generate passwords** option for greater security.
-1. Click **Save**. To view your saved Director password, click the **Credentials** tab.
+<%= partial "security-pane" %>
 
 ## <a id='syslog'></a>Step 8: Syslog Page
 

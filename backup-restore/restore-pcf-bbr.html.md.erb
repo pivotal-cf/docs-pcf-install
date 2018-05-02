@@ -21,8 +21,6 @@ The procedures described in this topic prepare your environment for PCF, deploy 
 
 <p class="note"><strong>Note</strong>: If the BOSH Director you are restoring had any deployments that were deployed manually rather than through an Ops Manager Tile, you must restore them manually at the end of the process. For more information, see <a href="#non-tiles">(Optional) Step 14: Restore Non-Tile Deployments</a>.</p>
 
-<p class="note validation"><strong>Note</strong>: If you are restoring in order to validate a backup, look for notes marked <strong>Validation</strong> throughout the topic.</p>
-
 ## <a id="compatibility"></a> Compatibility of Restore
 
 This section describes the restrictions for a backup artifact to be restorable to another environment.
@@ -38,7 +36,7 @@ Consult the following restrictions for a backup artifact to be restorable:
     but can’t validate the restore beyond that.
     For example, if the MySQL encryption key is different in the restore environment,
     the BBR restore might succeed although the restored MySQL database is unusable.
-+ **PCF version**: BBR can restore to the same version of PCF that was backed up. BBR does not support restoring to other major, minor, or patch releases. 
++ **PCF version**: BBR can restore to the same version of PCF that was backed up. BBR does not support restoring to other major, minor, or patch releases.
 
 <p class="note"><strong>Note</strong>: A change in VM size or underlying hardware should not affect BBR’s ability to restore data, as long as there is adequate storage space to restore the data. </p>
 
@@ -80,12 +78,13 @@ If you recreate your IaaS resources, you must also add those resources to Ops Ma
 ## <a id='deploy-import'></a>Step 2: Deploy Ops Manager and Import Installation Settings ##
 
 1. Perform the procedures for your IaaS to deploy Ops Manager:
-  * If you configured AWS manually: [Step 12](../pcf-aws-manual-config.html#pcfaws-om-ami) through [Step 19](../pcf-aws-manual-config.html#pcfaws-mysql-rds) of the <em>Manually Configuring AWS for PCF</em> topic.
-  * If you used the CloudFormation template install PCF on AWS: [Deploying BOSH and Ops Manager to AWS](../aws-terraform.html)
-  * [Launching a BOSH Director Instance on Azure](../azure-arm-template.html)
-  * [Launching a BOSH Director Instance on GCP](../gcp-om-deploy.html)
-  * [Step 3](../openstack-setup.html#create-om-image) through [Step 7](../openstack-setup.html#dns-entry) of the <em>Provisioning the OpenStack Infrastructure</em> topic.
-  * [Deploying Operations Manager to vSphere](../deploying-vm.html)
+    1. AWS
+        1. If you configured AWS manually, see [Step 12](../pcf-aws-manual-config.html#pcfaws-om-ami) through [Step 19](../pcf-aws-manual-config.html#pcfaws-mysql-rds) of the <em>Manually Configuring AWS for PCF</em> topic.
+        1. If you used the CloudFormation template install PCF on AWS, see [Deploying BOSH and Ops Manager to AWS](../aws-terraform.html)
+    1. Azure, see [Deploying BOSH and Ops Manager to Azure with ARM](../azure-arm-template.html)
+    1. GCP, see [Deploying BOSH and Ops Manager to GCP](../gcp-om-deploy.html)
+    1. OpenStack, see [Step 3](../openstack-setup.html#create-om-image) through [Step 7](../openstack-setup.html#dns-entry) of the <em>Provisioning the OpenStack Infrastructure</em> topic.
+    1. vSphere, see [Deploying Operations Manager to vSphere](../deploying-vm.html)
 
 1. Import your installation settings. This can be done in two ways:
 
@@ -125,20 +124,29 @@ If you recreate your IaaS resources, you must also add those resources to Ops Ma
 
         See [_Using the Ops Manager API_](https://docs.pivotal.io/pivotalcf/latest/customizing/ops-man-api.html) for instructions on how to authenticate and retrieve the `UAA-ACCESS-TOKEN`.
 
+<p class="note warning"><strong>Warning</strong>: Do not click <strong>Apply Changes</strong> in Ops Manager until the instruction in Step 11: Redeploy PAS.</p>
+
 ## <a id="config-new-resources"></a> (Optional) Step 3: Configure Ops Manager for New Resources
 
 If you recreated IaaS resources such as networks and load balancers by following the steps in the [(Optional) Step 1: Prepare Your Environment](#prepare-env) section above, perform the following steps to update Ops Manager with your new resources:
 
 1. Enable Ops Manager advanced mode by following the instructions in this [Knowledge Base article](https://discuss.pivotal.io/hc/en-us/articles/219118768-How-to-enable-advanced-mode-in-the-Ops-Manager).
+<p class="note"><strong>Note</strong>:
+  In advanced mode Ops Manager will allow you to make changes that are normally disabled. You may see warning messages when you save changes.</p>
 1. Navigate to the Ops Manager Installation Dashboard and click the BOSH Director tile.
+1. If you are using Google Cloud Platform (GCP), click **Google Config** and update:
+    1. **Project ID** to reflect the GCP project ID.
+    1. **Default Deployment Tag** to reflect the environment name.
+    1. **AuthJSON** to reflect the service account.
 1. Click **Create Networks** and update the network names to reflect the network names for the new environment.
-1. If running on GCP, click **Google Config** and update the **Project ID** to reflect the new GCP project ID.
+1. If your BOSH Director had an external hostname, you should change it in **Director Config > Director Hostname** to ensure it does not conflict with the hostname of the backed up Director.
 1. Return to the Ops Manager Installation Dashboard and click the Pivotal Application Service (PAS) tile.
 1. Click **Resource Config**. If necessary for your IaaS, enter the name of your new load balancers in the **Load Balancers** column.
-1. If necessary, click **Networking** and update the load balancer SSL certificate and private key under **Router SSL Termination Certificate and Private Key**.
+1. If necessary, click **Networking** and update the load balancer SSL certificate and private key under **Certificates and Private Keys for HAProxy and Router**.
 1. If your environment has a new DNS address, update the old environment DNS entries to point to the new load balancer addresses. For more information, see the [Step 4: Configure Networking](../custom-load-balancer.html#configure-networking) section of the <em>Using Your Own Load Balancer</em> topic and follow the link to the instructions for your IaaS.
-1. If you are using Google Cloud Platform (GCP), navigate to the **Google Config** section of the BOSH Director tile and update the **Default Deployment Tag** to reflect the new environment.
-1. Disable Ops Manager advanced mode as recommended in the [Knowledge Base article](https://discuss.pivotal.io/hc/en-us/articles/219118768-How-to-enable-advanced-mode-in-the-Ops-Manager).
+1. If your PAS uses an external blobstore, ensure that the PAS tile is configured to use a different blobstore, otherwise it will attempt to connect to the blobstore that the backed up PAS is using.
+1. Ensure your **System Domain** and **Apps Domain** under PAS **Domains** are updated to refer to the new environment's domains.
+1. Ensure that there are no outstanding warning messages in the BOSH Director tile, then disable Ops Manager advanced mode by following the instructions in this [Knowledge Base article](https://discuss.pivotal.io/hc/en-us/articles/219118768-How-to-enable-advanced-mode-in-the-Ops-Manager).
 
 ## <a id="bosh-state"></a> Step 4: Remove BOSH State File
 
@@ -149,19 +157,14 @@ If you recreated IaaS resources such as networks and load balancers by following
   </pre>
 1. Navigate to `YOUR-OPS-MAN-FQDN` in a browser and log into Ops Manager.
 1. Import the required stemcell for each tile that requires one. For more information on importing stemcells, see [Importing and Managing Stemcells](../../opsguide/managing-stemcells.html).
-<p class="note warning"><strong>Warning</strong>: Do not click <strong>Apply Changes</strong> at this point.</p>
 
 ## <a id="bosh-only-deploy"></a> Step 5: Deploy the BOSH Director
 
 Perform the steps in the [Applying Changes to BOSH Director](../deploy-ops-man-director.html) topic to use the Ops Manager API to only deploy the BOSH Director.
-<p class="note"><strong>Validation</strong>: If your BOSH Director has an external hostname, you should change it in **BOSH Director > Director Config > Director Hostname** to ensure it does not conflict with the hostname of the backed up Director.</p>
 
 ## <a id="artifacts-jumpbox"></a> Step 6: Transfer Artifacts to Jumpbox
 
 In the [Step 9: Back Up Your PAS Deployment](./backup-pcf-bbr.html#bbr-backup) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic, in the <em>After Taking the Backups</em> section you moved the TAR and metadata files of the backup artifacts off your jumpbox to your preferred storage space. Now you must transfer those files back to your jumpbox.
-
-For instance, you could SCP the backup artifact to your jumpbox:
-  <pre class="terminal">$ scp LOCAL-PATH-TO-BACKUP-ARTIFACT JUMPBOX-USER/JUMPBOX-ADDRESS</pre>
 
 ## <a id="retrieve"></a> Step 7: Retrieve BOSH Director Address and Credentials
 
@@ -171,6 +174,13 @@ Perform the following steps to retrieve the IP address of your BOSH Director and
 
 
 ## <a id='restore-bosh'></a> Step 8: Restore the BOSH Director
+
+<div class="note"><strong>Notes</strong>:
+  <ul>
+    <li>The BBR BOSH Director restore command can take at least 15 minutes to complete.</li>
+    <li>Pivotal recommends that you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</li>
+  </ul>
+</div>
 
 1. Navigate to the Ops Manager Installation Dashboard.
 1. Click the Ops Manager tile.
@@ -188,47 +198,46 @@ Perform the following steps to retrieve the IP address of your BOSH Director and
 1. Ensure the BOSH Director backup artifact is in the folder you from which you will run BBR.
 1. Run the BBR restore command from your jumpbox to restore the BOSH Director:
   <pre class="terminal">
-  $ nohup bbr director \
+  $ bbr director \
       --private-key-path PRIVATE-KEY \
       --username bbr \
       --host HOST \
+      --debug (OPTIONAL) \
       restore \
         --artifact-path PATH-TO-DIRECTOR-BACKUP
   </pre>
-  Use the optional `--debug` flag to enable debug logs. See the [Logging](backup-pcf-bbr.html#logging) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic for more information.
-  <br><br>
   Replace the placeholder values as follows:
   * `PATH-TO-DIRECTOR-BACKUP`: This is the path to the Director backup you want to restore.
   * `PRIVATE-KEY`: This is the path to the private key file you created above.
-  * `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, it is the `BOSH-DIRECTOR-IP`, which you retrieved in the [Step 6: Retrieve BOSH Director Address and Credentials](#retrieve) section.
-
-<p class="note"><strong>Note</strong>: The BBR BOSH Director restore command can take at least 15 minutes to complete. Pivotal recommends that you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</p>
+  * `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, it is the `BOSH-DIRECTOR-IP`, which you retrieved in the [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+  <br><br>
+  Use the optional `--debug` flag to enable debug logs. See the [Logging](backup-pcf-bbr.html#logging) section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic for more information.
 
 If the commands completes successfully, continue to [Step 9: Identify Your Deployment](#identify-deployment).
 
-If the command fails, do the following:
-
-1. Run restore-cleanup
+If the command fails, run the BBR restore-cleanup command:
 <pre class="terminal">
 $ bbr director \
   --private-key-path PRIVATE-KEY \
   --username bbr \
   --host HOST \
-  backup-cleanup
+  restore-cleanup
 </pre>
 
-1. Ensure all the parameters in the command are set.
-1. Ensure the BOSH Director credentials are valid.
-1. Ensure the specified deployment exists.
-1. Ensure the source deployment is compatible with the target deployment.
-1. Ensure that the jumpbox can reach the BOSH Director.
+Then, check the following before running the BBR restore command again:
+
+* Ensure all the parameters in the command are set.
+* Ensure the BOSH Director credentials are valid.
+* Ensure the specified deployment exists.
+* Ensure the source deployment is compatible with the target deployment.
+* Ensure that the jumpbox can reach the BOSH Director.
 
 ## <a id='identify-deployment'></a> Step 9: Identify Your Deployment
 
 After logging in to your BOSH Director, run `bosh deployments` to identify the name of the BOSH deployment that contains PCF:
 
 <pre class='terminal'>
-$ bosh -e DIRECTOR-IP --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
+$ bosh -e BOSH-DIRECTOR-IP --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
 
 Name                     Release(s)
 cf-example               push-apps-manager-release/661.1.24
@@ -247,7 +256,7 @@ In the above example, the name of the BOSH deployment that contains PCF is `cf-e
 For every deployment in the BOSH Director, run the following command:
 
 <pre class="terminal">
-$ bosh -e DIRECTOR-IP -d DEPLOYMENT-NAME -n cck \
+$ bosh -e BOSH-DIRECTOR-IP -d DEPLOYMENT-NAME -n cck \
   --resolution delete_disk_reference \
   --resolution delete_vm_reference
 </pre>
@@ -262,12 +271,12 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
 ## <a id='redeploy-ert'></a> Step 11: Redeploy PAS
 
 1. Perform the following steps to determine which stemcell is used by PAS:
-  1. Navigate to **Manage Stemcells** from the **Installation Dashboard**
+  1. Navigate to **Stemcell Library** from the **Installation Dashboard**
   1. Record the PAS stemcell release number from the **Staged** column. For more information on stemcells in Ops Manager, see [Importing and Managing Stemcells](../../opsguide/managing-stemcells.html).
     <br><br>
     You can also retrieve the stemcell release using the BOSH CLI:
       <pre class="terminal">
-        $ bosh -e DIRECTOR-IP deployments
+        $ bosh -e BOSH-DIRECTOR-IP deployments
         Using environment '10.0.0.5' as user 'director' (bosh.\*.read, openid, bosh.\*.admin, bosh.read, bosh.admin)
 
         Name                     Release(s)                            Stemcell(s)                                    Team(s)  Cloud Config
@@ -291,13 +300,15 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
   <p class="note warning"><strong>Warning</strong>: Restore will fail if there is not exactly one MySQL Server instance deployed.</p>
 1. Ensure that all errands needed by your system are set to run.
 1. Return to the Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
-  <p class="note validation"><strong>Validation</strong>: If your PAS uses an external blobstore, ensure that the PAS tile is configured to use a different blobstore before clicking <strong>Apply Changes</strong>. Otherwise it will attempt to connect to the blobstore that the existing PAS is using.</p>
-  <p class="note validation"><strong>Validation</strong>: Ensure your **System Domain** and **Apps Domain** under PAS **Domains** are updated to refer to the validation environment.
-  </p>
 
 ## <a id='restore-ert'></a> Step 12: Restore PAS
 
-<p class="note validation"><strong>Validation</strong>: If your apps must not run after a restore, run <code>bosh stop</code> on each <code>diego_cell</code> VM in the deployment.</p>
+<div class="note"><strong>Notes</strong>:
+  <ul>
+    <li>The BBR PAS restore command can take at least 15 minutes to complete.</li>
+    <li>Pivotal recommends that you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</li>
+  </ul>
+</div>
 
 1. If you use a non-versioned or non-S3-compatible external blobstore and copied it during the backup, restore the external blobstore with your IaaS specific tools before running PAS restore.
 
@@ -318,89 +329,24 @@ $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
     * `BOSH-CLIENT`, `BOSH-PASSWORD`: Use the BOSH UAA user provided in  **Pivotal Ops Manager > Credentials > Uaa Bbr Client Credentials**.
     <br><br>
        You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
-    * `BOSH-DIRECTOR-IP`: You retrieved this value in the [Step 6: Retrieve BOSH Director Address and Credentials](#retrieve) section.
-    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 8: Identify Your Deployment](#identify-deployment) section.
+    * `BOSH-DIRECTOR-IP`: You retrieved this value in the [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 9: Identify Your Deployment](#identify-deployment) section.
     * `PATH-TO-BOSH-SERVER-CERTIFICATE`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
     * `PATH-TO-PAS-BACKUP`: This is the path to the PAS backup you want to restore.
-
-    <p class="note validation">
-      <strong>Validation</strong>: If you ran <code>bosh stop</code> on each <code>diego_cell</code> before running <code>bbr restore</code>, you can now run <code>cf stop</code> on all apps and then run <code>bosh start</code> on each <code>diego_cell</code>. After this, all apps will be deployed in a stopped state.
-    </p>
 
 1. If desired, scale the MySQL Server job back up to its previous number of instances by navigating to the **Resource Config** section of the PAS tile. After scaling the job, return to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy.
 
 ##<a id='odb'></a> (Optional) Step 13: Restore On-Demand Service Instances
 
-<p class="note"><strong>Note</strong>: These procedures restore the on-demand service instances but do not restore service instance data.</p>
+If you have on-demand service instances provisioned by an on-demand service broker, perform the following steps to restore them after successfully restoring PAS:
 
-If you have on-demand service instances provisioned by an on-demand service broker, perform the following steps to restore them after successfully restoring PCF:
-
-1. Use the Cloud Foundry Command Line Interface (cf CLI) to target your PCF deployment:
-  <pre class="terminal">
-  $ cf api api.YOUR-SYSTEM-DOMAIN
-  </pre>
-1. Log in:
-  <pre class="terminal">
-  $ cf login
-  </pre>
-1. Perform the following steps to make a list of all the service instances provisioned by your on-demand service broker:
-  1. List your service offerings:
-    <pre class="terminal">
-    $ cf curl /v2/services
-    </pre>
-  1. Record the GUID of the on-demand service offering you want to restore by examining the value for `guid` under `metadata`:
-    <pre class="terminal">
-     "metadata": {
-        "guid": "ab2b01cc-2a22-525a-a333-e6e666a6aa66",
-        "url": "/v2/services/ab2b01cc-2a22-525a-a333-e6e666a6aa66",
-        "created_at": "2017-02-10T18:19:35Z",
-        "updated_at": "2017-02-10T18:19:35Z"
-    </pre>
-  1. List all service plans for the service offering, replacing `SERVICE-OFFERING-GUID` with the GUID obtained in the previous step:
-    <pre class="terminal">
-    $ cf curl /v2/services/SERVICE-OFFERING-GUID/service_plans
-    </pre>
-  1. Record the GUID of each service plan by examining the value for `guid` under `metadata`.
-  1. For each service plan, list all service instances:
-    <pre class="terminal">
-    $ cf curl /v2/service_plans/SERVICE-PLAN-GUID/service_instances
-    </pre>
-  1. Record the GUID of each service instance by examining the value for `guid` under `metadata`.
-1. Perform the following steps to obtain the BOSH credentials used by your on-demand service broker:
-  1. Navigate to `https://YOUR-OPS-MAN-FQDN/api/v0/staged/products` in a browser to obtain the product GUID of your tile.
-  1. Navigate to `https://YOUR-OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/manifest` to obtain your product's staged manifest.
-  1. Copy the manifest into a file on your local machine called `manifest.json`.
-  1. Run the following command to find the name of the deployment's on-demand broker instance group:
-    <pre class="terminal">
-    $ cat manifest.json | jq '(.instance_groups[].name )' | grep on-demand-broker | grep -v -E "register|smoke"
-    > redis-on-demand-broker
-    </pre>
-  1. Run the following command to extract the BOSH credentials:
-    <pre class="terminal">
-    $ cat manifest.json | jq '(.instance_groups[] |
-     select(.name == "redis-on-demand-broker").jobs[] |
-     select(.name == "broker").properties.bosh.authentication.uaa )'
-    </pre>
-1. SSH into your Ops Manager VM. For more information, see the [SSH into Ops Manager](../trouble-advanced.html#ssh) section of the <em>Advanced Troubleshooting with the BOSH CLI</em> topic.
-1. Using the BOSH credentials retrieved above, authenticate with your BOSH Director by running the following commands with BOSH CLI v2 or later. For more information about BOSH CLI, see [CLI v2+](https://bosh.io/docs/cli-v2.html) in the BOSH documentation.
-  <pre class="terminal">
-  $ export BOSH-CLIENT=YOUR-CLIENT-ID
-  $ export BOSH_CLIENT_SECRET=YOUR-CLIENT-SECRET
-  $ bosh alias-env director -e DIRECTOR-IP \
-  --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE
-  </pre>
-1. Using the list of service instance GUIDs gathered above, deploy each instance with the following commands:
-  <pre class="terminal">
-  $ bosh -e director manifest \
-  -d service-instance_SERVICE-INSTANCE-GUID > /tmp/manifest.yml
-  $ bosh -e director \
-  -d service-instance_SERVICE-INSTANCE-GUID deploy /tmp/manifest.yml
-  </pre>
-1. After deploying all service instances, remove the manifest from `tmp`.
-  <pre class="terminal">
-  $ rm /tmp/manifest.yml
-  </pre>
-1. Any PAS apps bound to these services will have to be restarted to pick up the recreated service instances.
+1. Navigate to an on-demand service tile in the **Installation Dashboard**.
+1. Select the **Errands** tab.
+1. Ensure the **Upgrade All Service Instances** errand is **On**.
+1. Repeat for all on-demand service tiles.
+1. Return to the **Installation Dashboard** and run **Apply Changes**. This will include running the Upgrade All Service Instances errand for the on-demand service, which will redeploy the on-demand service instances.
+1. (Optional) Restore service data to every on-demand service instance.
+1. Any app on PAS bound to an on-demand service instance may need to be restarted to start consuming the restored on-demand service instances.
 
 ## <a id='non-tiles'></a> (Optional) Step 14: Restore Non-Tile Deployments
 
@@ -437,10 +383,10 @@ If `bosh cloud-check` does not clean up all disk references, you must manually d
 To delete the disks, perform one of the following procedures:
 
 * Use the BOSH CLI to delete the disks by performing the following steps:
-  1. Target the redeployed BOSH Director using the BOSH CLI by performing the procedures in [Step 6: Retrieve BOSH Director Address and Credentials](#retrieve).
+  1. Target the redeployed BOSH Director using the BOSH CLI by performing the procedures in [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
   1. List the deployments by running the following command:
     <pre class="terminal">
-    $ bosh -e DIRECTOR-IP \
+    $ bosh -e BOSH-DIRECTOR-IP \
     --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
     </pre>
   1. Delete each deployment with the following command:
@@ -449,8 +395,8 @@ To delete the disks, perform one of the following procedures:
     </pre>
 * Log in to your IaaS account and delete the disks manually. Run the following command to retrieve a list of disk IDs:
   <pre class="terminal">
-  $ bosh -e DIRECTOR-IP \
+  $ bosh -e BOSH-DIRECTOR-IP \
   --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE instances
   </pre>
 
-Once the disks are deleted, continue with [Step 9: Remove Stale Cloud IDs for All Deployments](#bosh-cck).
+Once the disks are deleted, continue with [Step 10: Remove Stale Cloud IDs for All Deployments](#bosh-cck).

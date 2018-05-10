@@ -43,15 +43,15 @@ BBR is a binary that can back up and restore BOSH deployments and BOSH Directors
 BBR backs up the following PCF components:
 
 * **PAS**: You can configure PAS with either an internal MySQL database or a supported external database. You can configure PAS with either WebDAV/NFS blobstore or a versioned S3-compatible external blobstore.
-    * **External databases:** For a list of supported external databases, see [Supported Databases](https://docs.cloudfoundry.org/bbr/cf-backup.html#supported-external-databases) in *Configuring Cloud Foundry for BOSH Backup and Restore*.
-    * **External blobstores:** BBR only supports PAS with versioned S3-compatible external blobstores. For more information, see [BBR external blobstores documentation](https://docs.cloudfoundry.org/bbr/external-blobstores.html). To configure your PCF installation to use an external blobstore, see the _External S3 or Ceph Filestore_ section of the [filestore configuration documentation](../pcf-aws-manual-er-config.html#external_s3).
+    * **External databases:** For a list of supported external databases, see [Supported External Databases](https://docs.cloudfoundry.org/bbr/cf-backup.html#supported-external-databases) in the _Configuring Cloud Foundry for BOSH Backup and Restore_ in the Cloud Foundry documentation.
+    * **External blobstores:** BBR only supports PAS with versioned S3-compatible external blobstores. For more information, see [Backup and Restore with External Blobstores](https://docs.cloudfoundry.org/bbr/external-blobstores.html) in the Cloud Foundry documentation. To configure your PCF installation to use an external blobstore, see [External S3 or Ceph Filestore](../pcf-aws-manual-er-config.html#external_s3) in _Backing Up Pivotal Cloud Foundry with BBR_.
 * **BOSH Director**: The BOSH Director must have an internal Postgres database and an internal blobstore to be backed up and restored with BBR. As part of backing up the BOSH Director, BBR backs up the BOSH UAA database and the CredHub database.
 
 <div class="note">
   <strong>Note:</strong>
   <ul>
     <li>Backup artifacts of external, S3-compatible, versioned blobstores do not contain the physical blobs. BBR requires that the original buckets still exist to be restored.</li>
-    <li>To protect yourself from losing a bucket, see <a href="https://docs.cloudfoundry.org/bbr/external-blobstores.html#enable-replication">Enable Replication on Your External Blobstore</a> in the Cloud Foundry documentation.</li>
+    <li>To protect yourself from losing a bucket, see <a href="https://docs.cloudfoundry.org/bbr/external-blobstores.html#enable-replication">Enable Replication on Your External Blobstore</a> in <em>Backup and Restore with External Blobstores</em> in the Cloud Foundry documentation.</li>
   </ul>
 </div>
 
@@ -88,7 +88,7 @@ If you configured an unsupported external blobstore or an unsupported external d
 
 Keep in mind the following when backing up services:
 
-* You can back up and restore brokered services with the procedures documented in this topic and in [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html). BBR backs up and restores the VMs and the service instances, but not the service data.
+* You can back up and restore brokered services with the procedures documented in this topic and in the [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html) topic. BBR backs up and restores the VMs and the service instances, but not the service data.
 * You can redeploy on-demand service instances manually during restore, but the data in the instance is not backed up.
 * BBR does not back up managed services or their data.
 
@@ -110,7 +110,7 @@ The following diagram shows a sample backup flow.
 
 <%= image_tag('backup-flow.png') %>
 
-Before using BBR, follow the instructions in the [Setting Up Your Jumpbox for BBR](system-setup-bbr.html) section.
+Before using BBR, follow the instructions in [Setting Up Your Jumpbox for BBR](system-setup-bbr.html).
 
 ## <a id='prepare'></a>Prepare to Create Your Backup
 
@@ -126,7 +126,7 @@ Perform the following steps to retrieve the Cloud Controller Database encryption
 
 1. Navigate to Ops Manager in a browser and log in to the Ops Manager Installation Dashboard.
 1. Select PAS **Credentials** and locate the Cloud Controller section.
-1. Record the **Db Encryption Credentials**. You must provide these credentials if you contact [Pivotal Support](https://support.pivotal.io) for help
+1. Record the **Db Encryption Credentials**. You must provide these credentials when you contact [Pivotal Support](https://support.pivotal.io) for assistance
 restoring your installation.
 
 	<%= image_tag("ccdb-encrypt-creds.png") %>
@@ -163,14 +163,13 @@ You can also retrieve the credentials using the Ops Manager API with a GET reque
 	  --private-key-path PRIVATE-KEY \
 	  --username bbr \
 	  --host HOST \
-	  --debug (OPTIONAL) \
+	  --debug \
 	  pre-backup-check
 	</pre>
 	Replace the placeholder values as follows:
-	* `PRIVATE-KEY`: This is the path to the private key file you created above.
-	* `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH-DIRECTOR-IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
-  <br><br>
-  Use the optional `--debug` flag to enable debug logs. For more information, see [Logging](#logging).
+	* `PRIVATE-KEY`: The path to the private key file you created above
+	* `HOST`: The address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH-DIRECTOR-IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section of this topic.
+  <p class='note'><strong>Note</strong>: Use the optional <code>--debug</code> flag to enable debug logs. See the <a href="#logging">Logging</a> section of this topic for more information.</p>
 
 1. If the pre-backup check succeeds, continue to the [next section](#identify-deployment). If it fails, the Director may not have the correct backup scripts, or the connection to the BOSH Director may have failed.
 
@@ -224,7 +223,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 
 Pivotal recommends that you back up your Ops Manager installation settings by exporting
 frequently. This option is only available after you have deployed at least one time.
-Always export your installation settings before following the steps in the [Import Installation Settings](./restore-pcf-bbr.html#import) section of [Restoring Pivotal Cloud Foundry from Backup with BBR](./restore-pcf-bbr.html) .
+Always export your installation settings before following the steps in the [Import Installation Settings](./restore-pcf-bbr.html#import) section of [Restoring Pivotal Cloud Foundry from Backup with BBR](./restore-pcf-bbr.html).
 
 <div class="note">
   <strong>Notes</strong>:
@@ -240,7 +239,7 @@ There are two ways to export the installation settings.
   1. From the **Installation Dashboard** in the Ops Manager interface, click your user name at the top right navigation.
   1. Select **Settings**.
   1. Select **Export Installation Settings**.
-  1. Click the **Export Installation Settings**.
+  1. Click **Export Installation Settings**.
 
     <%= image_tag("settings.png") %>
 
@@ -251,7 +250,7 @@ There are two ways to export the installation settings.
       -H "Authorization: Bearer UAA-ACCESS-TOKEN" > installation_settings.zip
     ```
 
-    See [_Using the Ops Manager API_](https://docs.pivotal.io/pivotalcf/latest/customizing/ops-man-api.html) for instructions on how to authenticate and retrieve the `UAA-ACCESS-TOKEN`.
+    See [Using the Ops Manager API](https://docs.pivotal.io/pivotalcf/customizing/ops-man-api.html) for instructions about authenticating and retrieving the `UAA-ACCESS-TOKEN`.
 
 ### <a id='bbr-backup-director'></a> Step 8: Back Up Your BOSH Director
 
@@ -268,18 +267,18 @@ $ bbr director \
   --private-key-path PRIVATE-KEY \
   --username bbr \
   --host HOST \
-  --debug (OPTIONAL) \
+  --debug \
   backup
 </pre>
 
 Replace the placeholder values as follows:
 
-* `PRIVATE-KEY`: This is the path to the private key file you created in [Step 4: Check your BOSH Director](#check-director).
-* `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH-DIRECTOR-IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
-<br><br>
-Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
+* `PRIVATE-KEY`: The path to the private key file you created in [Step 4: Check your BOSH Director](#check-director)
+* `HOST`: The address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH-DIRECTOR-IP`, which you retrieved in [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve).
+  <p class='note'><strong>Note</strong>: Use the optional <code>--debug</code> flag to enable debug logs. See the <a href="#logging">Logging</a> section of this topic for more information.</p>
 
-If your backup terminates early or fails, you can clean up by running backup-cleanup:
+If your backup terminates early or fails, clean up by running backup-cleanup:
+
 <pre class="terminal">
 $ bbr director \
   --private-key-path PRIVATE-KEY \
@@ -307,9 +306,10 @@ $ bbr director \
     --username BOSH-CLIENT \
     --deployment DEPLOYMENT-NAME \
     --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
-    --debug (OPTIONAL) \
-    backup</pre>
-    * Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section for more information.
+    --debug \
+    backup
+  </pre>
+  * Use the optional `--debug` flag to enable debug logs. See the [Logging](#logging) section of this topic for more information.
     * Use the optional `--with-manifest` flag to ensure that BBR downloads your current deployment manifest when backing up. These manifests are included in the Ops Manager export, but are useful for reference. For example:
       <pre class="terminal">
       $ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
@@ -349,7 +349,7 @@ After creating your backup successfully, perform the following steps:
 
 ### <a id='validate-backup'></a> Step 11: (Optional) Validate Your Backup
 
-If you want to validate your backup, follow the instructions that correspond to your use case:
+To validate your backup, follow the instructions that correspond to your use case:
 
 * **Production environments**: [Validate Your Entire Backup](#full-validate)
 * **Sandbox and other non-production environments**: [Validate Only Your PAS Backup](#ert-validate)
@@ -441,7 +441,7 @@ BBR outputs logs to stdout. By default, BBR logs:
 * When the process is complete
 * When any error occurs
 
-If more logging is needed, use the optional `--debug` flag to print the following information:
+If you require additional logging, use the optional `--debug` flag to print the following information:
 
 * Logs about the API requests made to the BOSH server
 * All commands executed on remote instances

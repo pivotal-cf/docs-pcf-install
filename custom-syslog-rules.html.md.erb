@@ -5,20 +5,55 @@ owner: Platform Logging
 
 <strong><%= modified_date %></strong>
 
-You can configure Pivotal Application Service (PAS) to forward logs to remote 
-endpoints using the Syslog protocol defined in 
-[RFC 5424](https://tools.ietf.org/html/rfc5424). For more information, see [Enable Syslog Forwarding](../opsguide/logging-config-opsman.html#syslog-forward) in 
-_Configuring Logging in PAS_.
+You can configure Elastic Runtime to forward logs to remote endpoints using the
+Syslog protocol defined in [RFC 5424](https://tools.ietf.org/html/rfc5424).
+For more information, see
+[Enable Syslog Forwarding](../opsguide/logging-config-opsman.html#syslog-forward) in
+_Configuring Logging in Elastic Runtime_.
 
-PAS annotates forwarded messages with structured data.
-This structured data identifies the originating BOSH Director, deployment, instance group, availability zone, and instance ID.
-All logs forwarded from BOSH jobs have their PRI set to 14
-(facility: user, severity: info),
-which may not reflect the originally intended PRI of the log.
+Elastic Runtime annotates forwarded messages with structured data.
+This structured data identifies the originating BOSH Director, deployment,
+instance group, availability zone, and instance ID.
+All logs forwarded from BOSH jobs have their PRI set to 14 (facility: user,
+severity: warning), which may not reflect the originally intended PRI of the
+log.
 
-Logs forwarded from other sources,
-such as kernel logs,
-retain their original PRI information.
+Logs forwarded from other sources, such as kernel logs, retain their original
+PRI information.
+
+The following table describes the log line Structured Data:
+
+<table border="1" class="nice" >
+  <tr>
+    <th>Structured Data</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>ENTERPRISE_NUMBER</td>
+    <td>Cloud Foundry's private enterprise number, <code>47450</code>, as
+      defined in <a href="https://tools.ietf.org/html/rfc5424#section-7.2.2">RFC 5424 Section 7.2.2</a>.</td>
+  </tr>
+  <tr>
+    <td>DIRECTOR</td>
+    <td>The name of the BOSH Director managing the deployment.</td>
+  </tr>
+  <tr>
+    <td>DEPLOYMENT</td>
+    <td>The name of the BOSH deployment.</td>
+  </tr>
+  <tr>
+    <td>INSTANCE_GROUP</td>
+    <td>The name of the  BOSH instance_group.</td>
+  </tr>
+  <tr>
+    <td>AVAILABILITY_ZONE</td>
+    <td>The name of the BOSH availability zone.</td>
+  </tr>
+  <tr>
+    <td>ID</td>
+    <td>The BOSH GUID.</td>
+  </tr>
+</table>
 
 Log lines use the format below:
 
@@ -49,30 +84,42 @@ Example log messages:
     "/v1/actual_lrps/start","session":"418.1"}}
 </pre>
 
-##<a id='examples'></a>Change Which Logs Are Forwarded
+##<a id='examples'></a>Modify Which Logs Elastic Runtime Forwards
 
-When you enable log forwarding,
-all log lines written to disk in the `/var/vcap/sys/log` directories
-are forwarded from all Cloud Foundry job virtual machines (VMs).
+When you enable log forwarding, Elastic Runtime forwards all log lines written
+to the `/var/vcap/sys/log` directories on all Cloud Foundry virtual machines
+(VMs) to your configured External Syslog Aggregator endpoint by default.
 
-You can specify a custom rule to modify which logs PAS forwards.
+You can configure Elastic Runtime to forward a subset of logs instead of
+forwarding all logs as follows.
 
-The custom rsyslog rules shown below are written in [RainerScript](http://www.rsyslog.com/doc/v8-stable/rainerscript/index.html).
+1. In the Elastic Runtime tile, select **System Logging**.
+1. In the **Custom rsyslog Configuration** textbox, enter a custom syslog rule.
+See the example custom syslog rules below.
+1. Click **Save**.
+
+For more information about enabling and configuring syslog forwarding, see
+[Configuring Logging in Elastic Runtime](../opsguide/logging-config-opsman.html#syslog-forward).
+
+The custom rsyslog rules shown below are written in
+[RainerScript](http://www.rsyslog.com/doc/v8-stable/rainerscript/index.html).
 The custom rules are inserted before the rule that forwards logs.
 The _stop_ command, `stop`,
-prevents logs from reaching the forwarding rule. 
+prevents logs from reaching the forwarding rule.
 This filters out these logs.
 
-Logs filtered out before forwarding remain on the local disk,
-where the BOSH job originally wrote them,
-and may remain available for download from Ops Manager,
-or accessible through SSH.
+Logs filtered out before forwarding remain on the local disk, where the BOSH
+job originally wrote them.
+These logs remain on the local disk only until BOSH Director recreates the VMs.
+You can access these logs from Ops Manager or through SSH.
 
-<p class='note'><strong>Note</strong>: If your custom rule is invalid, PAS forwards no logs.</p>
+<p class='note'><strong>Note</strong>:
+Elastic Runtime requires a valid custom rule to forward logs. If your custom
+rule contains syntax errors, Elastic Runtime forwards no logs.</p>
 
 ###<a id='forward-job'></a>Forward Only Logs From a Certain Job
 
-This rule filters logs out unless they originate from the `uaa` job:
+This rule filters out logs unless they originate from the `uaa` job:
 
 ```
 if ($app-name != "uaa") then stop
@@ -87,6 +134,5 @@ if ($msg contains "DEBUG") then stop
 ```
 
 <p class='note'><strong>Note</strong>: 
-In the above example, "DEBUG" is in the message body.
-Not all logs that are originally intended as to be DEBUG logs will have this string in their body.
-</p>
+The above example contains "DEBUG" in the message body.
+Not all logs intended for debugging purposes contain the string "DEBUG" in the message body.</p>

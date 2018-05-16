@@ -1,0 +1,111 @@
+---
+title: Enabling External Blobstore Backups
+owner: RelEng
+---
+
+<strong><%= modified_date %></strong>
+
+This topic describes how to enable external blobstore backups in your Pivotal Cloud Foundry (PCF) deployment.
+
+External blobstore backups leverage the versioning feature of S3-compatible storage solutions instead of downloading the files stored in the blobstore. For more information, see [Backup and Restore with External Blobstores](https://docs.cloudfoundry.org/bbr/external-blobstores.html).
+
+<p class="note"><strong>Note:</strong> If you enable external blobstore backups, you will need to update your runtime configuration when upgrading to PCF v2.1. Remove <code>s3-versioned-blobstore-backup-restorer</code> from your runtime configuration before upgrading.</p>
+
+
+## <a id='backup-prepare'></a> Enable Backup-Prepare Node in Pivotal Application Service
+
+Follow the steps [here](https://docs.pivotal.io/pivotalcf/2-0/customizing/backup-restore/backup-pcf-bbr.html#backup-prepare-node) to ensure that the backup-prepare node is deployed in your Pivotal Application Service (PAS) tile.
+
+
+## <a id='versioning'></a> Enable Versioning
+
+[Create buckets](https://docs.pivotal.io/pivotalcf/2-0/customizing/pcf-aws-manual-config.html#create-s3) for PAS to use. As you create them, remember to [enable versioning and replication](https://docs.cloudfoundry.org/bbr/external-blobstores.html), as the BBR backup and restore workflow needs versioning to work. You might also want to [set a retention policy](http://docs.aws.amazon.com/AmazonS3/latest/dev/lifecycle-configuration-examples.html#lifecycle-config-conceptual-ex6) for the versioning.
+
+
+## <a id='backup-prepare'></a> Enable PCF to Use an External Blobstore
+
+Follow [these instructions](https://docs.pivotal.io/pivotalcf/2-0/customizing/pcf-aws-manual-er-config.html#external_s3) to point ERT/PAS to the buckets just created and apply changes.
+
+
+## <a id='backup-prepare'></a> Install the S3 Backups Add-On
+
+1. Find your PAS deployment name by clicking on the PAS tile and copying the slug (e.g. `cf-3247176589a379f246d1`) from the URL.
+
+1. Download the *Backup and Restore SDK Preview* add-on release from Pivotal Network to your local machine.
+
+1. Copy the release archive to your Ops Manager instance:
+  ```
+  $ scp -i PATH-TO-PRIVATE-KEY backup-and-restore-sdk-preview.tar.gz ubuntu@YOUR-OPS-MANAGER-VM-IP:~
+  ```
+
+1. SSH into the Ops Manager machine:
+  ```
+  $ ssh -i PATH-TO-PRIVATE-KEY ubuntu@YOUR-OPS-MANAGER-VM-IP
+  ```
+
+1. [Download the latest bosh CLI](https://bosh.io/docs/cli-v2.html#install), as the following BOSH commands require it.
+
+1. On the Ops Manager VM, log in to your BOSH Director. Navigate to **Ops Manager Director > Status** to find the IP address. When prompted, enter your BOSH Director credentials:
+  ```
+  $ bosh -e YOUR-BOSH-DIRECTOR-INTERNAL-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate login
+  ```
+  To retrieve your BOSH Director credentials, navigate to **Ops Manager > Credentials** and click **Link to Credential** next to **Director Credentials**.
+
+1. Upload the Backup and Restore SDK Preview release:
+  ```
+  $ bosh -e YOUR-BOSH-DIRECTOR-INTERNAL-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate upload-release backup-and-restore-sdk-preview.tar.gz
+  ```
+
+1. Confirm that the release upload has succeeded:
+  ```
+  $ bosh -e YOUR-BOSH-DIRECTOR-INTERNAL-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate releases
+  ```
+  You should see a `backup-and-restore-sdk-preview` entry.
+
+1. Download your current runtime configuration and save it as `runtime-config.yml`:
+  ```
+  $ bosh -e YOUR-BOSH-DIRECTOR-INTERNAL-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate runtime-config > runtime-config.yml.
+  ```
+  If you see an error that says “No runtime config”, create an empty file.
+
+1. Edit `runtime-config.yml` to look like the one below, replacing placeholders in <> with real values.
+  <pre>
+  ```releases:
+  … existing release definitions …
+  - name: backup-and-restore-sdk-preview
+      version: <the-release-version>
+  addons:
+  … existing add-on definitions …
+  - name: sdk-preview
+      jobs:
+      - name: s3-versioned-blobstore-backup-restorer
+        release: backup-and-restore-sdk-preview
+        properties:
+          enabled: true
+          buckets:
+            droplets:
+              name: <name-of-droplets-bucket>
+              region: <region-of-droplets-bucket>
+              aws_access_key_id: <aws-access-key>
+              aws_secret_access_key: <aws-secret-key>
+              endpoint: <blostore-endpoint>
+            packages:
+              name: <name-of-packages-bucket>
+              region: <region-of-packages-bucket>
+              aws_access_key_id: <aws-access-key>
+              aws_secret_access_key: <aws-secret-key>
+              endpoint: <blobstore-endpoint>
+            buildpacks:
+              name: <name-of-buildpacks-bucket>
+              region: <region-of-buildpacks-bucket>
+              aws_access_key_id: <aws-access-key>
+              aws_secret_access_key: <aws-secret-key>
+              endpoint: <blostore-endpoint>
+      include:
+        deployments:
+        - <PAS-deployment-name-from-step-1>
+        jobs:
+        - name: bbr-routingdb
+          release: routing
+  ```
+  </pre>

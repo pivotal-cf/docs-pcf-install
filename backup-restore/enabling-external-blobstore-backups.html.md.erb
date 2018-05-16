@@ -1,5 +1,5 @@
 ---
-title: Enabling External Blobstore Backups
+title: Enabling External S3 Blobstore Backups
 owner: RelEng
 ---
 
@@ -7,105 +7,112 @@ owner: RelEng
 
 This topic describes how to enable external blobstore backups in your Pivotal Cloud Foundry (PCF) deployment.
 
-External blobstore backups leverage the versioning feature of S3-compatible storage solutions instead of downloading the files stored in the blobstore. For more information, see [Backup and Restore with External Blobstores](https://docs.cloudfoundry.org/bbr/external-blobstores.html).
+External blobstore backups leverage the versioning feature of S3-compatible storage solutions instead of downloading the files stored in the blobstore.
+
+For more information, see [Backup and Restore with External Blobstores](https://docs.cloudfoundry.org/bbr/external-blobstores.html).
 
 <p class="note"><strong>Note:</strong> If you enable external blobstore backups, you will need to update your runtime configuration when upgrading to PCF v2.1. Remove <code>s3-versioned-blobstore-backup-restorer</code> from your runtime configuration before upgrading.</p>
 
 
-## <a id='backup-prepare'></a> Enable Backup-Prepare Node in Pivotal Application Service
+## <a id='backup-prepare'></a> Step 1: Enable Backup Prepare Node
 
-Follow the steps [here](https://docs.pivotal.io/pivotalcf/2-0/customizing/backup-restore/backup-pcf-bbr.html#backup-prepare-node) to ensure that the backup-prepare node is deployed in your Pivotal Application Service (PAS) tile.
+To ensure the backup prepare node is deployed on your Pivotal Application Service (PAS) tile, see [Enable Backup Prepare Node](backup-pcf-bbr.html#backup-prepare-node) in _Backing Up Pivotal Cloud Foundry with BBR_.
+
+## <a id='versioning'></a> Step 2: Set S3 Blobstore Versioning
+
+1. Create buckets for your PAS tile. For more information about creating buckets, see [Create S3 Buckets](../pcf-aws-manual-config.html#create-s3) in _Manually Configuring AWS for PCF_.
+
+1. Enable versioning and replication. For more information, see [Enable Versioning on Your S3-Compatible Blobstore](https://docs.cloudfoundry.org/bbr/external-blobstores.html#enable-s3-versioning) in _Backup and Restore with External Blobstores_.
+
+1. (Optional) Pivotal recommends you include a lifecycle policy rule to delete noncurrent versions after a period of time. Including this policy rule saves storage space and cost. For an example of this rule, see [Example 6: Specifying a Lifecycle Rule for a Versioning-Enabled Bucket](https://docs.aws.amazon.com/AmazonS3/latest/dev/lifecycle-configuration-examples.html#lifecycle-config-conceptual-ex6) in the AWS documentation.
+
+## <a id='backup-prepare'></a> Step 3: Configure an External Blobstore
+
+To configure an external blobstore for your PAS tile with your S3 buckets, see [External S3 or Ceph Filestore](../pcf-aws-manual-er-config.html#external_s3) in the _Manually Configuring PAS for AWS_.
 
 
-## <a id='versioning'></a> Enable Versioning
+## <a id='backup-prepare'></a> Step 4: Install the S3 Backups Add-On
 
-[Create buckets](https://docs.pivotal.io/pivotalcf/2-0/customizing/pcf-aws-manual-config.html#create-s3) for PAS to use. As you create them, remember to [enable versioning and replication](https://docs.cloudfoundry.org/bbr/external-blobstores.html), as the BBR backup and restore workflow needs versioning to work. You might also want to [set a retention policy](http://docs.aws.amazon.com/AmazonS3/latest/dev/lifecycle-configuration-examples.html#lifecycle-config-conceptual-ex6) for the versioning.
-
-
-## <a id='backup-prepare'></a> Enable PCF to Use an External Blobstore
-
-Follow [these instructions](https://docs.pivotal.io/pivotalcf/2-0/customizing/pcf-aws-manual-er-config.html#external_s3) to point ERT/PAS to the buckets just created and apply changes.
-
-
-## <a id='backup-prepare'></a> Install the S3 Backups Add-On
-
-1. Find your PAS deployment name by clicking on the PAS tile and copying the slug (e.g. `cf-3247176589a379f246d1`) from the URL.
-
-1. Download the *Backup and Restore SDK Preview* add-on release from Pivotal Network to your local machine.
-
-1. Copy the release archive to your Ops Manager instance:
-  ```
-  $ scp -i PATH-TO-PRIVATE-KEY backup-and-restore-sdk-preview.tar.gz ubuntu@YOUR-OPS-MANAGER-VM-IP:~
-  ```
-
-1. SSH into the Ops Manager machine:
-  ```
-  $ ssh -i PATH-TO-PRIVATE-KEY ubuntu@YOUR-OPS-MANAGER-VM-IP
-  ```
-
-1. [Download the latest bosh CLI](https://bosh.io/docs/cli-v2.html#install), as the following BOSH commands require it.
-
-1. On the Ops Manager VM, log in to your BOSH Director. Navigate to **Ops Manager Director > Status** to find the IP address. When prompted, enter your BOSH Director credentials:
-  ```
-  $ bosh -e YOUR-BOSH-DIRECTOR-INTERNAL-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate login
-  ```
-  To retrieve your BOSH Director credentials, navigate to **Ops Manager > Credentials** and click **Link to Credential** next to **Director Credentials**.
-
-1. Upload the Backup and Restore SDK Preview release:
-  ```
-  $ bosh -e YOUR-BOSH-DIRECTOR-INTERNAL-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate upload-release backup-and-restore-sdk-preview.tar.gz
-  ```
-
-1. Confirm that the release upload has succeeded:
-  ```
-  $ bosh -e YOUR-BOSH-DIRECTOR-INTERNAL-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate releases
-  ```
+1. From the Ops Manager Installation Dashboard, click **PAS** tile.
+1. From your browser's address bar, record the PAS deployment name from the URL. The deployment name is prefixed with the letters `cf`. For example, in `http://pcf.EXAMPLE-HOST.com/products/cf-3247176589a379f246d1`, the PAS deployment name is `cf-3247176589a379f246d1`. The PAS deployment name value is used to update the runtime config in a later step. 
+1. Select the **Credentials** tab.
+1. Locate **Director Credentials** and click **Link to Credentials** to retrieve your Director credentials. Record your **Director Credentials**. The **Director Credentials** are used to update the runtime config in a later step. 
+1. Select the **Status** tab.
+1. Record the BOSH Director IP address. The BOSH Director IP address value is used to update the runtime config in a later step. 
+1. Go to [Pivotal Network](https://network.pivotal.io/) and download **BOSH Addon for Backup and Restore of External Blobstores**.
+1. Run the following command to copy the release archive to your Ops Manager instance. For more information on obtaining your private key, see [Step 4: Check your BOSH Director
+](backup-pcf-bbr.html#check-director) in _Backing Up Pivotal Cloud Foundry with BBR_.
+  <pre class="terminal">$ scp -i PATH\_TO\_PRIVATE\_KEY 
+    BBR-external-blobstore-SEMVER.tar.gz ubuntu@YOUR\_OPS\_MANAGER\_VM\_IP:~</pre>
+1. Run the following command to SSH into the Ops Manager instance.
+  <pre class="terminal">$ ssh -i PATH\_TO\_PRIVATE\_KEY ubuntu@YOUR\_OPS\_MANAGER\_VM\_IP</pre>
+1. In the Ops Manager VM, run the following command to log in to your BOSH Director. When prompted, enter your BOSH Director credentials.
+  <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert 
+    /FILE-PATH-ROOT-CA-CERTIFICATE login</pre>
+1. Run the following command to upload the BOSH Addon for Backup and Restore of External Blobstores release that you previously downloaded from Pivotal Network.
+  <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
+   /FILE-PATH-ROOT-CA-CERTIFICATE upload-release BBR-external-blobstore-SEMVER.tar.gz</pre>
+1. Run the following command to confirm that the release upload has succeeded.
+  <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
+   /FILE-PATH-ROOT-CA-CERTIFICATE releases</pre>
   You should see a `backup-and-restore-sdk-preview` entry.
-
-1. Download your current runtime configuration and save it as `runtime-config.yml`:
-  ```
-  $ bosh -e YOUR-BOSH-DIRECTOR-INTERNAL-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate runtime-config > runtime-config.yml.
-  ```
-  If you see an error that says “No runtime config”, create an empty file.
-
-1. Edit `runtime-config.yml` to look like the one below, replacing placeholders in <> with real values.
+1. Run the following command to download your current runtime config and save it as `runtime-config.yml`.
+  <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate runtime-config > runtime-config.yml</pre>
+  If you receive an error about a missing runtime config, create an empty file and save it as `runtime-config.yml`.
+1. Append the below to the `releases` section of your `runtime-config.yml`. 
   <pre>
-  ```releases:
-  … existing release definitions …
-  - name: backup-and-restore-sdk-preview
-      version: <the-release-version>
+  releases:
+  <!-- Append the below to the list of releases: -->
+  \- name: backup-and-restore-sdk-preview
+      version: &lt;the-release-version&gt;
+  </pre>
+
+1. Append the below to the `addons` section of your `runtime-config.yml`.
+</br>
+</br>
+ Replace the bracketed placeholders in the `droplets`, `packages`, and `buildpacks` sections with the values you previously created in [Step 2: Set S3 Blobstore Versioning](../pcf-aws-manual-config.html#create-s3). 
+</br>
+</br>
+ Replace the bracketed information in the `include` section with the PAS Deployment name you recorded earlier.
+ <pre>  
   addons:
-  … existing add-on definitions …
-  - name: sdk-preview
+  <!-- Append the below to the list of addons: -->
+  \- name: sdk-preview
       jobs:
-      - name: s3-versioned-blobstore-backup-restorer
+      \- name: s3-versioned-blobstore-backup-restorer
         release: backup-and-restore-sdk-preview
         properties:
           enabled: true
           buckets:
             droplets:
-              name: <name-of-droplets-bucket>
-              region: <region-of-droplets-bucket>
-              aws_access_key_id: <aws-access-key>
-              aws_secret_access_key: <aws-secret-key>
-              endpoint: <blostore-endpoint>
+              name: &lt;name-of-droplets-bucket&gt;
+              region: &lt;region-of-droplets-bucket&gt;
+              aws\_access\_key_id: &lt;aws-access-key&gt;
+              aws\_secret\_access\_key: &lt;aws-secret-key&gt;
+              endpoint: &lt;blostore-endpoint&gt;
             packages:
-              name: <name-of-packages-bucket>
-              region: <region-of-packages-bucket>
-              aws_access_key_id: <aws-access-key>
-              aws_secret_access_key: <aws-secret-key>
-              endpoint: <blobstore-endpoint>
+              name: &lt;name-of-packages-bucket&gt;
+              region: &lt;region-of-packages-bucket&gt;
+              aws\_access\_key\_id: &lt;aws-access-key&gt;
+              aws\_secret\_access\_key: &lt;aws-secret-key&gt;
+              endpoint: &lt;blobstore-endpoint&gt;
             buildpacks:
-              name: <name-of-buildpacks-bucket>
-              region: <region-of-buildpacks-bucket>
-              aws_access_key_id: <aws-access-key>
-              aws_secret_access_key: <aws-secret-key>
-              endpoint: <blostore-endpoint>
+              name: &lt;name-of-buildpacks-bucket&gt;
+              region: &lt;region-of-buildpacks-bucket&gt;
+              aws\_access\_key\_id: &lt;aws-access-key&gt;
+              aws\_secret\_access\_key: &lt;aws-secret-key&gt;
+              endpoint: &lt;blostore-endpoint&gt;
       include:
         deployments:
-        - <PAS-deployment-name-from-step-1>
+        \- &lt;pas-deployment-name&gt;
         jobs:
-        - name: bbr-routingdb
+        \- name: bbr-routingdb
           release: routing
-  ```
   </pre>
+
+1. Run the following command to finishing updating the runtime config:
+<pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert 
+  /FILE-PATH-ROOT-CA-CERTIFICATE update-runtime-config runtime-config.yml
+</pre>
+
+1. Navigate to your **Ops Manager Installation Dashboard**. Click **Apply Changes**

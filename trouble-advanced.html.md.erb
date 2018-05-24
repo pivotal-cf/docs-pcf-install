@@ -19,7 +19,8 @@ BOSH Director diagnostic commands have access to information about your entire
 not proceed with troubleshooting until all BOSH Director tasks have completed or you
 have ended them. See the <a href="https://bosh.io/docs/sysadmin-commands.html">BOSH CLI Commands</a> for more information.</p>
 
-## <a id='prepare'></a>Prepare to Use the BOSH CLI
+
+## <a id='prepare'></a> Prepare to Use the BOSH CLI
 
 This section guides you through preparing to use the BOSH CLI.
 
@@ -64,7 +65,7 @@ Use SSH to connect to the Ops Manager VM. Follow the instructions in one of the 
 To SSH into the Ops Manager VM in AWS, you need the key pair you used when you created the Ops Manager VM.
 To see the name of the key pair, click on the Ops Manager VM and locate the `key pair name` in the properties.
 
-Perform the following steps to SSH into the Ops Manager VM in AWS:
+To SSH into the Ops Manager VM in AWS, do the following:
 
 1. Locate the Ops Manager FQDN on the AWS **EC2 instances** page.
 
@@ -85,7 +86,7 @@ Perform the following steps to SSH into the Ops Manager VM in AWS:
 To SSH into the Ops Manager VM in Azure, you need the key pair you used when creating the Ops Manager VM.
 If you need to reset the SSH key, locate the Ops Manager VM in the Azure portal and click **Reset Password**.
 
-Perform the following steps to SSH into the Ops Manager VM in Azure:
+To SSH into the Ops Manager VM in Azure, do the following:
 
 1. Locate the Ops Manager FQDN by selecting the VM in the Azure portal.
 
@@ -101,7 +102,7 @@ Perform the following steps to SSH into the Ops Manager VM in Azure:
 
 ### <a id='ssh-gcp'></a> GCP
 
-To SSH into the Ops Manager VM in GCP, follow these instructions:
+To SSH into the Ops Manager VM in GCP, do the following:
 
 1. Confirm that you have installed the [Google Cloud SDK and CLI](https://cloud.google.com/sdk/docs/quickstart-macos). See the [Google Cloud Platform documentation](https://cloud.google.com/sdk/gcloud/#downloading_gcloud) for more information.
 
@@ -117,15 +118,17 @@ To SSH into the Ops Manager VM in GCP, follow these instructions:
 
 1. Paste the command into your terminal window to SSH to the VM. For example:
     <pre class="terminal">
-    $ gcloud compute --project "YOUR-PROJECT-ID" ssh --zone "YOUR-ZONE-ID" "YOUR-VM"
+    $ gcloud compute "YOUR-VM" ssh --zone "YOUR-ZONE-ID"
     </pre>
+
+1. Run `sudo su - ubuntu` to switch to the `ubuntu` user.
 
 ### <a id='ssh-openstack'></a> OpenStack
 
 To SSH into the Ops Manager VM in OpenStack, you need the key pair that you created in the [Configure Security](./openstack-setup.html#security) step of the _Provisioning the OpenStack Infrastructure_ topic.
 If you need to reset the SSH key, locate the Ops Manager VM in the OpenStack console and boot it in recovery mode to generate a new key pair.
 
-Perform the following steps to SSH into the Ops Manager VM in OpenStack:
+To SSH into the Ops Manager VM in OpenStack, do the following:
 
 1. Locate the Ops Manager FQDN on the **Access & Security** page.
 
@@ -149,11 +152,11 @@ You set these credentials when you installed Ops Manager.
 
 Log in to the BOSH Director using one of the following options:
 
-- [Internal User Store Login via UAA](#log-in-uaa) - target and log in to the Director using BOSH.
+- [Internal User Store Login with UAA](#log-in-uaa) - target and log in to the Director using BOSH.
 
-- [External User Store Login via SAML](#log-in-saml) - use an external user store to log in to the BOSH Director.
+- [External User Store Login with SAML](#log-in-saml) - use an external user store to log in to the BOSH Director.
 
-#### <a id='log-in-uaa'></a> Internal User Store Login via UAA
+#### <a id='log-in-uaa'></a> Internal User Store Login with UAA
 
 1. Target the BOSH UAA on Ops Manager with the UAAC command `uaac target`.
 
@@ -179,7 +182,7 @@ Log in to the BOSH Director using one of the following options:
     Logged in as 'director'
     </pre>
 
-#### <a id='log-in-saml'></a> External User Store Login via SAML
+#### <a id='log-in-saml'></a> External User Store Login with SAML
 
 1. Log in to your identity provider and use the following information to configure SAML Service Provider Properties:
   * **Service Provider Entity ID**: `bosh-uaa`
@@ -248,7 +251,7 @@ The table below shows the naming conventions for deployment files.
 </tr>
 </table>
 
-<p class="note"><strong>Note</strong>: Where there is more than one installation of the same product, record the release number shown on the product tile in Operations Manager. Then, from the YAML files for that product, find the deployment that specifies the same release version as the product tile.</p>
+<p class="note"><strong>Note:</strong> Where there is more than one installation of the same product, record the release number shown on the product tile in Operations Manager. Then, from the YAML files for that product, find the deployment that specifies the same release version as the product tile.</p>
 
 1. Run `bosh status` and record the UUID value.
 
@@ -267,6 +270,28 @@ to apply BOSH CLI commands against the deployment described by the YAML file tha
 <pre class='terminal'>
 $ bosh deployment /var/tempest/workspaces/default/deployments/cf-cca1234abcd.yml
 </pre>
+
+
+## <a id='bosh-director-ssh-gcp'></a> SSH Into BOSH Director VM in GCP
+
+To SSH into BOSH Director VM in GCP, do the following:
+
+1. Confirm that you have installed the [Google Cloud SDK and CLI](https://cloud.google.com/sdk/docs/quickstart-macos). See the [Google Cloud Platform documentation](https://cloud.google.com/sdk/gcloud/#downloading_gcloud) for more information.
+
+1. Initialize Google Cloud CLI, using a user account with Owner, Editor, or Viewer permissions to access the project. Ensure that the Google Cloud CLI can login to the project by running the command `gcloud auth login`.
+
+1. From the GCP web console, navigate to **Compute Engine**.
+
+1. Locate the BOSH Director VM in the **VM Instances** list.
+
+1. Under **Remote access**, click the **SSH** dropdown and select **View gcloud command**.
+
+1. Copy the SSH command that appears in the popup window.
+
+1. Paste the command into your terminal window to SSH to the VM. For example:
+    <pre class="terminal">
+    $ gcloud compute --project "YOUR-PROJECT-ID" ssh --zone "YOUR-ZONE-ID" "YOUR-VM"
+    </pre>
 
 
 ## <a id='cli'></a> Use the BOSH CLI for Troubleshooting
@@ -333,7 +358,7 @@ troubleshooting.
 
 * `--dns`: Report also includes the DNS A record for each VM
 
-<p class="note"><strong>Note</strong>: The <strong>Status</strong> tab of the <strong>Elastic Runtime</strong> product tile displays information similar to the <code>bosh vms</code> output.</p>
+<p class="note"><strong>Note:</strong> The <strong>Status</strong> tab of the <strong>Elastic Runtime</strong> product tile displays information similar to the <code>bosh vms</code> output.</p>
 
 ### <a id='cck'></a> BOSH Cloud Check
 

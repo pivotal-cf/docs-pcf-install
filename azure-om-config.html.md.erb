@@ -11,6 +11,10 @@ This topic describes how to use Pivotal Cloud Foundry (PCF) Ops Manager to confi
 
 ## <a id="prerequisites"></a> Prerequisites
 
+See the following sections to prepare for configuring BOSH Director on Azure:
+
+### <a id="general-prereqs"></a> General Prerequisites
+
 Before you perform the procedures in this topic, you must have completed the procedures in the following topics:
 
 * The [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic
@@ -18,15 +22,30 @@ Before you perform the procedures in this topic, you must have completed the pro
 
 <p class="note"><strong>Note</strong>: You can also perform the procedures in this topic using the Ops Manager API. For more information, see the <a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
 
-##<a id="azure-stack"></a> Prerequisites for Azure Stack
 
-Azure Stack uses a different set of VM types than a standard Azure deployment. To install the BOSH Director tile on Azure Stack, you must set your virtual machine (VM) types using the Ops Manager API.
+### <a id="stack-gov-prereqs"></a> Prerequisites for Azure Stack or Azure Government Cloud
 
-Setting VM types with the API modifies the VMs available in the **Resource Config** pane of the tile. For a current list of Azure Stack VM types that you can include in your API call, see [Virtual Machine Sizes](https://docs.microsoft.com/en-us/azure/azure-stack/user/azure-stack-vm-considerations#virtual-machine-sizes) from the Azure Stack documentation. Ensure that you provide at least one `Standard` VM type for use by the **Router** VM of the Pivotal Application Service (PAS) tile. Below is an example command:
+If you are using Azure Stack or Azure Government Cloud, you must set custom VM types for a successful deployment. You can set custom VM types with the Ops Manager API. For more information, see <a href="ops-man-api.html">Using the Ops Manager API</a>.
 
-<pre class="terminal">
+To set custom VM types, see the following information.
+
+* <strong>For Azure Stack: </strong>The example below may not be up-to-date. For a current list of supported Azure Stack VM types that you can include in your API call, see [Virtual Machine Sizes](https://docs.microsoft.com/en-us/azure/azure-stack/user/azure-stack-vm-considerations#virtual-machine-sizes) from the Azure Stack documentation. Include at least one `Standard` VM type.
+
+* <strong>For Azure Government: </strong> See the example `curl` command below for your list of VM types.
+
+<table class="nice">
+  <tr>
+    <th colspan="2">Example Command to Set VM Types</th>
+  </tr>
+  <tr>
+    <th>Azure Stack</th>
+    <th>Azure Government</th>
+  </tr>
+  <tr>
+    <td>
+<pre class="terminal" style="max-width: 300px; height: 300px; overflow: auto;">
 $ curl -k https://YOUR-OPS-MAN-FQDN/api/v0/vm_types -X 
-PUT -H "Authorization: bearer YOUR-ACCESS-TOKEN" -H 
+PUT -H "Authorization: bearer UAA-ACCESS-TOKEN" 
 "Content-Type: application/json" -d '{"vm_types":[
 {"name":"Standard_DS1_v2","ram":3584,"cpu":1,"ephemeral_disk":51200},
 {"name":"Standard_DS2_v2","ram":7168,"cpu":2,"ephemeral_disk":102400},
@@ -36,12 +55,34 @@ PUT -H "Authorization: bearer YOUR-ACCESS-TOKEN" -H
 {"name":"Standard_DS11_v2","ram":14336,"cpu":2,"ephemeral_disk":102400},
 {"name":"Standard_DS12_v2","ram":28672,"cpu":4,"ephemeral_disk":204800},
 {"name":"Standard_DS13_v2","ram":57344,"cpu":8,"ephemeral_disk":409600},
-{"name":"Standard_DS14_v2","ram":114688,"cpu":16,"ephemeral_disk":819200}]}'
+{"name":"Standard_DS14_v2","ram":114688,"cpu":16,"ephemeral_disk":819200}]}''
 </pre>
+    </td>
+    <td>
+<pre class="terminal" style="max-width: 300px;; height: 300px; overflow: auto;">
+$ curl -k https://YOUR-OPS-MAN-FQDN/api/v0/vm_types -X 
+PUT -H "Authorization: bearer UAA-ACCESS-TOKEN" 
+"Content-Type: application/json" -d '{"vm_types":[
+{"name": "Standard\_D1\_v2", "ram": 3584, "cpu": 1, "ephemeral_disk": 51200 },
+{"name": "Standard\_D2\_v2", "ram": 7168, "cpu": 2, "ephemeral_disk": 102400 },
+{"name": "Standard\_D3\_v2", "ram": 14336, "cpu": 4, "ephemeral_disk": 204800 },
+{"name": "Standard\_D4\_v2", "ram": 28672, "cpu": 8, "ephemeral_disk": 409600 },
+{"name": "Standard\_D5\_v2", "ram": 57344, "cpu": 8, "ephemeral_disk": 819200 },
+{"name": "Standard\_D11\_v2", "ram": 14336, "cpu": 2, "ephemeral_disk": 102400 },
+{"name": "Standard\_D12\_v2", "ram": 28672, "cpu": 4, "ephemeral_disk": 204800 },
+{"name": "Standard\_D13\_v2", "ram": 57344, "cpu": 8, "ephemeral_disk": 409600 },
+{"name": "Standard\_D14\_v2", "ram": 114688, "cpu": 16, "ephemeral_disk": 819200 },
+{"name": "Standard\_F1", "ram": 2048, "cpu": 1, "ephemeral_disk": 16384 },
+{"name": "Standard\_F2", "ram": 4096, "cpu": 2, "ephemeral_disk": 32768 },
+{"name": "Standard\_F4", "ram": 8192, "cpu": 4, "ephemeral_disk": 65536 },
+{"name": "Standard\_F8", "ram": 16384, "cpu": 8,  "ephemeral_disk": 131072}]}'
+    </pre>
+    </td>
+  </tr>
 
-<p class="note"><strong>Note</strong>: To obtain your authorization token, perform the procedures in the <a href="ops-man-api.html">Using the Ops Manager API</a> topic. 
+</table>
 
-<p class="note warning"><strong>WARNING:</strong> If you do not set your VM types, the Ops Manager deploy will fail. You must set your VM types before configuring resources and clicking <strong>Apply Changes</strong>.</p>
+To check that you have successfully set your custom VM types, `GET` from the `/api/v0/vm_types` Ops Manager API endpoint.
 
 ## <a id='access-om'></a>Step 1: Access Ops Manager ##
 

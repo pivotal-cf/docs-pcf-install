@@ -141,13 +141,25 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
       </tr>
     </table><br />
     * For **Password**, enter the password that you defined for your MySQL database when you created in the [Step 19: Create a MySQL Database using AWS RDS](pcf-aws-manual-config.html#pcfaws-mysql-rds) section of the <em>Manually Configuring AWS for PCF</em> topic.
+  In addition, the following optional fields will appear:
+    * **Enable TLS:** Checking this checkbox enables TLS communication between the BOSH Director and the database.
+    * **TLS CA:** Enter the Certificate Authority for the TLS Certificate.
+    * **TLS Certificate:** Enter the client certificate for mutual TLS connections to the database.
+    * **TLS Private Key:** Enter the client private key for mutual TLS connections to the database.
+    * **Advanced DB Connection Options:** If you would like to provide additional options for the database, use this field to provide a JSON-formatted options string.
+  <p class='note'><strong>Note:</strong> You can only configure the TLS-related field if you check the <strong>Enable TLS for Director Database</strong> checkbox. Otherwise, all the other fields will remain greyed out.</p>
 
 1. (Optional) **Director Workers** sets the number of workers available to execute Director tasks. This field defaults to 5.
+
 1. (Optional) **Max Threads** sets the maximum number of threads that the BOSH Director can run simultaneously. For AWS, the default value is 6. Leave this field blank to use this default value. Pivotal recommends that you use the default value unless doing so results in rate limiting or errors on your IaaS.
+
 1. (Optional) To add a custom URL for your BOSH Director, enter a valid hostname in **Director Hostname**. You can also use this field to configure [a load balancer in front of your BOSH Director](https://discuss.pivotal.io/hc/en-us/articles/225420588).
+
 1. <%= partial "exclude-recursors" %>
+
 1. (Optional) To disable BOSH DNS, select the **Disable BOSH DNS server for troubleshooting purposes** checkbox. For more information about the BOSH DNS service discovery mechanism, see [BOSH DNS Service Discovery for Application Containers](http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-dns) in the Pivotal Application Service (PAS) Release Notes.
   <p class="note breaking"><strong>Breaking Change</strong>: Do not disable BOSH DNS without consulting Pivotal Support. For more information about disabling BOSH DNS, see <a href="https://discuss.pivotal.io/hc/en-us/articles/115015720428-Disabling-or-Opting-Out-of-BOSH-DNS-in-PCF">Disabling or Opting Out of BOSH DNS in PCF</a> in the Pivotal Knowledge Base.</p>
+
 1. (Optional) To set a custom banner that users see when logging in to the Director using SSH, enter text in the **Custom SSH Banner** field.
   <%= image_tag("disable-bosh-dns.png") %>
 
@@ -159,6 +171,7 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
 
 1. Select **Create Availability Zones**.
 <%= image_tag("cloudform/create-az.png") %>
+
 1. Perform the following steps to add the three AZs you specified in the [Step 4: Create a VPC](pcf-aws-manual-config.html#pcfaws-vpc) section of the <em>Manually Configuring AWS for PCF</em> topic: 
     1. Click **Add**.
     1. For **Amazon Availability Zone**, enter the name of the AZ.
@@ -167,9 +180,12 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
 1. Click **Save**.
 
 ## <a id='pcfaws-om-networks'></a>Step 5: Create Networks Page ##
+
 1. Select **Create Networks**.
 <%= image_tag("cloudform/create-networks.png") %>
+
 1. (Optional) Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
+
 1. Perform the following steps to add the network configuration you created for your VPC in the [Step 4: Create a VPC](pcf-aws-manual-config.html#pcfaws-vpc) section of the <em>Manually Configuring PCF for AWS</em> topic. Record your VPC CIDR if you set a CIDR other than the recommendation.
     1. Click **Add Network**.
     1. For **Name**, enter `pcf-management-network`.
@@ -294,8 +310,11 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
 
 1. Select **Assign AZs and Networks**.
 <%= image_tag("images/assign-az.png") %>
+
 1. Use the drop-down menu to select a **Singleton Availability Zone**. The BOSH Director is deployed into this AZ.
+
 1. Use the drop-down menu to select `pcf-management-network` under **Network**. The BOSH Director is deployed into this network.
+
 1. Click **Save**.
 
 ## <a id='security'></a>Step 7: Security Page ##
@@ -336,7 +355,9 @@ choose **Automatic** from the drop-down menu to allocate the recommended resourc
 ## <a id='pcfaws-om-complete'></a>Step 10: Complete the BOSH Director Installation ##
 
 1. Return to the **Installation Dashboard**.
+
 1. Click **Apply Changes**. 
+
 1. BOSH Director begins to install. The **Changes Applied** window displays when the installation process successfully completes.
 
     <%= image_tag("aws/vpc-step16.png") %>

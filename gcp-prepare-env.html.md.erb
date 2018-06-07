@@ -474,7 +474,6 @@ This step assigns tags and firewall rules to Ops Manager components and VMs that
     </div>
     <p class="note"><strong>Note</strong>: If you want your firewall rules to only allow traffic within your private network, modify the <strong>Source IP Ranges</strong> from the table accordingly.</p>
 
-
 1. If you are only using your GCP project to deploy PCF, then you can delete the following default firewall rules:
    * `default-allow-http`
    * `default-allow-https`
@@ -493,8 +492,11 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
 ### <a id='create-dbs-instance'></a> Create Database Instance  
 
 1. From the GCP Console, select **SQL** and click **CREATE INSTANCE**. 
+
 1. Ensure **MySQL** is selected and click **Next**. 
+
 1. Click **Choose Second Generation**. 
+
 1. Configure the instance as follows:
   * **Instance ID**: `MY-PCF-pas-sql`
   * **Root password**: Set a password for the root user.
@@ -506,12 +508,15 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
      * Under **High availability**, select the **Create failover replica** checkbox. 
   * **Authorize Networks**: Click **Add network** and create a network named `all` that allows traffic from `0.0.0.0/0`. 
   <p class="note"><strong>Note</strong>: If you assigned static IP addresses to your NAT instances, you can instead limit access to the database instances by specifying the NAT IP addresses.</p>
+
 1. Click **Create**. 
 
 ### <a id='create-dbs'></a> Create Databases
 
 1. From the **Instances** page, select the database instance you just created. 
+
 1. Select the **Databases** tab. 
+
 1. Use the **Create database** button to create the following databases: 
   * `account`
   * `app_usage_service`
@@ -527,13 +532,17 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
   * `silk`
   * `uaa`
   * `credhub`
+
 1. Select the **USERS** tab. 
+
 1. Use the **Create user account** button to create a unique username and password for each database you created above. For **Host name**, select **Allow any host**. You must create a total of fourteen user accounts.
+<p class='note'><strong>Note:</strong> Ensure that the <code>networkpolicyserver</code> database user has the <code>create_routine</code> permission.</p>
 
 
 ## <a id="buckets"></a> Step 7: Create Storage Buckets
 
 1. From the GCP Console, select **Storage** > **Browser**.
+
 1. Using **CREATE BUCKET**, create buckets with the following names. For **Default storage class**, select **Multi-Regional**:
   * `MY-PCF-buildpacks`
   * `MY-PCF-droplets`
@@ -546,7 +555,9 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
 ### <a id='create-instance-group'></a> Create Instance Group
 
 1. Navigate to **Compute Engine** > **Instance groups**. 
+
 1. Click **CREATE INSTANCE GROUP**.
+
 1. Complete the form as follows: 
   * For **Name**, enter `MY-PCF-http-lb`
   * For **Location**, select **Single-zone**. 
@@ -556,6 +567,7 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
   * For **Network**, select `MY-PCF-virt-net`. 
   * For **Subnetwork**, select the `MY-PCF-subnet-pas-MY-GCP-REGION` subnet that you created previously.
   * Click **Create**. 
+
 1. Create a second instance group with the following details:
   * **Name**: `MY-PCF-http-lb`
   * **Location**: **Single-zone**
@@ -563,7 +575,8 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
     Example: For region `us-west1`, select zone `us-west1-b`.
   * **Group type**: Select **Unmanaged instance group**. 
   * **Network**: Select `MY-PCF-virt-net`. 
-  * **Subnetwork**: Select the `MY-PCF-subnet-pas-MY-GCP-REGION` subnet that you created previously.
+  * **Subnetwork**: Select the `MY-PCF-subnet-ert-MY-GCP-REGION` subnet that you created previously.  
+
 1. Create a third instance group with the following details:
   * **Name**: `MY-PCF-http-lb`
   * **Location**: **Single-zone**
@@ -576,7 +589,9 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
 ### <a id='create-health-check'></a> Create Health Check
 
 1. Navigate to **Compute Engine** > **Health checks**. 
+
 1. Click **CREATE HEALTH CHECK**. 
+
 1. Complete the form as follows: 
   * **Name**: `MY-PCF-cf-public`
   * **Port**: `8080`
@@ -585,14 +600,19 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
   * **Timeout**: `5`
   * **Healthy threshold**: `10`
   * **Unhealthy threshold**: `2`
+
 1. Click **Create**. 
 
 ### <a id='config-backend'></a> Configure Back End
 
 1. Navigate to **Network services** > **Load balancing**. 
+
 1. Click **CREATE LOAD BALANCER**. 
+
 1. Under **HTTP(S) Load Balancing**, click the **Start configuration** button.
+
 1. For the **Name**, enter `MY-PCF-global-pcf`. 
+
 1. Select **Backend configuration**
   1. From the dropdown, select **Backend services** > **Create a backend service**. 
   1. Complete the form as follows:
@@ -605,6 +625,7 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
     * Click **Add backend**, select the **Instance group** that corresponds to the third zone of the multi-zone instance group you created. For example: `MY-PCF-http-lb-us-west1-c`. Click **Done**.
     * **Health check**: Select the `MY-PCF-cf-public` health check that you created.  
     * **Cloud CDN**: Ensure Cloud CDN is disabled. 
+ 
  1. Click **Create**. 
 
 ### <a id='config-frontend'></a> Configure Front End
@@ -637,6 +658,7 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
      * In the **Public key certificate** field, copy in the contents of your public certificate, or upload your certificate as a .pem file.
      * In the **Certificate chain** field, enter or upload your certificate chain in the .pem format. If you use a self-signed certificate, you do not need to populate this field.
      * In the **Private key** field, copy in the contents or upload the .pem file of the private key for the certificate.
+
 1. Review the completed frontend configuration. 
 
 1. Click **Review and finalize** to verify your configuration.
@@ -841,4 +863,4 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 
 * (Optional) To save time during the final stage of the installation process, you can start downloading the PAS tile. See [Step 1: Download the PAS Tile](./gcp-er-config.html#download-er) of the _Deploying PAS on GCP_ topic.
 
-* Proceed to the next step in the deployment, [Launching a BOSH Director Instance on GCP](./gcp-om-deploy.html). 
+* Proceed to the next step in the deployment, [Launching a BOSH Director Instance on GCP](./gcp-om-deploy.html).

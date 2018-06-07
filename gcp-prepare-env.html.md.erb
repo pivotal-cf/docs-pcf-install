@@ -18,9 +18,11 @@ When deploying PCF on GCP, Pivotal recommends using the following GCP components
 
 For more information, review the different deployment options and recommendations in the [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html). 
 
-## <a id="iam_account"></a>Step 1: Set up an IAM Service Account ##
+
+## <a id="iam_account"></a> Step 1: Set up an IAM Service Account
 
 1. From the GCP Console, select **IAM & Admin**, then **Service accounts**. 
+
 1. Click **Create Service Account**: 
   * **Service account name**: Enter a name. For example, `bosh`.
   * **Role**: Select the following roles for the service account:
@@ -37,7 +39,8 @@ For more information, review the different deployment options and recommendation
 
 1. Click **Create**. Your browser automatically downloads a JSON file with a private key for this account. Save this file in a secure location.
 
-## <a id="enable_compute_resource_api"></a>Step 2: Enable Google Cloud APIs ##
+
+## <a id="enable_compute_resource_api"></a> Step 2: Enable Google Cloud APIs
 
 Ops Manager manages GCP resources using the Google Compute Engine and Cloud Resource Manager APIs. To enable these APIs, perform the following steps:
 
@@ -78,6 +81,7 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
 
 1. Select **VPC network**, then **CREATE VPC NETWORK**.
   ![Create VPC Network](gcp/gcp-vpc-networks.png)
+
 1. In the **Name** field, enter `MY-PCF-virt-net`.<br>
      `MY-PCF` is a prefix to help you identify resources for this PCF deployment in the GCP console. 
      ![Enter VPC Name](gcp/gcp-vpc-name.png)
@@ -137,7 +141,8 @@ Ops Manager manages GCP resources using the Google Compute Engine and Cloud Reso
 
 1. Click **Create**.
 
-## <a id="create_nat"></a>Step 4: Create NAT Instances ##
+
+## <a id="create_nat"></a> Step 4: Create NAT Instances
 
 Use NAT instances when you want to expose only a minimal number of public IP addresses. 
 
@@ -207,7 +212,7 @@ For more information, see the [Reference Architecture for Pivotal Cloud Foundry 
     </tr>
     </table>
 
-### <a id="nat-routes"></a>Create Routes for NAT Instances
+### <a id="nat-routes"></a> Create Routes for NAT Instances
 
 1. In the GCP console, navigate to **VPC Networks** > **Routes**. 
   ![NAT Routes](gcp/gcp-vpc-routes.png)
@@ -242,6 +247,7 @@ For more information, see the [Reference Architecture for Pivotal Cloud Foundry 
       </td>
     </tr>
     </table>
+
 
 ## <a id="firewall_rules"></a> Step 5: Create Firewall Rules for the Network
 
@@ -349,9 +355,9 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
    * `default-allow-ssh`
 
 
-## <a id="dbs"></a>Step 6: Create Database Instance and Databases ##
+## <a id="dbs"></a> Step 6: Create Database Instance and Databases
 
-### Create Database Instance  
+### <a id='create-dbs-instance'></a> Create Database Instance  
 
 1. From the GCP Console, select **SQL** and click **CREATE INSTANCE**. 
 
@@ -373,7 +379,7 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
 
 1. Click **Create**. 
 
-### Create Databases
+### <a id='create-dbs'></a> Create Databases
 
 1. From the **Instances** page, select the database instance you just created. 
 
@@ -399,6 +405,7 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
 1. Use the **Create user account** button to create a unique username and password for each database you created above. For **Host name**, select **Allow any host**. You must create a total of fourteen user accounts.
 <p class='note'><strong>Note:</strong> Ensure that the <code>networkpolicyserver</code> database user has the <code>create_routine</code> permission.</p>
 
+
 ## <a id="buckets"></a> Step 7: Create Storage Buckets
 
 1. From the GCP Console, select **Storage** > **Browser**.
@@ -410,9 +417,9 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
   * `MY-PCF-resources`
 
     
-## <a id="http_loadbalancers"></a>Step 8: Create HTTP Load Balancer ##
+## <a id="http_loadbalancers"></a> Step 8: Create HTTP Load Balancer
 
-### Create Instance Group
+### <a id='create-instance-group'></a> Create Instance Group
 
 1. Navigate to **Compute Engine** > **Instance groups**. 
 
@@ -446,7 +453,7 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
   * **Network**: Select `MY-PCF-virt-net`. 
   * **Subnetwork**: Select the `MY-PCF-subnet-ert-MY-GCP-REGION` subnet that you created previously.  
 
-### Create Health Check
+### <a id='create-health-check'></a> Create Health Check
 
 1. Navigate to **Compute Engine** > **Health checks**. 
 
@@ -463,7 +470,7 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
 
 1. Click **Create**. 
 
-### Configure Backend
+### <a id='back-end'></a> Configure Back End
 
 1. Navigate to **Network services** > **Load balancing**. 
 
@@ -488,7 +495,7 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
  
  1. Click **Create**. 
 
-### Configure Frontend
+### <a id='front-end'></a> Configure Front End
 
 1. Click **Host and path rules** to populate the default fields and a green check mark.
 
@@ -501,7 +508,7 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
        1. Click **Reserve**.
    * **Port**: `80`
 
-1. If you are using a trusted SSL certificate or already have a self-signed certificate, proceed to step 5. 
+1. If you are using a trusted SSL certificate or already have a self-signed certificate, proceed to Step 5. 
 
 1. If you want to use a self-signed certificate generated during [Elastic Runtime network configuration](gcp-er-config.html#networking), skip over the next step of adding the HTTPS frontend configuration until after you generate the certificate in Elastic Runtime. After you generate the certificate, return to step 5 using the following guidelines: 
    * Copy and paste the generated contents of the **Router SSL Termination Certificate and Private Key** fields from Elastic Runtime into the public certificate and private key fields. 
@@ -524,6 +531,7 @@ GCP lets you assign [tags](https://cloud.google.com/compute/docs/label-or-tag-re
 1. Click **Review and finalize** to verify your configuration.
 
 1. Click **Create**.
+
 
 ## <a id="tcp_websockets_lb"></a> Step 9: Create TCP WebSockets Load Balancer
 
@@ -568,6 +576,7 @@ The load balancer for tailing logs with WebSockets for PCF on GCP operates on TC
   <%= image_tag "gcp/websockets_lb_finalize.png" %>
 1. Click **Create**.
 
+
 ## <a id="ssh_lb"></a> Step 10: Create SSH Proxy Load Balancer
 
 1. From the GCP Console, select **Network servicess > Load balancing > Create load balancer**.
@@ -602,9 +611,10 @@ The load balancer for tailing logs with WebSockets for PCF on GCP operates on TC
 
 1. Click **Create**.
 
+
 ## <a id="tcp_lb"></a> Step 11: Create Load Balancer for TCP Router 
 
-<p class="note"><strong>Note</strong>: This step is optional and only required if you enable TCP routing in your deployment.</p>
+<p class="note"><strong>Note:</strong> This step is optional and only required if you enable TCP routing in your deployment.</p>
 
 To create a load balancer for TCP routing in GCP, perform the following steps:
 
@@ -645,7 +655,8 @@ To create a load balancer for TCP routing in GCP, perform the following steps:
 
 1. Click **Create**.
 
-## <a id='cname'></a> Step 12: Add DNS Records for Your Load Balancers ##
+
+## <a id='cname'></a> Step 12: Add DNS Records for Your Load Balancers
 
 In this step you redirect queries for your domain to the IP addresses of your load balancers.
 
@@ -714,6 +725,7 @@ In this step you redirect queries for your domain to the IP addresses of your lo
     <pre class='terminal'>
 ;; ANSWER SECTION:
 xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
+
 
 ## <a id="next"></a> What to Do Next
 

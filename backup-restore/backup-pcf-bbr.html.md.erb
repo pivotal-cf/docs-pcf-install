@@ -74,7 +74,7 @@ If you configured an unsupported external blobstore or an unsupported external d
   </tr>
   <tr>
     <td>You configured both an unsupported external database and an unsupported external blobstore in PAS.</td>
-    <td>Follow the PCF backup process, but skip <a href="#bbr-backup">Step 9: Back Up Your PAS Deployment</a>. Copy the external database and blobstore by using the IaaS-specific tool.</td>
+    <td>Follow the PCF backup process, but skip <a href="#bbr-backup">Step 10: Back Up Your PAS Deployment</a>. Copy the external database and blobstore by using the IaaS-specific tool.</td>
   </tr>
 </table>
 
@@ -173,7 +173,19 @@ You can also retrieve the credentials using the Ops Manager API with a GET reque
 
 1. If the pre-backup check succeeds, continue to the [next section](#identify-deployment). If it fails, the Director may not have the correct backup scripts, or the connection to the BOSH Director may have failed.
 
-### <a id='identify-deployment'></a> Step 5: Identify Your Deployment
+### <a id='backup-prepare-node'></a> Step 5: Make Sure the Backup Prepare Node is Deployed
+
+When BBR backs up PAS, it needs a Backup Prepare node. This procedure makes sure that the Backup Prepare node is deployed.
+
+1. In Ops Manager, open the **<%= vars.product_full %>** tile.
+1. In the **Resource Config** pane find the **Backup Prepare Node** job and check if the **Instances** dropdown menu is set to `1`.
+<%= image_tag("backup-prepare-node.png") %>
+1. If the **Instances** dropdown menu is not set to `1`:
+  1. Set the **Instances** dropdown menu to **1**.
+  1. Click **Save**.
+  1. Navigate back to the Installation Dashboard and click **Apply Changes** to redeploy.
+
+### <a id='identify-deployment'></a> Step 6: Identify Your Deployment
 
 After logging in to your BOSH Director, run the following command to identify the name of the BOSH deployment that contains PCF:
 
@@ -192,7 +204,7 @@ cf-example               push-apps-manager-release/661.1.24
 
 In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
 
-### <a id='check'></a> Step 6: Check Your Deployment
+### <a id='check'></a> Step 7: Check Your Deployment
 
 Perform the following steps to check that your BOSH Director is reachable and has a deployment that can be backed up:
 
@@ -219,7 +231,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 
 ## <a id='procedure'></a>Create Your Backup
 
-### <a id='export'></a>Step 7: Export Installation Settings
+### <a id='export'></a>Step 8: Export Installation Settings
 
 Pivotal recommends that you back up your Ops Manager installation settings by exporting
 frequently. This option is only available after you have deployed at least one time.
@@ -252,7 +264,7 @@ There are two ways to export the installation settings.
 
     See [Using the Ops Manager API](https://docs.pivotal.io/pivotalcf/customizing/ops-man-api.html) for instructions about authenticating and retrieving the `UAA-ACCESS-TOKEN`.
 
-### <a id='bbr-backup-director'></a> Step 8: Back Up Your BOSH Director
+### <a id='bbr-backup-director'></a> Step 9: Back Up Your BOSH Director
 
 <div class="note"><strong>Notes</strong>:
   <ul>
@@ -287,7 +299,7 @@ $ bbr director \
   backup-cleanup
 </pre>
 
-### <a id='bbr-backup'></a> Step 9: Back Up Your PAS Deployment
+### <a id='bbr-backup'></a> Step 10: Back Up Your PAS Deployment
 
 <div class="note"><strong>Notes</strong>:
   <ul>
@@ -338,17 +350,17 @@ If the command fails, do the following:
 
 ## <a id='after'></a>After Taking Your Backup
 
-### <a id='transfer-artifacts'></a> Step 10: Transfer Backup Artifacts
+### <a id='transfer-artifacts'></a> Step 11: Transfer Backup Artifacts
 
 After creating your backup successfully, perform the following steps:
 
 1. Move the backup artifacts off the jumpbox to your preferred storage space. The backup created by BBR consists of a folder with the backup artifacts and metadata files. Pivotal recommends compressing and encrypting the files.
 1. Make redundant copies of your backup artifacts and store them in multiple locations to minimize the risk of losing backups in the event of a disaster.
-1. Attempt to restore every backup to validate the artifacts. Perform the procedures in the next step, [Step 11: Validate Your Backup](#validate-backup).
+1. Attempt to restore every backup to validate the artifacts. Perform the procedures in the next step, [Step 12: Validate Your Backup](#validate-backup).
 
 <p class="note"><strong>Note</strong>: Backup artifacts may contain data covered by the <a href="#gdpr">European Union's <em>General Data Protection Regulation (GDPR)</em></a>.</p>
 
-### <a id='validate-backup'></a> Step 11: (Optional) Validate Your Backup
+### <a id='validate-backup'></a> Step 12: (Optional) Validate Your Backup
 
 To validate your backup, follow the instructions that correspond to your use case:
 

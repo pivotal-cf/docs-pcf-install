@@ -317,12 +317,6 @@ To specify your PAS databases, perform the following steps:
 
 1. Select **Internal MySQL**. 
 
-1. In the **MySQL Proxy IPs** field, enter one or more comma-delimited IP addresses that are not in the reserved CIDR range of your network. If a MySQL node fails, these proxies re-route connections to a healthy node. See the [MySQL Proxy](http://docs.pivotal.io/p-mysql/1-9/proxy.html) topic for more information.</p>
-  <%= image_tag("mysql-config.png") %>
-
-1. For **MySQL Service Hostname**, enter an IP address or hostname for your load balancer. If a MySQL proxy fails, the load balancer re-routes connections to a healthy proxy. If you leave this field blank, components are configured with the IP address of the first proxy instance entered above.
-  <p class="note warning"><strong>WARNING:</strong> You must configure a load balancer to achieve complete high availability.</p>
-
 1. In the **Replication canary time period** field, leave the default of 30 seconds or modify the value based on the needs of your deployment. Lower numbers cause the canary to run more frequently, which means that the canary reacts more quickly to replication failure but adds load to the database.
 
 1. In the **Replication canary read delay** field, leave the default of 20 seconds or modify the value based on the needs of your deployment. This field configures how long the canary waits, in seconds, before verifying that data is replicating across each MySQL node. Clusters under heavy load can experience a small replication lag as write-sets are committed across the nodes.
@@ -340,10 +334,6 @@ To specify your PAS databases, perform the following steps:
   1. For the **Event types** field, you can enter the events you want the MySQL service to log. By default, this field includes `connect` and `query`, which tracks who connects to the system and what queries are processed. For more information, see the [Logging Events](https://mariadb.com/kb/en/mariadb/about-the-mariadb-audit-plugin/#logging-events) section of the MariaDB documentation.
 
     ![Server Activity Logging, Load Balancer Thresholds](internal_mysql_bottom.png)
-
-1. Enter values for the following fields:
-  * **Load Balancer Healthy Threshold**: Specifies the amount of time, in seconds, to wait until declaring the MySQL proxy instance started. This allows an external load balancer time to register the instance as healthy.
-  * **Load Balancer Unhealthy Threshold**: Specifies the amount of time, in seconds, that the MySQL proxy continues to accept connections before shutting down. During this period, the healthcheck reports as unhealthy to cause load balancers to fail over to other proxies. You must enter a value greater than or equal to the maximum time it takes your load balancer to consider a proxy instance unhealthy, given repeated failed healthchecks.
 
 1. If you want to enable the MySQL interruptor feature, select the checkbox to **Prevent node auto re-join**. This feature stops all writes to the MySQL database if it notices an inconsistency in the dataset between the nodes. For more information, see the [Interruptor](http://docs.pivotal.io/p-mysql/1-10/troubleshooting.html#interruptor) section in the MySQL for PCF documentation. 
 

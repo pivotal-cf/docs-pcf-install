@@ -207,7 +207,7 @@ To use an external S3-compatible filestore for your PAS file storage, perform th
 
 1. In the PAS tile, select **File Storage**.
 
-    <%= image_tag("cloudform/external_filestore_config.png") %>
+    <%= image_tag("images/external-s3-filestore.png") %>
 
 1. Select the **External S3-Compatible Filestore** option and complete the following fields:
     * For **URL Endpoint**:
@@ -219,6 +219,9 @@ To use an external S3-compatible filestore for your PAS file storage, perform th
 		      `https://s3-us-west-2.amazonaws.com/`.
     * For **S3 Signature Version** and **Region**, use the **V4 Signature** values. AWS recommends using [Signature Version 4](http://docs.aws.amazon.com/general/latest/gr/signing_aws_api_requests.html#signature-versions).
     * Select **Server-side Encryption (available for AWS S3 only)** to encrypt the contents of your S3 filestore. See the [AWS S3 documentation](http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingServerSideEncryption.html) for more information.
+    * (Optional) If you selected **Server-side Encryption**, you can also specify a **KMS Key ID**. You can find this value under the `blobstore_kms_key_id` in the Terraform output. PAS uses the KMS key to encrypt files uploaded to the blobstore. If you do not provide a KMS Key ID, PAS uses the default AWS key. For more information, see [Protecting Data Using Server-Side Encryption with AWS KMS–Managed Keys (SSE-KMS)](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html). 	+    * Complete the following fields:
+    * (Optional) Enable **Versioning is enabled for all buckets listed below** for S3 blobstore backup and restore, if your buckets have versioning enabled.
+    <p class="note"><strong>Note:</strong> Backup and restore only supports versioned S3-compatible blobstores. For more information about setting up versioning for your blobstore, see <a href="https://docs.cloudfoundry.org/bbr/external-blobstores.html#enable-versioning">Enable Versioning on Your External Blobstore</a> in the <em>Backup and Restore with External Blobstores</em> topic of the Cloud Foundry documentation.</p>
     * Complete the following fields:
     <table border="1" class="nice" >
       <tr>
@@ -288,23 +291,27 @@ settings using this form, the administrator must create orgs and users using
 the cf CLI tool. See <a href="../adminguide/cli-user-management.html">Creating and Managing Users with the cf CLI</a> for more information.</p>
 
 
-## <a id='config-cc'></a> Step 18: Configure Cloud Controller
+## <a id='config-autoscaler'></a> Step 18: (Optional) Configure App Autoscaler
+
+<%= partial 'app-autoscaler' %>
+
+## <a id='config-cc'></a> Step 19: Configure Cloud Controller
 
 <%= partial 'cloud-controller' %>
 
-## <a id='config-smoke-test'></a> Step 19: Configure Smoke Tests
+## <a id='config-smoke-test'></a> Step 20: Configure Smoke Tests
 
 <%= partial '_smoketests' %>
 
-## <a id='advanced-features'></a> Step 20: (Optional) Enable Advanced Features
+## <a id='advanced-features'></a> Step 21: (Optional) Enable Advanced Features
 
 <%= partial '_advanced-features' %>
 
-## <a id='errands'></a> Step 21: Configure Errands
+## <a id='errands'></a> Step 22: Configure Errands
 
 <%= partial 'errands' %>
 
-## <a id='config-elb'></a> Step 22: Configure Router (or HAProxy) to Elastic Load Balancer
+## <a id='config-elb'></a> Step 23: Configure Router (or HAProxy) to Elastic Load Balancer
 
 1. In the PAS tile, click **Resource Config**.
   <%= image_tag("pcfaws/er-aws-resource-config.png") %>
@@ -323,26 +330,15 @@ instead of the **Router** row. For a high availability configuration, scale up t
 1. Click **Save**.
 
 
-## <a id='disable-resources'></a> Step 23: (Optional) Scale Down and Disable Resources
+## <a id='disable-resources'></a> Step 24: (Optional) Scale Down and Disable Resources
 
 <%= partial 'disable_resources' %>
 
-## <a id='stemcell'></a> Step 24: Download Stemcell
-
-This step is only required if your Ops Manager does not already have the Stemcell version required by PAS.
-
-1. Select **Stemcell**.
-
-1. Log into the [Pivotal Network](https://network.pivotal.io/products/pivotal-cf) and click on **Stemcells**.
-
-1. Download the appropriate stemcell version targeted for your IaaS.
-
-1. In Ops Manager, import the downloaded stemcell <code>.tgz</code> file.
+## <a id='stemcell'></a> Step 25: Download Stemcell
 
 <%= partial "download-stemcell" %>
 
-
-## <a id='complete'></a> Step 25: Complete the PAS Installation
+## <a id='complete'></a> Step 26: Complete the PAS Installation
 
 1. Click the **Installation Dashboard** link to return to the Installation
 Dashboard.

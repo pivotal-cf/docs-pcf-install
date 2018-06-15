@@ -56,40 +56,36 @@ In a consistent backup, the blobs in the blobstore match the blobs in the Cloud 
 ### <a id="backup-timings"></a> Backup Timings
 The table below gives an indication of the downtime that you can expect. Actual downtime varies based on hardware and PCF configuration.
 
-These example timings were taken on GCP. The components scaled were CAPI workers, CredHub, UAA, Router, CAPI API, and Networking to simulate a "normal" and "very large" PCF deployment. API downtime is the sum of the time spent in lock, backup, and unlock phases. 
+These example timings were taken with PAS deployed on GCP with all components scaled to 1 and only 1 app pushed. API downtime is the sum of the time spent in lock, backup, and unlock phases.
+Backup time is significantly influenced by the size of the blobstore. 
+
 <table>
   <tr>
-    <th colspan="4"><em>Backup Timings with Scaled Components</em></th>
-  </tr>
-  <tr>
-    <td></td>
-   <td><em>Backup phase</em></td>
-    <td><em>Components scaled to 3</em></td>
-    <td><em>Components scaled to 6</em></td>
+    <th colspan="3"><em>Backup Timings</em></th>
   </tr>
   <tr>
     <td rowspan="3">API unavailable</td>
     <td>lock</td>
-    <td>9 minutes</td>
-    <td>21 minutes</td>
+    <td>2 minutes</td>
   </tr>
   <tr>
     <td>backup</td>
-    <td>&lt;1 minute</td>
-    <td>&lt;1 minute</td>
+    <td>10 seconds</td>
   </tr>
   <tr>
     <td>unlock</td>
-    <td>9 minutes</td>
-    <td>20 minutes</td>
+    <td>2 minutes</td>
   </tr>
   <tr>
     <td></td>
     <td>drain and checksum</td>
-    <td>80 minutes</td>
-    <td>80 minutes</td>
+    <td>Proportional to blobstore size</td>
   </tr>
 </table>
+
+#### <a id="blobstore-bbr"></a>Blobstore backup and restore
+
+Blobstores can be very large. To minimize downtime, for internal and external Versioned S3-Compatible blobstores, only metadata about the blobs is taken during the back up. For example, in the case of internal blobstores (Webdav/NFS), a list of hardlinks to the blobs is taken. After API access is restored, copies of the blobs are made. 
 
 #### <a id="blobstore-bbr"></a>Blobstore backup and restore
 

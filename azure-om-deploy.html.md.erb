@@ -99,12 +99,13 @@ If you choose to deploy PCF on Azure Stack regardless of its beta status, comple
     --resource-group $RESOURCE_GROUP --location $LOCATION \
     --address-prefixes 10.0.0.0/16
     </pre>
-1. Add a subnet to the network for PCF VMs.
+1. Add a subnet to the network for PCF VMs and attach the Network Security Group.
     <pre class="terminal">
     $ az network vnet subnet create --name pcf \
     --vnet-name pcf-net \
     --resource-group $RESOURCE_GROUP \
-    --address-prefix 10.0.0.0/20
+    --address-prefix 10.0.0.0/20 \
+    --network-security-group pcf-nsg
     </pre>
 
 ##<a id='storage'></a> Step 2: Create BOSH and Deployment Storage Accounts
@@ -200,44 +201,17 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
 ##<a id='lb'></a> Step 3: Create Load Balancers
 
 1. **Required:** PAS Load Balancer
-    1. Create a load balancer named `pcf-lb`.
+    1. Create a load balancer named `pcf-lb`. A static IP address will be automatically created for Standard sku load balancers.
         <pre class="terminal">
         $ az network lb create --name pcf-lb \
-        --resource-group $RESOURCE_GROUP --location $LOCATION
+        --resource-group $RESOURCE_GROUP --location $LOCATION --sku Standard
         </pre>
-    1. Create a static IP address for the load balancer named `pcf-lb-ip`.
-        <pre class="terminal">
-        $ az network public-ip create --name pcf-lb-ip \
-        --resource-group $RESOURCE_GROUP --location $LOCATION \
-        --allocation-method Static
-        {
-          "publicIp": {
-            "dnsSettings": null,
-            "etag": "W/\"a9b780e8-38bc-4a28-a563-e13a5859169d\"",
-            "id": "/subscriptions/995b7eed-77ef-45ff-a5c9-1a405ffb8243/resourceGroups/cf-docs/providers/Microsoft.Network/publicIPAddresses/pcf-lb-ip",
-            "idleTimeoutInMinutes": 4,
-            "ipAddress": "13.64.255.40",
-            "ipConfiguration": null,
-            "location": "westus",
-            "name": "pcf-lb-ip",
-            "provisioningState": "Succeeded",
-            "publicIpAddressVersion": "IPv4",
-            "publicIpAllocationMethod": "Static",
-            "resourceGroup": "cf-docs",
-            "resourceGuid": "4fbf2fe5-6f7e-449a-ae70-e513a9f5cddc",
-            "tags": null,
-            "type": "Microsoft.Network/publicIPAddresses"
-          }
-        }
-        </pre>
-
-    1. Record the `ipAddress` from the output above. This is the public IP address of your load balancer.
 
     1. Add a front-end IP configuration to the load balancer.
         <pre class="terminal">
         $ az network lb frontend-ip create --lb-name pcf-lb \
         --name pcf-fe-ip --resource-group $RESOURCE_GROUP \
-        --public-ip-address pcf-lb-ip
+        --public-ip-address PublicIPpcf-lb
         </pre>
     1. Add a probe to the load balancer.
         <pre class="terminal">
@@ -271,7 +245,7 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
         </pre>
 
     1.  Navigate to your DNS provider, and create an entry that points `*.YOUR-SUBDOMAIN` to the public IP address of your load balancer that you recorded in a previous step. For example, create an entry that points `azure.example.com` to `198.51.100.1`.
-        <p class="note"><strong>Note</strong>: If you did not record the IP address of your load balancer earlier, you can retrieve it by navigating to the Azure portal, clicking <strong>All resources</strong>, and clicking the <strong>Public IP address</strong> resource that ends with <code>pcf-lb-ip</code>.</p>
+        <p class="note"><strong>Note</strong>: You can retrieve it by navigating to the Azure portal, clicking <strong>All resources</strong>, and clicking the <strong>Public IP address</strong> resource named <code>PublicIPpcf-lb</code>.</p>
 
 1. **Optional:** Diego SSH Load Balancer
     1. Create a load balancer named `pcf-ssh-lb`.
@@ -439,6 +413,7 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
             --name opsman-image-2.0.x \
             --source https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image-2.0.x.vhd \
             --location $LOCATION \
+            --os-disk-size-gb 128 \
             --os-type Linux
             </pre>
             If you are using Azure China, Azure Government Cloud, or Azure Germany, replace `blob.core.windows.net` with the following:

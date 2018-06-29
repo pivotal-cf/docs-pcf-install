@@ -35,6 +35,7 @@ When deploying PCF on GCP, Pivotal recommends using the following GCP components
 
 For more information, review the different deployment options and recommendations in [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html).
 
+
 ## <a id="iam_account"></a> Step 1: Set up an IAM Service Account
 
 1. From the GCP Console, select **IAM & Admin**, then **Service accounts**.
@@ -65,7 +66,7 @@ For more information, review the different deployment options and recommendation
         <ul><li><strong>Compute Engine</strong> > <strong>Compute Viewer</strong></li></ul>
        </p> 
       </div>
-     <p class="note">You must scroll down in the pop-up windows to select all required roles.</p>
+     <p class="note"><strong>Note:</strong>You must scroll down in the pop-up windows to select all required roles.</p>
   * **Service account ID**: The field automatically generates a unique ID based on the username.
   * **Furnish a new private key**: Select this checkbox and JSON as the **Key type**.
     <%= image_tag("gcp/iam_account_2.png") %>
@@ -222,7 +223,7 @@ For more information, see [Reference Architecture for Pivotal Cloud Foundry on G
       - The IP address must exist in a reserved IP range set later in BOSH Director. The reserved range is typically the first `.1` through `.9` addresses in the CIDR range you set for the `MY-PCF-subnet-infrastructure-GCP-REGION` subnet. 
       - The IP address cannot be the same as the Gateway IP address set later in Ops Manager. The Gateway IP address is typically the first `.1` address in the CIDR range you set for the `MY-PCF-subnet-infrastructure-GCP-REGION` subnet.
     1. For **External IP**, select `Ephemeral`.
-    <p class="note"><strong>Note</strong>: If you select a static external IP address for the NAT instance, then you can use the static IP to further secure access to your CloudSQL instances.</p>
+    <p class="note"><strong>Note:</strong> If you select a static external IP address for the NAT instance, then you can use the static IP to further secure access to your CloudSQL instances.</p>
     1. Set **IP forwarding** to `On`. 
     1. Click **Done**.
 
@@ -472,7 +473,7 @@ This step assigns tags and firewall rules to Ops Manager components and VMs that
         </table>
      </p> 
     </div>
-    <p class="note"><strong>Note</strong>: If you want your firewall rules to only allow traffic within your private network, modify the <strong>Source IP Ranges</strong> from the table accordingly.</p>
+    <p class="note"><strong>Note:</strong> If you want your firewall rules to only allow traffic within your private network, modify the <strong>Source IP Ranges</strong> from the table accordingly.</p>
 
 1. If you are only using your GCP project to deploy PCF, then you can delete the following default firewall rules:
    * `default-allow-http`
@@ -507,7 +508,7 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
      * Leave **Automate backups** and **Enable binary logging** selected. 
      * Under **High availability**, select the **Create failover replica** checkbox. 
   * **Authorize Networks**: Click **Add network** and create a network named `all` that allows traffic from `0.0.0.0/0`. 
-  <p class="note"><strong>Note</strong>: If you assigned static IP addresses to your NAT instances, you can instead limit access to the database instances by specifying the NAT IP addresses.</p>
+  <p class="note"><strong>Note:</strong> If you assigned static IP addresses to your NAT instances, you can instead limit access to the database instances by specifying the NAT IP addresses.</p>
 
 1. Click **Create**. 
 
@@ -536,6 +537,8 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
 1. Select the **USERS** tab. 
 
 1. Use the **Create user account** button to create a unique username and password for each database you created above. For **Host name**, select **Allow any host**. You must create a total of fourteen user accounts.
+
+<p class='note'><strong>Note:</strong> Ensure that the networkpolicyserver database user has the <code>ALL PRIVILEGES</code> permission.</p>
 
 
 ## <a id="buckets"></a> Step 7: Create Storage Buckets
@@ -574,7 +577,7 @@ If you are deploying **PAS or other runtimes**, proceed to the following step.
     Example: For region `us-west1`, select zone `us-west1-b`.
   * **Group type**: Select **Unmanaged instance group**. 
   * **Network**: Select `MY-PCF-virt-net`. 
-  * **Subnetwork**: Select the `MY-PCF-subnet-ert-MY-GCP-REGION` subnet that you created previously.  
+  * **Subnetwork**: Select the `MY-PCF-subnet-pas-MY-GCP-REGION` subnet that you created previously.  
 
 1. Create a third instance group with the following details:
   * **Name**: `MY-PCF-http-lb`
@@ -746,7 +749,7 @@ The load balancer for tailing logs with WebSockets for PCF on GCP operates on TC
 
 ## <a id="tcp_lb"></a> Step 11: Create Load Balancer for TCP Router 
 
-<p class="note"><strong>Note</strong>: This step is optional and only required if you enable TCP routing in your deployment.</p>
+<p class="note"><strong>Note:</strong> This step is optional and only required if you enable TCP routing in your deployment.</p>
 
 To create a load balancer for TCP routing in GCP, perform the following steps:
 
@@ -787,7 +790,8 @@ To create a load balancer for TCP routing in GCP, perform the following steps:
 
 1. Click **Create**.
 
-## <a id='cname'></a> Step 12: Add DNS Records for Your Load Balancers ##
+
+## <a id='cname'></a> Step 12: Add DNS Records for Your Load Balancers
 
 In this step you redirect queries for your domain to the IP addresses of your load balancers.
 
@@ -796,7 +800,7 @@ In this step you redirect queries for your domain to the IP addresses of your lo
     * A TCP load balancer for WebSockets named `MY-PCF-wss-logs`
     * A TCP load balancer named `MY-PCF-ssh-proxy`
     * A TCP load balancer named `MY-PCF-cf-tcp-lb`
-    <p class="note"><strong>Note</strong>: You can locate the static IP address of each load balancer by clicking its name under <strong>Network services > Load balancing</strong> in the GCP Console.</p>
+    <p class="note"><strong>Note:</strong> You can locate the static IP address of each load balancer by clicking its name under <strong>Network services > Load balancing</strong> in the GCP Console.</p>
 
 1. Log in to the DNS registrar that hosts your domain. Examples of DNS registrars include Network Solutions, GoDaddy, and Register.com.
 

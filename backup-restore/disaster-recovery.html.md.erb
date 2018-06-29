@@ -54,46 +54,53 @@ Apps are not affected during backups, but certain APIs are unavailable. The down
 In a consistent backup, the blobs in the blobstore match the blobs in the Cloud Controller Database. To take a consistent backup, changes to the data are prevented during the backup. This means that the CF API, Routing API, Usage Service, Autoscaler, Notification Service, Network Policy Server, and CredHub are unavailable while the backup is being taken. UAA is in read-only mode during the backup.
 
 ### <a id="backup-timings"></a> Backup Timings
-The table below gives an indication of the downtime that you can expect. Actual downtime varies based on hardware and PCF configuration.
+The first three phases of the backup are lock, backup, and unlock. During this time, the API is unavailable. The drain and checksum phase starts once the backup scripts finish. BBR downloads the backup artifacts from the instances to the BBR VM, and performs a checksum to ensure the artifacts are not corrupt. The size of the blobstore significantly influences backup time.
 
-These example timings were taken on GCP. The components scaled were CAPI workers, CredHub, UAA, Router, CAPI API, and Networking to simulate a "normal" and "very large" PCF deployment. API downtime is the sum of the time spent in lock, backup, and unlock phases. 
+The table below gives an indication of the downtime that you can expect. Actual downtime varies based on hardware and PCF configuration. These example timings were recorded with PAS deployed on GCP with all components scaled to one and only one app pushed.  
+
 <table>
   <tr>
-    <th colspan="4"><em>Backup Timings with Scaled Components</em></th>
+    <th colspan="5"><em>Backup Timings</em></th>
   </tr>
-  <tr>
-    <td></td>
+  <tr>  
+   <td><em>API State</em></td>  
    <td><em>Backup phase</em></td>
-    <td><em>Components scaled to 3</em></td>
-    <td><em>Components scaled to 6</em></td>
-  </tr>
+   <td><em>Duration for External Versioned S3-Compatible Blobstore</em></td>
+   <td><em>Duration for External Unversioned S3-Compatible Blobstore</em></td>
+   <td><em>Duration for Internal Blobstore</em></td>
+   </tr>
   <tr>
     <td rowspan="3">API unavailable</td>
     <td>lock</td>
-    <td>9 minutes</td>
-    <td>21 minutes</td>
+    <td>15 seconds</td>
+    <td>15 seconds</td>
+    <td>15 seconds</td>
   </tr>
   <tr>
     <td>backup</td>
-    <td>&lt;1 minute</td>
-    <td>&lt;1 minute</td>
+    <td><30 seconds</td>
+     <td>Proportional to blobstore size</td>
+    <td>10 seconds</td>
   </tr>
   <tr>
     <td>unlock</td>
-    <td>9 minutes</td>
-    <td>20 minutes</td>
+    <td>3 minutes</td>
+    <td>3 minutes</td>
+    <td>3 minutes</td>
   </tr>
   <tr>
-    <td></td>
+    <td>API available</td>
     <td>drain and checksum</td>
-    <td>80 minutes</td>
-    <td>80 minutes</td>
+    <td><10 seconds</td>
+    <td><10 seconds</td>
+    <td>Proportional to blobstore size</td>
   </tr>
 </table>
 
 #### <a id="blobstore-bbr"></a>Blobstore backup and restore
 
-Blobstores can be very large. To minimize downtime, only metadata about the blobs is taken during the back up. For example, in the case of internal blobstores (Webdav/NFS), a list of hardlinks to the blobs is taken. After API access is restored, copies of the blobs are made. 
+Blobstores can be very large. To minimize downtime, BBR only takes blob metadata during the backup. For example, in the case of internal blobstores (Webdav/NFS), BBR takes a list of hardlinks that point to the blobs. Once the API becomes available, BBR makes copies of the blobs. 
+
 
 ### <a id="not-supported"></a>Products and Hardware Not Supported 
 

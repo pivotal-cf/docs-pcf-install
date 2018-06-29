@@ -79,9 +79,6 @@ At the minimum, you must download PAS v2.2.
 
 1. <%= partial 'check_disk_before_upgrade' %>
 
-1. In PCF v2.2, the Gorouter can communicate with app instances via TLS, which improves security but also increases resource usage. Prior versions of PCF did not support this feature. See [HTTP Routing](../concepts/http-routing.html#tls-to-back-end) for more information.
-    * **To support TLS routing** you should ensure that you have enough available memory capacity for app instances, and enable the **Router uses TLS to verify application identity** checkbox in the PAS and Isolation Segment tile **Application Containers** pane.
-
 1. If not already disabled, disable the VM Resurrector:
    1. From your **Installation Dashboard**, select the **BOSH Director** tile. 
    2. Click **Director Config**.
@@ -89,7 +86,7 @@ At the minimum, you must download PAS v2.2.
    4. Click **Save**.
    5. Return to the **Installation Dashboard** and click **Apply Changes**.
 
-1. If your original PAS deployment was PCF v1.6 or earlier, rotate non-configurable Director certificates using the Ops Manager API. Follow Step 3 of the [Managing TLS Certificates](../../security/pcf-infrastructure/api-cert-rotation.html) topic to regenerate certificates, or begin with Step 1 to also update the certificate authority (CA).
+1. If you disabled BOSH DNS, reenable it. In the **Director Config** pane of the **BOSH Director** tile, clear the **Disable BOSH DNS server for troubleshooting purposes** checkbox.
 
 1. Check the required machine specifications for Ops Manager v2.2. These specifications are specific [to your IaaS](gcp-om-deploy.html#start-vm). If these specifications do not match your existing Ops Manager, modify the values of your Ops Manager VM instance. For example, if the boot disk of your existing Ops Manager is 50&nbsp;GB and the new Ops Manager requires 100&nbsp;GB, then increase the size of your Ops Manager boot disk to 100&nbsp;GB. 
 
@@ -109,29 +106,28 @@ This is the same information you entered at the end of deploying [Ops Manager on
 
 ### <a id="upgrade-mysql"></a> Prep 7: Upgrade MySQL for PCF
 
-Make sure you have the latest version of MySQL installed. For instructions on how to upgrade MySQL for PCF, see the [MySQL for PCF documentation](http://docs.pivotal.io/p-mysql/2-3/index.html).
+Ensure you have the latest version of MySQL installed. For instructions on how to upgrade MySQL for PCF, see the [MySQL for PCF documentation](http://docs.pivotal.io/p-mysql/upgrade.html).
 
 ### <a id="upgrade-rmq"></a> Prep 8: Upgrade and Configure RabbitMQ for PCF
 
-If your PCF deployment contains **RabbitMQ for PCF**, download and upgrade RabbitMQ for PCF to v1.13 or later. For upgrade instructions, see the [RabbitMQ for PCF documentation](https://docs.pivotal.io/rabbitmq-cf/1-12/index.html). 
+If your PCF deployment contains **RabbitMQ for PCF**, download and upgrade RabbitMQ for PCF to v1.12.6. For upgrade instructions, see the [RabbitMQ for PCF documentation](https://docs.pivotal.io/rabbitmq-cf/1-12/index.html). 
 
 ### <a id="upgrade-redis"></a> Prep 9: Upgrade and Configure Redis for PCF
 
-If your PCF deployment contains Redis for PCF, download and upgrade to Redis for PCF v1.13 or later. If you only use the On-Demand service offering, consider [disabling Shared-VM and Dedicated-VM plans](https://docs.pivotal.io/redis/1-12/installing.html#disable-shared-dedicated) before upgrading.
-
-See the [Redis for PCF documentation](https://docs.pivotal.io/redis/1-12/index.html) for more information.
+If your PCF deployment contains Redis for PCF, download and upgrade to Redis for PCF v1.12.1.
+If you only use the On-Demand service offering, you may want to disable Shared-VM and Dedicated-VM plans before upgrading. For more information, see [Disable Shared and Dedicated VM Plans](https://docs.pivotal.io/redis/1-12/installing.html#disable-shared-dedicated) in _Installing Redis for PCF_.
 
 ### <a id="upgrade-add-ons"></a> Prep 10: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
 
- Before upgrading to PCF v2.2, operators who have deployed any PCF add-ons (such as **IPsec for PCF**, **ClamAV for PCF**, or **File Integrity Monitoring for PCF**) and who have deployed or are planning to deploy [PAS for Windows 2012R2](../windows2012r2/index.html) must modify the add-on manifest to specify a compatible OS stemcell. 
+Before upgrading to PCF v2.2, operators who have deployed any PCF add-ons such as **IPsec for PCF**, **ClamAV for PCF**, or **File Integrity Monitoring for PCF** and who have deployed or are planning to deploy [PAS for Windows 2012R2](../windows2012r2/index.html) must modify the add-on manifest to specify a compatible OS stemcell. 
 
- For example, **File Integrity Monitor for PCF** (FIM) is not supported on Windows. Therefore, the manifest must use an `include` directive to specify the target OS stemcell of `ubuntu-trusty`. 
+For example, **File Integrity Monitor for PCF** (FIM) is not supported on Windows. Therefore, the manifest must use an `include` directive to specify the target OS stemcell of `ubuntu-trusty`. 
 
- To update an add-on manifest, perform the following steps:
+To update an add-on manifest, perform the following steps:
 
- 1. Locate your existing add-on manifest file. For example, for FIM, locate the `fim.yml` you uploaded to the Ops Manager VM.
+1. Locate your existing add-on manifest file. For example, for FIM, locate the `fim.yml` you uploaded to the Ops Manager VM.
 
- 1. Modify the manifest to include following `include` directive to your manifest:
+1. Modify the manifest to include following `include` directive to your manifest:
 
     ```yml
       include:
@@ -175,7 +171,7 @@ For more information, see the [Viewing Logs in the Command Line Interface](../..
 
 This exports the current PCF installation with all of its assets.<br/><br/>
 
-When you export an installation, the export contains the base VM images and necessary packages, and references to the installation IP addresses, but does not include releases between upgrades if Ops Manager has already uploaded them to BOSH. When backing up PCF, you must take this into account by backing up the BOSH blobstore that contains the uploaded releases. BOSH Backup and Restore (BBR) backs up the BOSH blobstore. For more information, see [Backing Up Pivotal Cloud Foundry with BBR](././backup-restore/backup-pcf-bbr.html).
+When you export an installation, the export contains the base VM images and necessary packages, and references to the installation IP addresses, but does not include releases between upgrades if Ops Manager has already uploaded them to BOSH. When backing up PCF, you must take this into account by backing up the BOSH blobstore that contains the uploaded releases. BOSH Backup and Restore (BBR) backs up the BOSH blobstore. For more information, see [Backing Up Pivotal Cloud Foundry with BBR](././backup-restore/backup-pcf-bbr.html).
 
 * The export time depends on the size of the exported file.
 * Some browsers do not provide feedback on the status of the export process and might appear to hang.<br/><br/>

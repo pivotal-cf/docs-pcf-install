@@ -62,7 +62,7 @@ In this step you redirect queries for your domain to the IP addresses of your lo
     * A TCP load balancer for WebSockets named `MY-PCF-wss-logs`
     * A TCP load balancer for SSH access to applications named `MY-PCF-ssh-proxy`
     * A TCP load balancer for the TCP router named `MY-PCF-cf-tcp-lb` if you plan on enabling the TCP routing feature
-    <p class="note"><strong>Note</strong>: You can locate the static IP address of each load balancer by clicking its name under <strong>Networks > Load balancing</strong> in the GCP Console.</p>
+    <p class="note"><strong>Note:</strong> You can locate the static IP address of each load balancer by clicking its name under <strong>Networks > Load balancing</strong> in the GCP Console.</p>
 
 1. Log in to the DNS registrar that hosts your domain. Examples of DNS registrars include Network Solutions, GoDaddy, and Register.com.
 
@@ -132,8 +132,7 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 1. Enter the system and application domains that you created in [Step 12: Add DNS Records for Your Load Balancers](./gcp-prepare-env.html#cname) of the _Preparing GCP_ topic.
     * The **System Domain** defines your target when you push apps to PAS.
     * The **Apps Domain** defines where PAS serves your apps.
-
-    <p class="note"><strong>Note</strong>: Pivotal recommends that you use the same domain name but different subdomain names for your system and app domains. For example, use <code>system.example.com</code> for your system domain, and <code>apps.example.com</code> for your apps domain.</p>
+    <p class="note"><strong>Note:</strong> Pivotal recommends that you use the same domain name but different subdomain names for your system and app domains. For example, use <code>system.example.com</code> for your system domain, and <code>apps.example.com</code> for your apps domain.</p>
 
 1. Click **Save**.
 
@@ -143,7 +142,7 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 1. Select **Networking**.
 
 1. Leave the **Router IPs**, **SSH Proxy IPs**, **HAProxy IPs**, and **TCP Router IPs** fields blank. You do not need to complete these fields when deploying PCF to GCP. 
-   <p class="note"><strong>Note</strong>: You specify load balancers in the **Resource Config** section of PAS later on in the installation process. See the <a href="#config-lb">Configure Load Balancers</a> section of this topic for more information.</p>
+   <p class="note"><strong>Note:</strong> You specify load balancers in the **Resource Config** section of PAS later on in the installation process. See the <a href="#config-lb">Configure Load Balancers</a> section of this topic for more information.</p>
 
 1. <%= partial 'haproxy_router_cert_config' %>
 1. <%= partial 'router_haproxy_ca' %>
@@ -181,7 +180,7 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 1. <%= partial 'haproxy_request_max_buffer' %>
 1. <%= partial 'protected_domains' %>
 1. The **Loggregator Port** defaults to `443` if left blank. Enter a new value to override the default.
-1. For <b>Container Network Plugin Interface</b>, ensure <b>Silk</b> is selected and review the following fields:
+1. For <b>Container Network Interface Plugin</b>, ensure <b>Silk</b> is selected and review the following fields:
     <%= image_tag 'images/cni-silk.png' %>
     <p class="note"><strong>Note</strong>: The <b>External</b> option exists to support NSX-T integration for vSphere deployments.</p>
     <ol id="dns-servers">
@@ -192,6 +191,10 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
       <li><%= partial 'dns-servers' %></li>
     </ol>
   </li>
+1. For <strong>DNS Search Domains</strong>, enter DNS search domains for your containers as a comma-separated list. DNS on your containers appends these names to its host names, to resolve them into full domain names.
+    <%= image_tag 'images/dns-search-domains.png' %>
+
+1. <%= partial 'networking_database_timeout' %>
 
 1. <a id='tcp-routing-enable'></a><%= partial 'tcp_routing_enable' %>
    1. For GCP, you also need to specify the name of a GCP TCP load balancer in the **LOAD BALANCER** column of TCP Router job of the **Resource Config** screen. You configure this later on in PAS. See <a href="#configure-lb">Configure Load Balancers</a> section of this topic.</p>
@@ -219,7 +222,7 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 
     <%= image_tag('ert_uaa_jwt_uri.png') %>
 1. Under **SAML Service Provider Credentials**, enter a certificate and private key to be used by UAA as a SAML Service Provider for signing outgoing SAML authentication requests. You can provide an existing certificate and private key from your trusted Certificate Authority or generate a self-signed certificate. The following domain must be associated with the certificate: `*.login.YOUR-SYSTEM-DOMAIN`.
-  <p class="note"><strong>Note</strong>: The Pivotal Single Sign-On Service and Pivotal Spring Cloud Services tiles require the <code>*.login.YOUR-SYSTEM-DOMAIN</code>.</p>
+  <p class="note"><strong>Note:</strong> The Pivotal Single Sign-On Service and Pivotal Spring Cloud Services tiles require the <code>*.login.YOUR-SYSTEM-DOMAIN</code>.</p>
 
 1. If the private key specified under **Service Provider Credentials** is password-protected, enter the password under **SAML Service Provider Key Password**.
     <%= image_tag("service-provider.png") %>
@@ -240,12 +243,12 @@ xyz.EXAMPLE.COM.      1767    IN  A 203.0.113.1</pre>
 1. (Optional) The **Proxy IPs Regular Expression** field contains a pipe-delimited set of regular expressions that UAA considers to be reverse proxy IP addresses. UAA respects the `x-forwarded-for` and `x-forwarded-proto` headers coming from IP addresses that match these regular expressions. To configure UAA to respond properly to Router or HAProxy requests coming from a public IP address, append a regular expression or regular expressions to match the public IP address.
 
 1. You can configure UAA to use an internal MySQL database provided with PCF, or you can configure an external database provider. Follow the procedures in either the [Internal Database Configuration](#uaa-internal) or the [External Database Configuration](#uaa-external) section below.
-  <p class="note"><strong>Note</strong>: For GCP installations, Pivotal recommends selecting <strong>External</strong> and using Google Cloud SQL.</p>
-  <p class="note"><strong>Note</strong>: If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data before changing the configuration. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information, and contact <a href="https://support.pivotal.io">Pivotal Support</a> for help. </p>
+  <p class="note"><strong>Note:</strong> For GCP installations, Pivotal recommends selecting <strong>External</strong> and using Google Cloud SQL.</p>
+  <p class="note"><strong>Note:</strong> If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data before changing the configuration. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information, and contact <a href="https://support.pivotal.io">Pivotal Support</a> for help.</p>
 
 ### <a id='uaa-internal'></a> Internal Database Configuration
 
-When you configure the UAA to use an internal MySQL database, it uses the type of database selected in the **Databases** pane, which can be one of two options. See [Migrate to TLS Communication](../opsguide/scaling-down-mysql.html#migrate) for details.</p>
+When you configure the UAA to use an internal MySQL database, it uses the type of database selected in the **Databases** pane, which can be one of two options. See [Migrate to Internal Percona MySQL](../opsguide/scaling-down-mysql.html#migrate) for details.</p>
 
 1. Select **Internal MySQL**.
 
@@ -314,9 +317,9 @@ To specify your PAS databases, perform the following steps:
 
 <p class="note"><strong>Note:</strong> You only need to configure this section if you have selected <strong>Internal Databases - MySQL</strong> in the <strong>Databases</strong> section.</p>
 
-1. Select **Internal MySQL**. 
+1. Select **Internal MySQL**.
 
-1. In the **MySQL Proxy IPs** field, enter one or more comma-delimited IP addresses that are not in the reserved CIDR range of your network. If a MySQL node fails, these proxies re-route connections to a healthy node. See the [MySQL Proxy](http://docs.pivotal.io/p-mysql/1-9/proxy.html) topic for more information.</p>
+1. In the **MySQL Proxy IPs** field, enter one or more comma-delimited IP addresses that are not in the reserved CIDR range of your network. If a MySQL node fails, these proxies re-route connections to a healthy node. See the [MySQL Proxy](http://docs.pivotal.io/p-mysql/1-9/proxy.html) topic for more information.
   <%= image_tag("mysql-config.png") %>
 
 1. For **MySQL Service Hostname**, enter an IP address or hostname for your load balancer. If a MySQL proxy fails, the load balancer re-routes connections to a healthy proxy. If you leave this field blank, components are configured with the IP address of the first proxy instance entered above.
@@ -335,13 +338,16 @@ To specify your PAS databases, perform the following steps:
 1. For **Cluster Probe Timeout**, enter the maximum amount of time, in seconds, that a new node will search for existing cluster nodes. If left blank, the default value is 10 seconds.
   <%= image_tag("mysql-replication-canary.png") %>
 
+1. For **Max Connections**, enter the maximum number of connections allowed to the database.
+If left blank, the default value is 1500.
+
 1. If you want to log audit events for internal MySQL, select **Enable server activity logging** under **Server Activity Logging**.
-  1. For the **Event types** field, you can enter the events you want the MySQL service to log. By default, this field includes `connect` and `query`, which tracks who connects to the system and what queries are processed. For more information, see the [Logging Events](https://mariadb.com/kb/en/mariadb/about-the-mariadb-audit-plugin/#logging-events) section of the MariaDB documentation.
+  1. For the **Event types** field, you can enter the events you want the MySQL service to log. By default, this field includes `connect` and `query`, which tracks who connects to the system and what queries are processed.
 
     ![Server Activity Logging, Load Balancer Thresholds](internal_mysql_bottom.png)
 
-1. Enter values for the following fields:
-  * **Load Balancer Healthy Threshold**: Specifies the amount of time, in seconds, to wait until declaring the MySQL proxy instance started. This allows an external load balancer time to register the instance as healthy.
+1. Enter values for the following fields:	
+  * **Load Balancer Healthy Threshold**: Specifies the amount of time, in seconds, to wait until declaring the MySQL proxy instance started. This allows an external load balancer time to register the instance as healthy.	
   * **Load Balancer Unhealthy Threshold**: Specifies the amount of time, in seconds, that the MySQL proxy continues to accept connections before shutting down. During this period, the healthcheck reports as unhealthy to cause load balancers to fail over to other proxies. You must enter a value greater than or equal to the maximum time it takes your load balancer to consider a proxy instance unhealthy, given repeated failed healthchecks.
 
 1. If you want to enable the MySQL interruptor feature, select the checkbox to **Prevent node auto re-join**. This feature stops all writes to the MySQL database if it notices an inconsistency in the dataset between the nodes. For more information, see the [Interruptor](http://docs.pivotal.io/p-mysql/1-10/troubleshooting.html#interruptor) section in the MySQL for PCF documentation. 

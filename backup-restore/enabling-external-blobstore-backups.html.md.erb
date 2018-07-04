@@ -29,36 +29,33 @@ In order to perform backups of your S3-compatible versioned blobstore, you will 
 
 ### Installing the S3 Versioned Backups Add-On
 
-The S3 Versioned Backups Add-On provides the necessary functionality to backup and restore a Pivotal Cloud Foundry installation configured to use an S3 Versioned blobstore.
+The S3 Versioned Backups Add-On provides the necessary functionality to backup and restore a Pivotal Elastic Runtime installation configured to use an S3 versioned blobstore.
 
 To install the add-on:
 
-1. From the Ops Manager Installation Dashboard, click the **Elastic Runtime** tile.
-1. From your browser's address bar, record the Elastic Runtime deployment name from the URL. The deployment name is prefixed with the letters `cf`. For example, in `http://pcf.EXAMPLE-HOST.com/products/cf-3247176589a379f246d1`, the Elastic Runtime deployment name is `cf-3247176589a379f246d1`. The Elastic Runtime deployment name value is used to update the runtime config in a later step.
+1. From the Ops Manager Installation Dashboard, click the **Pivotal Elastic Runtime** tile.
+1. From your browser's address bar, record the Elastic Runtime deployment name from the URL. The deployment name is prefixed with the letters `cf`. For example, in `http://pcf.EXAMPLE-HOST.com/products/cf-3247176589a379f246d1`, the Elastic Runtime deployment name is `cf-3247176589a379f246d1`.
+1. Navigate back to the Ops Manager Installation Dashboard and click the **Ops Manager Director** tile.
 1. Select the **Credentials** tab.
-1. Locate **Director Credentials** and click **Link to Credentials** to retrieve your Director credentials. Record your **Director Credentials**. The **Director Credentials** are used to update the runtime config in a later step.
+1. Locate the **Director Credentials**, click on the corresponding **Link to Credentials** and take note of the identity and password.
 1. Select the **Status** tab.
-1. Record the BOSH Director IP address. The BOSH Director IP address value is used to update the runtime config in a later step.
-1. Go to [Pivotal Network](https://network.pivotal.io/) and download **External Blobstore Support for BOSH Backup and Restore**.
-1. Run the following command to copy the release archive to your Ops Manager instance. For more information on obtaining your private key, see [Step 4: Check your BOSH Director
-](backup-pcf-bbr.html#check-director) in _Backing Up Pivotal Cloud Foundry with BBR_.
+1. Record the BOSH Director IP address.
+1. Go to [Pivotal Network](https://network.pivotal.io/products/p-bosh-backup-and-restore) and download the latest **Blobstore Addon**.
+1. Run the following command to copy the release archive to your Ops Manager instance:
   <pre class="terminal">$ scp -i PATH\_TO\_PRIVATE\_KEY
     backup-and-restore-sdk-addon-SEMVER.tar.gz ubuntu@YOUR\_OPS\_MANAGER\_VM\_IP:~</pre>
-1. Run the following command to SSH into the Ops Manager instance.
-  <pre class="terminal">$ ssh -i PATH\_TO\_PRIVATE\_KEY ubuntu@YOUR\_OPS\_MANAGER\_VM\_IP</pre>
-1. In the Ops Manager VM, run the following command to log in to your BOSH Director. When prompted, enter your BOSH Director credentials.
+1. SSH into the Ops Manager instance following the instructions in [SSH Into Ops Manager VM](https://docs.pivotal.io/pivotalcf/1-11/customizing/trouble-advanced.html#ssh).
+1. In the Ops Manager VM, authenticate with your BOSH director following the instructions in [Log In to the BOSH Director](https://docs.pivotal.io/pivotalcf/1-11/customizing/trouble-advanced.html#log-in). Use the Director Credentials and Director IP retrieved at steps 5 and 7.
+1. Run the following command to upload the release that you previously downloaded from Pivotal Network.
   <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
-    /FILE-PATH-ROOT-TO-CA-CERTIFICATE login</pre>
-1. Run the following command to upload the External Blobstore Support for BOSH Backup and Restore release that you previously downloaded from Pivotal Network.
-  <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
-   /FILE-PATH-ROOT-TO-CA-CERTIFICATE upload-release backup-and-restore-sdk-addon-SEMVER.tar.gz</pre>
+   /var/tempest/workspaces/default/root\_ca\_certificate upload-release backup-and-restore-sdk-addon-SEMVER.tar.gz</pre>
 1. Run the following command to confirm that the release upload has succeeded.
   <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
-   /FILE-PATH-ROOT-TO-CA-CERTIFICATE releases</pre>
+   /var/tempest/workspaces/default/root\_ca\_certificate releases</pre>
   You should see a `backup-and-restore-sdk-addon-SEMVER` entry.
 1. Run the following command to download your current runtime config and save it as `runtime-config.yml`.
   <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
-    /FILE-PATH-TO-ROOT-CA-CERTIFICATE runtime-config > runtime-config.yml</pre>
+    /var/tempest/workspaces/default/root\_ca\_certificate runtime-config > runtime-config.yml</pre>
   If you receive an error about a missing runtime config, create an empty file and save it as `runtime-config.yml`.
 1. Append the below to the `releases` section of your `runtime-config.yml`.
   <pre>
@@ -113,7 +110,7 @@ Replace the bracketed information in the `include` section with the Elastic Runt
 
 1. Run the following command to finishing updating the runtime config:
 <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
-  /FILE-PATH-ROOT-CA-CERTIFICATE update-runtime-config runtime-config.yml
+  /var/tempest/workspaces/default/root\_ca\_certificate update-runtime-config runtime-config.yml
 </pre>
 
 1. Navigate to your **Ops Manager Installation Dashboard**. Click **Apply Changes**
@@ -124,36 +121,37 @@ Replace the bracketed information in the `include` section with the Elastic Runt
 
 ### Configuring your unversioned S3-compatible blobstore for backups
 
-1. For each bucket created in Step 2.1, create a backup bucket. We recommend that either the backup buckets or copies of them should be in a different region to the live buckets. For more information, see [Enable Backup and Restore of Your Unversioned S3-Compatible Blobstore](https://docs.cloudfoundry.org/bbr/external-blobstores.html#s3-unversioned)
+For each bucket in use by your Pivotal Elastic Runtime installation, create a corresponding backup bucket. We recommend that either the backup buckets or copies of them should be in a different region to the live buckets. For more information, see [Enable Backup and Restore of Your Unversioned S3-Compatible Blobstore](https://docs.cloudfoundry.org/bbr/external-blobstores.html#s3-unversioned).
 
 ### Installing the S3 Unversioned Backups Add-On
 
-1. From the Ops Manager Installation Dashboard, click **Elastic Runtime** tile.
-1. From your browser's address bar, record the Elastic Runtime deployment name from the URL. The deployment name is prefixed with the letters `cf`. For example, in `http://pcf.EXAMPLE-HOST.com/products/cf-3247176589a379f246d1`, the Elastic Runtime deployment name is `cf-3247176589a379f246d1`. The Elastic Runtime deployment name value is used to update the runtime config in a later step.
+The S3 Unversioned Backups Add-On provides the necessary functionality to backup and restore a Pivotal Elastic Runtime installation configured to use an S3 unversioned blobstore.
+
+To install the add-on:
+
+1. From the Ops Manager Installation Dashboard, click the **Pivotal Elastic Runtime** tile.
+1. From your browser's address bar, record the Elastic Runtime deployment name from the URL. The deployment name is prefixed with the letters `cf`. For example, in `http://pcf.EXAMPLE-HOST.com/products/cf-3247176589a379f246d1`, the Elastic Runtime deployment name is `cf-3247176589a379f246d1`.
+1. Navigate back to the Ops Manager Installation Dashboard and click the **Ops Manager Director** tile.
 1. Select the **Credentials** tab.
-1. Locate **Director Credentials** and click **Link to Credentials** to retrieve your Director credentials. Record your **Director Credentials**. The **Director Credentials** are used to update the runtime config in a later step.
+1. Locate the **Director Credentials**, click on the corresponding **Link to Credentials** and take note of the identity and password.
 1. Select the **Status** tab.
-1. Record the BOSH Director IP address. The BOSH Director IP address value is used to update the runtime config in a later step.
-1. Go to [Pivotal Network](https://network.pivotal.io/) and download **External Blobstore Support for BOSH Backup and Restore**.
-1. Run the following command to copy the release archive to your Ops Manager instance. For more information on obtaining your private key, see [Step 4: Check your BOSH Director
-](backup-pcf-bbr.html#check-director) in _Backing Up Pivotal Cloud Foundry with BBR_.
+1. Record the BOSH Director IP address.
+1. Go to [Pivotal Network](https://network.pivotal.io/products/p-bosh-backup-and-restore) and download the latest **Blobstore Addon**.
+1. Run the following command to copy the release archive to your Ops Manager instance:
   <pre class="terminal">$ scp -i PATH\_TO\_PRIVATE\_KEY
     backup-and-restore-sdk-addon-SEMVER.tar.gz ubuntu@YOUR\_OPS\_MANAGER\_VM\_IP:~</pre>
-1. Run the following command to SSH into the Ops Manager instance.
-  <pre class="terminal">$ ssh -i PATH\_TO\_PRIVATE\_KEY ubuntu@YOUR\_OPS\_MANAGER\_VM\_IP</pre>
-1. In the Ops Manager VM, run the following command to log in to your BOSH Director. When prompted, enter your BOSH Director credentials.
+1. SSH into the Ops Manager instance following the instructions in [SSH Into Ops Manager VM](https://docs.pivotal.io/pivotalcf/1-11/customizing/trouble-advanced.html#ssh).
+1. In the Ops Manager VM, authenticate with your BOSH director following the instructions in [Log In to the BOSH Director](https://docs.pivotal.io/pivotalcf/1-11/customizing/trouble-advanced.html#log-in). Use the Director Credentials and Director IP retrieved at steps 5 and 7.
+1. Run the following command to upload the release that you previously downloaded from Pivotal Network.
   <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
-    /FILE-PATH-ROOT-TO-CA-CERTIFICATE login</pre>
-1. Run the following command to upload the External Blobstore Support for BOSH Backup and Restore release that you previously downloaded from Pivotal Network.
-  <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
-   /FILE-PATH-ROOT-TO-CA-CERTIFICATE upload-release backup-and-restore-sdk-addon-SEMVER.tar.gz</pre>
+   /var/tempest/workspaces/default/root\_ca\_certificate upload-release backup-and-restore-sdk-addon-SEMVER.tar.gz</pre>
 1. Run the following command to confirm that the release upload has succeeded.
   <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
-   /FILE-PATH-ROOT-TO-CA-CERTIFICATE releases</pre>
+   /var/tempest/workspaces/default/root\_ca\_certificate releases</pre>
   You should see a `backup-and-restore-sdk-addon-SEMVER` entry.
 1. Run the following command to download your current runtime config and save it as `runtime-config.yml`.
   <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
-    /FILE-PATH-TO-ROOT-CA-CERTIFICATE runtime-config > runtime-config.yml</pre>
+    /var/tempest/workspaces/default/root\_ca\_certificate runtime-config > runtime-config.yml</pre>
   If you receive an error about a missing runtime config, create an empty file and save it as `runtime-config.yml`.
 1. Append the below to the `releases` section of your `runtime-config.yml`.
   <pre>
@@ -217,7 +215,7 @@ Replace the bracketed information in the `include` section with the Elastic Runt
 
 1. Run the following command to finishing updating the runtime config:
 <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
-  /FILE-PATH-ROOT-CA-CERTIFICATE update-runtime-config runtime-config.yml
+  /var/tempest/workspaces/default/root\_ca\_certificate update-runtime-config runtime-config.yml
 </pre>
 
 1. Navigate to your **Ops Manager Installation Dashboard**. Click **Apply Changes**

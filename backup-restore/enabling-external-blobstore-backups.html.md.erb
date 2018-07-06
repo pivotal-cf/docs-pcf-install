@@ -221,7 +221,93 @@ Replace the bracketed information in the `include` section with the Elastic Runt
 1. Navigate to your **Ops Manager Installation Dashboard**. Click **Apply Changes**
 
 ## <a id="azure"></a> Azure Blobstores
+### <a id="configuring-azure-blobstore"></a> Configuring your Azure blobstore for backups
 
-### Configuring your Azure blobstore for backups
+In order to perform backups of your Azure blobstore, you will need to apply the following configurations:
 
-### Installing the Azure Backups Add-On
+1. Enable soft deletes on your blob storage account. For more information, see [Enable soft delete](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-soft-delete#quickstart)
+
+1. (Optional) Pivotal recommends you configure a retention policy to delete soft deleted objects after a period of time. Configuring this policy saves storage space and cost. For more information, see [Enable soft delete](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-soft-delete#quickstart)
+
+### <a id="installing-azure-addon"></a> Installing the Azure Backups Add-On
+
+The Azure Backups Add-On provides the necessary functionality to backup and restore a Pivotal Elastic Runtime installation configured to use an Azure blobstore.
+
+To install the add-on:
+
+1. From the Ops Manager Installation Dashboard, click the **Pivotal Elastic Runtime** tile.
+1. From your browser's address bar, record the Elastic Runtime deployment name from the URL. The deployment name is prefixed with the letters `cf`. For example, in `http://pcf.EXAMPLE-HOST.com/products/cf-3247176589a379f246d1`, the Elastic Runtime deployment name is `cf-3247176589a379f246d1`.
+1. Navigate back to the Ops Manager Installation Dashboard and click the **Ops Manager Director** tile.
+1. Select the **Credentials** tab.
+1. Locate the **Director Credentials**, click on the corresponding **Link to Credentials** and take note of the identity and password.
+1. Select the **Status** tab.
+1. Record the BOSH Director IP address.
+1. Go to [Pivotal Network](https://network.pivotal.io/products/p-bosh-backup-and-restore) and download the latest **Blobstore Addon**.
+1. Run the following command to copy the release archive to your Ops Manager instance:
+  <pre class="terminal">$ scp -i PATH\_TO\_PRIVATE\_KEY
+    backup-and-restore-sdk-addon-SEMVER.tar.gz ubuntu@YOUR\_OPS\_MANAGER\_VM\_IP:~</pre>
+1. SSH into the Ops Manager instance following the instructions in [SSH Into Ops Manager VM](https://docs.pivotal.io/pivotalcf/1-11/customizing/trouble-advanced.html#ssh).
+1. In the Ops Manager VM, authenticate with your BOSH director following the instructions in [Log In to the BOSH Director](https://docs.pivotal.io/pivotalcf/1-11/customizing/trouble-advanced.html#log-in). Use the Director Credentials and Director IP retrieved at steps 5 and 7.
+1. Run the following command to upload the release that you previously downloaded from Pivotal Network.
+  <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
+   /var/tempest/workspaces/default/root\_ca\_certificate upload-release backup-and-restore-sdk-addon-SEMVER.tar.gz</pre>
+1. Run the following command to confirm that the release upload has succeeded.
+  <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
+   /var/tempest/workspaces/default/root\_ca\_certificate releases</pre>
+  You should see a `backup-and-restore-sdk-addon-SEMVER` entry.
+1. Run the following command to download your current runtime config and save it as `runtime-config.yml`.
+  <pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
+    /var/tempest/workspaces/default/root\_ca\_certificate runtime-config > runtime-config.yml</pre>
+  If you receive an error about a missing runtime config, create an empty file and save it as `runtime-config.yml`.
+1. Append the below to the `releases` section of your `runtime-config.yml`.
+  <pre>
+  releases:
+  \# Append the below to the list of releases:
+  \- name: backup-and-restore-sdk-addon
+      version: \<the-release-version\>
+  </pre>
+
+1. Append the appropriate configuration to the `addons` section of your `runtime-config.yml`.
+</br>
+</br>
+Replace the bracketed placeholders in the `droplets`, `packages`, and `buildpacks` sections with the values configured in Ops Manager.
+</br>
+</br>
+Replace the bracketed information in the `include` section with the Elastic Runtime Deployment name you recorded earlier.
+<pre>
+  addons:
+  \# Append the below to the list of addons:
+  \- name: sdk-preview
+      jobs:
+      \- name: azure-blobstore-backup-restorer
+        release: backup-and-restore-sdk-addon
+        properties:
+          enabled: true
+          containers:
+            droplets:
+              name: \<name-of-droplets-container\>
+              azure\_storage\_account: \<azure-storage-account\>
+              azure\_storage\_key: \<azure-storage-key\>
+            packages:
+              name: \<name-of-packages-container\>
+              azure\_storage\_account: \<azure-storage-account\>
+              azure\_storage\_key: \<azure-storage-key\>
+            buildpacks:
+              name: \<name-of-buildpacks-container\>
+              azure\_storage\_account: \<azure-storage-account\>
+              azure\_storage\_key: \<azure-storage-key\>
+      include:
+        deployments:
+        \- \<elastic-runtime-deployment-name\>
+        jobs:
+        \- name: mysql-backup
+          release: cf-backup-and-restore
+</pre>
+To configure backup and restore for [Azure Sovereign Cloud](https://www.microsoft.com/en-us/trustcenter/cloudservices/nationalcloud), configure the `environment` property described in the [Backup and Restore SDK Documentation](https://github.com/cloudfoundry-incubator/backup-and-restore-sdk-release/blob/develop/docs/blobstore-backup-restore.md#Azure-Blobstores). 
+
+1. Run the following command to finishing updating the runtime config:
+<pre class="terminal">$ bosh -e BOSH\_DIRECTOR\_IP --ca-cert
+  /var/tempest/workspaces/default/root\_ca\_certificate update-runtime-config runtime-config.yml
+</pre>
+
+1. Navigate to your **Ops Manager Installation Dashboard**. Click **Apply Changes**

@@ -1,13 +1,13 @@
 ---
-title: Recovering MySQL from PAS Downtime with MariaDB Galera Cluster
+title: Recovering MySQL from PAS Downtime with Percona XtraDB Cluster
 owner: RelEng
 ---
 
 <strong><%= modified_date %></strong>
 
-_This topic assumes you are using the [Internal Databases - MySQL - MariaDB Galera Cluster](config-er-vmware.html#internal-db) option as your system database and [BOSH CLI v2+](https://bosh.io/docs/cli-v2.html)._
+_This topic assumes you are using the [Internal Databases - MySQL - Percona XtraDB Cluster](config-er-vmware.html#internal-db) option as your system database and [BOSH CLI v2+](https://bosh.io/docs/cli-v2.html)._
 
-_If you are using the [Internal Databases - MySQL - Percona XtraDB Cluster](config-er-vmware.html#internal-db) option as your system database please follow the [Recovering MySQL from PAS Downtime with Percona XtraDB Cluster](mysql_pxc_bootstrap_ert.html) docs instead._
+_If you are using the [Internal Databases - MySQL - MariaDB Galera Cluster](config-er-vmware.html#internal-db) option as your system database please follow the [Recovering MySQL from PAS Downtime with MariaDB Galera Cluster](mysql_bootstrap_ert.html) docs instead._
 
 This topic describes the procedure for recovering a terminated Pivotal Application Service (PAS) cluster using a process known as bootstrapping.
 
@@ -56,7 +56,7 @@ Follow the steps below to recover a cluster that has lost quorum.
     Name                Release(s)                Stemcell(s)                                         Team(s)  Cloud Config
     cf                  binary-buildpack/1.0.9    bosh-warden-boshlite-ubuntu-trusty-go_agent/3363.9  -        latest
                         capi/1.21.0
-                        cf-mysql/34
+                        pxc/0.9.0
                         cf-smoke-tests/11
                         cflinuxfs2-rootfs/1.52.0
                         consul/155
@@ -67,9 +67,8 @@ Follow the steps below to recover a cluster that has lost quorum.
                         routing/0.145.0
                         statsd-injector/1.0.20
                         uaa/25
-    service-instance    mysql/0.6.0               bosh-warden-boshlite-ubuntu-trusty-go_agent/3363.9  -        latest
 
-    2 deployments
+    1 deployment
 
     Succeeded
     </pre>
@@ -188,10 +187,9 @@ If the bootstrap errand cannot recover the cluster, you need to perform the step
 - If the output of `bosh instances` shows the state of the jobs as `failing` ([Scenario 1](#cluster-disrupted)), proceed directly to the manual steps below.
 - If the output of `bosh instances` shows the state of the jobs as `unknown/unknown`, perform Steps 1-2 of [Scenario 2](#vms-terminated), substitute the manual steps below for Step 3, and then perform Steps 4-5 of [Scenario 2](#vms-terminated).
 
-1. SSH to each node in the cluster and, as root, shut down the `mariadb` process.
-
+1. SSH to each node in the cluster and, as root, shut down the `galera-init` process.
     <pre class="terminal">
-    $ monit stop mariadb_ctrl
+    $ monit stop galera-init
     </pre>
 
     Re-bootstrapping the cluster will not be successful unless all other nodes have been shut down.
@@ -199,43 +197,43 @@ If the bootstrap errand cannot recover the cluster, you need to perform the step
 1. Choose a node to bootstrap by locating the node with the highest transaction sequence number (`seqno`). You can obtain the `seqno` of a stopped node in one of two ways:
     - If a node shut down gracefully, the `seqno` is in the Galera state file of the node.
     <pre class="terminal">
-    $ cat /var/vcap/store/mysql/grastate.dat | grep 'seqno:'
+    $ cat /var/vcap/store/pxc-mysql/grastate.dat | grep 'seqno:'
     </pre>
     - If the node crashed or was killed, the `seqno` in the Galera state file of the node is `-1`. In this case, the `seqno` may be recoverable from the database. 
         1. Run the following command to start up the database, log the recovered sequence number, and exit.
         <pre class="terminal">
-        $ /var/vcap/packages/mariadb/bin/mysqld --wsrep-recover
+        $ /var/vcap/packages/pxc/bin/mysqld --wsrep-recover
         </pre>
         1. Scan the error log for the recovered sequence number. The last number after the group id (`uuid`) is the recovered `seqno`:
         <pre class="terminal">
-        $ grep "Recovered position" /var/vcap/sys/log/mysql/mysql.err.log | tail -1
+        $ grep "Recovered position" /var/vcap/sys/log/pxc-mysql/mysql.err.log | tail -1
         150225 18:09:42 mysqld_safe WSREP: Recovered position e93955c7-b797-11e4-9faa-9a6f0b73eb46:15
         </pre>
         If the node never connected to the cluster before crashing, it may not have a group id (`uuid` in `grastate.dat`). In this case, you cannot recover the `seqno`. Unless all nodes crashed this way, do not choose this node for bootstrapping.
     
 1. Choose the node with the highest `seqno` value as the bootstrap node. If all nodes have the same `seqno`, you can choose any node as the bootstrap node.
 
-    <p class="note"><strong>Note:</strong> Only perform these bootstrap commands on the node with the highest <code>seqno</code>. Otherwise, the node with the highest <code>seqno</code> will be unable to join the new cluster unless its data is abandoned. Its <code>mariadb</code> process will exit with an error. See the <a href="http://docs.pivotal.io/p-mysql/1-8/cluster-behavior.html">Cluster Scaling, Node Failure, and Quorum</a> topic for more details about intentionally abandoning data.</p>
+    <p class="note"><strong>Note:</strong> Only perform these bootstrap commands on the node with the highest <code>seqno</code>. Otherwise, the node with the highest <code>seqno</code> will be unable to join the new cluster unless its data is abandoned. Its <code>mysql</code> process will exit with an error. See the <a href="http://docs.pivotal.io/p-mysql/1-8/cluster-behavior.html">Cluster Scaling, Node Failure, and Quorum</a> topic for more details about intentionally abandoning data.</p>
 
-1. On the bootstrap node, update the state file and restart the `mariadb` process.
+1. On the bootstrap node, update the state file and restart the `galera-init` process.
 
     <pre class="terminal">
-    $ echo -n "NEEDS_BOOTSTRAP" > /var/vcap/store/mysql/state.txt
-    $ monit start mariadb_ctrl
+    $ echo -n "NEEDS_BOOTSTRAP" > /var/vcap/store/pxc-mysql/state.txt
+    $ monit start galera-init
     </pre>
 
-1. Check that the `mariadb` process has started successfully.
+1. Check that the `galera-init` process has started successfully.
 
     <pre class="terminal">
     $ watch monit summary
     </pre>
 
-    It can take up to ten minutes for `monit` to start the `mariadb` process.
+    It can take up to ten minutes for `monit` to start the `galera-inist` process.
     
-1. Once the bootstrapped node is running, start the `mariadb` process on the remaining nodes using `monit`.
+1. Once the bootstrapped node is running, start the `galera-init` process on the remaining nodes using `monit`.
 
     <pre class="terminal">
-    $ monit start mariadb_ctrl
+    $ monit start galera-init
     </pre>
 
 1. Verify that the new nodes have successfully joined the cluster. The following command displays the total number of nodes in the cluster:

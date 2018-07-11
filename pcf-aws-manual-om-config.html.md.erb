@@ -1,5 +1,5 @@
 ---
-title: Configuring BOSH Director on AWS Installed Manually
+title: Configuring BOSH Director on AWS
 owner: Ops Manager
 iaas: AWS
 ---
@@ -9,12 +9,12 @@ iaas: AWS
 
 This topic describes how to configure Ops Manager to deploy Pivotal Cloud Foundry (PCF) on Amazon Web Services (AWS).
 
-Before beginning this procedure, ensure that you have successfully completed all of the steps in the [Manually Configuring AWS for PCF](pcf-aws-manual-config.html) topic. After completing the procedures in this topic, proceed to the [Manually Configuring PAS for AWS](pcf-aws-manual-er-config.html) topic to continue deploying PCF.
+Before beginning this procedure, ensure that you have successfully completed all of the steps in the [Installing PCF on AWS Manually](pcf-aws-manual-config.html) topic. After completing the procedures in this topic, proceed to the [Deploying PAS on AWS](pcf-aws-manual-er-config.html) topic to continue deploying PCF.
 
 
 ## <a id='pcfaws-om-access'></a> Step 1: Access Ops Manager
 
-1. In a web browser, navigate to the fully qualified domain you created in the <a href="./pcf-aws-manual-config.html#pcfaws-dns">Configure DNS Records</a> step of _Manually Installing PCF on AWS_.
+1. In a web browser, navigate to the fully qualified domain you created in the [Configure DNS Records](./pcf-aws-manual-config.html#pcfaws-dns) step of _Installing PCF on AWS Manually_.
 
 1. When Ops Manager starts for the first time, you must choose one of the following:
     * [Use an Identity Provider](#idp): If you use an Identity Provider, an external identity server maintains your user database.
@@ -53,16 +53,16 @@ Before beginning this procedure, ensure that you have successfully completed all
     <%= image_tag("cloudform/aws-config.png") %>
 
 1. Select **Use AWS Keys** or **Use AWS Instance Profile**.
-    * **Access Key ID** and **AWS Secret Key**: To retrieve your AWS key information, use the AWS Identity and Access Management (IAM) credentials that you generated in the [Step 3: Create an IAM User for PCF](pcf-aws-manual-config.html#create-iam) section of the <em>Manually Configuring AWS for PCF</em> topic.
-    * **AWS IAM Instance Profile**: Enter the name of the IAM profile you created in the [Step 3: Create an IAM User for PCF](pcf-aws-manual-config.html#create-iam) section of the <em>Manually Configuring AWS for PCF</em> topic. 
+    * **Access Key ID** and **AWS Secret Key**: To retrieve your AWS key information, use the AWS Identity and Access Management (IAM) credentials that you generated in the [Step 3: Create an IAM User for PCF](pcf-aws-manual-config.html#create-iam) section of the _Installing PCF on AWS Manually_ topic.
+    * **AWS IAM Instance Profile**: Enter the name of the IAM profile you created in the [Step 3: Create an IAM User for PCF](pcf-aws-manual-config.html#create-iam) section of the _Installing PCF on AWS Manually_ topic. 
 
 1. Complete the rest of the **AWS Management Console Config** page:
-    * **Security Group ID**: Enter the **Group ID** of the `pcf-vms-security-group` you created for your PCF VMs in the [Step 6: Configure a Security Group for PCF VMs](pcf-aws-manual-config.html#pcfaws-om-ersecgrp) section of the <em>Manually Configuring AWS for PCF</em> topic. Locate the Group ID in the **Security Groups** tab of your EC2 Dashboard. 
+    * **Security Group ID**: Enter the **Group ID** of the `pcf-vms-security-group` you created for your PCF VMs in the [Step 6: Configure a Security Group for PCF VMs](pcf-aws-manual-config.html#pcfaws-om-ersecgrp) section of the _Installing PCF on AWS Manually_ topic. Locate the Group ID in the **Security Groups** tab of your EC2 Dashboard. 
     * **Key Pair Name**: Enter `pcf-ops-manager-key`.
-    * **SSH Private Key**: Open the AWS key pair `pcf-ops-manager-keys.pem` file you generated in the [Step 3: Create an IAM User for PCF](pcf-aws-manual-config.html#create-iam) section of the <em>Manually Configuring AWS for PCF</em> topic. Copy the contents of the `.pem` file and paste it into the **SSH Private Key** field.
+    * **SSH Private Key**: Open the AWS key pair `pcf-ops-manager-keys.pem` file you generated in the [Step 3: Create an IAM User for PCF](pcf-aws-manual-config.html#create-iam) section of the _Installing PCF on AWS Manually_ topic. Copy the contents of the `.pem` file and paste it into the **SSH Private Key** field.
     * **Region**: Select the region where you deployed Ops Manager.
     * **Encrypt EBS Volumes**: Select this checkbox to enable full encryption on persistent disks of all BOSH-deployed VMs except the Ops Manager VM and Director VM. See the [Configuring Amazon EBS Encryption for PCF on AWS](cloudform-om-ebs-config.html) topic for details about using EBS encryption.
-    <p class="note warning"><strong>Warning</strong>: Do not enable EBS encryption if you are running <strong>PAS for Windows</strong>. EBS encryption is currently incompatible with Windows VMs and it prevents Windows runtimes from installing.</p>
+    <p class="note warning"><strong>WARNING:</strong> Do not enable EBS encryption if you are running <strong>PAS for Windows</strong>. EBS encryption is currently incompatible with Windows VMs and it prevents Windows runtimes from installing.</p>
 
 1. Click **Save**.
 
@@ -73,8 +73,7 @@ Before beginning this procedure, ensure that you have successfully completed all
 
     <%= image_tag("images/cloudform/director_aws.png") %>
 
-1. Enter at least two of the following NTP servers in the **NTP Servers (comma
-delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.ntp.org,2.amazon.pool.ntp.org,3.amazon.pool.ntp.org`
+1. Enter at least two of the following NTP servers in the **NTP Servers (comma delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.ntp.org,2.amazon.pool.ntp.org,3.amazon.pool.ntp.org`
 
 1. Leave the **JMX Provider IP Address** field blank.
   <p class="note"><strong>Note:</strong> Starting from PCF v2.0, BOSH-reported component metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use PCF JMX Bridge for consuming them outside of the Firehose, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
@@ -143,7 +142,7 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
         <td><strong>Username</strong></td>
       </tr>
     </table><br />
-    * For **Password**, enter the password that you defined for your MySQL database when you created in the [Step 19: Create a MySQL Database using AWS RDS](pcf-aws-manual-config.html#pcfaws-mysql-rds) section of the <em>Manually Configuring AWS for PCF</em> topic.
+    * For **Password**, enter the password that you defined for your MySQL database when you created in the [Step 19: Create a MySQL Database using AWS RDS](pcf-aws-manual-config.html#pcfaws-mysql-rds) section of the _Installing PCF on AWS Manually_ topic.
   In addition, if you selected the **Enable TLS for Director Database** checkbox, you can fill out the following optional fields:
     * **Enable TLS:** Selecting this checkbox enables TLS communication between the BOSH Director and the database.
     * **TLS CA:** Enter the Certificate Authority for the TLS Certificate.
@@ -171,12 +170,12 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
 
 ## <a id='az'></a> Step 4: Create Availability Zones Page
 
-<p class="note"><strong>Note:</strong> Pivotal recommends at least three availability zones (AZs) for a highly available installation of PAS. The procedures in <a href="pcf-aws-manual-config.html">Manually Configuring AWS for PCF</a> use 3 AZs.</p>
+<p class="note"><strong>Note:</strong> Pivotal recommends at least three availability zones (AZs) for a highly available installation of PAS. The procedures in <a href="pcf-aws-manual-config.html">Installing PCF on AWS Manually</a> use 3 AZs.</p>
 
 1. Select **Create Availability Zones**.
 <%= image_tag("cloudform/create-az.png") %>
 
-1. Perform the following steps to add the three AZs you specified in the [Step 4: Create a VPC](pcf-aws-manual-config.html#pcfaws-vpc) section of the <em>Manually Configuring AWS for PCF</em> topic: 
+1. Perform the following steps to add the three AZs you specified in the [Step 4: Create a VPC](pcf-aws-manual-config.html#pcfaws-vpc) section of the _Installing PCF on AWS Manually_ topic: 
     1. Click **Add**.
     1. For **Amazon Availability Zone**, enter the name of the AZ.
     1. Repeat until you have entered all three AZs, in the format `REGION-#a`, `REGION-#b`, and `REGION-#c`. For example, `us-west-2a`, `us-west-2b`, and `us-west-2c`. 
@@ -184,14 +183,14 @@ delimited)** field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.n
 1. Click **Save**.
 
 
-## <a id='pcfaws-om-networks'></a>S tep 5: Create Networks Page
+## <a id='pcfaws-om-networks'></a> Step 5: Create Networks Page
 
 1. Select **Create Networks**.
 <%= image_tag("cloudform/create-networks.png") %>
 
 1. (Optional) Select **Enable ICMP checks** to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
 
-1. Perform the following steps to add the network configuration you created for your VPC in the [Step 4: Create a VPC](pcf-aws-manual-config.html#pcfaws-vpc) section of the <em>Manually Configuring PCF for AWS</em> topic. Record your VPC CIDR if you set a CIDR other than the recommendation.
+1. Perform the following steps to add the network configuration you created for your VPC in the [Step 4: Create a VPC](pcf-aws-manual-config.html#pcfaws-vpc) section of the _Installing PCF on AWS Manually_ topic. Record your VPC CIDR if you set a CIDR other than the recommendation.
     1. Click **Add Network**.
     1. For **Name**, enter `pcf-management-network`.
     1. Create a subnet for each availability zone by clicking **Add Subnet**. Refer to the table below for the information required to create all three subnets:
@@ -365,4 +364,4 @@ choose **Automatic** from the drop-down menu to allocate the recommended resourc
 
     <%= image_tag("aws/vpc-step16.png") %>
 
-1. Proceed to the [Manually Configuring PAS for AWS](pcf-aws-manual-er-config.html) topic to continue deploying PCF.
+1. Proceed to the [Deploying PAS on AWS](pcf-aws-manual-er-config.html) topic to continue deploying PCF.

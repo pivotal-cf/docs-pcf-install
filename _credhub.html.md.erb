@@ -1,21 +1,37 @@
-<p class="note"><strong>Note</strong>: Enabling CredHub is not required, but you cannot leave the fields under <b>Encryption Keys</b> blank. Enter any text in the <b>Name</b> and <b>Key</b> fields as placeholder values if you do not intend to use CredHub.</p>
+<p class="note"><strong>Note:</strong> Enabling CredHub is not required. However, you cannot leave the fields under <strong>Encryption Keys</strong> blank. If you do not intend to use CredHub, enter any text in the <strong>Name</strong> and <strong>Key</strong> fields as placeholder values.</p>
 
-1. Select **Credhub**. 
-	<%= image_tag('images/credhub.png') %>
-1. Choose the location of your CredHub Database. PAS includes this CredHub database for services to store their service instance credentials. 
-	1. If you chose **External**, enter the following:
-		* **Hostname**: The IP address of your database server. 
-		* **TCP Port**: The port of your database server, such as `3306`. 
-		* **Username**: A unique username that can access this specific database on the database server. 
-		* **Password**: The password for the provided username. 
-		* **Database CA Certificate**: Enter a certificate to use for encrypting traffic to and from the database. 
-1. Under **Encryption Keys**, specify a key to use for encrypting and decrypting the values stored in the CredHub database.
-	* **Name**: Enter the name of the key.
-	* **Key**: Enter a key that is at least 20 characters in length. 
-	* **Primary**: Select this checkbox to use this key as your primary key. 
-		<p class="note"><strong>Note</strong>: Ensure that you only mark one key as <b>Primary</b>. The UI includes an <b>Add</b> button to add more keys to support key rotation. For more information, see the [Rotating Runtime CredHub Encryption Keys](../opsguide/credential-rotation.html) topic.
-		</p>
+1. Select **CredHub**.
+1. Choose the location of your CredHub database. PAS includes this CredHub database for services to store their service instance credentials.
+
+    <%= image_tag("images/credhub-db.png") %>
+
+    If you chose **External**, enter the following:
+	* **Hostname**. This is the IP address of your database server.
+	* **TCP Port**. This is the port of your database server, such as `3306`.
+	* **Username**. This is a unique username that can access your CredHub database on the database server.
+	* **Password**. This is the password for the provided username. 
+	* **Database CA Certificate**. This certificate is used when encrypting traffic to and from the database.
+1. (Optional) To configure CredHub to use an HSM, complete the following fields:
+  * **HSM Provider Partition**. This is the name of the HSM provider partition.
+  * **HSM Provider Partition Password**. This password is used to access the HSM provider partition.
+  * **HSM Provider Client Certificate**. This is the client certificate for the HSM. For more information, see [Create and Register HSM Clients](hsm-config.html#create-register-hsm) in the _Preparing CredHub HSMs for Configuration_ topic.
+  <%= image_tag("images/hsm-provider.png") %>
+  * In the **HSM Provider Servers** section, click **Add** to add an HSM server. You can add multiple HSM servers. For each HSM server, complete the following fields:
+      * **Host Address**. This is the host name or IP address of the HSM server.
+      * **Port**. This is the port of the HSM server. If you do not know your port address, enter `1792`.
+      * **Partition Serial Number**. This is the serial number of the HSM partition.
+      * **HSM Certificate**. This is the certificate for the HSM server. The HSM presents this certificate to CredHub to establish a two-way TLS connection.
+1. Under **Encryption Keys**, specify one or more keys to use for encrypting and decrypting the values stored in the CredHub database.
+	* **Name**. This is the name of the encryption key.
+	* **Provider**. This is the provider of the encryption key.
+	If you have configured an HSM provider and HSM servers above, select **HSM**. Otherwise, select **Internal**.
+	* **Key**. This key is used for encrypting all data. The key must be at least 20 characters long.
+	* **Primary**. This checkbox is used for marking the key you specified above as the primary encryption key.
+		<p class="note"><strong>Note:</strong> Ensure that you mark only one key as <strong>Primary</strong>. For more information about using additional keys for key rotation, see the [Rotating Runtime CredHub Encryption Keys](../opsguide/credential-rotation.html) topic.</p>
 1. If your deployment uses any PCF services that support storing service instance credentials in CredHub and you want to enable this feature, select the **Secure Service Instance Credentials** checkbox.
+1. Click **Save**.
 1. Select the **Resource Config** pane.
 1. Under the **Job** column of the **CredHub** row, set the number of instances to `2`. This is the minimum instance count required for high availability.
-1. To use the runtime CredHub feature, follow the additional steps in <a href="../opsguide/secure-si-creds.html#pas-config">Securing Service Instance Credentials with Runtime CredHub</a>.</p>
+1. Click **Save**.
+
+For more information about using CredHub for securing service instance credentials, see [Securing Service Instance Credentials with Runtime CredHub](../opsguide/secure-si-creds.html).

@@ -9,14 +9,14 @@ owner: RelEng
 
 This topic describes the procedure for backing up your critical backend Pivotal Cloud Foundry (PCF) components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments. To restore your backup, see the [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html) topic.
 
-To view the BBR release notes, see the <a href="https://docs.pivotal.io/bbr/bbr-rn.html">BOSH Backup and Restore Release Notes</a>. To back up PCF manually, see the <a href="backup-pcf.html">Backing Up Pivotal Cloud Foundry Manually</a> topic.
+To view the BBR release notes, see the [BOSH Backup and Restore Release Notes](https://docs.cloudfoundry.org/bbr/bbr-rn.html). To back up PCF manually, see [Backing Up Pivotal Cloud Foundry Manually](backup-pcf.html).
 
 During the backup, BBR stops the Cloud Controller API and the Cloud Controller workers to create a consistent backup. Only the API functionality, like that used when pushing applications or using the Cloud Foundry Command Line Interface (cf CLI), is affected. The deployed applications do not experience downtime.
 
-<p class="note"><strong>Note</strong>: You can only use BBR to back up PCF v1.11 and later. To back up earlier versions of PCF, perform the <a href="backup-pcf.html">manual procedures</a>.</p>
+<p class="note"><strong>Note:</strong> You can only use BBR to back up PCF v1.11 and later. To back up earlier versions of PCF, perform the <a href="backup-pcf.html">manual procedures</a>.</p>
 
 <div class="note warning">
-  <strong>Warnings</strong>:
+  <strong>WARNING:</strong>
   <ul>
     <li><strong>Backup artifacts can contain secrets.</strong> Secure backup artifacts using encryption or other means. </li>
     <li><strong>The restore is a destructive operation.</strong> BBR is designed to restore PCF after a disaster. If it fails, the environment may be left in an unusable state and require reprovisioning. The two restore scenarios currently documented are <a href="restore-pcf-bbr.html">Restoring Pivotal Cloud Foundry from Backup with BBR</a> and <a href="in-place-restore.html">Restoring an ERT Backup In-place</a>.</li>
@@ -27,18 +27,20 @@ During the backup, BBR stops the Cloud Controller API and the Cloud Controller w
 </div>
 
 
-##<a id='recs'></a> Recommendations
+## <a id='recs'></a> Recommendations
 
 Pivotal recommends the following:
 
 * Follow the full procedure documented in this topic when creating a backup. This ensures that you always have a consistent backup of Ops Manager, Elastic Runtime, and BOSH to restore from.
 * Back up frequently, especially before making any changes to your PCF deployment, such as the configuration of any tiles in Ops Manager.
 
+
 ## <a id="restore-compatibility"></a> Compatibility of Restore
 
 When using a backup to restore, you must ensure that the restore environment is compatible. For more information, see [Compatibility of Restore](./restore-pcf-bbr.html#compatibility).
 
-## <a id='supported'></a>Supported Components
+
+## <a id='supported'></a> Supported Components
 
 BBR is a binary that can back up and restore BOSH deployments and BOSH Directors. BBR requires that the backup targets supply scripts that implement the backup and restore functions.
 
@@ -48,15 +50,18 @@ BBR backs up the following PCF components:
 
 * **BOSH Director**: The BOSH Director must have an internal Postgres database and an internal blobstore to be backed up and restored with BBR. As part of backing up the BOSH Director, BBR backs up the BOSH UAA database and the CredHub database.
 
-### Backing Up Services
+### <a id='backup-services'></a> Backing Up Services
 
 Keep in mind the following when backing up services:
 
 * You can back up and restore brokered services with the procedures documented in this topic and in the [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html) topic. BBR backs up and restores the virtual machines (VMs) and the service instances, but not the service data.
+
 * You can redeploy on-demand service instances manually during restore, but the data in the instance is not backed up.
+
 * BBR does not back up managed services or their data.
 
-## <a id='workflow'></a>Workflow
+
+## <a id='workflow'></a> Workflow
 
 Operators download the BBR binary and transfer it to a jumpbox. Then they run BBR from the jumpbox, specifying the name of the BOSH deployment to back up.
 
@@ -74,26 +79,26 @@ The following diagram shows a sample backup flow.
 
 <%= image_tag('backup-flow.png') %>
 
-
 Before using BBR, follow the instructions in the [Setting up your system for BBR](system-setup-bbr.html) section.
 
-## <a id='prepare'></a>Prepare to Create Your Backup
 
-### <a id='setup-jumpbox'></a>Step 1: Set Up Your Jumpbox
+## <a id='prepare'></a> Prepare to Create Your Backup
+
+### <a id='setup-jumpbox'></a> Step 1: Set Up Your Jumpbox
 
 Prepare your jumpbox for BBR by following the steps in the [Setting Up Your Jumpbox for BBR](system-setup-bbr.html) topic.
 
-<p class="note"><strong>Note</strong>: Pivotal recommends that you regularly update the BBR binary on your jumpbox to the latest version</a>. See <a href="system-setup-bbr.html#scp">Transfer BBR Binary to Your Jumpbox</a> in <em>Setting Up Your Jumpbox for BBR</em> for more information.</p>
+<p class="note"><strong>Note:</strong> Pivotal recommends that you regularly update the BBR binary on your jumpbox to the latest version</a>. See <a href="system-setup-bbr.html#scp">Transfer BBR Binary to Your Jumpbox</a> in <em>Setting Up Your Jumpbox for BBR</em> for more information.</p>
 
-### <a id='encrypt-key'></a>Step 2: Record the Cloud Controller Database Encryption Credentials
+### <a id='encrypt-key'></a> Step 2: Record the Cloud Controller Database Encryption Credentials
 
 Perform the following steps to retrieve the Cloud Controller Database encryption credentials from the Elastic Runtime tile:
 
 1. Navigate to Ops Manager in a browser and log in to the Ops Manager Installation Dashboard.
+
 1. Select **Pivotal Elastic Runtime > Credentials** and locate the Cloud Controller section.
-1. Record the Cloud Controller **DB Encryption Credentials**.
-You must provide these credentials if you contact [Pivotal Support](https://support.pivotal.io) for help
-restoring your installation.
+
+1. Record the Cloud Controller **DB Encryption Credentials**. You must provide these credentials if you contact [Pivotal Support](https://support.pivotal.io) for help restoring your installation.
 
 	<%= image_tag("ccdb-encrypt-creds.png") %>
 
@@ -108,22 +113,28 @@ Perform the following steps to retrieve the IP address of your BOSH Director and
 Perform the following steps to verify that you can back up your BOSH Director:
 
 1. Navigate to the Ops Manager Installation Dashboard.
+
 1. Click the Ops Manager tile.
+
 1. Click the **Credentials** tab.
+
 1. Locate **Bbr Ssh Credentials** and click **Link to Credential** next to it.
 <br><br>
 You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/bbr_ssh_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.
 
 1. Copy the value for `private_key_pem`.
+
 1. SSH into your jumpbox:
 	<pre class="terminal">
 	$ ssh JUMPBOX-USER/JUMPBOX-ADDRESS -i YOUR-CERTIFICATE.pem
 	</pre>
-1. Run the following command to reformat the key and save it to a file called `PRIVATE_KEY` in the current directory, pasting in the contents of your private key for `YOUR_PRIVATE_KEY`:
+
+1. Run the following command to reformat the key and save it to a file called `PRIVATE-KEY` in the current directory, pasting in the contents of your private key for `YOUR-PRIVATE-KEY`:
   <pre class="terminal">
   $ printf -- "YOUR\_PRIVATE\_KEY" > PRIVATE_KEY
   </pre>
-1. Run the BBR pre-backup-check command from your jumpbox:
+
+1. Run the BBR `pre-backup-check` command from your jumpbox:
 	<pre class="terminal">
 	$ bbr director \
 	  --private-key-path PRIVATE\_KEY \
@@ -143,13 +154,16 @@ You can also retrieve the credentials using the Ops Manager API with a GET reque
 
 BBR requires the MySQL backup prepare node to be present in order to successfully back up Elastic Runtime. Currently, the only way to ensure the presence of this node is to enable automated MySQL backups. If you already have these enabled, you may skip this section. Future versions of Elastic Runtime will include an option to deploy the backup prepare node without enabling automatic MySQL backups.
 
-Perform the following steps to enable the backup prepare node:
+To enable the backup prepare node, do the following:
 
 1. In the Elastic Runtime tile, click **Internal MySQL**.
+
 1. Under **Automated Backups Configuration**, select **Enable automated backups from MySQL to an S3 bucket or other S3-compatible file store**. Fill in the required fields with any text value, and set the **Cron Schedule** to a cron-formatted date that doesn't exist. For example, use February 31: `0 0 31 2 *`.
- 	<p class="note"><strong>Note</strong>: If you do not enable automated backups, the BBR backup will fail.</p>
+ 	<p class="note"><strong>Note:</strong> If you do not enable automated backups, the BBR backup will fail.</p>
+
 1. Click **Resource Config** and use the dropdown menu to scale up the **Backup Prepare Node** to one instance.
 	<%= image_tag("backup-prepare-node.png") %>
+
 1. Navigate back to the Ops Manager Installation Dashboard and click **Apply Changes** to redeploy.
 
 ### <a id='identify-deployment'></a> Step 6: Identify Your Deployment
@@ -185,7 +199,6 @@ Perform the following steps to check that your BOSH Director is reachable and ha
       --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
       pre-backup-check
 	</pre>
-
     Replace the placeholder values as follows:
     <br><br>
     * `BOSH_CLIENT`, `BOSH_PASSWORD`: From the Ops Manager Installation Dashboard, click **Ops Manager Director**, navigate to the **Credentials** tab, and click **Uaa Bbr Client Credentials** to retrieve the BOSH UAA credentials.<br><br>
@@ -203,15 +216,16 @@ Perform the following steps to check that your BOSH Director is reachable and ha
 		* The mysql restore script expects a backup script which produces mysql-artifact artifact which is not present in the deployment.
 	Follow the instructions in the [Step 5: Enable Backup Prepare Node](#backup-prepare-node) section and retry.
 
-## <a id='procedure'></a>Create Your Backup
 
-### <a id='export'></a>Step 8: Export Installation Settings
+## <a id='procedure'></a> Create Your Backup
 
-Pivotal recommends that you back up your installation settings by exporting
-frequently. This option is only available after you have deployed at least one time.
+### <a id='export'></a> Step 8: Export Installation Settings
+
+Pivotal recommends that you back up your installation settings by exporting frequently. This option is only available after you have deployed at least one time.
 Always export an installation before following the steps in the [Import Installation Settings](./restore-pcf.html#import) section of the [Restoring Pivotal Cloud Foundry from Backup with BBR](./restore-pcf-bbr.html) topic.
 
-<div class="note"><strong>Notes</strong>:
+<div class="note">
+  <strong>Notes:</strong>
   <ul>
     <li>Exporting your installation only backs up your installation settings. It does not back up your VMs or any external MySQL databases.</li>
     <li>Preparing and downloading the installation settings file takes around 5 to 15 minutes.</li>
@@ -246,7 +260,7 @@ Replace the placeholder values as follows:
 * `PRIVATE_KEY`: This is the path to the private key file you created in [Step 4: Check your BOSH Director](#check-director).
 * `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH_DIRECTOR_IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section.
 
-<div class="note"><strong>Notes</strong>:
+<div class="note"><strong>Notes:</strong>
   <ul>
     <li>The BOSH Director backup takes at least 20 minutes.</li>
     <li>Because the BBR backup command can take a long time to complete, Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. Use <code>nohup</code>, a <code>screen</code>, or a <code>tmux</code> session.</li>
@@ -263,6 +277,8 @@ $ bbr director \
 </pre>
 
 ### <a id='bbr-backup'></a> Step 10: Back Up Your Elastic Runtime Deployment
+
+1.  If you are using an external blobstore, create a copy of the blobstore with your IaaS-specific tool. Your blobstore backup may be slightly inconsistent with your Elastic Runtime backup depending on the duration of time between performing the backups.
 
  Run the BBR backup command from your jumpbox to back up your Elastic Runtime deployment:
   <pre class="terminal">
@@ -284,7 +300,7 @@ $ bbr director \
         --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
         backup --with-manifest</pre>
 
-<div class="note"><strong>Notes</strong>:
+<div class="note"><strong>Notes:</strong>
   <ul>
     <li>Backing up Elastic Runtime takes at least 10 minutes, and can take considerably longer with larger blobstores or slow network connections. The backup also incurs around 10 minutes of Cloud Controller downtime, during which users will be unable to push, scale, or delete apps. Your apps will not be affected.</li>
     <li>Because the BBR backup command can take a long time to complete, Pivotal recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</li>
@@ -303,16 +319,24 @@ If the command fails, do the following:
     --deployment DEPLOYMENT\_NAME \
     --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
     backup-cleanup</pre>
+
 1. Ensure all the parameters in the command are set.
+
 1. Ensure the BOSH Director credentials are valid.
+
 1. Ensure the specified deployment exists.
+
 1. Consult the [Exit Codes](#exit-codes) section below.
 
-## <a id='after'></a>After Taking the Backups
+
+## <a id='after'></a> After Taking the Backups
+
 If the commands complete successfully, complete the following steps:
 
 1. Move the backup artifacts off the jumpbox to your preferred storage space. The backup created by BBR consists of a folder with the backup artifacts and metadata files. Pivotal recommends compressing and encrypting the files.
+
 1. Make redundant copies of your backup and store them in multiple locations to minimize the risk of losing backups in the event of a disaster.
+
 1. Attempt to test restore on every backup to validate it. Perform the procedures in the next step. See [Step 11: Validate Your Backup](#validate-backup).
 
 ### <a id='validate-backup'></a> Step 11: (Optional) Validate Your Backup
@@ -324,7 +348,7 @@ If you want to validate your backup, follow the instructions that correspond to 
 
 #### <a id='full-validate'></a> Validate Your Entire Backup
 
-<div class="note warning"><strong>Warnings</strong>:
+<div class="note warning"><strong>WARNING:</strong>
   <ul>
     <li><strong>The VMs and disks from the backed-up BOSH Director should not be visible to the new BOSH Director</strong> when validating your backup. As a result, Pivotal recommends that you deploy the new BOSH Director to a different IaaS network and account than the VMs and disks of the backed-up BOSH Director.</li>
     <li><strong>Data services outside of PCF may produce unexpected side effects during restoration.</strong> The services will try to connect to those data services when you restore to a new environment. For example, consider an app that processes mail queues and connects to an external database. When you validate your backup in a test environment, the app may start processing the queue, and this work may be lost.</li>
@@ -333,28 +357,30 @@ If you want to validate your backup, follow the instructions that correspond to 
 
 After backing up PCF, you may want to validate your backup by restoring it to a similar environment and checking the applications. Because BBR is designed for disaster recovery, its backups are intended to be restored to an environment deployed with the same configuration.
 
-Perform the following steps to spin up a second environment that matches the original in order to test a restore:
+To spin up a second environment that matches the original in order to test a restore, do the following:
 
 1. Export your Ops Manager installation by performing the steps in the [Step 8: Export Installation Settings](#export) section.
+
 1. Create a new Ops Manager VM in a different network to the original. Ensure that the Ops Manager VM has enough persistent disk to accommodate the files exported in the previous step. Consult the topic specific to your IaaS:<br><br>
   * [Launching an Ops Manager Director Instance on AWS (for CloudFormation users)](../cloudform-om-deploy.html)
-	* [Manually Configuring AWS for PCF](../pcf-aws-manual-config.html)
+	* [Configuring AWS for PCF](../pcf-aws-manual-config.html)
 	* [Launching an Ops Manager Director Instance with an ARM Template](../azure-arm-template.html)
-    * [Launching an Ops Manager Director Instance on GCP](../gcp-om-deploy.html)
-    * [Provisioning the OpenStack Infrastructure](../openstack-setup.html)
-    * [Deploying Operations Manager to vSphere](../deploying-vm.html)
+  * [Launching an Ops Manager Director Instance on GCP](../gcp-om-deploy.html)
+  * [Provisioning the OpenStack Infrastructure](../openstack-setup.html)
+  * [Deploying Operations Manager to vSphere](../deploying-vm.html)
 
 After you deploy the second environment, follow the instructions in the [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html) topic.
 
 #### <a id='ert-validate'></a> Validate Your Elastic Runtime Backup Only
 
-For a sandbox or other non-production environment, you can optionally perform an _in-place_ restore of Elastic Runtime only. In this case, you restore the Elastic Runtime backup to the same PCF environment that the backup was created from. Follow the procedures in [Restoring an Elastic Runtime Backup In-place](in-place-restore.html).
+For a sandbox or other non-production environment, you can optionally perform an _in-place_ restore of Elastic Runtime only. In this case, you restore the Elastic Runtime backup to the same PCF environment that the backup was created from. Follow the procedures in [Restoring an Elastic Runtime Backup In-Place](in-place-restore.html).
 
-## <a id='exit-codes-logging'></a>Exit Codes and Logging
+
+## <a id='exit-codes-logging'></a> Exit Codes and Logging
 
 For information about the exit codes returned by BBR and BBR logging, consult the sections below.
 
-### <a id='exit-codes'></a>Exit Codes
+### <a id='exit-codes'></a> Exit Codes
 
 The exit code returned by BBR indicates the status of the backup. The following table matches exit codes to error messages.
 
@@ -400,7 +426,7 @@ To check that a bit is set, use bitwise AND, as demonstrated by the following ex
 
 Exit code `20` indicates that the pre-backup lock failed and cleanup failed.
 
-### <a id='logging'></a>Logging
+### <a id='logging'></a> Logging
 
 BBR outputs logs to stdout. By default, BBR logs:
 
@@ -416,12 +442,15 @@ If more logging is needed, use the optional `--debug` flag to print the followin
 * All commands executed on local environment
 * Standard in and standard out streams for the backup and restore scripts when they are executed
 
-## <a id='canceling-backup'></a>Canceling a Backup
+
+## <a id='canceling-backup'></a> Cancelling a Backup
 
 If you need to cancel a backup, perform the following steps:
 
 1. Enter `CTRL-C` to terminate the BBR process, then enter `yes` to confirm.
+
 1. Log in to your BOSH Director with the BOSH CLI by performing the procedures in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section above.
+
 1. Perform the following steps for each `cloud_controller` VM in your deployment:
 	1. List the VMs in your deployment:
 		<pre class="terminal">$ bosh -e DIRECTOR\_IP \
@@ -431,8 +460,10 @@ If you need to cancel a backup, perform the following steps:
 	1. Select the VM you want to SSH into.
 	1. Run the following command from the VM:
 		<pre class="terminal">$ sudo /var/vcap/jobs/cloud-controller-backup/bin/bbr/post-backup-unlock</pre>
+
 1. Run the BBR pre-backup check from your jumpbox by following the steps in the [Step 7: Check Your Deployment](#check) section above. If the command reports that it cannot back up the deployment, SSH onto each VM mentioned in the error using the BOSH CLI and remove the `/var/vcap/store/bbr-backup` directory if present.
 
-## <a id="gdpr"></a>European Union's General Data Protection Regulation (GDPR)
 
-Backup artifacts may contain data covered by the European Union's <em>General Data Protection Regulation (GDPR)</em>. Please be mindful that any backup artifacts may contain personal data. For example, a backup of PAS could contain user email addresses. As such, backup artifacts should be handled in accordance with organizational policies and applicable laws as they pertain to security, confidentiality, and privacy.
+## <a id="gdpr"></a> European Union's General Data Protection Regulation (GDPR)
+
+Backup artifacts may contain data covered by the European Union's _General Data Protection Regulation (GDPR)_. Please be mindful that any backup artifacts may contain personal data. For example, a backup of Elastic Runtime could contain user email addresses. As such, backup artifacts should be handled in accordance with organizational policies and applicable laws as they pertain to security, confidentiality, and privacy.

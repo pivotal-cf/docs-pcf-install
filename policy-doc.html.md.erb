@@ -5,9 +5,12 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-Use this policy document to complete [Step 2: Create an IAM User for PCF](./pcf-aws-manual-config.html#create-iam) in the <em>Manually Configuring AWS for PCF</em> topic.
+Use this policy document to complete [Step 2: Create an IAM User for PCF](./pcf-aws-manual-config.html#create-iam) in the _Configuring AWS for PCF_ topic.
 
-**IMPORTANT** For the S3 Bucket policy sections, make sure to update the generic bucket naming with your custom/unique bucket names. 
+
+## <a id="policy-code"></a> The Policy Document Base Code
+
+<p class='note'><strong>Note:</strong> For the S3 Bucket policy sections, make sure to update the generic bucket naming with your custom/unique bucket names.</p>
 
 From the AWS Management Console, copy and paste the following text in the **Policy Document** field.
 
@@ -103,5 +106,112 @@ From the AWS Management Console, copy and paste the following text in the **Poli
 ]
 }
 
-
 </pre>
+
+
+## <a id="add-policies"></a> Add Additional AWS Policies
+
+To perform specific tasks, you may need to add additional policies to your **Policy Document** field in the AWS Management Console.
+
+Consult the table below to determine what additional policies you may want to include. Then paste the code from the corresponding row. Enter the code in your existing policy after any `},`.
+
+<table>
+    <tr>
+        <th>I need to...</th>
+        <th>So I paste this code.</th>
+    </tr>
+    <tr>
+        <td>Encrypt EBS volumes with AWS Key Management Service (KMS).</td>
+        <td><pre class="code" style="max-height: 7em; max-width:30em; overflow: auto">
+{
+    "Sid": "RequiredIfUsingHeavyStemcells",
+    "Effect": "Allow",
+    "Action": [
+        "ec2:RegisterImage",
+        "ec2:DeregisterImage"
+    ],
+    "Resource": "*"
+},
+{
+    "Sid": "RequiredIfEncryptingStemcells",
+    "Effect": "Allow",
+    "Action": [
+        "ec2:CopyImage"
+    ],
+    "Resource": "*"
+},
+</pre></td>
+    </tr>
+    <tr>
+        <td>Use a custom KMS encryption key that I created in AWS.</td>
+        <td><pre class="code" style="max-height: 7em; max-width:30em; overflow: auto">
+{
+    "Sid": "RequiredIfUsingCustomKMSKeys",
+    "Effect": "Allow",
+    "Action": [
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:CreateGrant",
+        "kms:DescribeKey*"
+    ],
+    "Resource": [
+        "((kms_key_arn))"
+    ]
+},
+</pre></td>
+    </tr>
+    <tr>
+        <td>Use the load balancer target group.</td>
+        <td>
+            <pre class="code" style="max-height: 7em; max-width:30em; overflow: auto">
+{
+    "Sid": "RequiredIfUsingLBTargetGroupCloudProperties",
+    "Effect": "Allow",
+    "Action": [
+        "elasticloadbalancing:DescribeLoadBalancers",
+        "elasticloadbalancing:DescribeTargetGroups",
+        "elasticloadbalancing:DescribeTargetHealth",
+        "elasticloadbalancing:RegisterTargets"
+    ],
+    "Resource": "*"
+},
+</pre>
+        </td>
+    </tr>
+    <tr>
+        <td>Use the AWS Spot instance advisor.</td>
+        <td>
+            <pre class="code" style="max-height: 7em; max-width:30em; overflow: auto">
+{
+    "Sid": "RequiredIfUsingSpotBidPriceCloudProperties",
+    "Effect": "Allow",
+    "Action": [
+        "ec2:CancelSpotInstanceRequests",
+        "ec2:DescribeSpotInstanceRequests",
+        "ec2:RequestSpotInstances"
+    ],
+    "Resource": "*"
+},
+</pre>
+        </td>
+        </tr>
+    <tr>
+        <td>Create and replace AWS routes.</td>
+        <td>
+            <pre class="code" style="max-height: 7em; max-width:30em; overflow: auto">
+{
+    "Sid": "RequiredIfUsingAdvertisedRoutesCloudProperties",
+    "Effect": "Allow",
+    "Action": [
+        "ec2:CreateRoute",
+        "ec2:DescribeRouteTables",
+        "ec2:ReplaceRoute"
+    ],
+    "Resource": "*"
+},
+</pre>
+        </td>
+        </tr>
+</table>
+
+For more information about AWS policies, see [Example Policies](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_examples.html) in the AWS documentation.

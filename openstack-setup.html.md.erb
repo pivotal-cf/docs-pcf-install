@@ -8,15 +8,17 @@ owner: Ops Manager
 This guide describes how to provision the OpenStack infrastructure that you
 need to install [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) OpenStack. This document uses Mirantis Openstack. Use this topic when [Installing Pivotal Cloud Foundry on OpenStack](./openstack.html).
 
-After completing this procedure, complete all of the steps in the [Configuring Ops Manager Director after Deploying PCF on OpenStack](./openstack-om-config.html) and [Installing Elastic Runtime after Deploying PCF on OpenStack](./openstack-er-config.html) topics.
+After completing this procedure, complete all of the steps in the [Configuring Ops Manager Director on OpenStack](./openstack-om-config.html) and [Deploying Elastic Runtime on OpenStack](./openstack-er-config.html) topics.
 
-## <a id='log-in'></a>Step 1: Log In to the OpenStack Horizon Dashboard ##
+
+## <a id='log-in'></a> Step 1: Log In to the OpenStack Horizon Dashboard
 
 1. Log in to the OpenStack Horizon Dashboard.
 
     <%= image_tag("openstack/log-in.png") %>
 
-## <a id='security'></a>Step 2: Configure Security ##
+
+## <a id='security'></a> Step 2: Configure Security
 
 1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Access & Security**.
 
@@ -30,8 +32,7 @@ After completing this procedure, complete all of the steps in the [Configuring O
 
 1. In the left navigation, click **Access & Security** to refresh the page.
 
-1. Select the **Security Groups** tab. Click **Create Security Group** and
-create a group with the following properties:
+1. Select the **Security Groups** tab. Click **Create Security Group** and create a group with the following properties:
     * **Name**: `opsmanager`
     * **Description**: `Ops Manager`
 
@@ -41,12 +42,8 @@ create a group with the following properties:
 
     <%= image_tag("openstack/manage-security-rules.png") %>
 
-1. Add the access rules for HTTP, HTTPS, and SSH as shown in the table below. The rules with 'opsmanager' in the Remote column have restricted access to that particular Security Group.
-
-    <p class='note'><strong>Note</strong>: Adjust the remote sources as
-    necessary for your own security compliance. Pivotal recommends limiting
-    remote access to Ops Manager to IP ranges within your organization.</p>
-
+1. Add the access rules for HTTP, HTTPS, and SSH as shown in the table below. The rules with `opsmanager` in the Remote column have restricted access to that particular Security Group.
+    <p class='note'><strong>Note:</strong> Adjust the remote sources as necessary for your own security compliance. Pivotal recommends limiting remote access to Ops Manager to IP ranges within your organization.</p>
     <table class='nice' border='1'>
       <tr>
         <th><strong>Direction</strong></th>
@@ -99,23 +96,20 @@ create a group with the following properties:
       </tr>
     </table>
 
-## <a id='create-om-image'></a>Step 3: Create Ops Manager Image ##
 
-You can create the Ops Manager image in OpenStack using the OpenStack GUI or
-using the [Glance CLI](http://docs.openstack.org/developer/python-glanceclient/man/glance.html)
-client.
+## <a id='create-om-image'></a> Step 3: Create Ops Manager Image
 
-<p class='note'><strong>Note</strong>: If your Horizon Dashboard does not
-support file uploads, you must use the Glance client.</p>
+You can create the Ops Manager image in OpenStack using the OpenStack GUI or using the [Glance CLI](http://docs.openstack.org/developer/python-glanceclient/man/glance.html) client.
 
-### OpenStack GUI ###
+<p class='note'><strong>Note:</strong> If your Horizon Dashboard does not support file uploads, you must use the Glance client.</p>
+
+### <a id='gui'></a> OpenStack GUI
 
 1. Download the **Pivotal Cloud Foundry Ops Manager for OpenStack** image file from [Pivotal Network](https://network.pivotal.io).
 
 1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Images**.
 
-1. Click **Create Image**. Complete the **Create An Image** page with the
-following information:
+1. Click **Create Image**. Complete the **Create An Image** page with the following information:
     * **Name**: Enter `Ops Manager`.
     * **Image Source**: Select **Image File**.
     * **Image File**: Click **Choose File**. Browse to and select the image file
@@ -127,34 +121,33 @@ following information:
     * Select the **Protected** checkbox.
 
     <%= image_tag("openstack/create-image.png") %>
+
 1. Click **Create Image**.
 
-### Glance CLI ###
+### <a id='glance-cli'></a> Glance CLI
 
 1. Download the **Pivotal Cloud Foundry Ops Manager for OpenStack** image file from [Pivotal Network](https://network.pivotal.io).
 
 1. In a terminal window, run the following command to install the Glance CLI
 client:
-
     <pre class='terminal'>
     $ apt-get install python-glanceclient
     </pre>
 
 1. Run `admin-openrc.sh` to download your `openstack.rc` file and target your
 OpenStack environment.
-
     <pre class='terminal'>
     $ ./admin-openrc.sh
     Please enter your OpenStack Password:
     </pre>
 
 1. Run the following command to use the Glance CLI client to upload the image file that you downloaded from [Pivotal Network](https://network.pivotal.io):
-
     <pre class='terminal'>
     $ glance image-create --progress --disk-format raw --name "Ops Manager" --container-format bare --file PATH/DOWNLOADED-FILE
     </pre>
 
-## <a id='launch-om-vm'></a>Step 4: Launch Ops Manager VM ##
+
+## <a id='launch-om-vm'></a> Step 4: Launch Ops Manager VM
 
 1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Images**.
 
@@ -162,17 +155,13 @@ OpenStack environment.
 
     <%= image_tag("openstack/launch-image.png") %>
 
-1. Complete the **Details**, **Access & Security**, and **Networking** tabs of
-the **Launch Instance** form with the information below.
+1. Complete the **Details**, **Access & Security**, and **Networking** tabs of the **Launch Instance** form with the information below.
 
-### Details Tab ###
+### <a id='details'></a> Details Tab
 
 Select the **Details** tab and specify the following details:
 
-  * **Availability Zone**: Use the drop-down menu to select an availability
-    zone. You use this availability zone when you [Complete the Availability
-    Zones Pages](./openstack-om-config.html#az-config) when [Configuring Ops
-    Manager Director](./openstack-om-config.html).
+  * **Availability Zone**: Use the drop-down menu to select an availability zone. You use this availability zone when you [Complete the Availability Zones Pages](./openstack-om-config.html#az-config) when [Configuring Ops Manager Director](./openstack-om-config.html).
   * **Instance Name**: Enter `Ops Manager`.
   * **Flavor**: Select **m1.large**.
   * **Instance Count**: Do not change from the default.
@@ -181,43 +170,37 @@ Select the **Details** tab and specify the following details:
 
     <%= image_tag("openstack/instance-details.png") %>
 
-### Access & Security Tab ###
+### <a id='access-security'></a> Access & Security Tab
 
 Select the **Access & Security** tab and specify the following details:
 
-  * **Key Pair**: Select the key pair that you created in [Step 2: Configure
-    Security](#security). You need this key pair to log in to the Ops Manager
-    instance from your workstation.
-  * **Security Groups**: Select the **opsmanager** checkbox. Deselect all
-    other Security Groups.
+  * **Key Pair**: Select the key pair that you created in [Step 2: Configure Security](#security). You need this key pair to log in to the Ops Manager instance from your workstation.
+  * **Security Groups**: Select the **opsmanager** checkbox. Deselect all other Security Groups.
 
     <%= image_tag("openstack/instance-security.png") %>
 
-### Networking Tab ###
+### <a id='networking'></a> Networking Tab
 
 1. Select the **Networking** tab.
 
-1. Under **Available networks**, select a private subnet. You add a Floating IP
-to this network in a later step.
+1. Under **Available networks**, select a private subnet. You add a Floating IP to this network in a later step.
 
 1. Click **Launch**.
 
     <%= image_tag("openstack/instance-networking.png") %>
 
-## <a id='floating-ip'></a>Step 5: Associate a Floating IP Address ##
+
+## <a id='floating-ip'></a> Step 5: Associate a Floating IP Address
 
 1. In the left navigation of your OpenStack dashboard, click **Project > Compute > Instances**.
 
-1. Wait until the **Power State** of the Ops Manager instances shows as
-_Running_.
+1. Wait until the **Power State** of the Ops Manager instances shows as _Running_.
 
-1. Record the private **IP Address** of the Ops Manager instance. You use this
-IP Address when you [Complete the Create Networks Pages](./openstack-om-config.html#create-networks) in Ops Manager.
+1. Record the private **IP Address** of the Ops Manager instance. You use this IP Address when you [Complete the Create Networks Pages](./openstack-om-config.html#create-networks) in Ops Manager.
 
     <%= image_tag("openstack/instance-running.png") %>
 
-1. Select the **Ops Manager** checkbox. Click the **Actions** drop-down menu and
-select **Associate Floating IP**.
+1. Select the **Ops Manager** checkbox. Click the **Actions** drop-down menu and select **Associate Floating IP**.
 
 1. Under IP Address, click **+**.
 
@@ -227,13 +210,12 @@ select **Associate Floating IP**.
 
     <%= image_tag("openstack/ip-pool.png") %>
 
-1. Under **Port to be associated**, select your **Ops Manager** instance. Click
-**Associate**.
+1. Under **Port to be associated**, select your **Ops Manager** instance. Click **Associate**.
 
     <%= image_tag("openstack/ip-associate.png") %>
 
 
-## <a id='blob-storage'></a>Step 6: Add Blob Storage ##
+## <a id='blob-storage'></a> Step 6: Add Blob Storage
 
 1. In the left navigation of your OpenStack dashboard, click **Project > Object Store > Containers**.
 
@@ -243,16 +225,17 @@ select **Associate Floating IP**.
 
     <%= image_tag("openstack/create-container.png") %>
 
-## <a id='dns-entry'></a>Step 7: Create a DNS Entry ##
 
-<p class="note"><strong>Note</strong>: For security, Ops Manager 1.7 and later require you to create a fully qualified domain name in order to access Ops Manager during the <a href="openstack-om-config.html#log-in">initial configuration.</a></p>
+## <a id='dns-entry'></a> Step 7: Create a DNS Entry
+
+<p class="note"><strong>Note:</strong> For security, Ops Manager v1.7 and later require you to create a fully qualified domain name in order to access Ops Manager during the <a href="openstack-om-config.html#log-in">initial configuration.</a></p>
 
 Create a DNS entry for the IP address that you used for Ops Manager. You must use this fully qualified domain name when you log into Ops Manager in the Configure Ops Manager Director for OpenStack step below.
 
 
 ## <a id='configure-ops'></a>Step 8: Configure Ops Manager Director for OpenStack
 
-After completing this procedure, complete all of the steps in the [Configuring Ops Manager Director after Deploying PCF on OpenStack](./openstack-om-config.html) and [Installing Elastic Runtime after Deploying PCF on OpenStack](./openstack-er-config.html) topics.
+After completing this procedure, complete all of the steps in the [Configuring Ops Manager Director on OpenStack](./openstack-om-config.html) and [Deploying Elastic Runtime on OpenStack](./openstack-er-config.html) topics.
 
 ---
 

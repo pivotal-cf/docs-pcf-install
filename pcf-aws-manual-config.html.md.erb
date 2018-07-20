@@ -1,17 +1,17 @@
 ---
-title: Manually Installing PCF on AWS
+title: Installing PCF on AWS Manually
 owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
 
-This topic describes how to manually configure the Amazon Web Services (AWS) components that you need to run <a href="https://network.pivotal.io/products/pivotal-cf">Pivotal Cloud Foundry</a> (PCF) on AWS.
+This topic describes how to manually configure the Amazon Web Services (AWS) components that you need to run [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on AWS.
 
 To deploy PCF on AWS, you must perform the procedures in this topic to create objects in the AWS Management Console that PCF requires. 
 
 To view the list of AWS objects created by the procedures in this topic, see the [Required AWS Objects](#required-objects) section. 
 
-After completing the procedures in this topic, proceed to [Manually Configuring BOSH Director for AWS](pcf-aws-manual-om-config.html) to continue deploying PCF.
+After completing the procedures in this topic, proceed to [Configuring BOSH Director on AWS](pcf-aws-manual-om-config.html) to continue deploying PCF.
 
 
 ## <a id='file-ticket'></a> Step 1: File a Ticket
@@ -20,7 +20,7 @@ Log in to the AWS Management Console, and file a ticket with Amazon to ensure th
 
 <p class="note"><strong>Note:</strong> To deploy PCF to AWS GovCloud (US), log in to the <a href="https://console.amazonaws-us-gov.com/">AWS GovCloud (US) Console</a> instead of the standard AWS Management Console and select the <code>us-gov-west-1</code> region.</p>
 
-<p class="note"><strong>Note:</strong> To deploy PCF to AWS China, set up an <a href="http://www.amazonaws.cn/en/products/">AWS China</a> account and contact <a href="http://support.pivotal.io/">Pivotal Support</a>.</p>
+<p class="note"><strong>Note</strong>: To deploy PCF to AWS China, set up an <a href="http://www.amazonaws.cn/en/products/">AWS China</a> account and contact the Platform Architect assigned for your Pivotal account.</p>
 
 You can check the limits on your account by visiting the EC2 Dashboard on the AWS Management Console and clicking <strong>Limits</strong> on the left navigation.
 
@@ -28,14 +28,15 @@ You can check the limits on your account by visiting the EC2 Dashboard on the AW
 ## <a id='create-s3'></a> Step 2: Create S3 Buckets
 
 1. Navigate to the S3 Dashboard.
+	<p class="note"><strong>Note:</strong>S3 bucket names must be globally unique. When naming buckets, Pivotal recommends that you prefix the generic names below with an unique and helpfully identifiable string (i.e. ID-STRING-pcf-ops-manager-bucket, MY-IDENTIFIER-pcf-buildpacks-bucket, and so on). Then you should use the same prefix when naming other associated resources, such as IAM policies.</p>
 
 1. Perform the following steps to create five S3 buckets:
   * Click **Create Bucket**
-  * For **Bucket name**, enter `pcf-ops-manager-bucket`.
+  * For **Bucket name**, enter `ID-STRING-pcf-ops-manager-bucket`. 
   * For **Region**, select your region.
   * Click **Next** three times.
   * Click **Create bucket**.
-  * Repeat the above steps to create four more S3 buckets: `pcf-buildpacks-bucket`, `pcf-packages-bucket`, `pcf-resources-bucket`, and `pcf-droplets-bucket`.
+  * Repeat the above steps to create four more S3 buckets: `ID-STRING-pcf-buildpacks-bucket`, `ID-STRING-pcf-packages-bucket`, `ID-STRING-pcf-resources-bucket`, and `ID-STRING-pcf-droplets-bucket`.
 
 
 ## <a id='create-iam'></a> Step 3: Create an IAM User for PCF
@@ -44,7 +45,7 @@ Perform the following steps to create an Amazon Identity and Access Management (
 
 1. Select **Identity & Access Management** to access the IAM Dashboard.
 
-1. Select **Users>Create New Users**.
+1. Select **Users > Create New Users**.
 
 1. Enter a user name, such as `pcf-user`.
 
@@ -522,7 +523,7 @@ To launch an Amazon Machine Image (AMI) for Ops Manager, do the following:
     <%= image_tag("pcfaws/pcf_aws_configure_instance.png") %>
 
 1. Click **Next: Add Storage** and adjust the **Size (GiB)** value.
-The default persistent disk value is 50 GB. Pivotal recommends increasing this value to a minimum of 100 GB.
+The default persistent disk value is 50&nbsp;GB. Pivotal recommends increasing this value to a minimum of 100&nbsp;GB.
 
     <%= image_tag("pcfaws/pcf_aws_add_storage.png") %>
 
@@ -832,7 +833,7 @@ The default persistent disk value is 50 GB. Pivotal recommends increasing this v
     * **DB Instance Class**: Select **db.m3.large - 2 vCPU, 7.5 GiB RAM**.
     * **Multi-AZ Deployment**: Select **Yes**.
     * **Storage Type**: Select `Provisioned IOPS (SSD)`.
-    * **Allocated Storage**: Enter **100 GB**.
+    * **Allocated Storage**: Enter **100&nbsp;GB**.
     * **DB Instance Identifier**: Enter `pcf-ops-manager-director`.
     * Enter a secure **Master Username** and **Master Password**.
           <p class="note"><strong>Note:</strong> Record the username and password. You need these credentials later when configuring the <strong>Director Config</strong> page in the BOSH Director tile.</p>
@@ -852,7 +853,7 @@ The default persistent disk value is 50 GB. Pivotal recommends increasing this v
 
 1. Click **Launch DB Instance**. Launching the instance may take several minutes.
 
-1. When the instance has launched, proceed to [Manually Configuring BOSH Director for AWS](pcf-aws-manual-om-config.html) to continue deploying PCF. 
+1. When the instance has launched, proceed to [Configuring BOSH Director on AWS](pcf-aws-manual-om-config.html) to continue deploying PCF. 
 
 
 ## <a id='required-objects'></a> Required AWS Objects

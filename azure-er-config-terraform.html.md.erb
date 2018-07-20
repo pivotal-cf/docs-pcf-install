@@ -1,14 +1,13 @@
 ---
-title: Deploying PAS on Azure using Terraform
+title: Deploying PAS on Azure Using Terraform
 owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
-<html class="list-style-none"></html>
 
 This topic describes how to install and configure Pivotal Application Service (PAS) on Azure.
 
-Before you perform the procedures in this topic, you must have completed the procedures in the [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic, the [Launching a BOSH Director Instance on Azure using Terraform](azure-deploy-terraform.html) topic, and the [Configuring BOSH Director on Azure (Terraform)](azure-om-config-terraform.html) topic.
+Before you perform the procedures in this topic, you must have completed the procedures in the [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic, the [Launching a BOSH Director Instance on Azure Using Terraform](azure-deploy-terraform.html) topic, and the [Configuring BOSH Director on Azure Using Terraform](azure-om-config-terraform.html) topic.
 
 <p class="note"><strong>Note:</strong> If you plan to <a href="http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the Pivotal Application Service (PAS) tile.</p>
 
@@ -55,9 +54,8 @@ Before you perform the procedures in this topic, you must have completed the pro
 
 1. Enter the system and application domains.
     * For **System Domain**, enter the value of `sys_domain` from the Terraform output. This defines your target when you push apps to PAS.
-    * For **Apps Domain**, enter the value of `app_domain` from the Terraform output. This defines where PAS should serve your apps.
-    <p class="note"><strong>Note:</strong> You configured a wildcard DNS record
-    for these domains in an earlier step.</p>
+    * For **Apps Domain**, enter the value of `apps_domain` from the Terraform output. This defines where PAS should serve your apps.
+    <p class="note"><strong>Note:</strong> You configured a wildcard DNS record for these domains in an earlier step.</p>
 
 1. Click **Save**.
 
@@ -104,9 +102,9 @@ Before you perform the procedures in this topic, you must have completed the pro
 1. <%= partial 'haproxy_request_max_buffer' %>
 1. <%= partial 'protected_domains' %> 
 1. The **Loggregator Port** defaults to `443` if left blank. Leave this field blank.
-1. For <b>Container Network Interface Plugin</b>, ensure <b>Silk</b> is selected and review the following fields:
+1. For **Container Network Interface Plugin**, ensure **Silk** is selected and review the following fields:
     <%= image_tag 'images/cni-silk.png' %>
-    <p class="note"><strong>Note:</strong> The <b>External</b> option exists to support NSX-T integration for vSphere deployments.</p>
+    <p class="note"><strong>Note:</strong> The <strong>External</strong> option exists to support NSX-T integration for vSphere deployments.</p>
     <ol>
       <li><%= partial 'app_mtu' %> </li>
       <li><%= partial 'c2c-overlay' %></li>
@@ -116,13 +114,13 @@ Before you perform the procedures in this topic, you must have completed the pro
       <li><%= partial 'networking_database_timeout' %></li>
     </ol>
   </li>
-1. For <strong>DNS Search Domains</strong>, enter DNS search domains for your containers as a comma-separated list. DNS on your containers appends these names to its host names, to resolve them into full domain names.
+1. For **DNS Search Domains**, enter DNS search domains for your containers as a comma-separated list. DNS on your containers appends these names to its host names, to resolve them into full domain names.
     <%= image_tag 'images/dns-search-domains.png' %>
 
 1. <%= partial 'networking_database_timeout' %>
 
 1. <%= partial 'tcp_routing_enable' %>
-   1. For Azure, you also need to specify the name of Azure load balancer in the LOAD BALANCER column of TCP Router job of the <strong>Resource Config</strong> screen. You configure this later on in PAS. See <a href="#resources">Configuring Resources</a>.</p>
+   1. For Azure, you also need to specify the name of Azure load balancer in the LOAD BALANCER column of TCP Router job of the **Resource Config** screen. You configure this later on in PAS. See [Configuring Resources](#resources).</p>
 1. <%= partial 'tcp_routing_disable' %>
 
 1. Click **Save**.
@@ -144,7 +142,7 @@ Before you perform the procedures in this topic, you must have completed the pro
 
 <%= partial 'uaa' %>
 
-## <a id='credhub'></a> Step 9: (Optional) Configure CredHub
+## <a id='credhub'></a> Step 9: Configure CredHub
 
 <%= partial '_credhub' %>
 
@@ -178,7 +176,7 @@ Then proceed to [Step 12: (Optional) Configure Internal MySQL](#internal-mysql) 
 
 For production-level PCF deployments on Azure, the recommended selection is Azure Storage. For more information about production-level PCF deployments on Azure, see the [Reference Architecture for Pivotal Cloud Foundry on Azure](../refarch/azure/azure_ref_arch.html).
 
-For more factors to consider when selecting file storage, see <a href="../opsguide/storage_considerations.html">Considerations for Selecting File Storage in Pivotal Cloud Foundry</a>. 
+For more factors to consider when selecting file storage, see [Considerations for Selecting File Storage in Pivotal Cloud Foundry](../opsguide/storage_considerations.html). 
 
 ### <a id='internal_filestore'></a> Internal Filestore
 
@@ -203,9 +201,7 @@ For more factors to consider when selecting file storage, see <a href="../opsgui
 
 ## <a id='smtp'></a> Step 16: (Optional) Configure Email Notifications
 
-PAS uses SMTP to send invitations and confirmations to Apps Manager users.
-You must complete the **Email Notifications** page if you want to enable end-user
-self-registration.
+PAS uses SMTP to send invitations and confirmations to Apps Manager users. You must complete the **Email Notifications** page if you want to enable end-user self-registration.
 
 1. Select **Email Notifications**.
 
@@ -213,10 +209,7 @@ self-registration.
 
 1. Enter your reply-to and SMTP email information
 
-1. Verify your authentication requirements with your email administrator and use
-the **SMTP Authentication Mechanism** drop-down menu to select `None`, `Plain`,
-or `CRAMMD5`.
-If you have no SMTP authentication requirements, select `None`.
+1. Verify your authentication requirements with your email administrator and use the **SMTP Authentication Mechanism** drop-down menu to select `None`, `Plain`, or `CRAMMD5`. If you have no SMTP authentication requirements, select `None`.
 
 1. Click **Save**.
 
@@ -244,14 +237,11 @@ If you have no SMTP authentication requirements, select `None`.
 1. Select **Resource Config**.
 	<%= image_tag("azure/resource-config.png") %>
 
-  1. Ensure a `Standard` VM type is selected for the **Router** VM.
-  The PAS deployment fails if you select a `Basic` VM type. 
+  1. Ensure a `Standard` VM type is selected for the **Router** VM. The PAS deployment fails if you select a `Basic` VM type. 
 
-1. Enter the value of `web_lb_name` from your Terraform output in the
-**Resource Config** pane under **Load Balancers** for the **Router** job.
+1. Enter the value of `web_lb_name` from your Terraform output in the **Resource Config** pane under **Load Balancers** for the **Router** job.
 
-1. Enter the value of `diego_ssh_lb_name` from your Terraform output in the
-**Resource Config** pane under **Load Balancers** for the **Diego Brain** job.
+1. Enter the value of `diego_ssh_lb_name` from your Terraform output in the **Resource Config** pane under **Load Balancers** for the **Diego Brain** job.
 
 1. Ensure that the **Internet Connected** checkboxes are deselected for all jobs.
 
@@ -269,16 +259,12 @@ If you have no SMTP authentication requirements, select `None`.
 
 ## <a id='complete'></a> Step 24: Complete the PAS Installation
 
-1. Click the **Installation Dashboard** link to return to the Installation
-Dashboard.
+1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
 
-1. Click **Apply Changes**. If the following ICMP error message appears, click
-**Ignore errors and start the install**.
+1. Click **Apply Changes**. If the following ICMP error message appears, click **Ignore errors and start the install**.
 
     <%= image_tag("cloudform/install-error.png") %>
 
-    The install process generally requires a minimum of 90 minutes to complete.
-    The image shows the Changes Applied window that displays when the
-    installation process successfully completes.
+    The install process generally requires a minimum of 90 minutes to complete. The image shows the Changes Applied window that displays when the installation process successfully completes.
 
     <%= image_tag("cloudform/ops-manager-complete.png") %>

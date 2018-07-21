@@ -1,35 +1,40 @@
 ---
 title: Enabling External Blobstore Backups
-owner: RelEng
+owner: BBR
 ---
 
 <strong><%= modified_date %></strong>
 
-This topic describes the procedure for enabling external blobstore backups on your Pivotal Elastic Runtime (PCF) installation.
+This topic provides instructions for enabling external blobstore backups in your Pivotal Elastic Runtime tile.
 
-BBR supports both versioned and un-versioned S3-Compatible blobstores, and Azure blobstores. For more information, see [Backup and Restore with External Blobstores](https://docs.cloudfoundry.org/bbr/external-blobstores.html).
+BOSH Backup and Restore (BBR) supports versioned and unversioned S3-compatible blobstores and Azure blobstores. For more information, see [Backup and Restore with External Blobstores](https://docs.cloudfoundry.org/bbr/external-blobstores.html) in the open-source Cloud Foundry documentation.
 
-<p class="note"><strong>Note: </strong>To enable external blobstore backups on your Elastic Runtime installation, you need to make sure that the backup prepare node is present. See <a href=backup-pcf-bbr.html#backup-prepare-node>Step 5: Enable Backup Prepare Node</a> in  <em>Backing Up Pivotal Cloud Foundry with BBR</em>.</p>
+<p class="note"><strong>Note</strong>: To enable external blobstore backups for Elastic Runtime, the Backup Prepare Node must be enabled. See <a href=backup-pcf-bbr.html#backup-prepare-node>Enable Backup Prepare Node</a> in <em>Backing Up Pivotal Cloud Foundry with BBR</em>.</p>
 
-<p class="note"><strong>Note: </strong>The following steps require BOSH v2+. Check that you have downloaded the latest version of BOSH CLI. For more information, see <a href="https://bosh.io/docs/cli-v2/#install">Install</a> in the BOSH documentation.</p>
+<p class="note"><strong>Note</strong>: The instructions below require the BOSH Command Line Interface (CLI) v2+. For more information, see <a href="https://bosh.io/docs/cli-v2/#install">Install</a> in the BOSH documentation.</p>
 
-## <a id="s3-versioned"></a> S3-Compatible Versioned Blobstores
+## <a id="s3-versioned"></a> Versioned S3-Compatible Blobstores
 
-<p class="note"><strong>Note:</strong> If you enable versioned S3-compatible external blobstore backups, you will need to update your runtime configuration when upgrading to PCF v2.1. Remove <code>s3-versioned-blobstore-backup-restorer</code> from your runtime configuration before upgrading.</p>
+For information about configuring a versioned S3-compatible blobstore for backups and installing the S3 Versioned Backups Add-On, see the following sections:
 
-###<a id="configuring-versioned-s3"></a> Configuring your versioned S3-compatible blobstore for backups
+* [Configure a Versioned S3-Compatible Blobstore for Backups](#configuring-versioned-s3)
+* [Install the S3 Versioned Backups Add-On](#installing-s3-versioned-addon)
 
-In order to perform backups of your S3-compatible versioned blobstore, you will need to apply the following configurations:
+<p class="note"><strong>Note:</strong> If you enable BBR, you must remove <code>s3-versioned-blobstore-backup-restorer</code> from your runtime configuration before you upgrade to Pivotal Application Service (PAS) v2.1.</p>
 
-1. Enable versioning. For more information, see [Enable Versioning on Your S3-Compatible Blobstore](https://docs.cloudfoundry.org/bbr/external-blobstores.html#enable-s3-versioning) in _Backup and Restore with External Blobstores_.
+###<a id="configuring-versioned-s3"></a> Configure a Versioned S3-Compatible Blobstore for Backups
 
-1. (Optional) Pivotal recommends you enable Cross-Region Replication for your buckets. For more information, see [Enable Replication on Your Versioned S3-Compatible Blobstore](https://docs.cloudfoundry.org/bbr/external-blobstores.html#enable-s3-versioned-replication) in _Backup and Restore with External Blobstores_.
+To perform backups of your versioned S3-compatible blobstore, do the following:
 
-1. (Optional) Pivotal recommends you include a lifecycle policy rule to delete noncurrent versions after a period of time. Including this policy rule saves storage space and cost. For an example of this rule, see [Example 6: Specifying a Lifecycle Rule for a Versioning-Enabled Bucket](https://docs.aws.amazon.com/AmazonS3/latest/dev/lifecycle-configuration-examples.html#lifecycle-config-conceptual-ex6) in the AWS documentation.
+1. Enable versioning. For more information, see [Enable Versioning on Your S3-Compatible Blobstore](https://docs.cloudfoundry.org/bbr/external-blobstores.html#enable-s3-versioning) in the open-source Cloud Foundry documentation.
+
+1. (Recommended) Enable cross-region replication for your buckets. For more information, see [Enable Replication on Your Versioned S3-Compatible Blobstore](https://docs.cloudfoundry.org/bbr/external-blobstores.html#enable-s3-versioned-replication) in the open-source Cloud Foundry documentation.
+
+1. (Recommended) Include a lifecycle policy rule. This ensures non-current versions are deleted after a period of time. For an example of a lifecycle policy rule, see [Specifying a Lifecycle Rule for a Versioning-Enabled Bucket](https://docs.aws.amazon.com/AmazonS3/latest/dev/lifecycle-configuration-examples.html#lifecycle-config-conceptual-ex6) in the AWS documentation.
 
 ###<a id="installing-s3-versioned-addon"></a> Installing the S3 Versioned Backups Add-On
 
-The S3 Versioned Backups Add-On provides the necessary functionality to backup and restore a Pivotal Elastic Runtime installation configured to use an S3 versioned blobstore.
+The S3 Versioned Backups Add-On provides the functionality to backup and restore a Pivotal Elastic Runtime installation configured to use an S3 versioned blobstore.
 
 To install the add-on:
 

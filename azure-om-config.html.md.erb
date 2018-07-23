@@ -5,33 +5,32 @@ iaas: Azure
 ---
 
 <strong><%= modified_date %></strong>
-<html class="list-style-none"></html>
 
 This topic describes how to use Pivotal Cloud Foundry (PCF) Ops Manager to configure the BOSH Director on Azure.
 
 
 ## <a id="prerequisites"></a> Prerequisites
 
-See the following sections to prepare for configuring BOSH Director on Azure:
+See the following sections to prepare for configuring BOSH Director on Azure.
 
 ### <a id="general-prereqs"></a> General Prerequisites
 
 Before you perform the procedures in this topic, you must have completed the procedures in the following topics:
 
-* The [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic
-* Either the [Launching a BOSH Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching a BOSH Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic
+* [Preparing to Deploy PCF on Azure](azure-prepare-env.html)
+* Either [Launching a BOSH Director Instance with an ARM Template](azure-arm-template.html) or [Launching a BOSH Director Instance on Azure without an ARM Template](azure-om-deploy.html)
 
 <p class="note"><strong>Note:</strong> You can also perform the procedures in this topic using the Ops Manager API. For more information, see the <a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
 
 ### <a id="stack-gov-prereqs"></a> Prerequisites for Azure Stack or Azure Government Cloud
 
-If you are using Azure Stack or Azure Government Cloud, you must set custom VM types for a successful deployment. You can set custom VM types with the Ops Manager API. For more information, see <a href="ops-man-api.html">Using the Ops Manager API</a>.
+If you are using Azure Stack or Azure Government Cloud, you must set custom VM types for a successful deployment. You can set custom VM types with the Ops Manager API. For more information, see [Using the Ops Manager API](ops-man-api.html).
 
 To set custom VM types, see the following information.
 
-* <strong>For Azure Stack:</strong> The example below may not have up-to-date VM types. For a current list of supported Azure Stack VM types that you can include in your API call, see [Virtual Machine Sizes](https://docs.microsoft.com/en-us/azure/azure-stack/user/azure-stack-vm-considerations#virtual-machine-sizes) from the Azure Stack documentation. Include at least one `Standard` VM type.
+* **For Azure Stack:** The example below may not have up-to-date VM types. For a current list of supported Azure Stack VM types that you can include in your API call, see [Virtual Machine Sizes](https://docs.microsoft.com/en-us/azure/azure-stack/user/azure-stack-vm-considerations#virtual-machine-sizes) from the Azure Stack documentation. Include at least one `Standard` VM type.
 
-* <strong>For Azure Government:</strong> See the example `curl` command below for your list of VM types.
+* **For Azure Government:** See the example `curl` command below for your list of VM types.
 
 <table class="nice">
   <tr>
@@ -87,7 +86,7 @@ To check that you have successfully set your custom VM types, `GET` from the `/a
 
 ## <a id='access-om'></a> Step 1: Access Ops Manager
 
-1. In a web browser, navigate to the fully qualified domain name (FQDN) of Ops Manager that you set up in either the [Launching a BOSH Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching a BOSH Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic. 
+1. In a web browser, navigate to the fully qualified domain name (FQDN) of Ops Manager that you set up in either the [Launching a BOSH Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching a BOSH Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic.
 
 1. When Ops Manager starts for the first time, you must choose one of the following:
     * [Use an Identity Provider](#idp): If you use an Identity Provider, an external identity server maintains your user database.
@@ -137,16 +136,9 @@ To check that you have successfully set your custom VM types, `GET` from the `/a
 
 
 1. For **Cloud Storage Type**, select one of the following options based on your Azure VM storage settings.
-	* **Use Managed Disks**: Select this option if you use Azure Managed Disks.
-See [Azure Managed Disks Overview](https://docs.microsoft.com/en-us/azure/storage/storage-managed-disks-overview) in the
-Microsoft documentation for more information. For **Storage Account Type**, select the storage option that corresponds with
-your Azure subscription. Select **Standard_LRS** for HDD-based storage or **Premium_LRS** for SSD-based storage.
+	* **Use Managed Disks**: Select this option if you use Azure Managed Disks. See [Azure Managed Disks Overview](https://docs.microsoft.com/en-us/azure/storage/storage-managed-disks-overview) in the Microsoft documentation for more information. For **Storage Account Type**, select the storage option that corresponds withmyour Azure subscription. Select **Standard_LRS** for HDD-based storage or **Premium_LRS** for SSD-based storage.
         <%= image_tag("azure/azure-managed-disk.png") %>
-	* **Use Storage Accounts**: Select this option if you use storage accounts to store your Azure VMs.
-Enter the base storage name that you used to create your deployment storage accounts, prepended and appended
-with the wildcard character `*`. For example, if you created accounts named  `xyzdeploymentstorage1`, `xyzdeploymentstorage2`,
-and `xyzdeploymentstorage3`, enter `*deploymentstorage*`. Ops Manager requires
-that you specify an asterisk at both the beginning and the end of the base storage account name.
+	* **Use Storage Accounts**: Select this option if you use storage accounts to store your Azure VMs. Enter the base storage name that you used to create your deployment storage accounts, prepended and appendedmwith the wildcard character `*`. For example, if you created accounts named  `xyzdeploymentstorage1`, `xyzdeploymentstorage2`,mand `xyzdeploymentstorage3`, enter `*deploymentstorage*`. Ops Manager requires that you specify an asterisk at both the beginning and the end of the base storage account name.
         <%= image_tag("azure/storage-accounts.png") %>
 
 1. (Optional) Enter your **Default Security Group**. For more information about Network Security Groups, see [Filter network traffic with network security groups](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-nsg) in Microsoft Azure's documentation.
@@ -182,8 +174,7 @@ that you specify an asterisk at both the beginning and the end of the base stora
 1. Leave the **Bosh HM Forwarder IP Address** field blank.
   <p class="note"><strong>Note:</strong> Starting from PCF v2.0, BOSH-reported component metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the BOSH HM Forwarder for consuming them, you may receive duplicate data. To prevent this, leave the <strong>Bosh HM Forwarder IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
-1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops
-Manager Resurrector functionality and increase PAS availability.
+1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops Manager Resurrector functionality and increase PAS availability.
 
 1. Select **Enable Post Deploy Scripts** to run a post-deploy script after deployment. This script allows the job to execute additional commands against a deployment.
 
@@ -331,7 +322,6 @@ In this procedure, you create three networks.
 
 <%= partial "syslog_bosh" %>
 
-
 ## <a id='resource-config'></a> Step 8: Resource Config Page
 
 1. Select **Resource Config**.
@@ -340,14 +330,12 @@ In this procedure, you create three networks.
 
 1. Ensure that the **Internet Connected** checkboxes are deselected for all jobs. 
 
-1. Adjust any values as necessary for your deployment. Under the **Instances**, **Persistent Disk Type**, and **VM Type** fields,
-choose **Automatic** from the drop-down menu to allocate the recommended resources for the job. If the **Persistent Disk Type** field reads **None**, the job does not require persistent disk space.
+1. Adjust any values as necessary for your deployment. Under the **Instances**, **Persistent Disk Type**, and **VM Type** fields, choose **Automatic** from the drop-down menu to allocate the recommended resources for the job. If the **Persistent Disk Type** field reads **None**, the job does not require persistent disk space.
     <p class="note"><strong>Note:</strong> Ops Manager requires a Director VM with at least 8&nbsp;GB memory.</p>
     <p class="note"><strong>Note:</strong> If you set a field to <strong>Automatic</strong> and the recommended resource allocation changes in a future version, Ops Manager automatically uses the updated recommended allocation.</p>
 
-1. (Optional) For **Load Balancers**, enter your Azure application gateway name for each associated job.
-  
-    To create an application gateway, follow the procedures in [Configure an application gateway for SSL offload by using Azure Resource Manager](https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-ssl-arm) from the Azure documentation. When you create the application gateway, associate the gateway's IP with your PCF system domain. <p class="note warning"><strong>WARNING:</strong> This feature is not recommended for production use. The Azure load balancer does not support an override port in the healthcheck configuration.</p>
+1. (Optional) For **Load Balancers**, enter your Azure application gateway name for each associated job. To create an application gateway, follow the procedures in [Configure an application gateway for SSL offload by using Azure Resource Manager](https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-ssl-arm) from the Azure documentation. When you create the application gateway, associate the gateway's IP with your PCF system domain.
+    <p class="note warning"><strong>WARNING:</strong> This feature is not recommended for production use. The Azure load balancer does not support an override port in the healthcheck configuration.</p>
 
 1. Click **Save**.
 
@@ -358,14 +346,14 @@ choose **Automatic** from the drop-down menu to allocate the recommended resourc
 
 ## <a id='complete-installation'></a> Step 10: Complete the BOSH Director Installation
 
-1. Click **Apply Changes**. If a red ICMP error message appears and you have disabled ICMP, click
-**Ignore errors and start the install**.
+1. Click **Apply Changes**. If a red ICMP error message appears and you have disabled ICMP, click **Ignore errors and start the install**.
 
 1. BOSH Director installs. This may take a few moments. When the installation process successfully completes, the **Changes Applied** window appears.
 
 1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
 
 1. When Ops Manager finishes deploying, you can optionally [deploy BOSH Add-Ons](./add-ons.html) to your system, and then [install one or more PCF runtime environments](./runtimes.html) to complete your PCF installation.
+
 
 ## <a id="next"></a> What to Do Next
 

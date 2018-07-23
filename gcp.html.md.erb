@@ -4,26 +4,26 @@ owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
-<html class="list-style-none"></html>
 
 This guide describes how to install Pivotal Cloud Foundry (PCF) on Google Cloud Platform (GCP).
 
 To view production-level deployment options for PCF on GCP, see the [Reference Architecture for Pivotal Cloud Foundry on GCP](../refarch/gcp/gcp_ref_arch.html).
 
-## <a id="general"></a>General Requirements ##
+
+## <a id="general"></a> General Requirements
 
 <%= partial 'requirements' %>
 
-## <a id="gcp"></a>GCP Requirements ##
+## <a id="gcp"></a> GCP Requirements
 
 You must have the following to install PCF on GCP:
 
-* A GCP project with sufficient quota to deploy all the VMs needed for a PCF installation. For a list of suggested quotas, see <a class="subnav" href="./gcp-quotas.html">Recommended GCP Quotas</a>.
+* A GCP project with sufficient quota to deploy all the VMs needed for a PCF installation. For a list of suggested quotas, see [Recommended GCP Quotas](./gcp-quotas.html).
 <br>
 <br>
 You can request a quota increase on the [GCP Quotas page](https://console.cloud.google.com/compute/quotas).
   
-* <a name="#env_account"></a>A GCP account with adequate permissions to create resources within the selected GCP project. Per the [Least Privileged User principle](./iaas-user-roles.html), the permissions required to set up a GCP environment for PCF include:
+* <a name="#env_account"></a> A GCP account with adequate permissions to create resources within the selected GCP project. Per the [Least Privileged User principle](./iaas-user-roles.html), the permissions required to set up a GCP environment for PCF include:
    * Permissions to create firewalls, networks, load balancers, and other resources:
      * **Compute Engine** > **Compute Instances Admin (beta)**
      * **Compute Engine** > **Compute Network Admin**
@@ -32,8 +32,7 @@ You can request a quota increase on the [GCP Quotas page](https://console.cloud.
      * **Storage** > **Storage Admin**
    * If you are using Cloud DNS, permissions to add and modify DNS entries:
      * **Project** > **Editor**
-     
-  <p class="note"><strong>Note</strong>: When you deploy PCF, the deployment processes run under a [separate service account](./gcp-prepare-env.html#iam_account) with the minimum permissions required to install Ops Manager and Pivotal Application Service (PAS).</p>
+  <p class="note"><strong>Note:</strong> When you deploy PCF, the deployment processes run under a <a href="separate service account">./gcp-prepare-env.html#iam_account</a> with the minimum permissions required to install Ops Manager and Pivotal Application Service (PAS).</p>
 
 * The [Google Cloud SDK](https://cloud.google.com/sdk/) installed on your machine and authenticated to your GCP account.
 * Sufficiently high VM instance limits, or no instance limits, on your GCP account. The exact number of VMs depends on the number of tiles and availability zones you plan to deploy.
@@ -129,68 +128,71 @@ By default, PAS deploys the number of VM instances required to run a highly avai
   </tr>
 </table>
 	
-* Administrative rights to a domain for your PCF installation. You need to be able to add wildcard records to this domain. You specify this registered domain when configuring the SSL certificate and Cloud Controller for your deployment. For more information see the [Providing a Certificate for your SSL Termination Point](../opsguide/security_config.html) topic. </td>
+* Administrative rights to a domain for your PCF installation. You need to be able to add wildcard records to this domain. You specify this registered domain when configuring the SSL certificate and Cloud Controller for your deployment. For more information see the [Providing a Certificate for your SSL Termination Point](../opsguide/security_config.html) topic.
 * An SSL certificate for your PCF domain. This can be a self-signed certificate, which Ops Manager can generate for you, but Pivotal recommends using a self-signed certificate for development and testing purposes only. If you plan to deploy PCF into a production environment, you must obtain a certificate from your Certificate Authority. 
 
 ### <a id="gcp_certs"></a> Certificate Requirements on GCP
 
 If you are deploying PCF on GCP, then you must add your certificate to both the frontend configuration of your HTTP Load Balancer and to the Gorouter (PAS Router). For more information, see [Create Instance Groups and the HTTP(S) Load Balancer](../customizing/gcp-prepare-env.html#create-http-and-instance-group).
 
-GCP load balancers actually forward both encrypted (WebSockets) and unencrypted (HTTP and TLS-terminated HTTPS) traffic to the Gorouter. When configuring the point-of-entry for a GCP deployment, select <b>Forward SSL to PAS Router</b> in your PAS network configuration. This point-of-entry selection accommodates this special characteristic of GCP deployments.
+GCP load balancers actually forward both encrypted (WebSockets) and unencrypted (HTTP and TLS-terminated HTTPS) traffic to the Gorouter. When configuring the point-of-entry for a GCP deployment, select **Forward SSL to PAS Router** in your PAS network configuration. This point-of-entry selection accommodates this special characteristic of GCP deployments.
 
 See [Certificate Requirements](../adminguide/securing-traffic.html#certtypes) for general certificate requirements for deploying PCF.
 
-## <a id="permissions"></a>GCP Permissions Guidelines
+
+## <a id="permissions"></a> GCP Permissions Guidelines
 
 Pivotal recommends following the principle of least privilege by scoping privileges to the most restrictive permissions possible for a given role. See [IaaS Permissions Guidelines](./iaas-user-roles.html) for recommendations on how to create and scope GCP accounts for PCF.
 
-## <a id="security"></a>GCP Security Documents ##
+
+## <a id="security"></a> GCP Security Documents
 
 * [GCP authentication documentation](https://cloud.google.com/docs/authentication)<br />
 This developer-facing documentation explains general authentication guidelines for GCP.
 
-## <a id="install_pcf"></a> Install PCF on GCP ##
+
+## <a id="install_pcf"></a> Install PCF on GCP
 
 ### <a id="manual"></a> Install PCF on GCP Manually 
 
 Complete the following procedures to install PCF on GCP:
 
-1. <a class="subnav" href="./gcp-prepare-env.html">Preparing to Deploy PCF on GCP</a>
+1. [Preparing to Deploy PCF on GCP](./gcp-prepare-env.html)
 
-1. <a class="subnav" href="./gcp-om-deploy.html">Launching a BOSH Director Instance on GCP</a>
+1. [Launching a BOSH Director Instance on GCP](./gcp-om-deploy.html)
 
-1. <a class="subnav" href="./gcp-om-config.html">Configuring BOSH Director on GCP</a>
+1. [Configuring BOSH Director on GCP](./gcp-om-config.html)
 
-1. <a class="subnav" href="./gcp-shared-vpc.html">(Optional) Configuring a Shared VPC on GCP</a>
+1. [(Optional) Configuring a Shared VPC on GCP](./gcp-shared-vpc.html)
 
-1. <a href="http://docs.pivotal.io/addon-ipsec/installing.html">(Optional) Installing the PCF IPsec Add-On</a>
+1. [(Optional) Installing the PCF IPsec Add-On](http://docs.pivotal.io/addon-ipsec/installing.html)
 
-1. <a class="subnav" href="./gcp-er-config.html">Deploying PAS on GCP</a>
+1. [Deploying PAS on GCP](./gcp-er-config.html)
 
 ### <a id="Terraform"></a> Install PCF on GCP Using Terraform
 
 Complete the following procedures to install PCF on GCP:
 
-1. <a class="subnav" href="./gcp-prepare-env-terraform.html">Preparing to Deploy PCF on GCP (Terraform)</a>
+1. [Preparing to Deploy PCF on GCP Using Terraform](./gcp-prepare-env-terraform.html)
 
-1. <a class="subnav" href="./gcp-om-config-terraform.html">Configuring BOSH Director on GCP (Terraform)</a>
+1. [Configuring BOSH Director on GCP Using Terraform](./gcp-om-config-terraform.html)
 
-1. <a class="subnav" href="./gcp-shared-vpc.html">(Optional) Configuring a Shared VPC on GCP</a>
+1. [(Optional) Configuring a Shared VPC on GCP](./gcp-shared-vpc.html)
 
-1. <a href="http://docs.pivotal.io/addon-ipsec/installing.html">(Optional) Installing the PCF IPsec Add-On</a>
+1. [(Optional) Installing the PCF IPsec Add-On](http://docs.pivotal.io/addon-ipsec/installing.html)
 
-1. <a class="subnav" href="./gcp-er-config-terraform.html">Deploying Pivotal Application Service (PAS) on GCP (Terraform)</a>
+1. [Deploying PAS on GCP Using Terraform](./gcp-er-config-terraform.html)
 
-## <a id="delete_pcf"></a> Delete PCF on GCP ##
+
+## <a id="delete_pcf"></a> Delete PCF on GCP
 
 You can use the GCP console to remove an installation of all components, but retain the objects in your bucket for a future deployment: 
 
-* <a class="subnav" href="./deleting-gcp-install.html">Deleting a GCP Installation from the Console</a>
+* [Deleting a GCP Installation from the Console](./deleting-gcp-install.html)
 
-## <a id="troubleshooting"></a> Troubleshoot PCF on GCP ##
+
+## <a id="troubleshooting"></a> Troubleshoot PCF on GCP
 
 The troubleshooting document for PCF on GCP infrastructure.
 
-* <a class="subnav" href="./gcp-troubleshooting.html">Troubleshooting PCF on GCP</a>
-
-
+* [Troubleshooting PCF on GCP](./gcp-troubleshooting.html)

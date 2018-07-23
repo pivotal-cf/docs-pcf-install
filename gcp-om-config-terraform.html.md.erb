@@ -5,16 +5,17 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-This topic describes how to configure the Ops Manager Director for Pivotal Cloud Foundry (PCF)
-on Google Cloud Platform (GCP) after [Preparing to Deploy PCF on GCP with Terraform](./gcp-prepare-env-terraform.html).
+This topic describes how to configure the Ops Manager Director for Pivotal Cloud Foundry (PCF) on Google Cloud Platform (GCP) after [Preparing to Deploy PCF on GCP with Terraform](./gcp-prepare-env-terraform.html).
 
 <p class="note"><strong>Note:</strong> You can also perform the procedures in this topic using the Ops Manager API. For more information, see the <a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
 
-## <a id='prereq'></a>Prerequisite ##
+
+## <a id='prereq'></a> Prerequisite
 
 To complete the procedures in this topic, you must have access to the output from when you ran `terraform apply` to create resources for this deployment. You can view this output at any time by running `terraform output`. You use the values in your Terraform output to configure the Ops Manager Director tile. 
 
-## <a id='access-om'></a>Step 1: Access Ops Manager ##
+
+## <a id='access-om'></a> Step 1: Access Ops Manager
 
 1. In a web browser, navigate to the fully qualified domain name (FQDN) of the Ops Manager director.
 Use the `ops_manager_dns` value from running `terraform output`.
@@ -26,11 +27,11 @@ Use the `ops_manager_dns` value from running `terraform output`.
 
     <%= image_tag("select-authentication.png") %>
 
-### <a id='idp'></a>Use an Identity Provider (IdP) ###
+### <a id='idp'></a> Use an Identity Provider (IdP)
 
 <%= partial 'using_idp_ops_manager' %> 
 
-### <a id='internal'></a>Internal Authentication ###
+### <a id='internal'></a> Internal Authentication
 
 1. When redirected to the **Internal Authentication** page, you must complete the following steps:
     * Enter a **Username**, **Password**, and **Password confirmation** to create an Admin user.
@@ -45,7 +46,8 @@ Use the `ops_manager_dns` value from running `terraform output`.
 
     <%= image_tag("cf-login.png") %>
 
-## <a id='gcp-config'></a>Step 2: Google Cloud Platform Config ##
+
+## <a id='gcp-config'></a> Step 2: Google Cloud Platform Config
 
 1. Click the **Google Cloud Platform** tile within the **Installation Dashboard**.
     <%= image_tag("gcp/gcp-om-config.png") %>
@@ -55,26 +57,26 @@ Use the `ops_manager_dns` value from running `terraform output`.
     * Select **AuthJSON** and in the field below enter the contents of the JSON file for you service account key.
         <p class="note"><strong>Note:</strong> As an alternative, you can select <strong>The Ops Manager VM Service Account</strong> option to use the service account automatically created by GCP for the Ops Manager VM.</p>
        <%= image_tag("gcp/google_config.png") %>
+
 1. Click **Save**.
 
-## <a id='director-config'></a>Step 3: Director Config Page ##
+
+## <a id='director-config'></a> Step 3: Director Config Page
 
 1. Select **Director Config** to open the **Director Config** page.
 
     <%= image_tag("gcp/director_gcp.png") %>
 
 1. In the **NTP Servers (comma delimited)** field, enter `metadata.google.internal`.
-
-    <p class="note"><strong>Note</strong>: To resolve <code>metadata.google.internal</code> as the NTP server hostname, you must provide the two IP addresses for DNS configuration as described in <a href="#network">Step 5: Create Networks Page</a> of this procedure.</p>
+    <p class="note"><strong>Note:</strong> To resolve <code>metadata.google.internal</code> as the NTP server hostname, you must provide the two IP addresses for DNS configuration as described in <a href="#network">Step 5: Create Networks Page</a> of this procedure.</p>
 
 1. Leave the **JMX Provider IP Address** field blank.
-    <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported component metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use PCF JMX Bridge for consuming them outside of the Firehose, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
+    <p class="note"><strong>Note:</strong> Starting from PCF v2.0, BOSH-reported component metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use PCF JMX Bridge for consuming them outside of the Firehose, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
 1. Leave the **Bosh HM Forwarder IP Address** field blank.
-    <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported component metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the BOSH HM Forwarder for consuming them, you may receive duplicate data. To prevent this, leave the <strong>Bosh HM Forwarder IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
+    <p class="note"><strong>Note:</strong> Starting from PCF v2.0, BOSH-reported component metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the BOSH HM Forwarder for consuming them, you may receive duplicate data. To prevent this, leave the <strong>Bosh HM Forwarder IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
-1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops
-Manager Resurrector functionality and increase Pivotal Application Service (PAS) availability.
+1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops Manager Resurrector functionality and increase Pivotal Application Service (PAS) availability.
 
 1. (Optional) Select **Enable Post Deploy Scripts** to run a post-deploy script after deployment. This script allows the job to execute additional commands against a deployment.
 
@@ -120,16 +122,18 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
 1. <%= partial "exclude-recursors" %>
 
 1. (Optional) To disable BOSH DNS, select the **Disable BOSH DNS server for troubleshooting purposes** checkbox. For more information about the BOSH DNS service discovery mechanism, see [BOSH DNS Service Discovery for Application Containers](https://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-dns) in the Pivotal Application Service (PAS) Release Notes.
-  <p class="note"><strong>Note: </strong>Disabling BOSH DNS affects <a href="#network">Step 5: Create Networks Page</a> below when you configure your network DNS. You must first navigate to your PAS tile and enter <code>8.8.8.8</code> into the <strong>DNS Servers</strong> field.</p>
-  <p class="note breaking"><strong>Breaking Change</strong>: Do not disable BOSH DNS without consulting Pivotal Support. For more information about disabling BOSH DNS, see <a href="https://discuss.pivotal.io/hc/en-us/articles/115015720428-Disabling-or-Opting-Out-of-BOSH-DNS-in-PCF">Disabling or Opting Out of BOSH DNS in PCF</a> in the Pivotal Knowledge Base.</p>
+  <p class="note"><strong>Note:</strong> Disabling BOSH DNS affects <a href="#network">Step 5: Create Networks Page</a> below when you configure your network DNS. You must first navigate to your PAS tile and enter <code>8.8.8.8</code> into the <strong>DNS Servers</strong> field.</p>
+  <p class="note breaking"><strong>Breaking Change:</strong> Do not disable BOSH DNS without consulting Pivotal Support. For more information about disabling BOSH DNS, see <a href="https://discuss.pivotal.io/hc/en-us/articles/115015720428-Disabling-or-Opting-Out-of-BOSH-DNS-in-PCF">Disabling or Opting Out of BOSH DNS in PCF</a> in the Pivotal Knowledge Base.</p>
+
 1. (Optional) To set a custom banner that users see when logging in to the Director using SSH, enter text in the **Custom SSH Banner** field.
    <%= image_tag("disable-bosh-dns.png") %>
 
 1. Click **Save**.
 
-## <a id='az'></a>Step 4: Create Availability Zones Page ##
 
-<p class="note"><strong>Note</strong>: Pivotal recommends at least three availability zones for a highly available installation of PAS. For an example of a three availability zone deployment, see <a href="../refarch/gcp/gcp_ref_arch.html">Reference Architecture for Pivotal Cloud Foundry on GCP</a>.</p>
+## <a id='az'></a> Step 4: Create Availability Zones Page
+
+<p class="note"><strong>Note:</strong> Pivotal recommends at least three availability zones for a highly available installation of PAS. For an example of a three availability zone deployment, see <a href="../refarch/gcp/gcp_ref_arch.html">Reference Architecture for Pivotal Cloud Foundry on GCP</a>.</p>
 
 1. Select **Create Availability Zones**.
 
@@ -137,13 +141,16 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
 
 1. Click **Save**. 
 
-## <a id='network'></a>Step 5: Create Networks Page ##
+
+## <a id='network'></a> Step 5: Create Networks Page
+
 1. Select **Create Networks**.
+
 1. Make sure **Enable ICMP checks** is not selected. GCP routers do not respond to ICMP pings.
+
 1. Use the **Add Network** button to create the following three networks:
-    <p class="note"><strong>Note</strong>: To use a shared VPC network, enter the shared VPC host project name before the network name in the format <code>VPC-PROJECT-NAME/NETWORK-NAME/SUBNET-NAME/REGION-NAME</code>.
-    For example, <code>vpc-project/opsmgr/central/us-central1</code>.
-    For more information, see <a href="./gcp-shared-vpc.html">Configuring a Shared VPC on GCP</a>.</p>
+    <p class="note"><strong>Note:</strong> To use a shared VPC network, enter the shared VPC host project name before the network name in the format <code>VPC-PROJECT-NAME/NETWORK-NAME/SUBNET-NAME/REGION-NAME</code>.
+    For example, <code>vpc-project/opsmgr/central/us-central1</code>. For more information, see <a href="./gcp-shared-vpc.html">Configuring a Shared VPC on GCP</a>.</p>
     <p class="note"><strong>Note:</strong> If you disabled BOSH DNS, enter <code>8.8.8.8</code> into the **DNS Servers** field of the PAS tile. For more information, see step 29g in the <em>Configure Networking</em> section of the <a href="gcp-er-config-terraform.html#dns-servers">Deploying PAS on GCP Using Terraform</a> topic.</p>
     <table>
         <tr>
@@ -273,14 +280,19 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
         </tr>
     </table>
 
-## <a id="assign-azs"></a>Step 6: Assign AZs and Networks Page##
+
+## <a id="assign-azs"></a> Step 6: Assign AZs and Networks Page
 
 1. Select **Assign AZs and Networks**.
+
 1. Use the drop-down menu to select a **Singleton Availability Zone**. The Ops Manager Director installs in this Availability Zone.
+
 1. Under **Network**, select the `management` network for your Ops Manager Director.
+
 1. Click **Save**.
 
-## <a id='security'></a>Step 7: Security Page ##
+
+## <a id='security'></a> Step 7: Security Page
 
 <%= partial "security-pane" %>
 
@@ -288,17 +300,17 @@ Manager Resurrector functionality and increase Pivotal Application Service (PAS)
 
 <%= partial 'syslog_bosh' %>
 
-## <a id='resource-config'></a>Step 9: Resource Config Page
+## <a id='resource-config'></a> Step 9: Resource Config Page
 
 1. Select **Resource Config**.
 
 1. Verify that the **Internet Connected** checkbox for every job is checked. The Terraform templates do not provision a Network Address Translation (NAT) box for Internet connectivity to your VMs so instead they will be provided with ephemeral public IP addresses to allow the jobs to reach the Internet.
    <p class="note"><strong>Note:</strong> If you want to provision a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses, deselect the <strong>Internet Connected</strong> checkboxes. For more information about using NAT in GCP, see the <a href="https://cloud.google.com/compute/docs/networking">GCP documentation</a>.</p>
 
-## <a id='complete'></a>Step 10: Complete the Ops Manager Director Installation ##
 
-1. Click the **Installation Dashboard** link to return to the Installation
-Dashboard.
+## <a id='complete'></a> Step 10: Complete the Ops Manager Director Installation
+
+1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
 
 1. Click **Apply Changes**. If the following ICMP error message appears, return to the [Network Config](#network) screen, and make sure you have deselected the **Enable ICMP Checks** box. Then click **Apply Changes** again. 
 

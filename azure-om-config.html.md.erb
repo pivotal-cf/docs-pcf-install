@@ -5,37 +5,37 @@ iaas: Azure
 ---
 
 <strong><%= modified_date %></strong>
-<html class="list-style-none"></html>
 
 This topic describes how to use Pivotal Cloud Foundry (PCF) Ops Manager to configure the BOSH Director on Azure.
 
+
 ## <a id="prerequisites"></a> Prerequisites
 
-See the following sections to prepare for configuring BOSH Director on Azure:
+See the following sections to prepare for configuring BOSH Director on Azure.
 
 ### <a id="general-prereqs"></a> General Prerequisites
 
 Before you perform the procedures in this topic, you must have completed the procedures in the following topics:
 
-* The [Preparing to Deploy PCF on Azure](azure-prepare-env.html) topic
-* Either the [Launching a BOSH Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching a BOSH Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic
+* [Preparing to Deploy PCF on Azure](azure-prepare-env.html)
+* Either [Launching a BOSH Director Instance with an ARM Template](azure-arm-template.html) or [Launching a BOSH Director Instance on Azure without an ARM Template](azure-om-deploy.html)
 
-<p class="note"><strong>Note</strong>: You can also perform the procedures in this topic using the Ops Manager API. For more information, see the <a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
+<p class="note"><strong>Note:</strong> You can also perform the procedures in this topic using the Ops Manager API. For more information, see the <a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
 
 
 ### <a id="stack-gov-prereqs"></a> Prerequisites for Azure Stack (beta) or Azure Government Cloud
 
-If you are using Azure Stack or Azure Government Cloud, you must set custom VM types for a successful deployment. You can set custom VM types with the Ops Manager API. For more information, see <a href="ops-man-api.html">Using the Ops Manager API</a>.
+If you are using Azure Stack or Azure Government Cloud, you must set custom VM types for a successful deployment. You can set custom VM types with the Ops Manager API. For more information, see [Using the Ops Manager API](ops-man-api.html).
 
 To set custom VM types, see the following information.
 
-<p class="note"><strong>Note</strong>: Azure Stack is in beta for this release. Pivotal does not recommend using Azure Stack for a production deployment.
+<p class="note"><strong>Note:</strong> Azure Stack is in beta for this release. Pivotal does not recommend using Azure Stack for a production deployment.</p>
 
-For more information, see <a href="../../pcf-release-notes/breaking-changes.html#azure-stack">Azure Stack Support is in Beta for Ops Manager</a>.</p>
+For more information, see [Azure Stack Support is in Beta for Ops Manager](../../pcf-release-notes/breaking-changes.html#azure-stack).
 
-* <strong>For Azure Stack (beta): </strong>The example below may not have up-to-date VM types. For a current list of supported Azure Stack VM types that you can include in your API call, see [Virtual Machine Sizes](https://docs.microsoft.com/en-us/azure/azure-stack/user/azure-stack-vm-considerations#virtual-machine-sizes) from the Azure Stack documentation. Include at least one `Standard` VM type.
+* <strong>For Azure Stack (beta):</strong> The example below may not have up-to-date VM types. For a current list of supported Azure Stack VM types that you can include in your API call, see [Virtual Machine Sizes](https://docs.microsoft.com/en-us/azure/azure-stack/user/azure-stack-vm-considerations#virtual-machine-sizes) from the Azure Stack documentation. Include at least one `Standard` VM type.
 
-* <strong>For Azure Government: </strong> See the example `curl` command below for your list of VM types.
+* <strong>For Azure Government:</strong> See the example `curl` command below for your list of VM types.
 
 <table class="nice">
   <tr>
@@ -88,20 +88,22 @@ PUT -H "Authorization: bearer UAA-ACCESS-TOKEN"
 
 To check that you have successfully set your custom VM types, `GET` from the `/api/v0/vm_types` Ops Manager API endpoint.
 
-## <a id='access-om'></a>Step 1: Access Ops Manager ##
 
-1. In a web browser, navigate to the fully qualified domain name (FQDN) of Ops Manager that you set up in either the [Launching a BOSH Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching a BOSH Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic. 
+## <a id='access-om'></a> Step 1: Access Ops Manager
+
+1. In a web browser, navigate to the fully qualified domain name (FQDN) of Ops Manager that you set up in either [Launching a BOSH Director Instance with an ARM Template](azure-arm-template.html) or [Launching a BOSH Director Instance on Azure without an ARM Template](azure-om-deploy.html). 
+
 1. When Ops Manager starts for the first time, you must choose one of the following:
     * [Use an Identity Provider](#idp): If you use an Identity Provider, an external identity server maintains your user database.
     * [Internal Authentication](#internal): If you use Internal Authentication, PCF maintains your user database.
 
     <%= image_tag("select-authentication.png") %>
 
-### <a id='idp'></a>Use an Identity Provider (IdP) ###
+### <a id='idp'></a> Use an Identity Provider (IdP)
 
 <%= partial 'using_idp_ops_manager' %> 
 
-### <a id='internal'></a>Internal Authentication ###
+### <a id='internal'></a> Internal Authentication
 
 1. When redirected to the **Internal Authentication** page, you must complete the following steps:
     * Enter a **Username**, **Password**, and **Password confirmation** to create an Admin user.
@@ -116,7 +118,8 @@ To check that you have successfully set your custom VM types, `GET` from the `/a
 
     <%= image_tag("cf-login.png") %>
 
-## <a id='azure-config'></a>Step 2: Azure Config Page ##
+
+## <a id='azure-config'></a> Step 2: Azure Config Page
 
 1. Click the **BOSH Director** tile.
 
@@ -138,20 +141,13 @@ To check that you have successfully set your custom VM types, `GET` from the `/a
 
 
 1. For **Cloud Storage Type**, select one of the following options based on your Azure VM storage settings.
-	* **Use Managed Disks**: Select this option if you use Azure Managed Disks.
-See [Azure Managed Disks Overview](https://docs.microsoft.com/en-us/azure/storage/storage-managed-disks-overview) in the
-Microsoft documentation for more information. For **Storage Account Type**, select the storage option that corresponds with
-your Azure subscription. Select **Standard_LRS** for HDD-based storage or **Premium_LRS** for SSD-based storage.
+	* **Use Managed Disks**: Select this option if you use Azure Managed Disks. See [Azure Managed Disks Overview](https://docs.microsoft.com/en-us/azure/storage/storage-managed-disks-overview) in the Microsoft documentation for more information. For **Storage Account Type**, select the storage option that corresponds withmyour Azure subscription. Select **Standard_LRS** for HDD-based storage or **Premium_LRS** for SSD-based storage.
         <%= image_tag("azure/azure-managed-disk.png") %>
-	* **Use Storage Accounts**: Select this option if you use storage accounts to store your Azure VMs.
-Enter the base storage name that you used to create your deployment storage accounts, prepended and appended
-with the wildcard character `*`. For example, if you created accounts named  `xyzdeploymentstorage1`, `xyzdeploymentstorage2`,
-and `xyzdeploymentstorage3`, enter `*deploymentstorage*`. Ops Manager requires
-that you specify an asterisk at both the beginning and the end of the base storage account name.
+	* **Use Storage Accounts**: Select this option if you use storage accounts to store your Azure VMs. Enter the base storage name that you used to create your deployment storage accounts, prepended and appendedmwith the wildcard character `*`. For example, if you created accounts named  `xyzdeploymentstorage1`, `xyzdeploymentstorage2`,mand `xyzdeploymentstorage3`, enter `*deploymentstorage*`. Ops Manager requires that you specify an asterisk at both the beginning and the end of the base storage account name.
         <%= image_tag("azure/storage-accounts.png") %>
 
 1. (Optional) Enter your **Default Security Group**. For more information about Network Security Groups, see [Filter network traffic with network security groups](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-nsg) in Microsoft Azure's documentation.
-    <p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p> 
+    <p class="note"><strong>Note:</strong> The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p> 
 
 1. For **SSH Public Key**, copy and paste the contents of your public key in the `opsman.pub` file. You created this file in either the [Launching a BOSH Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching a BOSH Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic. 
 
@@ -159,7 +155,8 @@ that you specify an asterisk at both the beginning and the end of the base stora
 
 1. <%= partial "azure-environment" %>
 
-1. (Optional) If you selected `Azure Stack` for your **Azure Environment**, complete the following Azure Stack-only fields: <p class="note"><strong>Note: </strong>Azure Stack is in Beta and not recommended for production use.</p>
+1. (Optional) If you selected `Azure Stack` for your **Azure Environment**, complete the following Azure Stack-only fields:
+  <p class="note"><strong>Note:</strong> Azure Stack is in beta and not recommended for production use.</p>
   1. For **Domain**, enter the domain for your Azure Stack deployment. For example, `local.azurestack.external`.
   1. Enter the URL for your **Tenant Management Resource Endpoint**. 
   1. Enter `AzureAD` for **Authentication**.
@@ -168,7 +165,8 @@ that you specify an asterisk at both the beginning and the end of the base stora
 
 1. Click **Save**.
 
-## <a id='director-config'></a>Step 3: Director Config Page ##
+
+## <a id='director-config'></a> Step 3: Director Config Page
 
 1. Select **Director Config**.
 
@@ -177,13 +175,12 @@ that you specify an asterisk at both the beginning and the end of the base stora
 1. In the **NTP Servers (comma delimited)** field, enter a comma-separated list of valid NTP servers.
 
 1. Leave the **JMX Provider IP Address** field blank.
-  <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported component metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use PCF JMX Bridge for consuming them outside of the Firehose, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
+  <p class="note"><strong>Note:</strong> Starting from PCF v2.0, BOSH-reported component metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use PCF JMX Bridge for consuming them outside of the Firehose, you may receive duplicate data. To prevent this, leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
 1. Leave the **Bosh HM Forwarder IP Address** field blank.
-  <p class="note"><strong>Note</strong>: Starting from PCF v2.0, BOSH-reported component metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the BOSH HM Forwarder for consuming them, you may receive duplicate data. To prevent this, leave the <strong>Bosh HM Forwarder IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
+  <p class="note"><strong>Note:</strong> Starting from PCF v2.0, BOSH-reported component metrics are available in the Loggregator Firehose by default. Therefore, if you continue to use the BOSH HM Forwarder for consuming them, you may receive duplicate data. To prevent this, leave the <strong>Bosh HM Forwarder IP Address</strong> field blank. For additional guidance, see <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>.</p>
 
-1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops
-Manager Resurrector functionality and increase PAS availability.
+1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops Manager Resurrector functionality and increase PAS availability.
 
 1. Select **Enable Post Deploy Scripts** to run a post-deploy script after deployment. This script allows the job to execute additional commands against a deployment.
 
@@ -230,106 +227,121 @@ Manager Resurrector functionality and increase PAS availability.
 1. <%= partial "exclude-recursors" %>
 
 1. (Optional) To disable BOSH DNS, select the **Disable BOSH DNS server for troubleshooting purposes** checkbox. For more information about the BOSH DNS service discovery mechanism, see [BOSH DNS Service Discovery for Application Containers](http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-dns) in the Pivotal Application Service (PAS) Release Notes.
-  <p class="note breaking"><strong>Breaking Change</strong>: Do not disable BOSH DNS without consulting Pivotal Support. For more information about disabling BOSH DNS, see <a href="https://discuss.pivotal.io/hc/en-us/articles/115015720428-Disabling-or-Opting-Out-of-BOSH-DNS-in-PCF">Disabling or Opting Out of BOSH DNS in PCF</a> in the Pivotal Knowledge Base.</p>
+  <p class="note breaking"><strong>Breaking Change:</strong> Do not disable BOSH DNS without consulting Pivotal Support. For more information about disabling BOSH DNS, see <a href="https://discuss.pivotal.io/hc/en-us/articles/115015720428-Disabling-or-Opting-Out-of-BOSH-DNS-in-PCF">Disabling or Opting Out of BOSH DNS in PCF</a> in the Pivotal Knowledge Base.</p>
+
 1. (Optional) To set a custom banner that users see when logging in to the Director using SSH, enter text in the **Custom SSH Banner** field.
   <%= image_tag("disable-bosh-dns.png") %>
 
 1. Click **Save**.
 
-## <a id='create-networks'></a>Step 4: Create Networks Page ##
+
+## <a id='create-networks'></a> Step 4: Create Networks Page
 
 In this procedure, you create three networks.
 
-### <a id='infra'></a> Create the Management or Infrastructure Network ###
+### <a id='infra'></a> Create the Management or Infrastructure Network
 
 1. Select **Create Networks**. 
+
 1. Click **Add Network**.
 1. Select **Enable ICMP checks** if you want to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
+
 1. For **Name**, enter the name of the network you want to create. For example, `Management`.
+
 1. Under **Subnets**, complete the following fields:
    * **Azure Network Name**: Enter `PCF/Management`. You can use either the `NETWORK-NAME/SUBNET-NAME` format or the `RESOURCE-GROUP/NETWORK-NAME/SUBNET-NAME` format. If you specify a resource group, it must exist under the same subscription ID you provided in the [Azure Config](#azure-config) page.
-     <p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p>
+     <p class="note"><strong>Note:</strong> The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p>
    * **CIDR**: Enter `10.0.4.0/22`.
    * **Reserved IP Ranges**: Enter the first 9 IP addresses of the subnet. For example, `10.0.4.1-10.0.4.9`.
    * **DNS**: Enter `168.63.129.16`.
    * **Gateway**: Enter the first IP address of the subnet. For example, `10.0.4.1`.
      <%= image_tag("azure/create-networks-management.png") %>
+
 1. Click **Save**.<%= vars.expand_network_azs %>
 
-### <a id='pas'></a> Create the Deployment or PAS Network ###
+### <a id='pas'></a> Create the Deployment or PAS Network
 
 1. Click **Add Network**.
+
 1. Select **Enable ICMP checks** if you want to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
+
 1. For **Name**, enter the name of the network you want to create. For example, `Deployment`.
+
 1. Under **Subnets**, complete the following fields:
    * **Azure Network Name**: Enter `PCF/Deployment`. You can use either the `NETWORK-NAME/SUBNET-NAME` format or the `RESOURCE-GROUP/NETWORK-NAME/SUBNET-NAME` format. If you specify a resource group, it must exist under the same subscription ID you provided in the [Azure Config](#azure-config) page.
-     <p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p>
+     <p class="note"><strong>Note:</strong> The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p>
    * **CIDR**: Enter `10.0.12.0/22`.
    * **Reserved IP Ranges**: Enter the first 9 IP addresses of the subnet. For example, `10.0.12.1-10.0.12.9`.
    * **DNS**: Enter `168.63.129.16`.
    * **Gateway**: Enter the first IP address of the subnet. For example, `10.0.12.1`.
      <%= image_tag("azure/create-networks-deployment.png") %>
+
 1. Click **Save**.
 
-### <a id='services'></a> Create the Services Network ###
+### <a id='services'></a> Create the Services Network
 
 1. Click **Add Network**.
+
 1. Select **Enable ICMP checks** if you want to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
+
 1. For **Name**, enter the name of the network you want to create. For example, `Services`.
+
 1. Under **Subnets**, complete the following fields:
    * **Azure Network Name**: Enter `PCF/Services`. You can use either the `NETWORK-NAME/SUBNET-NAME` format or the `RESOURCE-GROUP/NETWORK-NAME/SUBNET-NAME` format. If you specify a resource group, it must exist under the same subscription ID you provided in the [Azure Config](#azure-config) page.
-    <p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p>
+    <p class="note"><strong>Note:</strong> The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p>
    * **CIDR**: Enter `10.0.8.0/22`.
    * **Reserved IP Ranges**: Enter the first 9 IP addresses of the subnet. For example, `10.0.8.1-10.0.8.9`.
    * **DNS**: Enter `168.63.129.16`.
    * **Gateway**: Enter the first IP address of the subnet. For example, `10.0.8.1`.
      <%= image_tag("azure/create-networks-services.png") %>
+
 1. Click **Save**. If you do not have **Enable ICMP checks** selected, you may see red warnings which you can safely ignore.
 
-## <a id='assign-networks'></a>Step 5: Assign Networks Page ##
+
+## <a id='assign-networks'></a> Step 5: Assign Networks Page
 
 1. Select **Assign Networks**.
 	
 	<%= image_tag("azure/assign-networks.png") %>
 
 1. Under **Network**, select the `Management` network you created from the dropdown menu.
+
 1. Click **Save**.
 
-## <a id='security'></a>Step 6: Security Page ##
+
+## <a id='security'></a> Step 6: Security Page
 
 1. <%= partial "security-pane" %>
 
-## <a id='syslog'></a>Step 7: Syslog Page
+## <a id='syslog'></a> Step 7: Syslog Page
 
 <%= partial 'syslog_bosh' %>
 
-## <a id='resource-config'></a>Step 8: Resource Config Page
+## <a id='resource-config'></a> Step 8: Resource Config Page
 
 1. Select **Resource Config**.
 
     <%= image_tag("azure/om-resource-config.png") %>
 
 1. Ensure that the **Internet Connected** checkboxes are deselected for all jobs. 
-1. Adjust any values as necessary for your deployment. Under the **Instances**, **Persistent Disk Type**, and **VM Type** fields,
-choose **Automatic** from the drop-down menu to allocate the recommended resources for the job. If the **Persistent Disk Type** field reads **None**, the job does not require persistent disk space.
-    <p class="note"><strong>Note</strong>: Ops Manager requires a Director VM with at least 8&nbsp;GB memory.</p>
 
-    <p class="note"><strong>Note</strong>: If you set a field to <strong>Automatic</strong> and the recommended resource allocation changes in a future version, Ops Manager automatically uses the updated recommended allocation.</p>
+1. Adjust any values as necessary for your deployment. Under the **Instances**, **Persistent Disk Type**, and **VM Type** fields, choose **Automatic** from the drop-down menu to allocate the recommended resources for the job. If the **Persistent Disk Type** field reads **None**, the job does not require persistent disk space.
+    <p class="note"><strong>Note:</strong> Ops Manager requires a Director VM with at least 8&nbsp;GB memory.</p>
+    <p class="note"><strong>Note:</strong> If you set a field to <strong>Automatic</strong> and the recommended resource allocation changes in a future version, Ops Manager automatically uses the updated recommended allocation.</p>
 
-1. (Optional) For **Load Balancers**, enter your Azure application gateway name for each associated job.
-  
-    To create an application gateway, follow the procedures in [Configure an application gateway for SSL offload by using Azure Resource Manager](https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-ssl-arm) from the Azure documentation. When you create the application gateway, associate the gateway's IP with your PCF system domain.<p class="note warning"><strong>WARNING: </strong> This feature is not recommended for production use. The Azure load balancer does not support an override port in the healthcheck configuration.</p>
+1. (Optional) For **Load Balancers**, enter your Azure application gateway name for each associated job. To create an application gateway, follow the procedures in [Configure an application gateway for SSL offload by using Azure Resource Manager](https://docs.microsoft.com/en-us/azure/application-gateway/application-gateway-ssl-arm) from the Azure documentation. When you create the application gateway, associate the gateway's IP with your PCF system domain.
+<p class="note warning"><strong>WARNING:</strong> This feature is not recommended for production use. The Azure load balancer does not support an override port in the healthcheck configuration.</p>
 
 1. Click **Save**.
+
 
 ## <a id="custom-vm-extensions"></a> Step 9: (Optional) Add Custom VM Extensions
 
 <%= partial "vm-extension-config"  %>
 
-## <a id='complete-installation'></a>Step 10: Complete the BOSH Director Installation
+## <a id='complete-installation'></a> Step 10: Complete the BOSH Director Installation
 
-1. Click **Apply Changes**. If a red ICMP error message appears and you have disabled ICMP, click
-**Ignore errors and start the install**.
+1. Click **Apply Changes**. If a red ICMP error message appears and you have disabled ICMP, click **Ignore errors and start the install**.
 
 1. BOSH Director installs. This may take a few moments. When the installation process successfully completes, the **Changes Applied** window appears.
 
@@ -337,6 +349,7 @@ choose **Automatic** from the drop-down menu to allocate the recommended resourc
 
 1. When Ops Manager finishes deploying, you can optionally [deploy BOSH Add-Ons](./add-ons.html) to your system, and then [install one or more PCF runtime environments](./runtimes.html) to complete your PCF installation.
 
-## <a id="next"></a>What to Do Next
+
+## <a id="next"></a> What to Do Next
 
 After you complete this procedure, follow the instructions in the [Deploying PAS on Azure](azure-er-config.html) topic.

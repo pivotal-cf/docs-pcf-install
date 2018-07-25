@@ -27,11 +27,14 @@ Monit start failed: Timed out waiting for monit: 2m0s
 
 ### Explanation
 
-This happens when `mariadb` fails to start within the timeout period. It will end up in an "Execution Failed" state and `monit` will never try to start it again.
+This happens when the MySQL job fails to start within the timeout period.
+It ends up in an **Execution Failed** state and `monit` never tries to start it again.
 
 ### Solution
 
-Ensure that your MySQL Server cluster has only one instance. If there are more than one instances of MySQL Server, the restore will fail with a `monit start` timeout. Scale down to one instance and retry.
+Ensure that your MySQL Server cluster has only one instance.
+If there is more than one instances of MySQL Server, the restore fails with a `monit start` timeout.
+Scale down to one instance and retry.
 
 If your MySQL Server cluster is already scaled down to one node, it may have taken longer than normal to restart the cluster. Follow the procedure below to manually verify and retry.
 
@@ -40,11 +43,13 @@ If your MySQL Server cluster is already scaled down to one node, it may have tak
   -d DEPLOYMENT\_NAME \
   ssh</pre>
 1. Select the `mysql` VM to SSH into.
-1. From the `mysql` VM, run the following command to check that the `mariadb` process is running:
+1. From the `mysql` VM, run `ps aux | grep MYSQL-JOB` to check that the MySQL job process is running, replacing `MYSQL-JOB` with your MySQL job process name.
+  <br><br>For example:
   <pre class="terminal">
   $ ps aux | grep mariadb
   </pre>
-1. Run the following command to check that `monit` reports `mariadb_ctrl` is in an "Execution Failed" state:
+<p class="note"><strong>Note</strong>: Depending on which MySQL database you selected in the <b>Databases</b> pane of the PAS tile, the process name is either <code>mariadb_ctrl</code> or <code>galera-init</code>.</p>
+1. Run the following command to check that `monit` reports that the MySQL job process is in an **Execution Failed** state:
   <pre class="terminal">$ sudo monit summary</pre>
 1. If so, run the following command from the `mysql` VM to disable monitoring:
   <pre class="terminal">$ monit unmonitor</pre>

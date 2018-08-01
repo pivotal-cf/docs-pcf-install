@@ -1,5 +1,5 @@
 ---
-title: Recovering MySQL from PAS Downtime with MariaDB Galera Cluster
+title: Recovering From MySQL Cluster Downtime
 owner: RelEng
 ---
 
@@ -11,7 +11,8 @@ _If you are using the [Internal Databases - MySQL - Percona XtraDB Cluster](conf
 
 This topic describes the procedure for recovering a terminated Pivotal Application Service (PAS) cluster using a process known as bootstrapping.
 
-## <a id='when'></a>When to Bootstrap
+
+## <a id='when'></a> When to Bootstrap
 
 You must bootstrap a cluster that loses quorum. A cluster loses quorum when less than half of the nodes can communicate with each other for longer than the configured grace period. If a cluster does not lose quorum, individual unhealthy nodes automatically rejoin the cluster after resolving the error, restarting the node, or restoring connectivity. 
 
@@ -41,7 +42,8 @@ See the [Cluster Scaling, Node Failure, and Quorum](http://docs.pivotal.io/p-mys
 
 Follow the steps below to recover a cluster that has lost quorum.
 
-## <a id='manifest'></a>Step 1: Choose the Correct Manifest
+
+## <a id='manifest'></a> Step 1: Choose the Correct Manifest
 
 1. Log in to the BOSH Director by running `bosh -e MY-ENV log-in`. Replace `MY-ENV` with the environment where you deployed the cluster.
     <pre class="terminal">
@@ -83,11 +85,12 @@ Follow the steps below to recover a cluster that has lost quorum.
     $ bosh -e prod -d mysql manifest /tmp/mysql.yml
     </pre>
 
-## <a id="assisted-bootstrap"></a>Step 2: Run the Bootstrap Errand
 
-PAS versions 1.7.0 and later include a [BOSH errand](http://bosh.io/docs/jobs.html#jobs-vs-errands) to automate the process of bootstrapping. The bootstrap errand automates the steps described in the [Manual Bootstrapping](#manual-bootstrap) section below. It finds the node with the highest transaction sequence number and asks it to start up by itself in bootstrap mode. Finally, it asks the remaining nodes to join the cluster.
+## <a id="assisted-bootstrap"></a> Step 2: Run the Bootstrap Errand
 
-In most cases, running the errand will recover your cluster. However, certain scenarios require additional steps. To determine which set of instructions to follow, you must determine the state of your Virtual Machines (VMs).
+PAS versions v1.7.0 and later include a [BOSH errand](http://bosh.io/docs/jobs.html#jobs-vs-errands) to automate the process of bootstrapping. The bootstrap errand automates the steps described in the [Manual Bootstrapping](#manual-bootstrap) section below. It finds the node with the highest transaction sequence number and asks it to start up by itself in bootstrap mode. Finally, it asks the remaining nodes to join the cluster.
+
+In most cases, running the errand recovers your cluster. However, certain scenarios require additional steps. To determine which set of instructions to follow, you must determine the state of your Virtual Machines (VMs).
 
 1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT instances` and examine the output. Replace `MY-ENV` with the environment where you deployed the cluster and `MY-DEPLOYMENT` with the deployment cluster name.
     <pre class="terminal">
@@ -96,19 +99,31 @@ In most cases, running the errand will recover your cluster. However, certain sc
     * If the output of `bosh instances` shows the state of the jobs as `failing`, proceed to Scenario 1.
     * If the output of `bosh instances` shows the state of jobs as `unknown/unknown`, proceed to Scenario 2.
 
-### <a id="cluster-disrupted"></a>Scenario 1: Virtual Machines Running, Cluster Disrupted
+### <a id="cluster-disrupted"></a> Scenario 1: Virtual Machines Running, Cluster Disrupted
 
-In this scenario, nodes are up and running, but the cluster has been disrupted. You can run the bootstrap errand without recreating the VMs.
+In this scenario, the VMs are running, but the jobs are failing. You can run the bootstrap errand without recreating the VMs.
 
 1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT <%= vars.bosh_run_errand %> bootstrap`. Replace `MY-ENV` with the name of the environment where you deployed the cluster and `MY-DEPLOYMENT` with the deployment cluster name.
     <pre class="terminal">
     $ bosh -e prod -d mysql <%= vars.bosh_run_errand %>  bootstrap
     </pre>
-    <p class="note"><strong>Note</strong>: Sometimes the bootstrap errand fails on the first try. If this happens, run the command again in a few minutes.</p>
+    The command returns many lines of output, eventually followed by:
+    <pre class="terminal">
+    Bootstrap errand completed
+    [stderr]
+    + echo 'Started bootstrap errand ...'
+    + JOB\_DIR=/var/vcap/jobs/bootstrap
+    + CONFIG\_PATH=/var/vcap/jobs/bootstrap/config/config.yml
+    + /var/vcap/packages/bootstrap/bin/cf-mysql-bootstrap -configPath=/var/vcap/jobs/bootstrap/config/config.yml
+    + echo 'Bootstrap errand completed'
+    + exit 0
+    Errand `bootstrap' completed successfully (exit code 0)
+    </pre>   
+    <p class="note"><strong>Note:</strong> Sometimes the bootstrap errand fails on the first try. If this happens, run the command again in a few minutes.</p>
 
 1. If the errand fails, try performing the steps automated by the errand manually by following the [Manual Bootstrapping](#manual-bootstrap) procedure.
 
-### <a id="vms-terminated"></a>Scenario 2: Virtual Machines Terminated or Lost
+### <a id="vms-terminated"></a> Scenario 2: Virtual Machines Terminated or Lost
 
 In this scenario, severe circumstances such as power failure have terminated all of your VMs. You need to recreate the VMs before you can recover the cluster.
 

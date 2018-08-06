@@ -5,11 +5,14 @@ owner: RelEng
 
 <strong><%= modified_date %></strong>
 
-_This topic assumes you are using the [Internal Databases - MySQL - MariaDB Galera Cluster](config-er-vmware.html#internal-db) option as your system database and [BOSH CLI v2+](https://bosh.io/docs/cli-v2.html)._
+This topic describes the procedure for recovering a terminated Pivotal Application Service (PAS) MySQL cluster using the bootstrapping process.
 
-_If you are using the [Internal Databases - MySQL - Percona XtraDB Cluster](config-er-vmware.html#internal-db) option as your system database please follow the [Recovering MySQL from PAS Downtime with Percona XtraDB Cluster](mysql_pxc_bootstrap_ert.html) docs instead._
+You can bootstrap your cluster by using one of two methods:
 
-This topic describes the procedure for recovering a terminated Pivotal Application Service (PAS) cluster using a process known as bootstrapping.
+- Run the bootstrap errand. See [Run the Bootstrap Errand](#assisted-bootstrap) below.
+- Bootstrap manually. See [Bootstrap Manually](#manual-bootstrap) below.
+
+<p class="note"><strong>Note:</strong> The procedures below assume you are using BOSH CLI v2 or later. For more information about BOSH v2, see <a href="https://bosh.io/docs/cli-v2/">Commands</a> in the BOSH documentation.</p>
 
 
 ## <a id='when'></a> When to Bootstrap
@@ -40,230 +43,303 @@ You can detect lost quorum through the following symptoms:
 
 See the [Cluster Scaling, Node Failure, and Quorum](http://docs.pivotal.io/p-mysql/1-8/cluster-behavior.html) topic for more details about determining cluster state.
 
-Follow the steps below to recover a cluster that has lost quorum.
 
+## <a id="assisted-bootstrap"></a> Run the Bootstrap Errand
 
-## <a id='manifest'></a> Step 1: Choose the Correct Manifest
+The following sections describe what the bootstrap errand is and how to use it based on the type of cluster failure.
 
-1. Log in to the BOSH Director by running `bosh -e MY-ENV log-in`. Replace `MY-ENV` with the environment where you deployed the cluster.
-    <pre class="terminal">
-    $ bosh -e prod log-in
-    </pre>
+### <a id="about-errand"></a> About the Bootstrap Errand
 
-1. Run `bosh -e MY-ENV deployments`. Replace `MY-ENV` with the environment where you deployed the cluster.
+The bootstrap errand automates the steps described in the [Manual Bootstrapping](#manual-bootstrap) section below. It finds the node with the highest transaction sequence number and asks it to start up by itself in bootstrap mode. Finally, it asks the remaining nodes to join the cluster.
 
-    <pre class="terminal">
-    $ bosh -e prod deployments
-    Using environment '192.168.56.6' as client 'admin'
-    Name                Release(s)                Stemcell(s)                                         Team(s)  Cloud Config
-    cf                  binary-buildpack/1.0.9    bosh-warden-boshlite-ubuntu-trusty-go_agent/3363.9  -        latest
-                        capi/1.21.0
-                        cf-mysql/34
-                        cf-smoke-tests/11
-                        cflinuxfs2-rootfs/1.52.0
-                        consul/155
-                        diego/1.8.1
-                        garden-runc/1.2.0
-                        loggregator/78
-                        nats/15
-                        routing/0.145.0
-                        statsd-injector/1.0.20
-                        uaa/25
-    service-instance    mysql/0.6.0               bosh-warden-boshlite-ubuntu-trusty-go_agent/3363.9  -        latest
+In most cases, running the errand recovers your cluster. But certain scenarios require additional steps.
 
-    2 deployments
+### <a id="determine-failure"></a> Determine Type of Cluster Failure
 
-    Succeeded
-    </pre>
+To determine which set of instructions to follow, do the following:
 
-1.  Run `bosh -e MY-ENV -d MY-DEPLOYMENT manifest > /tmp/MANIFEST.yml` to download the manifest. Replace the example text with the following:
-  * `MY-ENV`: the environment where you deployed the cluster
-  * `MY-DEPLOYMENT`: the name of your deployment cluster from the output of the previous step
-  * `MANIFEST.yml`: the name you want to give the manifest
+1. Run the following command.
 
-    <pre class="terminal">
-    $ bosh -e prod -d mysql manifest /tmp/mysql.yml
-    </pre>
+    ```
+    bosh -e YOUR-ENV -d YOUR-DEPLOYMENT instances
+    ```
+    
+    Where:
+    - `YOUR-ENV` is the environment where you deployed the cluster.
+    - `YOUR-DEPLOYMENT` is the deployment cluster name.
 
-
-## <a id="assisted-bootstrap"></a> Step 2: Run the Bootstrap Errand
-
-PAS versions v1.7.0 and later include a [BOSH errand](http://bosh.io/docs/jobs.html#jobs-vs-errands) to automate the process of bootstrapping. The bootstrap errand automates the steps described in the [Manual Bootstrapping](#manual-bootstrap) section below. It finds the node with the highest transaction sequence number and asks it to start up by itself in bootstrap mode. Finally, it asks the remaining nodes to join the cluster.
-
-In most cases, running the errand recovers your cluster. However, certain scenarios require additional steps. To determine which set of instructions to follow, you must determine the state of your Virtual Machines (VMs).
-
-1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT instances` and examine the output. Replace `MY-ENV` with the environment where you deployed the cluster and `MY-DEPLOYMENT` with the deployment cluster name.
+    For example:
     <pre class="terminal">
     $ bosh -e prod -d mysql instances
     </pre>
-    * If the output of `bosh instances` shows the state of the jobs as `failing`, proceed to Scenario 1.
-    * If the output of `bosh instances` shows the state of jobs as `unknown/unknown`, proceed to Scenario 2.
+
+1. Find and record the `Process State` for your MySQL instances.
+    <a id="vms"></a>In the following example output, the MySQL instances are in the `failing` process state.
+    <pre class="terminal">
+    Instance                                                             Process State  AZ             IPs
+    backup-prepare/c635410e-917d-46aa-b054-86d222b6d1c0                  running        us-central1-b  10.0.4.47
+    bootstrap/a31af4ff-e1df-4ff1-a781-abc3c6320ed4                       -              us-central1-b  -
+    broker-registrar/1a93e53d-af7c-4308-85d4-3b2b80d504e4                -              us-central1-b  10.0.4.58
+    cf-mysql-broker/137d52b8-a1b0-41f3-847f-c44f51f87728                 running        us-central1-c  10.0.4.57
+    cf-mysql-broker/28b463b1-cc12-42bf-b34b-82ca7c417c41                 running        us-central1-b  10.0.4.56
+    deregister-and-purge-instances/4cb93432-4d90-4f1d-8152-d0c238fa5aab  -              us-central1-b  -
+    monitoring/f7117dcb-1c22-495e-a99e-cf2add90dea9                      running        us-central1-b  10.0.4.48
+    mysql/220fe72a-9026-4e2e-9fe3-1f5c0b6bf09b                           failing        us-central1-b  10.0.4.44
+    mysql/28a210ac-cb98-4ab4-9672-9f4c661c57b8                           failing        us-central1-f  10.0.4.46
+    mysql/c1639373-26a2-44ce-85db-c9fe5a42964b                           failing        us-central1-c  10.0.4.45
+    proxy/87c5683d-12f5-426c-b925-62521529f64a                           running        us-central1-b  10.0.4.60
+    proxy/b0115ccd-7973-42d3-b6de-edb5ae53c63e                           running        us-central1-c  10.0.4.61
+    rejoin-unsafe/8ce9370a-e86b-4638-bf76-e103f858413f                   -              us-central1-b  -
+    smoke-tests/e026aaef-efd9-4644-8d14-0811cb1ba733                     -              us-central1-b  10.0.4.59
+    </pre>
+
+1. Choose your scenario:
+    * If your MySQL instances are in the `failing` state, continue to [Scenario 1](#cluster-disrupted).
+    * If your MySQL instances are in the ` - ` state, continue to [Scenario 2](#vms-terminated).
 
 ### <a id="cluster-disrupted"></a> Scenario 1: Virtual Machines Running, Cluster Disrupted
 
-In this scenario, the VMs are running, but the jobs are failing. You can run the bootstrap errand without recreating the VMs.
+In this scenario, the VMs are running, but the jobs are failing.
 
-1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT <%= vars.bosh_run_errand %> bootstrap`. Replace `MY-ENV` with the name of the environment where you deployed the cluster and `MY-DEPLOYMENT` with the deployment cluster name.
-    <pre class="terminal">
-    $ bosh -e prod -d mysql <%= vars.bosh_run_errand %>  bootstrap
-    </pre>
-    The command returns many lines of output, eventually followed by:
+To bootstrap in this scenario, do the following:
+
+1. Run the bootstrap errand.
+
+    ```
+    bosh -e YOUR-ENV -d YOUR-DEPLOYMENT run-errand bootstrap
+    ```
+    <p class='note'><strong>Note:</strong> The errand runs for a long time, during which no output is returned.</p>
+    The command returns many lines of output, eventually with the following successful output:
     <pre class="terminal">
     Bootstrap errand completed
     [stderr]
-    + echo 'Started bootstrap errand ...'
-    + JOB\_DIR=/var/vcap/jobs/bootstrap
-    + CONFIG\_PATH=/var/vcap/jobs/bootstrap/config/config.yml
-    + /var/vcap/packages/bootstrap/bin/cf-mysql-bootstrap -configPath=/var/vcap/jobs/bootstrap/config/config.yml
-    + echo 'Bootstrap errand completed'
-    + exit 0
+    echo 'Started bootstrap errand ...'
+    JOB\_DIR=/var/vcap/jobs/bootstrap
+    CONFIG\_PATH=/var/vcap/jobs/bootstrap/config/config.yml
+    /var/vcap/packages/bootstrap/bin/cf-mysql-bootstrap -configPath=/var/vcap/jobs/bootstrap/config/config.yml
+    echo 'Bootstrap errand completed'
+    exit 0
     Errand `bootstrap' completed successfully (exit code 0)
-    </pre>   
-    <p class="note"><strong>Note:</strong> Sometimes the bootstrap errand fails on the first try. If this happens, run the command again in a few minutes.</p>
+    </pre>
+    
+1. If the errand fails, run the bootstrap errand command again after a few minutes. The bootstrap errand may not work immediately.
 
-1. If the errand fails, try performing the steps automated by the errand manually by following the [Manual Bootstrapping](#manual-bootstrap) procedure.
+1. If the errand fails after several tries, bootstrap your cluster manually. See [Bootstrap Manually](#manual-bootstrap) below.
 
 ### <a id="vms-terminated"></a> Scenario 2: Virtual Machines Terminated or Lost
 
-In this scenario, severe circumstances such as power failure have terminated all of your VMs. You need to recreate the VMs before you can recover the cluster.
+In severe circumstances, such as a power failure, it is possible to lose all your VMs. 
+You must recreate them before you can begin recovering the cluster.
 
-1. To recreate terminated or lost VMs, perform the following steps:
+When MySQL instances are in the ` - ` state, the VMs are lost. The procedures in this scenario bring the instances from a ` - ` state to a `failing` state. Then you run the bootstrap errand similar to [Scenario 1](#cluster-disrupted) above and restore configuration.
 
-    1. If you use the [VM Resurrector](./resurrector.html#enabling), disable it.
+To recover terminated or lost VMs, do the procedures in the sections below:
 
-    1. Run the BOSH Cloud Check interactive command `bosh -e MY-ENV -d MY-DEPLOYMENT <%= vars.bosh_cloud_check %>`. When prompted, select **Recreate VM and wait for processes to start**. If this option fails, select **Delete VM reference**.
+1. [Recreate the Missing VMs](#recreate): Bring MySQL instances from a ` - ` state to a `failing` state.
 
-        <pre class="terminal">
-        $ bosh -e prod -d mysql <%= vars.bosh_cloud_check %> 
+1. [Run the Bootstrap Errand](#run-the-errand): Since your instances are now in the `failing` state, you continue similarly to [Scenario 1](#cluster-disrupted) above.
 
-        Using environment '192.168.56.6' as user 'director' (bosh.*.read, openid, bosh.*.admin, bosh.read, bosh.admin)
+1. [Restore the BOSH Configuration](#reset-deployment): Go back to unignoring all instances and redeploy. This is a critical and mandatory step. 
 
-        Task 34
+<p class="warning note"><strong>WARNING:</strong> If you do not <code>bosh unignore</code> your instances, your instances are not updated in future deploys. You must perform the procedure in the final section of <em>Scenario 2</em>, <a href="#reset-deployment">Restore the BOSH Configuration</a>.</p>
 
-        19:19:12 | Scanning 21 VMs: Checking VM states (00:00:16)
-        19:19:28 | Scanning 21 VMs: 19 OK, 2 unresponsive, 0 missing, 0 unbound (00:00:00)
-        19:19:28 | Scanning 5 persistent disks: Looking for inactive disks (00:00:00)
-        19:19:28 | Scanning 5 persistent disks: 5 OK, 0 missing, 0 inactive, 0 mount-info mismatch (00:00:00)
+##### <a id="recreate"></a> Recreate the Missing VMs
 
-        Started  Fri Aug  4 19:19:12 UTC 2017
-        Finished Fri Aug  4 19:19:28 UTC 2017
-        Duration 00:00:16
+The procedure in this section uses BOSH to recreate the VMs, install software on them, and try to start the jobs. 
 
-        Task 34 done
+The procedure below allows you to do the following:
 
-        #  Type                Description
-        1  unresponsive_agent  VM for 'uaa/0 (0)' with cloud ID 'vm-001' is not responding.
-        2  unresponsive_agent  VM for 'mysql/0 (0)' with cloud ID 'vm-007' is not responding.
+-  Redeploy your cluster while expecting the jobs to fail.
 
-        2 problems
+- Instruct BOSH to ignore the state of each instance in your cluster. This allows BOSH to deploy the software to each instance even if the instance is failing.
 
-        1: Skip for now
-        2: Reboot VM
-        3: Recreate VM without waiting for processes to start
-        4: Recreate VM and wait for processes to start
-        5: Delete VM
-        6: Delete VM reference (forceful; may need to manually delete VM from the Cloud to avoid IP conflicts)
-        </pre>
+To recreate your missing VMs, do the following:
 
-    1. Re-enable the VM Resurrector if you want to continue to use it.
-
-    <p class="note"><strong>Note</strong>: Do not proceed to the next step until all VMs are in either the <code>starting</code> or <code>failing</code> state.</p>
-
-1. Complete the following steps to prepare your deployment for the bootstrap errand:
-
-    1. Open `/tmp/MANIFEST.yml` in a text editor.
-    1. Search for the jobs section: `jobs`.
-    1. Search for the mysql job: `mysql`.
-    1. Search for the update section: `update`.
-    1. Change `max_in_flight` to `3`.
-    1. Below the `max_in_flight` line, add a new line: `canaries: 0`.
-    1. Set `update.serial` to `false`.
-    1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT deploy /tmp/MANIFEST.yml`.
-
-1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT <%= vars.bosh_run_errand %> bootstrap`. Replace `MY-ENV` with the name of the environment where you deployed the cluster and `MY-DEPLOYMENT` with the deployment cluster name.
-
-1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT instances` and examine the output to confirm that the errand completes successfully. Some instances may still appear as `failing`. 
-
-1. Complete the following steps to restore the BOSH configuration:
-
-    1. Open `/tmp/MANIFEST.yml` in a text editor.
-    1. Re-set `canaries` to 1, `max_in_flight` to 1, and `serial` to true in the same manner as above.
-    1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT deploy /tmp/MANIFEST.yml`.
-    1. Validate that all mysql instances are in `running` state.
-
-    <p class="note"><strong>Note:</strong> You must reset the values in the BOSH manifest to ensure successful future deployments and accurate reporting of the status of your jobs.</p>
-
-1. If this procedure fails, try performing the steps automated by the errand manually by following the [Manual Bootstrapping](#manual-bootstrap) procedure.
-
-## <a id="manual-bootstrap"></a>Manual Bootstrapping ##
-
-<p class="note"><strong>Note</strong>: The following steps are prone to user error and can result in lost data if followed incorrectly. Please follow the <a href="#assisted-bootstrap">Run the Bootstrap Errand</a> instructions above first, and only resort to the manual process if the errand fails to repair the cluster.</p>
-If the bootstrap errand cannot recover the cluster, you need to perform the steps automated by the errand manually. 
-
-- If the output of `bosh instances` shows the state of the jobs as `failing` ([Scenario 1](#cluster-disrupted)), proceed directly to the manual steps below.
-- If the output of `bosh instances` shows the state of the jobs as `unknown/unknown`, perform Steps 1-2 of [Scenario 2](#vms-terminated), substitute the manual steps below for Step 3, and then perform Steps 4-5 of [Scenario 2](#vms-terminated).
-
-1. SSH to each node in the cluster and, as root, shut down the `mariadb` process.
-
-    <pre class="terminal">
-    $ monit stop mariadb_ctrl
-    </pre>
-
-    Re-bootstrapping the cluster will not be successful unless all other nodes have been shut down.
-
-1. Choose a node to bootstrap by locating the node with the highest transaction sequence number (`seqno`). You can obtain the `seqno` of a stopped node in one of two ways:
-    - If a node shut down gracefully, the `seqno` is in the Galera state file of the node.
-    <pre class="terminal">
-    $ cat /var/vcap/store/mysql/grastate.dat | grep 'seqno:'
-    </pre>
-    - If the node crashed or was killed, the `seqno` in the Galera state file of the node is `-1`. In this case, the `seqno` may be recoverable from the database. 
-        1. Run the following command to start up the database, log the recovered sequence number, and exit.
-        <pre class="terminal">
-        $ /var/vcap/packages/mariadb/bin/mysqld --wsrep-recover
-        </pre>
-        1. Scan the error log for the recovered sequence number. The last number after the group id (`uuid`) is the recovered `seqno`:
-        <pre class="terminal">
-        $ grep "Recovered position" /var/vcap/sys/log/mysql/mysql.err.log | tail -1
-        150225 18:09:42 mysqld_safe WSREP: Recovered position e93955c7-b797-11e4-9faa-9a6f0b73eb46:15
-        </pre>
-        If the node never connected to the cluster before crashing, it may not have a group id (`uuid` in `grastate.dat`). In this case, you cannot recover the `seqno`. Unless all nodes crashed this way, do not choose this node for bootstrapping.
+1. If BOSH resurrection is enabled, disable it.
     
-1. Choose the node with the highest `seqno` value as the bootstrap node. If all nodes have the same `seqno`, you can choose any node as the bootstrap node.
+    ```
+    bosh -e YOUR-ENV update-resurrection off
+    ```
 
-    <p class="note"><strong>Note:</strong> Only perform these bootstrap commands on the node with the highest <code>seqno</code>. Otherwise, the node with the highest <code>seqno</code> will be unable to join the new cluster unless its data is abandoned. Its <code>mariadb</code> process will exit with an error. See the <a href="http://docs.pivotal.io/p-mysql/1-8/cluster-behavior.html">Cluster Scaling, Node Failure, and Quorum</a> topic for more details about intentionally abandoning data.</p>
-
-1. On the bootstrap node, update the state file and restart the `mariadb` process.
-
-    <pre class="terminal">
-    $ echo -n "NEEDS_BOOTSTRAP" > /var/vcap/store/mysql/state.txt
-    $ monit start mariadb_ctrl
-    </pre>
-
-1. Check that the `mariadb` process has started successfully.
-
-    <pre class="terminal">
-    $ watch monit summary
-    </pre>
-
-    It can take up to ten minutes for `monit` to start the `mariadb` process.
+2. Download the current manifest.
     
-1. Once the bootstrapped node is running, start the `mariadb` process on the remaining nodes using `monit`.
+    ```
+    bosh -e YOUR-ENV -d YOUR-DEPLOYMENT manifest > /tmp/manifest.yml
+    ```
 
+3. Redeploy and expect one of the MySQL VMs to fail. Deploying causes BOSH to create new VMs and install the software. Forming a cluster is in a subsequent step. 
+    
+    ```
+    bosh -e YOUR-ENV -d YOUR-DEPLOYMENT deploy /tmp/manifest.yml
+    ``` 
+
+4. Run the following command and record the instance GUID of the VM that attempted to start. Your instance GUID is the string after `mysql/` in your BOSH instances output.
+    
+    ```
+    bosh -e YOUR-ENV -d YOUR-DEPLOYMENT instances
+    ```
+
+5. Tell BOSH to ignore your MySQL instance. Ignoring the state allows BOSH to deploy software to the failed instance.
+    
+    ```
+    bosh -e YOUR-ENV -d YOUR-DEPLOYMENT ignore mysql/INSTANCE_GUID
+    ```
+    Where:
+    - `YOUR-ENV` is the environment where you deployed the cluster.
+    - `YOUR-DEPLOYMENT` is the deployment cluster name.
+    - `INSTANCE-GUID` is the string after `mysql/` in your BOSH instances output.
+    For example:
     <pre class="terminal">
-    $ monit start mariadb_ctrl
+    $ bosh -e prod -d mysql ignore mysql/220fe72a-9026-4e2e-9fe3-1f5c0b6bf09b
     </pre>
 
-1. Verify that the new nodes have successfully joined the cluster. The following command displays the total number of nodes in the cluster:
+6. Repeat steps 3 through 5 until all MySQL instances have attempted to start.
 
+1. Re-enable BOSH resurrection if you disabled it in the first step.
+
+    ```
+    bosh -e YOUR-ENV update-resurrection on
+    ```
+
+1. See that your MySQL instances have gone from the ` - ` state to the `failing` state.
+
+    ```
+    bosh -e YOUR-ENV -d YOUR-DEPLOYMENT instances
+    ```
+
+##### <a id="run-the-errand"></a> Run the Bootstrap Errand 
+
+All MySQL instances have a `failing` process state, but they now have the MySQL code installed on them. In this section, the bootstrap process recovers the cluster.
+
+To bootstrap, do the following:
+
+1. Run the bootstrap errand.
+
+    ```
+    bosh -e YOUR-ENV -d YOUR-DEPLOYMENT run-errand bootstrap
+    ```
+    <p class='note'><strong>Note:</strong> The errand runs for a long time, during which no output is returned.</p>
+    The command returns many lines of output, eventually with the following successful output:
     <pre class="terminal">
-    mysql> SHOW STATUS LIKE 'wsrep_cluster_size';
+    Bootstrap errand completed
+    [stderr]
+    echo 'Started bootstrap errand ...'
+    JOB\_DIR=/var/vcap/jobs/bootstrap
+    CONFIG\_PATH=/var/vcap/jobs/bootstrap/config/config.yml
+    /var/vcap/packages/bootstrap/bin/cf-mysql-bootstrap -configPath=/var/vcap/jobs/bootstrap/config/config.yml
+    echo 'Bootstrap errand completed'
+    exit 0
+    Errand `bootstrap' completed successfully (exit code 0)
+    </pre>   
+    
+1. If the errand fails, run the bootstrap errand command again after a few minutes. The bootstrap errand may not work immediately.
+
+1. See that the errand completes successfully in the shell output and continue to [Restore the BOSH Configuration](#reset-deployment) below.
+    <p class="note"><strong>Note:</strong> After you complete the bootstrap errand, you may still see instances in the <code>failing</code> state. Continue to the next section anyway.</p>
+
+##### <a id="reset-deployment"></a> Restore the BOSH Configuration 
+
+<p class="note warning"><strong>WARNING:</strong> If you do not <code>bosh unignore</code> all your ignored instances, your instances are never updated in future deploys.</p>
+
+To restore your BOSH configuration to its previous state, this procedure unignores each instance that was previously ignored.
+
+1. Set each ignored instance to `unignore`.
+
+    ```
+    bosh -e MY-ENV -d MY-DEP unignore mysql/INSTANCE_GUID
+    ```
+
+1. Redeploy.
+
+    ```
+    bosh -e MY-ENV -d MY-DEP deploy
+    ```
+
+1. Validate that all `mysql` instances are in a `running` state.
+
+    ```
+    bosh -e YOUR-ENV -d YOUR-DEPLOYMENT instances
+    ```
+
+
+## <a id="manual-bootstrap"></a> Bootstrap Manually 
+
+If the bootstrap errand is not able to automatically recover the cluster, you might need to do the steps manually. 
+
+<p class="note warning"><strong>WARNING:</strong> The following procedures are prone to user-error and can result in lost data if followed incorrectly. Follow the procedure in <a href="#assisted-bootstrap">Bootstrap with the BOSH Errand</a> above first, and only resort to the manual process if the errand fails to repair the cluster.</p>
+
+Do the procedures in the sections below to manually bootstrap your cluster.
+
+### <a id="shut-down-mariadb"></a> Shut Down MariaDB
+
+Do the following for each node in the cluster:
+
+1. SSH into the node. See the [BOSH CLI v2 instructions](https://docs.pivotal.io/pivotalcf/1-11/customizing/trouble-advanced.html#ssh-v2) for SSHing into BOSH-deployed VMs.
+
+1. Shut down the `mariadb` process on the node. Run the following command:
+    ```
+    monit stop mariadb_ctrl
+    ```
+
+Re-bootstrapping the cluster is not successful unless you shut down the `mariadb` process on all nodes in the cluster.
+
+### <a id="choose-node"></a> Choose Node to Bootstrap 
+
+To choose the node to bootstrap, you must find the node with the highest transaction sequence number (`seqno`).
+
+Do the following to find the node with the highest `seqno`:
+
+1. Run the following command from the node:    
+    ```
+    cat /var/vcap/store/mysql/grastate.dat | grep 'seqno:'
+    ```
+1. If a node shut down gracefully, the `seqno` is in the Galera state file. Retrieve the `seqno` and continue to [Bootstrap the First Node](#set-bootstrap-node). 
+<br><br>
+If a node crashed or was killed, the `seqno` in the Galera state file is recorded as `-1`. In this case, the `seqno` might be recoverable from the database. Run the following command to start up the database, log the recovered `seqno`, and then exit:
+    ```
+    /var/vcap/packages/mariadb/bin/mysqld --wsrep-recover
+    ```
+    Scan the error log for the recovered `seqno`. It is the last number after the group id (`uuid`). For example:
+    <pre class="terminal">
+    $ grep "Recovered position" /var/vcap/sys/log/mysql/mysql.err.log | tail -1
+    150225 18:09:42 mysqld_safe WSREP: Recovered position e93955c7-b797-11e4-9faa-9a6f0b73eb46:15
     </pre>
+    If the node never connected to the cluster before crashing, it may not even have a group id (`uuid` in `grastate.dat`). In this case, there is nothing to recover. Unless all nodes crashed this way, do not choose this node for bootstrapping.
 
-1. Complete the following steps to restore the BOSH configuration:
+1. After determining the `seqno` for all nodes in your cluster, identify the node with the highest `seqno`. If all nodes have the same `seqno`, you can choose any node as the new bootstrap node.
 
-    1. Open `/tmp/MANIFEST.yml` in a text editor.
-    1. Re-set `canaries` to 1, `max_in_flight` to 1, and `serial` to true in the same manner as above.
-    1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT deploy /tmp/MANIFEST.yml`.
-    1. Validate that all mysql instances are in `running` state.
+### <a id="set-bootstrap-node"></a> Bootstrap the First Node
 
-    <p class="note"><strong>Note:</strong> You must reset the values in the BOSH manifest to ensure successful future deployments and accurate reporting of the status of your jobs.</p>
+After determining the node with the highest `seqno`, do the following to bootstrap the node:
+
+<p class="note"><strong>Note:</strong> Only run these bootstrap commands on the node with the highest <code>seqno</code>. Otherwise the node with the highest <code>seqno</code> is unable to join the new cluster unless its data is abandoned. Its <code>mariadb</code> process exits with an error.</p>
+
+1. On the new bootstrap node, update the state file and restart the <code>mariadb</code> process. Run the following commands:
+    <pre><code>echo -n "NEEDS_BOOTSTRAP" > /var/vcap/store/mysql/state.txt
+    monit start mariadb_ctrl</code></pre>
+
+1. It can take up to ten minutes for <code>monit</code> to start the <code>mariadb</code> process.
+   To check if the <code>mariadb</code> process has started successfully, run the following command:
+    <pre><code>watch monit summary</code></pre>
+
+### <a id="restart-nodes"></a> Restart Remaining Nodes
+
+1. After the bootstrapped node is running, start the <code>mariadb</code> process on the remaining nodes with <code>monit</code>. From the bootstrap node, run the following command:
+    <pre><code>monit start mariadb_ctrl</code></pre>
+    If the node is prevented from starting by the [Interruptor](https://docs.pivotal.io/p-mysql/interruptor.html), do the manual procedure to force the node to rejoin the cluster, documented in [Pivotal Knowledge Base](https://discuss.pivotal.io/hc/en-us/articles/115014258668). 
+    <p class="note warning"><strong>WARNING:</strong> Forcing a node to rejoin the cluster is a destructive procedure.
+       Only do the procedure with the assistance of <a href="https://support.pivotal.io">Pivotal Support</a>.</p>
+
+1. If the `monit start` command fails, it might be because the node with the highest `seqno` is `mysql/0`. In this case, do the following:
+    1. From the Ops Manager VM, use the BOSH CLI to make BOSH ignore updating `mysql/0`:
+        ```
+        bosh -e MY-ENV -d MY-DEP ignore mysql/0
+        ```
+    1. Navigate to Ops Manager in a browser, log in, and click **Apply Changes**.
+    1. When the deploy finishes, run the following command from the Ops Manager VM:
+        ```
+        bosh -e MY-ENV -d MY-DEP unignore mysql/0
+        ```
+
+1. Verify that the new nodes have successfully joined the cluster. SSH into the bootstrap node and run the following command to output the total number of nodes in the cluster:
+    <pre><code>mysql> SHOW STATUS LIKE 'wsrep_cluster_size';</code></pre>

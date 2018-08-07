@@ -98,50 +98,50 @@ To install the S3 Versioned Backups Add-On, follow the instructions below:
 
 1. Append the following to the `releases` section of your `runtime-config.yml` file:
 
-    ```
+    ```yaml
     releases:
     # Append the below to the list of releases:
     - name: backup-and-restore-sdk-addon
-        version: RELEASE-VERSION
+      version: RELEASE-VERSION
     ```
     Where `RELEASE-VERSION` is the release version.
 
 1. Append the following to the `addons` section of your `runtime-config.yml` file:
 
-    ```
+    ```yaml
     addons:
     # Append the below to the list of addons:
     - name: sdk-preview
+      jobs:
+      - name: s3-versioned-blobstore-backup-restorer
+        release: backup-and-restore-sdk-addon
+        properties:
+          enabled: true
+          buckets:
+            droplets:
+              name: NAME-OF-DROPLETS-BUCKET
+              region: REGION-OF-DROPLETS-BUCKET
+              aws_access_key_id: AWS-ACCESS-KEY
+              aws_secret_access_key: AWS-SECRET-KEY
+              endpoint: BLOBSTORE-ENDPOINT
+            packages:
+              name: NAME-OF-PACKAGES-BUCKET
+              region: REGION-OF-PACKAGES-BUCKET
+              aws_access_key_id: AWS-ACCESS-KEY
+              aws_secret_access_key: AWS-SECRET-KEY
+              endpoint: BLOBSTORE-ENDPOINT
+            buildpacks:
+              name: NAME-OF-BUILDPACKS-BUCKET
+              region: REGION-OF-BUILDPACKS-BUCKET
+              aws_access_key_id: AWS-ACCESS-KEY
+              aws_secret_access_key: AWS-SECRET-KEY
+              endpoint: BLOBSTORE-ENDPOINT
+      include:
+        deployments:
+        - ELASTIC-RUNTIME-DEPLOYMENT-NAME
         jobs:
-        - name: s3-versioned-blobstore-backup-restorer
-          release: backup-and-restore-sdk-addon
-          properties:
-            enabled: true
-            buckets:
-              droplets:
-                name: NAME-OF-DROPLETS-BUCKET
-                region: REGION-OF-DROPLETS-BUCKET
-                aws_access_key_id: AWS-ACCESS-KEY
-                aws_secret_access_key: AWS-SECRET-KEY
-                endpoint: BLOBSTORE-ENDPOINT
-              packages:
-                name: NAME-OF-PACKAGES-BUCKET
-                region: REGION-OF-PACKAGES-BUCKET
-                aws_access_key_id: AWS-ACCESS-KEY
-                aws_secret_access_key: AWS-SECRET-KEY
-                endpoint: BLOBSTORE-ENDPOINT
-              buildpacks:
-                name: NAME-OF-BUILDPACKS-BUCKET
-                region: REGION-OF-BUILDPACKS-BUCKET
-                aws_access_key_id: AWS-ACCESS-KEY
-                aws_secret_access_key: AWS-SECRET-KEY
-                endpoint: BLOBSTORE-ENDPOINT
-        include:
-          deployments:
-          - ELASTIC-RUNTIME-DEPLOYMENT-NAME
-          jobs:
-          - name: mysql-backup
-            release: cf-backup-and-restore
+        - name: mysql-backup
+          release: cf-backup-and-restore
     ```
     Replace the placeholder text as follows:
     * In the `droplets`, `packages`, and `buildpacks` section, replace the text with the values configured in Ops Manager.
@@ -236,59 +236,59 @@ To install the S3 Unversioned Backups Add-On, follow the instructions below:
 
 1. Append the following to the `releases` section of your `runtime-config.yml` file:
 
-    ```
+    ```yaml
     releases:
     # Append the below to the list of releases:
     - name: backup-and-restore-sdk-addon
-        version: RELEASE-VERSION
+      version: RELEASE-VERSION
     ```
     Where `RELEASE-VERSION` is the release version.
 
 1. Append the following to the `addons` section of your `runtime-config.yml` file:
 
-    ```
+    ```yaml
     addons:
     # Append the below to the list of addons:
     - name: sdk-preview
+      jobs:
+      - name: s3-unversioned-blobstore-backup-restorer
+        release: backup-and-restore-sdk-addon
+        properties:
+          enabled: true
+          buckets:
+            droplets:
+              name: NAME-OF-DROPLETS-BUCKET
+              region: REGION-OF-DROPLETS-BUCKET
+              aws_access_key_id: AWS-ACCESS-KEY
+              aws_secret_access_key: AWS-SECRET-KEY
+              endpoint: BLOBSTORE-ENDPOINT
+              backup:
+                name: NAME-OF-DROPLETS-BACKUP-BUCKET
+                region: REGION-OF-DROPLETS-BACKUP-BUCKET
+            packages:
+              name: NAME-OF-PACKAGES-BUCKET
+              region: REGION-OF-PACKAGES-BUCKET
+              aws_access_key_id: AWS-ACCESS-KEY
+              aws_secret_access_key: AWS-SECRET-KEY
+              endpoint: BLOBSTORE-ENDPOINT
+              backup:
+                name: NAME-OF-PACKAGES-BACKUP-BUCKET
+                region: REGION-OF-PACKAGES-BACKUP-BUCKET
+            buildpacks:
+              name: NAME-OF-BUILDPACKS-BUCKET
+              region: REGION-OF-BUILDPACKS-BUCKET
+              aws_access_key_id: AWS-ACCESS-KEY
+              aws_secret_access_key: AWS-SECRET-KEY
+              endpoint: BLOBSTORE-ENDPOINT
+              backup:
+                name: NAME-OF-BUILDPACKS-BACKUP-BUCKET
+                region: REGION-OF-BUILDPACKS-BACKUP-BUCKET
+      include:
+        deployments:
+        - ELASTIC-RUNTIME-DEPLOYMENT-NAME
         jobs:
-        - name: s3-unversioned-blobstore-backup-restorer
-          release: backup-and-restore-sdk-addon
-          properties:
-            enabled: true
-            buckets:
-              droplets:
-                name: NAME-OF-DROPLETS-BUCKET
-                region: REGION-OF-DROPLETS-BUCKET
-                aws_access_key_id: AWS-ACCESS-KEY
-                aws_secret_access_key: AWS-SECRET-KEY
-                endpoint: BLOBSTORE-ENDPOINT
-                backup:
-                  name: NAME-OF-DROPLETS-BACKUP-BUCKET
-                  region: REGION-OF-DROPLETS-BACKUP-BUCKET
-              packages:
-                name: NAME-OF-PACKAGES-BUCKET
-                region: REGION-OF-PACKAGES-BUCKET
-                aws_access_key_id: AWS-ACCESS-KEY
-                aws_secret_access_key: AWS-SECRET-KEY
-                endpoint: BLOBSTORE-ENDPOINT
-                backup:
-                  name: NAME-OF-PACKAGES-BACKUP-BUCKET
-                  region: REGION-OF-PACKAGES-BACKUP-BUCKET
-              buildpacks:
-                name: NAME-OF-BUILDPACKS-BUCKET
-                region: REGION-OF-BUILDPACKS-BUCKET
-                aws_access_key_id: AWS-ACCESS-KEY
-                aws_secret_access_key: AWS-SECRET-KEY
-                endpoint: BLOBSTORE-ENDPOINT
-                backup:
-                  name: NAME-OF-BUILDPACKS-BACKUP-BUCKET
-                  region: REGION-OF-BUILDPACKS-BACKUP-BUCKET
-        include:
-          deployments:
-          - ELASTIC-RUNTIME-DEPLOYMENT-NAME
-          jobs:
-          - name: mysql-backup
-            release: cf-backup-and-restore
+        - name: mysql-backup
+          release: cf-backup-and-restore
     ```
     Replace the placeholder text as follows:
     * In the `droplets`, `packages`, and `buildpacks` section, replace the text with the values configured in Ops Manager and the backup buckets that you created in a previous step. See [Configure an Unversioned S3 or S3-Compatible Blobstore for Backups](enabling-external-blobstore-backups.html#backup-buckets).
@@ -381,44 +381,44 @@ To install the Azure Backups Add-On, follow the instructions below:
 
 1. Append the following to the `releases` section of your `runtime-config.yml` file:
 
-    ```
+    ```yaml
     releases:
     # Append the below to the list of releases:
     - name: backup-and-restore-sdk-addon
-        version: RELEASE-VERSION
+      version: RELEASE-VERSION
     ```
     Where `RELEASE-VERSION` is the release version.
 
 1. Append the following to the `addons` section of your `runtime-config.yml` file:
 
-    ```
+    ```yaml
     addons:
     # Append the below to the list of addons:
     - name: sdk-preview
+      jobs:
+      - name: azure-blobstore-backup-restorer
+        release: backup-and-restore-sdk-addon
+        properties:
+          enabled: true
+          containers:
+            droplets:
+              name: NAME-OF-DROPLETS-CONTAINER
+              azure_storage_account: AZURE-STORAGE-ACCOUNT
+              azure_storage_key: AZURE-STORAGE-KEY
+            packages:
+              name: NAME-OF-PACKAGES-CONTAINER
+              azure_storage_account: AZURE-STORAGE-ACCOUNT
+              azure_storage_key: AZURE-STORAGE-KEY
+            buildpacks:
+              name: NAME-OF-BUILDPACKS-CONTAINER
+              azure_storage_account: AZURE-STORAGE-ACCOUNT
+              azure_storage_key: AZURE-STORAGE-KEY
+      include:
+        deployments:
+        - ELASTIC-RUNTIME-DEPLOYMENT-NAME
         jobs:
-        - name: azure-blobstore-backup-restorer
-          release: backup-and-restore-sdk-addon
-          properties:
-            enabled: true
-            containers:
-              droplets:
-                name: NAME-OF-DROPLETS-CONTAINER
-                azure_storage_account: AZURE-STORAGE-ACCOUNT
-                azure_storage_key: AZURE-STORAGE-KEY
-              packages:
-                name: NAME-OF-PACKAGES-CONTAINER
-                azure_storage_account: AZURE-STORAGE-ACCOUNT
-                azure_storage_key: AZURE-STORAGE-KEY
-              buildpacks:
-                name: NAME-OF-BUILDPACKS-CONTAINER
-                azure_storage_account: AZURE-STORAGE-ACCOUNT
-                azure_storage_key: AZURE-STORAGE-KEY
-        include:
-          deployments:
-          - ELASTIC-RUNTIME-DEPLOYMENT-NAME
-          jobs:
-          - name: mysql-backup
-            release: cf-backup-and-restore
+        - name: mysql-backup
+          release: cf-backup-and-restore
     ```
     Replace the placeholder text as follows:
     * In the `droplets`, `packages`, and `buildpacks` section, replace the text with the values configured in Ops Manager.

@@ -5,9 +5,9 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-This topic describes upgrading Pivotal Cloud Foundry (PCF) to v2.2. The upgrade procedure below describes upgrading Pivotal Cloud Foundry Operations Manager (Ops Manager), Pivotal Application Service (PAS), and product tiles.
+This topic describes upgrading Pivotal Cloud Foundry (PCF) to v2.3. The upgrade procedure below describes upgrading Pivotal Cloud Foundry Operations Manager (Ops Manager), Pivotal Application Service (PAS), and product tiles.
 
-For an up-to-date checklist of upgrade preparations, see [Upgrade Checklist for PCF v2.2](../upgrading/checklist.html).
+For an up-to-date checklist of upgrade preparations, see [Upgrade Checklist for PCF v2.3](../upgrading/checklist.html).
 
 <p class="note breaking"><strong>Breaking Changes:</strong> Read the <a href="http://docs.pivotal.io/pivotalcf/2-2/pcf-release-notes/index.html">Release Notes</a> and <a href="http://docs.pivotal.io/pivotalcf/2-2/pcf-release-notes/breaking-changes.html">Breaking Changes</a> for this release, including the Known Issues sections, before starting the upgrade process.</p>
 
@@ -18,7 +18,7 @@ For details about how upgrading PCF impacts individual PCF components, see [Unde
 
 ## <a id="beforeupgrade"></a> Before You Upgrade
 
-This section contains important preparation steps, **Preps**, that you must follow before beginning an upgrade to Ops Manager v2.2. Failure to follow these instructions may jeopardize your existing deployment data and cause your upgrade to fail.
+This section contains important preparation steps, **Preps**, that you must follow before beginning an upgrade to Ops Manager v2.3. Failure to follow these instructions may jeopardize your existing deployment data and cause your upgrade to fail.
 
 Pivotal recommends backing up your PCF deployment before upgrading, to restore in the case of failure. To do this, follow the instructions in the [Backing Up Pivotal Cloud Foundry with BBR](././backup-restore/backup-pcf-bbr.html) topic. 
 
@@ -63,17 +63,17 @@ For information about how to regenerate and rotate CA certificates, see [Managin
 
 ### <a id="review-partners"></a> Prep 4: Review Partner Service Tiles
 
-Some partner service tiles may be incompatible with PCF v2.2. Pivotal is working with partners to ensure their tiles are updated to work with the latest versions of PCF. For information about which partner service releases are currently compatible with PCF v2.2, review the appropriate partners services release documentation at [http://docs.pivotal.io](http://docs.pivotal.io), or contact the partner organization that produces the service tile.
+Some partner service tiles may be incompatible with PCF v2.3. Pivotal is working with partners to ensure their tiles are updated to work with the latest versions of PCF. For information about which partner service releases are currently compatible with PCF v2.3, review the appropriate partners services release documentation at [http://docs.pivotal.io](http://docs.pivotal.io), or contact the partner organization that produces the service tile.
 
 ### <a id="download-targets"></a> Prep 5: Download Upgrade Versions
 
 To minimize disruptions to your deployment during the upgrade, and to satisfy any simultaneous upgrade requirements, download the version of the product files you wish to upgrade from [Pivotal Network](https://network.pivotal.io/). 
 
-At the minimum, you must download PAS v2.2.
+At the minimum, you must download PAS v2.3.
 
 ### <a id="prepare-env"></a> Prep 6: Prepare Your Environment
 
-1. Install the releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.10 and you are upgrading to v2.2, you must sequentially install v1.11, v1.12, v2.0, and v2.1 before proceeding with the upgrade to v2.2.
+1. Install the releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.11 and you are upgrading to v2.3, you must sequentially install v1.12, v2.0, v2.1, and 2.2 before proceeding with the upgrade to v2.3.
 
 1. If you have disabled lifecycle errands for any installed product to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. For more information, see the [Adding and Deleting Products](./add-delete.html#add-import) topic.
 
@@ -88,7 +88,7 @@ At the minimum, you must download PAS v2.2.
 
 1. If you disabled BOSH DNS, reenable it. In the **Director Config** pane of the **BOSH Director** tile, clear the **Disable BOSH DNS server for troubleshooting purposes** checkbox.
 
-1. Check the required machine specifications for Ops Manager v2.2. These specifications are specific [to your IaaS](gcp-om-deploy.html#start-vm). If these specifications do not match your existing Ops Manager, modify the values of your Ops Manager VM instance. For example, if the boot disk of your existing Ops Manager is 50&nbsp;GB and the new Ops Manager requires 100&nbsp;GB, then increase the size of your Ops Manager boot disk to 100&nbsp;GB. 
+1. Check the required machine specifications for Ops Manager v2.3. These specifications are specific [to your IaaS](gcp-om-deploy.html#start-vm). If these specifications do not match your existing Ops Manager, modify the values of your Ops Manager VM instance. For example, if the boot disk of your existing Ops Manager is 50&nbsp;GB and the new Ops Manager requires 100&nbsp;GB, then increase the size of your Ops Manager boot disk to 100&nbsp;GB. 
 
 1. If you are upgrading a vSphere environment, ensure that you have the following information about your existing environment before starting the upgrade:
   * Record the following IP addresses, which you can find in the vSphere web client under **Manage** > **Settings** > **vApp Options**. 
@@ -119,7 +119,7 @@ If you only use the On-Demand service offering, you may want to disable Shared-V
 
 ### <a id="upgrade-add-ons"></a> Prep 10: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
 
-Before upgrading to PCF v2.2, operators who have deployed any PCF add-ons such as **IPsec for PCF**, **ClamAV for PCF**, or **File Integrity Monitoring for PCF** and who have deployed or are planning to deploy [PAS for Windows 2012R2](../windows2012r2/index.html) must modify the add-on manifest to specify a compatible OS stemcell. 
+Before upgrading to PCF v2.3, operators who have deployed any PCF add-ons such as **IPsec for PCF**, **ClamAV for PCF**, or **File Integrity Monitoring for PCF** and who have deployed or are planning to deploy [PAS for Windows 2012R2](../windows2012r2/index.html) must modify the add-on manifest to specify a compatible OS stemcell. 
 
 For example, **File Integrity Monitor for PCF** (FIM) is not supported on Windows. Therefore, the manifest must use an `include` directive to specify the target OS stemcell of `ubuntu-trusty`. 
 
@@ -158,7 +158,7 @@ For more information, see the [Viewing Logs in the Command Line Interface](../..
 
 ### <a id="check-external-blobstore-backup-restore-addon"></a> Prep 12: Check External Blobstore Backup and Restore Add-On
 
-If you have enabled external blobstore backups for <strong>unversioned S3-compatible</strong> blostore using the Blobstore Addon, you need to update your runtime configuration when upgrading to PCF v2.2. Remove `s3-unversioned-blobstore-backup-restorer` from your runtime configuration before upgrading.
+If you have enabled external blobstore backups for <strong>unversioned S3-compatible</strong> blostore using the Blobstore Addon, you need to update your runtime configuration when upgrading to PCF v2.3. Remove `s3-unversioned-blobstore-backup-restorer` from your runtime configuration before upgrading.
 If you don't remove this job, upgrading PAS will fail with error:
 <pre>
 Preparing deployment: Preparing deployment (00:00:01)
@@ -166,11 +166,11 @@ Preparing deployment: Preparing deployment (00:00:01)
 </pre>
 After removing this job from your runtime configuration, you will need to ensure the `Versioning is enabled for all buckets listed below` checkbox is disabled and the backup buckets are configured in the PAS tile. Please see [External S3 or Ceph Filestore](https://docs.pivotal.io/pivotalcf/2-2/customizing/pcf-aws-manual-er-config.html#external_s3) topic for instructions.
 
-## <a id="upgrade_ops"></a> Upgrade Ops Manager and Installed Products to v2.2
+## <a id="upgrade_ops"></a> Upgrade Ops Manager and Installed Products to v2.3
 
 ### <a id="export"></a> Step 1: Export Your Installation
 
-1. In your Ops Manager v2.1 **Installation Dashboard**, click the account dropdown and select **Settings**.
+1. In your Ops Manager v2.2 **Installation Dashboard**, click the account dropdown and select **Settings**.
 
     <%= image_tag("./images/upgrading/upgrade_to_1.9.png") %>
 
@@ -189,9 +189,9 @@ When you export an installation, the export contains the base VM images and nece
 
 <%= image_tag("./images/upgrading/compress.png") %>
 
-### <a id="upgrade"></a> Step 2: Upgrade to Ops Manager v2.2
+### <a id="upgrade"></a> Step 2: Upgrade to Ops Manager v2.3
 
-1. Download the Ops Manager VM Template v2.2 from the [Pivotal Network](https://network.pivotal.io/products/ops-manager) site.
+1. Download the Ops Manager VM Template v2.3 from the [Pivotal Network](https://network.pivotal.io/products/ops-manager) site.
 
 1. Record the FQDN address of the existing Ops Manager VM.
 
@@ -226,7 +226,7 @@ When you export an installation, the export contains the base VM images and nece
 
 ### <a id="upgrade_products"></a> Step 3: Upgrade PAS and Product Tiles
 
-1. <a name="success"></a>After upgrading to Ops Manager v2.2, upgrade your product versions. 
+1. <a name="success"></a>After upgrading to Ops Manager v2.3, upgrade your product versions. 
 
 1. Import the product file to your Ops Manager **Installation Dashboard**.
 
@@ -238,16 +238,16 @@ When you export an installation, the export contains the base VM images and nece
 
 ### <a id="perform-upgrade"></a> Step 4: Perform Your Upgrade
 
-<p class="note warning"><strong>WARNING:</strong> If the installation fails or returns errors, contact <%= vars.support_link %>. Do not attempt to roll back the upgrade by restarting the previous (v2.1) Ops Manager VM.</p>
+<p class="note warning"><strong>WARNING:</strong> If the installation fails or returns errors, contact <%= vars.support_link %>. Do not attempt to roll back the upgrade by restarting the previous (v2.2) Ops Manager VM.</p>
 
 1. Navigate to the Ops Manager **Installation Dashboard**.
 
 1. Click **Apply Changes**. This immediately imports and applies upgrades to all tiles in a single transaction.
-	<p class="note breaking"><strong>Breaking Change:</strong> Only use **Apply Changes** to upgrade tiles immediately after upgrade. Do not use <strong>Review Pending Changes</strong> for selective deployment. For more information, see <a href="https://docs.pivotal.io/pivotalcf/2-2/pcf-release-notes/breaking-changes.html#bosh-dns">Redeploy All Products After Upgrading to Ops Manager v2.2</a>.</p>
+	<p class="note breaking"><strong>Breaking Change:</strong> Only use **Apply Changes** to upgrade tiles immediately after upgrade. Do not use <strong>Review Pending Changes</strong> for selective deployment. For more information, see <a href="https://docs.pivotal.io/pivotalcf/2-2/pcf-release-notes/breaking-changes.html#bosh-dns">Redeploy All Products After Upgrading to Ops Manager v2.3</a>.</p>
 
 1. Click each service tile, select the **Status** tab, and confirm that all VMs appear and are in good health.
 
-1. After confirming that the new installation functions correctly, remove the previous (v2.1) Ops Manager VM.
+1. After confirming that the new installation functions correctly, remove the previous (v2.2) Ops Manager VM.
 
 
 ## <a id="after-upgrade"></a> After You Upgrade
@@ -256,4 +256,4 @@ When you export an installation, the export contains the base VM images and nece
 
 Download [the latest version of the Cloud Foundry Command Line Interface (cf CLI)](https://github.com/cloudfoundry/cli#downloads) to share service instances across orgs and spaces, use the refactored push command, and use push with support for symlinks in app files. For more information, see [Using the Cloud Foundry Command Line Interface (cf CLI)](https://docs.cloudfoundry.org/cf-cli/).
 
-<p class='note warning'><strong>WARNING:</strong> Due to a regression with x.509 certificates in Go v1.10, Pivotal recommends downloading cf CLI v6.36.2 or later, which use Go v1.9. For more information, see the <a href=https://github.com/cloudfoundry/cli/releases/tag/v6.36.2>v6.36.2</a> change log and <a href=https://docs.pivotal.io/pivotalcf/2-2/pcf-release-notes/runtime-rn.html#golang-x509>Known Issues</a> in the <em>Pivotal Application Service v2.2 Release Notes</em> topic.</p>
+<p class='note warning'><strong>WARNING:</strong> Due to a regression with x.509 certificates in Go v1.10, Pivotal recommends downloading cf CLI v6.36.2 or later, which use Go v1.9. For more information, see the <a href=https://github.com/cloudfoundry/cli/releases/tag/v6.36.2>v6.36.2</a> change log and <a href=https://docs.pivotal.io/pivotalcf/2-2/pcf-release-notes/runtime-rn.html#golang-x509>Known Issues</a> in the <em>Pivotal Application Service v2.3 Release Notes</em> topic.</p>

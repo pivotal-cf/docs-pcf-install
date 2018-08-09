@@ -22,11 +22,11 @@ This section contains important preparation steps, **Preps**, that you must foll
 
 Pivotal recommends backing up your PCF deployment before upgrading, to restore in the case of failure. To do this, follow the instructions in the [Backing Up Pivotal Cloud Foundry with BBR](././backup-restore/backup-pcf-bbr.html) topic. 
 
-### <a id="groot"></a> Prep 1: Enable GrootFS and Check Apps
+### <a id="groot"></a> Prep 1: Enable GrootFS
 
 <p class="note">If GrootFS is already enabled for your deployment, you can skip this step.</p>
 
-You must enable GrootFS in your PAS v2.2 tile before upgrading to PAS v2.3. PAS v2.3 uses GrootFS as the only container image management tool (CIMT) and removes the checkbox to enable or disable GrootFS in the **Configure Application Containers** pane. 
+You must enable GrootFS in your PAS v2.2 tile before upgrading to PAS v2.3. PAS v2.3 uses GrootFS as the only Garden image plugin and removes the checkbox to enable or disable GrootFS in the **Configure Application Containers** pane. See [Deprecated Garden Image Plugin Option Removed](https://docs.pivotal.io/pivotalcf/pcf-release-notes/runtime-rn.html#groot) in the PAS v2.3 release notes. 
 
 Follow these steps to enable GrootFS: 
 
@@ -38,7 +38,7 @@ Follow these steps to enable GrootFS:
 1. Click **Save**. 
 1. Return to the Installation Dashboard and click **Apply Changes**. 
 
-Once you have enabled GrootFS, ensure that your apps function properly before proceeding with your upgrade. 
+Once you have enabled GrootFS, ensure the apps running on your deployment function properly before proceeding with your upgrade. If there are any issues, they are most likely to appear directly following the deploy of PAS. 
 
 ### <a id="storage"></a> Prep 2: Review File Storage IOPS and Other Upgrade Limiting Factors
 
@@ -126,7 +126,9 @@ This is the same information you entered at the end of deploying [Ops Manager on
 
 Before upgrading to PCF v2.3, operators who have deployed any PCF add-ons such as **IPsec for PCF**, **ClamAV for PCF**, or **File Integrity Monitoring for PCF** and who have deployed or are planning to deploy [PAS for Windows 2012R2](../windows2012r2/index.html) must modify the add-on manifest to specify a compatible OS stemcell. 
 
-For example, **File Integrity Monitor for PCF** (FIM) is not supported on Windows. Therefore, the manifest must use an `include` directive to specify the target OS stemcell of `ubuntu-trusty`. 
+For example, **File Integrity Monitor for PCF** (FIM) is not supported on Windows. Therefore, the manifest must use an `include` directive to specify the target OS stemcell of `ubuntu-trusty` and `ubuntu-xenial`. 
+
+<p class="note"><strong>Note</strong>: To upgrade to a Xenial stemcell, see to documentation for each add-on and follow the instructions.</p>
 
 To update an add-on manifest, perform the following steps:
 
@@ -138,6 +140,7 @@ To update an add-on manifest, perform the following steps:
       include:
         stemcell:
           - os: ubuntu-trusty
+          - os: ubuntu-xenial
     ```
  1. Re-upload the manifest file to your PCF deployment. For example instructions, see [Create the FIM Manifest](../../addon-fim/index.html#create-mfest). 
 

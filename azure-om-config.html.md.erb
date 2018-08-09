@@ -4,7 +4,6 @@ owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
-<html class="list-style-none"></html>
 
 This topic describes how to configure the Ops Manager Director for Pivotal Cloud Foundry (PCF) on Azure.
 
@@ -12,22 +11,24 @@ Before you perform the procedures in this topic, you must have completed the pro
 
 After you complete the procedures in this topic, follow the instructions in the [Deploying Elastic Runtime on Azure](azure-er-config.html) topic.
 
-<p class="note"><strong>Note</strong>: You can also perform the procedures in this topic using the Ops Manager API. For more information, see the <a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
+<p class="note"><strong>Note:</strong> You can also perform the procedures in this topic using the Ops Manager API. For more information, see the <a href="ops-man-api.html">Using the Ops Manager API</a> topic.</p>
 
-## <a id='access-om'></a>Step 1: Access Ops Manager ##
+
+## <a id='access-om'></a> Step 1: Access Ops Manager
 
 1. In a web browser, navigate to the fully qualified domain name (FQDN) of Ops Manager that you set up in either the [Launching an Ops Manager Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching an Ops Manager Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic. 
+
 1. When Ops Manager starts for the first time, you must choose one of the following:
     * [Use an Identity Provider](#idp): If you use an Identity Provider, an external identity server maintains your user database.
     * [Internal Authentication](#internal): If you use Internal Authentication, PCF maintains your user database.
 
     <%= image_tag("select-authentication.png") %>
 
-### <a id='idp'></a>Use an Identity Provider (IdP) ###
+### <a id='idp'></a> Use an Identity Provider (IdP)
 
 <%= partial 'using_idp_ops_manager' %> 
 
-### <a id='internal'></a>Internal Authentication ###
+### <a id='internal'></a> Internal Authentication
 
 1. When redirected to the **Internal Authentication** page, you must complete the following steps:
     * Enter a **Username**, **Password**, and **Password confirmation** to create an Admin user.
@@ -42,7 +43,8 @@ After you complete the procedures in this topic, follow the instructions in the 
 
     <%= image_tag("cf-login.png") %>
 
-## <a id='azure-config'></a>Step 2: Azure Config Page ##
+
+## <a id='azure-config'></a> Step 2: Azure Config Page
 
 1. Click the **Ops Manager Director** tile.
 
@@ -62,7 +64,6 @@ After you complete the procedures in this topic, follow the instructions in the 
 	* **Resource Group Name**: Enter the name of your resource group, which you exported as the `$RESOURCE_GROUP` environment variable.
 	* **BOSH Storage Account Name**: Enter the name of your storage account, which you exported as the `$STORAGE_NAME` environment variable.
 
-
 1. For **Cloud Storage Type**, select one of the following options based on your Azure VM storage settings.
 	* **Use Managed Disks**: Select this option if you use Azure Managed Disks.
 See [Azure Managed Disks Overview](https://docs.microsoft.com/en-us/azure/storage/storage-managed-disks-overview) in the
@@ -77,7 +78,7 @@ that you specify an asterisk at both the beginning and the end of the base stora
         <%= image_tag("azure/storage-accounts.png") %>
 
 1. For **Default Security Group**, enter `pcf-nsg`.
-    <p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p> 
+    <p class="note"><strong>Note:</strong> The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p> 
 
 1. For **SSH Public Key**, copy and paste the contents of your public key in the `opsman.pub` file. You created this file in either the [Launching an Ops Manager Director Instance with an ARM Template](azure-arm-template.html) topic or the [Launching an Ops Manager Director Instance on Azure without an ARM Template](azure-om-deploy.html) topic. 
 
@@ -85,7 +86,8 @@ that you specify an asterisk at both the beginning and the end of the base stora
 
 1. Click **Save**.
 
-## <a id='director-config'></a>Step 3: Director Config Page ##
+
+## <a id='director-config'></a> Step 3: Director Config Page
 
 1. Select **Director Config**.
 
@@ -144,58 +146,66 @@ Manager Resurrector functionality and increase Elastic Runtime availability.
 
 1. Click **Save**.
 
-## <a id='create-networks'></a>Step 4: Create Networks Page ##
+
+## <a id='create-networks'></a> Step 4: Create Networks Page
 
 1. Select **Create Networks**.
 
 	<%= image_tag("azure/create-networks.png") %>
 
 1. Click **Add Network**.
+
 1. Select **Enable ICMP checks** if you want to enable ICMP on your networks. Ops Manager uses ICMP checks to confirm that components within your network are reachable.
+
 1. For **Name**, enter `default`.
+
 1. If you want to dynamically provision VMs in this network for use with on-demand services, select the **Service Networks** checkbox. When the checkbox is selected, Ops Manager does not provision VMs within the specified CIDR range.
+
 1. To create a subnet, complete the following fields:
 	* **Azure Network Name**: Enter `pcf-net/pcf`. You can use either the `NETWORK-NAME/SUBNET-NAME` format or the `RESOURCE-GROUP/NETWORK-NAME/SUBNET-NAME` format. If you specify a resource group, it must exist under the same subscription ID you provided in the [Azure Config](#azure-config) page.
-        <p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p> 
+        <p class="note"><strong>Note:</strong> The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p> 
 	* **CIDR**: Enter `10.0.0.0/20`.
 	* **Reserved IP Ranges**: Enter the first 9 IP addresses of the subnet. For example, `10.0.0.1-10.0.0.9`.
 	* **DNS**: Enter `168.63.129.16`.
 	* **Gateway**: Enter the first IP address of the subnet. For example, `10.0.0.1`.
 1. Click **Save**. If you do not have **Enable ICMP checks** selected, you may see red warnings which you can safely ignore.
 
-## <a id='create-networks'></a>Step 5: Assign Networks Page ##
+
+## <a id='create-networks'></a> Step 5: Assign Networks Page
 
 1. Select **Assign Networks**.
 	
 	<%= image_tag("azure/assign-networks.png") %>
 
 1. Under **Network**, select the `default` network you created from the dropdown menu.
+
 1. Click **Save**.
 
-## <a id='security'></a>Step 6: Security Page ##
+
+## <a id='security'></a> Step 6: Security Page
 
 1. <%= partial "security-pane" %>
 
-## <a id='syslog'></a>Step 7: Syslog Page
+## <a id='syslog'></a> Step 7: Syslog Page
 
 <%= partial 'syslog_bosh' %>
 
-## <a id='resource-config'></a>Step 8: Resource Config Page
+## <a id='resource-config'></a> Step 8: Resource Config Page
 
 1. Select **Resource Config**.
 
     <%= image_tag("azure/om-resource-config.png") %>
 
-1. Ensure that the **Internet Connected** checkboxes are deselected for all jobs. 
-1. Adjust any values as necessary for your deployment. Under the **Instances**, **Persistent Disk Type**, and **VM Type** fields,
-choose **Automatic** from the drop-down menu to allocate the recommended resources for the job. If the **Persistent Disk Type** field reads **None**, the job does not require persistent disk space.
-    <p class="note"><strong>Note</strong>: Ops Manager v1.11 requires a Director VM with at least 8&nbsp;GB memory.</p>
+1. Ensure that the **Internet Connected** checkboxes are deselected for all jobs.
 
-    <p class="note"><strong>Note</strong>: If you set a field to <strong>Automatic</strong> and the recommended resource allocation changes in a future version, Ops Manager automatically uses the updated recommended allocation.</p>
+1. Adjust any values as necessary for your deployment. Under the **Instances**, **Persistent Disk Type**, and **VM Type** fields, choose **Automatic** from the drop-down menu to allocate the recommended resources for the job. If the **Persistent Disk Type** field reads **None**, the job does not require persistent disk space.
+    <p class="note"><strong>Note:</strong> Ops Manager v.11 requires a Director VM with at least 8&nbsp;GB memory.</p>
+    <p class="note"><strong>Note:</strong> If you set a field to <strong>Automatic</strong> and the recommended resource allocation changes in a future version, Ops Manager automatically uses the updated recommended allocation.</p>
 
 1. Click **Save**.
 
-## <a id='complete-installation'></a>Step 9: Complete the Ops Manager Director Installation
+
+## <a id='complete-installation'></a> Step 9: Complete the Ops Manager Director Installation
 
 1. Click **Apply Changes**. If a red ICMP error message appears and you have disabled ICMP, click
 **Ignore errors and start the install**.
@@ -205,6 +215,3 @@ choose **Automatic** from the drop-down menu to allocate the recommended resourc
 1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
 
 1. After you complete this procedure, follow the instructions in the [Configuring Elastic Runtime for Azure](azure-er-config.html) topic.
-
-
-

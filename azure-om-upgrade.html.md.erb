@@ -4,38 +4,34 @@ owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
-<html class="list-style-none"></html>
 
 This topic describes how to upgrade BOSH Director for Pivotal Cloud Foundry (PCF) on Azure.
 
 Follow the procedures below as part of the upgrade process documented in the [Upgrading Pivotal Cloud Foundry](upgrading-pcf.html) topic.
 
-<p class="note"><strong>Note</strong>: The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p> 
+<p class="note"><strong>Note:</strong> The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p> 
 
-##<a id='env-vars'></a> Step 1: Export Environment Variables
 
-1. Install the Azure CLI 2.0 by following the instructions for your operating system in the [Azure documentation](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli).
+## <a id='env-vars'></a> Step 1: Export Environment Variables
+
+1. Install the Azure CLI v2.0 by following the instructions for your operating system in the [Azure documentation](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli).
 
 1. Set your cloud:
-
     <pre class="terminal">
     $ az cloud set --name AzureCloud
     </pre>
-
     If you deployed PCF in an environment other than Azure Cloud, consult the following list: 
     * For Azure China, replace <code>AzureCloud</code> with <code>AzureChinaCloud</code>. If logging in to <code>AzureChinaCloud</code> fails with a <code>CERT_UNTRUSTED</code> <a href="https://github.com/Azure/azure-xplat-cli/issues/2725">error</a>, use the latest version of node, 4.x or later.
     * For [Azure Government Cloud](azure-gov-cloud.html), replace `AzureCloud` with `AzureUSGovernment`.
     * For [Azure Germany](azure-german-cloud.html), replace `AzureCloud` with `AzureGermanCloud`.
 
 1. Log in:
-
     <pre class="terminal">
     $ az login
     </pre>
-
     Authenticate by navigating to the URL in the output, entering the provided code, and clicking your account.
 
-1. Ensure that the following environment variables are set to the names of the resources you created when originally deploying Ops Manager by following the procedures in either the [Launching a BOSH Director Instance on Azure](azure-om-deploy.html) topic.
+1. Ensure that the following environment variables are set to the names of the resources you created when originally deploying Ops Manager by following the procedures in the [Launching a BOSH Director Instance on Azure](azure-om-deploy.html) topic.
     * `$RESOURCE_GROUP`: This should be set to the name of your resource group. Run `az group list` to list the resource groups for your subscription.
     * `$LOCATION`: This should be set to your location, such as `westus`. For a list of available locations, run `az account list-locations`.
     * `$STORAGE_NAME`: This should be set to your BOSH storage account name. Run `az storage account list` to list your storage accounts.
@@ -51,13 +47,16 @@ The command returns output similar to the following:
       "connectionString": "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=cfdocsboshstorage;AccountKey=EXAMPLEaaaaaaaaaleiIy/Lprnc5igFxYWsgq016Tu9uGwseOl8bqNBEL/2tp7wX92QMUM19Pz9BYTXt8aq4A=="
     }
     </pre>
+
 1. From the `data:` field in the output above, record the full value of `connectionString` from the output above, starting with and including `DefaultEndpointsProtocol=`.
+
 1. Export the value of `connectionString` as the environment variable `$AZURE_STORAGE_CONNECTION_STRING`.
     <pre class="terminal">
     $ export AZURE_STORAGE_CONNECTION_STRING="YOUR-ACCOUNT-KEY-STRING"
     </pre>
 
-##<a id='setup'></a> Step 2: Set Up Ops Manager
+
+## <a id='setup'></a> Step 2: Set Up Ops Manager
 
 1. Navigate to [Pivotal Network](https://network.pivotal.io/products/ops-manager) and download the release of **Pivotal Cloud Foundry Ops Manager for Azure** you want to upgrade to.
 
@@ -92,24 +91,27 @@ The command returns output similar to the following:
     </pre>
     When `status` reads `success`, continue to the next step.
 
-##<a id='config-ip'></a> Step 3: Configure IP Address
+
+## <a id='config-ip'></a> Step 3: Configure IP Address
 
 You have two choices for the Ops Manager IP address. Choose one of the following:
 
 * [Reuse the existing dynamic public IP address](#reuse-dynamic).
 * [Use a new dynamic public IP address](#new-ip).
 
-###<a id='reuse-dynamic'></a> Reuse Existing Dynamic Public IP Address
+### <a id='reuse-dynamic'></a> Reuse Existing Dynamic Public IP Address
 
 1. List your VMs and record the name of your Ops Manager VM:
     <pre class="terminal">$ az vm list</pre>
+
 1. Delete your old Ops Manager VM:
     <pre class="terminal">$ az vm delete --name YOUR-OPS-MAN-VM --resource-group $RESOURCE_GROUP</pre>
+
 1. List your network interfaces and record the name of the Ops Manager network interface:
     <pre class="terminal">$ az resource list --resource-group $RESOURCE_GROUP \
     --resource-type Microsoft.Network/networkInterfaces</pre>
 
-###<a id='new-ip'></a> Use a New Dynamic Public IP Address
+### <a id='new-ip'></a> Use a New Dynamic Public IP Address
 
 1. Create a new public IP address named `ops-manager-ip-new`.
     <pre class="terminal">
@@ -157,7 +159,8 @@ You have two choices for the Ops Manager IP address. Choose one of the following
 
 1. Update your DNS record to point to your new public IP address of Ops Manager.
 
-##<a id='boot'></a> Step 4: Boot Ops Manager
+
+## <a id='boot'></a> Step 4: Boot Ops Manager
 
 1. If you want to use the keypair from your previous Ops Manager, locate the path to the file on your local machine. If you want to create a new keypair, enter the following command:
    <pre class="terminal">
@@ -210,7 +213,7 @@ You have two choices for the Ops Manager IP address. Choose one of the following
             </pre>
 
 1. If you have deployed more than one tile in this Ops Manager installation, perform the following steps to increase the size of the Ops Manager VM disk. You can repeat this process and increase the disk again at a later time if necessary.
-    <p class="note"><strong>Note</strong>: If you use Azure Stack, you must increase the Ops Manager VM disk size using the Azure Stack UI.</p>
+    <p class="note"><strong>Note:</strong> If you use Azure Stack, you must increase the Ops Manager VM disk size using the Azure Stack UI.</p>
     1. Run the following command to stop the VM and detach the disk, replacing `opsman-version` with the version of Ops Manager you are deploying, for example `opsman-2.0.1`:
     <pre class="terminal">
     $ az vm deallocate --name opsman-version \

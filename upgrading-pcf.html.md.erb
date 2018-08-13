@@ -24,23 +24,33 @@ Pivotal recommends backing up your PCF deployment before upgrading, to restore i
 
 ### <a id="groot"></a> Prep 1: Enable GrootFS
 
-<p class="note"><strong>Note</strong>: If GrootFS is already enabled for your deployment, you can skip this step.</p>
+<p class="note"><strong>Note:</strong> If GrootFS is already enabled for your deployment, you can skip this step.</p>
 
 You must enable GrootFS in your PAS v2.2 tile before upgrading to PAS v2.3. PAS v2.3 uses GrootFS as the only Garden image plugin and removes the checkbox to enable or disable GrootFS in the **Configure Application Containers** pane. See [Deprecated Garden Image Plugin Option Removed](https://docs.pivotal.io/pivotalcf/pcf-release-notes/runtime-rn.html#groot) in the PAS v2.3 release notes. 
 
-Follow these steps to enable GrootFS: 
+To enable GrootFS, do the following: 
 
-1. Go to **Application Containers** in PAS. 
-1. Select **Enable the GrootFS container image plugin for Garden RunC**. 
-1. Click **Save**. 
+1. Go to **Application Containers** in PAS.
+
+1. Select **Enable the GrootFS container image plugin for Garden RunC**.
+
+1. Click **Save**.
+
 1. Go to **Director Config** in the BOSH Director tile.
-1. Select **Recreate all VMs**. 
-1. Click **Save**. 
-1. Return to the Installation Dashboard and click **Apply Changes**. 
 
-Once you have enabled GrootFS, ensure the apps running on your deployment function properly before proceeding with your upgrade. If there are any issues, they are most likely to appear directly following the deploy of PAS. 
+1. Select **Recreate all VMs**.
 
-### <a id="storage"></a> Prep 2: Review File Storage IOPS and Other Upgrade Limiting Factors
+1. Click **Save**.
+
+1. Return to the Installation Dashboard and click **Apply Changes**.
+
+Once you have enabled GrootFS, ensure the apps running on your deployment function properly before proceeding with your upgrade. If there are any issues, they are most likely to appear directly following the deploy of PAS.
+
+### <a id='patch'></a> Prep 2: Install the Latest PAS v2.2 Patch
+
+In PAS v2.3, traffic between the Gorouter and Cloud Controller is encrypted. To ensure there is no downtime while upgrading from v2.2 to v2.3, download the latest patch for v2.2. This patch contains the configuration `router.backends.enable_tls: true` in the Gorouter manifest.
+
+### <a id="storage"></a> Prep 3: Review File Storage IOPS and Other Upgrade Limiting Factors
 
 During the PCF upgrade process, a large quantity of data is moved around on disk. 
 
@@ -56,13 +66,13 @@ In addition to file storage IOPS, consider additional existing deployment factor
 
 To review example upgrade-related performance measurements of an existing production Cloud Foundry deployment, see the [Pivotal Web Services Performance During Upgrade](../opsguide/pws_upgrade_load.html) topic. 
 
-### <a id="app_usage"></a> Prep 3: Verify App Usage Service Remedial Steps
+### <a id="app_usage"></a> Prep 4: Verify App Usage Service Remedial Steps
 
 If you are upgrading from a PCF deployment that at one point included Elastic Runtime v1.7.16 or earlier, you must perform the remedial steps outlined in [App Usage Data and Events Data Become Corrupted After Upgrade or Install](https://discuss.pivotal.io/hc/en-us/articles/228639827-App-Usage-Data-and-Events-Data-Becomes-Corrupted-After-Upgrade-or-Install) before proceeding with this upgrade.
 
 <p class="note warning"><strong>WARNING:</strong> If you fail to perform the remedial steps for this issue, this upgrade process may corrupt your existing usage data.</p>
 
-### <a id="cert-expiry"></a> Prep 4: Check Certificate Authority Expiration Dates
+### <a id="cert-expiry"></a> Prep 5: Check Certificate Authority Expiration Dates
 
 Depending on the requirements of your deployment, you may need to rotate your Certificate Authority (CA) certificates. The non-configurable certificates in your deployment expire every two years. You must regenerate and rotate them so that critical components do not face a complete outage.
 
@@ -79,19 +89,19 @@ In this request, the `expires_within` parameter is optional. Valid values for th
 
 For information about how to regenerate and rotate CA certificates, see [Managing TLS Certificates](../../security/pcf-infrastructure/api-cert-rotation.html).
 
-### <a id="review-partners"></a> Prep 5: Review Partner Service Tiles
+### <a id="review-partners"></a> Prep 6: Review Partner Service Tiles
 
 Some partner service tiles may be incompatible with PCF v2.3. Pivotal is working with partners to ensure their tiles are updated to work with the latest versions of PCF. For information about which partner service releases are currently compatible with PCF v2.3, review the appropriate partners services release documentation at [http://docs.pivotal.io](http://docs.pivotal.io), or contact the partner organization that produces the service tile.
 
-### <a id="download-targets"></a> Prep 6: Download Upgrade Versions
+### <a id="download-targets"></a> Prep 7: Download Upgrade Versions
 
 To minimize disruptions to your deployment during the upgrade, and to satisfy any simultaneous upgrade requirements, download the version of the product files you wish to upgrade from [Pivotal Network](https://network.pivotal.io/). 
 
 At the minimum, you must download PAS v2.3.
 
-### <a id="prepare-env"></a> Prep 7: Prepare Your Environment
+### <a id="prepare-env"></a> Prep 8: Prepare Your Environment
 
-1. Install the releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.11 and you are upgrading to v2.3, you must sequentially install v1.12, v2.0, v2.1, and 2.2 before proceeding with the upgrade to v2.3.
+1. Install the releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.11 and you are upgrading to v2.3, you must sequentially install v1.12, v2.0, v2.1, and v2.2 before proceeding with the upgrade to v2.3.
 
 1. If you have disabled lifecycle errands for any installed product to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. For more information, see the [Adding and Deleting Products](./add-delete.html#add-import) topic.
 
@@ -122,13 +132,13 @@ This is the same information you entered at the end of deploying [Ops Manager on
       * Hard Disk 1
       * Network Adapter 1. When you configure the new VM, ensure your network adapters are configured properly and are on the same network.
 
-### <a id="upgrade-add-ons"></a> Prep 8: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
+### <a id="upgrade-add-ons"></a> Prep 9: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
 
 Before upgrading to PCF v2.3, operators who have deployed any PCF add-ons such as **IPsec for PCF**, **ClamAV for PCF**, or **File Integrity Monitoring for PCF** and who have deployed or are planning to deploy [PAS for Windows 2012R2](../windows2012r2/index.html) must modify the add-on manifest to specify a compatible OS stemcell. 
 
 For example, **File Integrity Monitor for PCF** (FIM) is not supported on Windows. Therefore, the manifest must use an `include` directive to specify the target OS stemcell of `ubuntu-trusty` and `ubuntu-xenial`. 
 
-<p class="note"><strong>Note</strong>: To upgrade to a Xenial stemcell, see to documentation for each add-on and follow the instructions.</p>
+<p class="note"><strong>Note:</strong> To upgrade to a Xenial stemcell, see to documentation for each add-on and follow the instructions.</p>
 
 To update an add-on manifest, perform the following steps:
 
@@ -146,7 +156,7 @@ To update an add-on manifest, perform the following steps:
 
  If you are using any other BOSH-managed add-ons in your deployment, you should verify OS compatibility for those component as well. For more information about configuring BOSH add-on manifests, see the [BOSH documentation](https://bosh.io/docs/runtime-config.html#addons). 
 
-### <a id="check-health"></a> Prep 9: Check System Health Before Upgrade
+### <a id="check-health"></a> Prep 10: Check System Health Before Upgrade
 
 1. Run `bosh <%= vars.bosh_cloud_check %>` to confirm that the VMs are healthy. For more information, see the [BOSH Cloudcheck](./trouble-advanced.html#cck) topic.
 
@@ -164,15 +174,16 @@ For more information, see the [Viewing Logs in the Command Line Interface](../..
     Exited with 0.
     </pre>
 
-### <a id="check-external-blobstore-backup-restore-addon"></a> Prep 10: Check External Blobstore Backup and Restore Add-On
+### <a id="check-external-blobstore-backup-restore-addon"></a> Prep 11: Check External Blobstore Backup and Restore Add-On
 
-If you have enabled external blobstore backups for <strong>unversioned S3-compatible</strong> blostore using the Blobstore Addon, you need to update your runtime configuration when upgrading to PCF v2.3. Remove `s3-unversioned-blobstore-backup-restorer` from your runtime configuration before upgrading.
+If you have enabled external blobstore backups for **unversioned S3-compatible** blostore using the Blobstore Addon, you need to update your runtime configuration when upgrading to PCF v2.3. Remove `s3-unversioned-blobstore-backup-restorer` from your runtime configuration before upgrading.
 If you don't remove this job, upgrading PAS will fail with error:
 <pre>
 Preparing deployment: Preparing deployment (00:00:01)
   L Error: Colocated job 's3-unversioned-blobstore-backup-restorer' is already added to the instance group 'backup-prepare'.
 </pre>
 After removing this job from your runtime configuration, you will need to ensure the `Versioning is enabled for all buckets listed below` checkbox is disabled and the backup buckets are configured in the PAS tile. Please see [External S3 or Ceph Filestore](https://docs.pivotal.io/pivotalcf/2-2/customizing/pcf-aws-manual-er-config.html#external_s3) topic for instructions.
+
 
 ## <a id="upgrade_ops"></a> Upgrade Ops Manager and Installed Products to v2.3
 
@@ -217,7 +228,6 @@ When you export an installation, the export contains the base VM images and nece
     <%= image_tag("./images/upgrading/welcome.png") %>
 
 1. When prompted, enter the **Decryption Passphrase** for this Ops Manager installation. You set this passphrase during your initial installation of Ops Manager. 
-
     <p class="note"><strong>Note:</strong> If lost, the <strong>Decryption Passphrase</strong> cannot be recovered.</p>
 
 1. Click **Choose File** and browse to the installation ZIP file exported in [Step 1](#export) above.
@@ -225,7 +235,6 @@ When you export an installation, the export contains the base VM images and nece
     <%= image_tag("./images/upgrading/decryption_passphrase.png") %>
 
 1. Click **Import**.
-
     <p class="note"><strong>Note:</strong> Some browsers do not provide feedback on the status of the import process, and might appear to hang.</p>
 
 1. A "Successfully imported installation" message appears upon completion.
@@ -234,7 +243,7 @@ When you export an installation, the export contains the base VM images and nece
 
 ### <a id="upgrade_products"></a> Step 3: Upgrade PAS and Product Tiles
 
-1. <a name="success"></a>After upgrading to Ops Manager v2.3, upgrade your product versions. 
+1. <a name="success"></a> After upgrading to Ops Manager v2.3, upgrade your product versions. 
 
 1. Import the product file to your Ops Manager **Installation Dashboard**.
 

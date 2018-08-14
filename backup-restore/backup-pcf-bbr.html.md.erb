@@ -196,10 +196,19 @@ You can also retrieve the credentials using the Ops Manager API with a GET reque
 	</pre>
 	Replace the placeholder values as follows:
 	* `PRIVATE-KEY`: The path to the private key file you created above
-	* `HOST`: The address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is the `BOSH-DIRECTOR-IP`, which you retrieved in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section of this topic.
-  <p class='note'><strong>Note:</strong> Use the optional <code>--debug</code> flag to enable debug logs. See the <a href="#logging">Logging</a> section of this topic for more information.</p>
+	* `HOST`: The address of the BOSH Director. If the BOSH Director is public,
+  this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is
+  the `BOSH-DIRECTOR-IP`, which you retrieved in the
+  [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section of this topic.
+  <p class='note'><strong>Note:</strong> Use the optional <code>--debug</code>
+    flag to enable debug logs. See the <a href="#logging">Logging</a> section of
+    this topic for more information.</p>
 
-1. If the pre-backup check succeeds, continue to the [next section](#identify-deployment). If it fails, the Director may not have the correct backup scripts, or the connection to the BOSH Director may have failed.
+1. If the pre-backup check succeeds, continue to [Step 5: Make Sure the Backup Prepare Node is Deployed](#backup-prepare-node)
+below.
+<br><br>
+If the pre-backup check fails, the Director might not have the correct backup scripts, or the connection
+to the BOSH Director might have failed.
 
 ### <a id='backup-prepare-node'></a> Step 5: Make Sure the Backup Prepare Node is Deployed
 
@@ -256,7 +265,10 @@ Perform the following steps to check that your BOSH Director is reachable and ha
     * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 6: Identify Your Deployment](#identify-deployment) section.
     * `PATH-TO-BOSH-SERVER-CERTIFICATE`: This is the path to the Certificate Authority (CA) certificate for the BOSH Director. For more information, see [Ensure BOSH Director Certificate Availability](./system-setup-bbr.html#root-ca-cert).
 
-1. If the pre-backup check succeeds, continue to the [next section](#procedure). If it fails, the deployment you selected may not have the correct backup scripts, or the connection to the BOSH Director may have failed.
+1. If the pre-backup check succeeds, continue to [Create Your Backup](#procedure) below.
+<br><br>
+If the pre-backup check fails, the deployment you selected might not have the correct backup scripts,
+or the connection to the BOSH Director might have failed.
 
 
 ## <a id='procedure'></a> Create Your Backup
@@ -275,24 +287,39 @@ Always export your installation settings before following the steps in the [Impo
   </ul>
 </div>
 
-There are two ways to export the installation settings.
+There are two ways to export Ops Manager installation settings:
 
-1. Using the Ops Manager UI:
-  1. From the **Installation Dashboard** in the Ops Manager interface, click your user name at the top right navigation.
-  1. Select **Settings**.
-  1. Select **Export Installation Settings**.
-  1. Click the **Export Installation Settings** button.
+- [Using the Ops Manager UI](#export-using-ui)
+- [Using the Ops Manager API](#export-using-api)
 
+#### <a id='export-using-ui'></a>Option 1: Using the Ops Manager UI
+
+To export your installation settings using the Ops Manager UI, do the following:
+
+1. From the **Installation Dashboard** in the Ops Manager interface, click your
+user name at the top right navigation.
+
+1. Select **Settings**.
+
+1. Select **Export Installation Settings**.
+
+1. Click the **Export Installation Settings** button.
     <%= image_tag("settings.png") %>
 
-1. Using the Ops Manager API:
+#### <a id='export-using-api'></a> Option 2: Using the Ops Manager API
 
-    ```
-    curl OPSMAN-URL/api/v0/installation_asset_collection \
-      -H "Authorization: Bearer UAA-ACCESS-TOKEN" > installation_settings.zip
-    ```
+If you want to automate the back up process, you can use the Ops Manager API to
+export your installation settings.
 
-    See [Using the Ops Manager API](../ops-man-api.html) for instructions about authenticating and retrieving the `UAA-ACCESS-TOKEN`.
+To export your installation settings using the Ops Manager API, run the following command:
+
+```
+curl OPSMAN-URL/api/v0/installation_asset_collection \
+  -H "Authorization: Bearer UAA-ACCESS-TOKEN" > installation.zip
+```
+
+For instructions about authenticating and retrieving the `UAA-ACCESS-TOKEN`, see
+[Using the Ops Manager API](../ops-man-api.html).
 
 ### <a id='bbr-backup-director'></a> Step 9: Back Up Your BOSH Director
 

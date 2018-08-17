@@ -39,30 +39,66 @@ Scale down to one instance and retry.
 If your MySQL Server cluster is already scaled down to one node, it may have taken longer than normal to restart the cluster. Follow the procedure below to manually verify and retry.
 
 1. List the VMs in your deployment:
-  <pre class="terminal">$ bosh -e DIRECTOR\_IP --ca-cert /var/tempest/workspaces/default/root\_ca\_certificate \
-  -d DEPLOYMENT\_NAME \
-  ssh</pre>
+
+    ```
+    bosh -e BOSH-DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate \
+    -d DEPLOYMENT-NAME \
+    ssh
+    ```
+    Where:
+    <br>
+    * `BOSH-DIRECTOR-IP` is the BOSH Director IP. For how to retrieve this IP address,
+    see [Retrieve BOSH Director Address and Credentials](./restore-pcf-bbr.html#retrieve).
+    * `DEPLOYMENT-NAME` is the deployment name. For how to retrieve the deployment name,
+    see [Identify Your Deployment](./restore-pcf-bbr.html#identify-deployment).
+
 1. Select the `mysql` VM to SSH into.
-1. From the `mysql` VM, run `ps aux | grep MYSQL-JOB` to check that the MySQL job process is running, replacing `MYSQL-JOB` with your MySQL job process name.<br><br>
-If you selected **Internal Databases - MySQL - Percona XtraDB Cluster** when you configured the PAS tile, the process name is `galera-init`.<br><br>
-If you selected **Internal Databases - MySQL - MariaDB Galera Cluster** when you configured the PAS tile, the process name is `mariadb_ctrl`.<br><br>
-  For example:
-  <pre class="terminal">
-  $ ps aux | grep galera-init
-  </pre>
+
+1. From the `mysql` VM, run the following to check that the MySQL job process is running: 
+
+    ```
+    ps aux | grep MYSQL-JOB
+    ```
+    <br>
+    Where `MYSQL-JOB` is your MySQL job process name. Replace with one of the following:
+    <br><br>
+    - If you selected **Internal Databases - MySQL - Percona XtraDB Cluster** 
+    when you configured the PAS tile, replace `MYSQL-JOB` with `galera-init`.
+    - If you selected **Internal Databases - MySQL - MariaDB Galera Cluster** 
+    when you configured the PAS tile, replace `MYSQL-JOB` with `mariadb_ctrl`.
+  
+    For example:
+    <pre class="terminal">
+    $ ps aux | grep galera-init
+    </pre>
 For more information, see the <em>Deploying PAS</em> topic for your IaaS. For example, if you run PAS on AWS, see <a href="../pcf-aws-manual-er-config.html#sys-db">Deploying PAS on AWS</a>.
+
 1. Run the following command to check that `monit` reports that the MySQL job process is in an **Execution Failed** state:
-  <pre class="terminal">$ sudo monit summary</pre>
+    
+    ```
+    sudo monit summary
+    ```
+
 1. If so, run the following command from the `mysql` VM to disable monitoring:
-  <pre class="terminal">$ monit unmonitor</pre>
+    
+    ```
+    monit unmonitor
+    ```
+
 1. Run the following command to enable monitoring:
-  <pre class="terminal">$ monit monitor</pre>
+
+    ```
+    monit monitor
+    ```
+
 1. After a few minutes, run the following command:
-  <pre class="terminal">$ monit summary</pre>
+    ```
+    monit summary
+    ```
   The command should report that all the processes are running.
+
 1. Re-attempt the restore with BBR.
 
----
 
 ### Symptom
 

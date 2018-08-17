@@ -165,9 +165,10 @@ If you recreated IaaS resources such as networks and load balancers by following
 1. SSH into your Ops Manager VM. For more information, see the [SSH into Ops Manager](../trouble-advanced.html#ssh) section of the _Advanced Troubleshooting with the BOSH CLI_ topic.
 
 1. On the Ops Manager VM, delete the `/var/tempest/workspaces/default/deployments/bosh-state.json` file:
-  <pre class="terminal">
-  $ sudo rm /var/tempest/workspaces/default/deployments/bosh-state.json
-  </pre>
+    
+    ```
+    sudo rm /var/tempest/workspaces/default/deployments/bosh-state.json
+    ```
 
 1. Navigate to `YOUR-OPS-MAN-FQDN` in a browser and log into Ops Manager.
 
@@ -215,46 +216,53 @@ Perform the following steps to retrieve the IP address of your BOSH Director and
 1. SSH into your jumpbox.
 
 1. Run the following command to reformat the key and save it to a file named `PRIVATE-KEY` in the current directory, copying in the contents of your private key for `YOUR-PRIVATE-KEY`:
-  <pre class="terminal">
-  $ printf -- "YOUR-PRIVATE-KEY" > PRIVATE-KEY
-  </pre>
+  
+    ```
+    printf -- "YOUR-PRIVATE-KEY" > PRIVATE-KEY
+    ```
 
 1. Ensure the BOSH Director backup artifact is in the folder you from which you will run BBR.
 
 1. Run the BBR restore command from your jumpbox to restore the BOSH Director:
-  <pre class="terminal">
-  $ bbr director \
-      --private-key-path PRIVATE-KEY \
-      --username bbr \
-      --host HOST \
-      restore \
-        --artifact-path PATH-TO-DIRECTOR-BACKUP
-  </pre>
-  Replace the placeholder values as follows:
-  * `PATH-TO-DIRECTOR-BACKUP`: This is the path to the Director backup you want to restore.
-  * `PRIVATE-KEY`: This is the path to the private key file you created above.
-  * `HOST`: This is the address of the BOSH Director. If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, it is the `BOSH-DIRECTOR-IP`, which you retrieved in the [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve) section.
+  
+    ```
+    bbr director \
+    --private-key-path PRIVATE-KEY \
+    --username bbr \
+    --host HOST \
+    restore \
+    --artifact-path PATH-TO-DIRECTOR-BACKUP
+    ```
+    Where:
+    <br>
+    * `PATH-TO-DIRECTOR-BACKUP` is the path to the Director backup you want to restore.
+    * `PRIVATE-KEY`is the path to the private key file you created above.
+    * `HOST`is the address of the BOSH Director. 
+      * If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`. 
+      * If the BOSH Director is not public, it is the `BOSH-DIRECTOR-IP` retrieved 
+      in [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
+    * Use the optional `--debug` flag if you want to enable debug logs. 
+    See the [Logging](backup-pcf-bbr.html#logging) section of the _Backing Up Pivotal Cloud Foundry with BBR_ topic for more information.
+
+1. If the command succeeds, continue to [Step 9: Identify Your Deployment](#identify-deployment).
+<br><br>
+If the command fails, do the following:
+  1. Run the BBR restore-cleanup command:
+
+        ```
+        bbr director \
+        --private-key-path PRIVATE-KEY \
+        --username bbr \
+        --host HOST \
+        restore-cleanup
+        ```
+  1. Run the BBR restore command again after checking the following:
   <br><br>
-  Use the optional `--debug` flag to enable debug logs. See the [Logging](backup-pcf-bbr.html#logging) section of the _Backing Up Pivotal Cloud Foundry with BBR_ topic for more information.
-
-If the commands completes successfully, continue to [Step 9: Identify Your Deployment](#identify-deployment).
-
-If the command fails, run the BBR restore-cleanup command:
-<pre class="terminal">
-$ bbr director \
-  --private-key-path PRIVATE-KEY \
-  --username bbr \
-  --host HOST \
-  restore-cleanup
-</pre>
-
-Then, check the following before running the BBR restore command again:
-
-* Ensure all the parameters in the command are set.
-* Ensure the BOSH Director credentials are valid.
-* Ensure the specified deployment exists.
-* Ensure the source deployment is compatible with the target deployment.
-* Ensure that the jumpbox can reach the BOSH Director.
+      * All the parameters in the command are set.
+      * The BOSH Director credentials are valid.
+      * The specified deployment exists.
+      * The source deployment is compatible with the target deployment.
+      * That the jumpbox can reach the BOSH Director.
 
 
 ## <a id='identify-deployment'></a> Step 9: Identify Your Deployment
@@ -281,13 +289,13 @@ In the above example, the name of the BOSH deployment that contains PCF is `cf-e
 
 For every deployment in the BOSH Director, run the following command:
 
-<pre class="terminal">
-$ bosh -e BOSH-DIRECTOR-IP \
-  --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
-  -d DEPLOYMENT-NAME -n cck \
-  --resolution delete_disk_reference \
-  --resolution delete_vm_reference
-</pre>
+```
+bosh -e BOSH-DIRECTOR-IP \
+--ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+-d DEPLOYMENT-NAME -n cck \
+--resolution delete_disk_reference \
+--resolution delete_vm_reference
+```
 
 This reconciles the BOSH Director's internal state with the state in the IaaS. You can use the list of deployments returned in [Step 9: Identify Your Deployment](#identify-deployment).
 
@@ -316,13 +324,14 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
 1. Download the stemcell from [Pivotal Network](https://network.pivotal.io/products/stemcells).
 
 1. Run the following command to upload the stemcell used by PAS:
-  <pre class="terminal">
-  $ bosh -e BOSH-DIRECTOR-IP \
-      -d DEPLOYMENT-NAME \
-      --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
-      <%= vars.bosh_upload_stemcell %> \
-      --fix PATH-TO-STEMCELL
-  </pre>
+  
+    ```
+    bosh -e BOSH-DIRECTOR-IP \
+    -d DEPLOYMENT-NAME \
+    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+    <%= vars.bosh_upload_stemcell %> \
+    --fix PATH-TO-STEMCELL
+    ```
 
 1. If you have any other tiles installed, ensure you upload their stemcells if they are different from the PAS stemcell. Upload stemcells to the BOSH Director with `bosh <%= vars.bosh_upload_stemcell %> --fix PATH-TO-STEMCELL`, as in the command above.
 
@@ -348,26 +357,40 @@ Scanning 19 persistent disks: 19 OK, 0 missing ...
 1. If you use a non-versioned or non-S3-compatible external blobstore and copied it during the backup, restore the external blobstore with your IaaS specific tools before running PAS restore.
 
 1. Run the BBR restore command from your jumpbox to restore PAS:
-<pre class="terminal">
-$ BOSH_CLIENT_SECRET=BOSH-PASSWORD \
-      bbr deployment \
-        --target BOSH-DIRECTOR-IP \
-        --username BOSH-CLIENT \
-        --deployment DEPLOYMENT-NAME \
-        --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
-        restore \
-          --artifact-path PATH-TO-PAS-BACKUP
-</pre>
 
-    Replace the placeholder values as follows:
+    ```
+    bbr deployment \
+    --target BOSH-DIRECTOR-IP \
+    --username BOSH-CLIENT \
+    --password BOSH-PASSWORD \
+    --deployment DEPLOYMENT-NAME \
+    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+    restore \
+    --artifact-path PATH-TO-PAS-BACKUP
+    ```
+
+    Where:
+    <br>
+    * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in
+    [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
     <br><br>
-    * `BOSH-CLIENT`, `BOSH-PASSWORD`: Use the BOSH UAA user provided in  **Pivotal Ops Manager > Credentials > Uaa Bbr Client Credentials**.
+    * `BOSH-CLIENT`, `BOSH-PASSWORD` are the BOSH UAA credentials.
     <br><br>
-       You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.<br><br>
-    * `BOSH-DIRECTOR-IP`: You retrieved this value in the [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve) section.
-    * `DEPLOYMENT-NAME`: You retrieved this value in the [Step 9: Identify Your Deployment](#identify-deployment) section.
-    * `PATH-TO-BOSH-SERVER-CERTIFICATE`: This is the path to the BOSH Director’s Certificate Authority (CA) certificate, if the certificate is not verifiable by the local machine’s certificate chain.
-    * `PATH-TO-PAS-BACKUP`: This is the path to the PAS backup you want to restore.
+    To retrieve these credentials, navigate to the Ops Manager Installation Dashboard, 
+    click **BOSH Director**, navigate to the **Credentials** tab, and click **Uaa Bbr Client Credentials**.
+    <br><br>
+    You can also retrieve the credentials using the Ops Manager API with a GET
+    request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`.
+    <br>
+    For more information, see [Using the Ops Manager API](../ops-man-api.html).
+    <br><br>
+    * `DEPLOYMENT-NAME` is the deployment name retrieved in 
+    [Step 9: Identify Your Deployment](#identify-deployment).
+    <br><br>
+    * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
+    (CA) certificate for the BOSH Director, if the certificate is not verifiable
+    by the local machine’s certificate chain.
+    * `PATH-TO-PAS-BACKUP` is the path to the PAS backup you want to restore.
 
 1. If desired, scale the MySQL Server job back up to its previous number of instances by navigating to the **Resource Config** section of the PAS tile. After scaling the job, return to the Ops Manager Installation Dashboard and click **Apply Changes** to deploy.
 
@@ -396,27 +419,30 @@ If you have on-demand service instances provisioned by an on-demand service brok
 If you have any deployments that were deployed manually with the BOSH Director rather than through an Ops Manager tile, perform the following steps to restore the VMs.
 
 1. Identify the names of the deployments that you need to restore. Do not include the deployments from Ops Manager tiles. Run the following command to obtain a list of all deployments on your BOSH Director:
-  <pre class="terminal">
-  $ bosh -e BOSH-DIRECTOR-IP \
-      --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
-      deployments
-  </pre>
+  
+    ``` 
+    bosh -e BOSH-DIRECTOR-IP \
+    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+    deployments
+    ```
 
 1. Run the following command for each deployment you need to restore:
-  <pre class="terminal">
-  $ bosh -n -e BOSH-DIRECTOR-IP \
-      --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
-      -d DEPLOYMENT-NAME \
-      cck --resolution=recreate_vm
-  </pre>
+  
+    ```
+    bosh -n -e BOSH-DIRECTOR-IP \
+    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+    -d DEPLOYMENT-NAME \
+    cck --resolution=recreate_vm
+    ```
 
 1. Run the following command to verify the status of the VMs in each deployment:
-  <pre class="terminal">
-  $ bosh -e BOSH-DIRECTOR-IP \
-      --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
-      -d DEPLOYMENT-NAME \
-      vms
-  </pre>
+    
+    ```
+    bosh -e BOSH-DIRECTOR-IP \
+    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+    -d DEPLOYMENT-NAME \
+    vms
+    ```
   The process state for all VMs should show as `running`.
 
 
@@ -431,19 +457,21 @@ To delete the disks, perform one of the following procedures:
 * Use the BOSH CLI to delete the disks by performing the following steps:
   1. Target the redeployed BOSH Director using the BOSH CLI by performing the procedures in [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
   1. List the deployments by running the following command:
-    <pre class="terminal">
-    $ bosh -e BOSH-DIRECTOR-IP \
-    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
-    </pre>
+    
+        ```
+        bosh -e BOSH-DIRECTOR-IP \
+        --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
+        ```
   1. Delete each deployment with the following command:
-    <pre class="terminal">
-    $ bosh -d DEPLOYMENT-NAME <%= vars.bosh_delete_deployment %>
-    </pre>
-
+    
+        ```
+        bosh -d DEPLOYMENT-NAME <%= vars.bosh_delete_deployment %>
+        ```
 * Log in to your IaaS account and delete the disks manually. Run the following command to retrieve a list of disk IDs:
-  <pre class="terminal">
-  $ bosh -e BOSH-DIRECTOR-IP \
-  --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE instances -i
-  </pre>
+  
+    ```
+    bosh -e BOSH-DIRECTOR-IP \
+    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE instances -i
+    ```
 
 Once the disks are deleted, continue with [Step 10: Remove Stale Cloud IDs for All Deployments](#bosh-cck).

@@ -396,9 +396,6 @@ If the command fails, do the following:
 
 1. Ensure the specified deployment exists.
 
-1. Consult the [Exit Codes](#exit-codes) section below.
-
-
 ## <a id='after'></a> After Taking Your Backup
 
 ### <a id='transfer-artifacts'></a> Step 11: Transfer Backup Artifacts
@@ -446,58 +443,7 @@ After you deploy the second environment, follow the instructions in [Restoring P
 
 For a sandbox or other non-production environment, you can optionally perform an _in-place_ restore of PAS only. In this case, you restore the PAS backup to the same PCF environment that the backup was created from. Follow the procedures in [Restoring PCF from Backup with BBR](restore-pcf-bbr.html#restore-ert).
 
-
-## <a id='exit-codes-logging'></a> Exit Codes and Logging
-
-For information about the exit codes returned by BBR and BBR logging, consult the sections below.
-
-### <a id='exit-codes'></a> Exit Codes
-
-The exit code returned by BBR indicates the status of the backup. The following table matches exit codes to error messages.
-
-<table>
-<tr>
-<th>Value</th>
-<th>Error</th>
-</tr>
-<tr>
-<td>0</td>
-<td>Success</td>
-</tr>
-<tr>
-<td>1</td>
-<td>General failure</td>
-</tr>
-<tr>
-<td>4</td>
-<td>The pre-backup lock failed.</td>
-</tr>
-<tr>
-<td>8</td>
-<td>The post-backup unlock failed. Your deployment may be in a bad state and requires attention.</td>
-</tr>
-<tr>
-<td>16</td>
-<td>The cleanup failed. This is a non-fatal error indicating that the utility has been unable to clean up open BOSH SSH connections to the deployment VMs. Manual cleanup may be required to clear any hanging BOSH users and connections.</td>
-</tr>
-</table>
-
-If multiple failures occur, your exit code reflects a combination of values. Use bitwise AND to determine which failures occurred.
-
-For example, the exit code `5` indicates that the pre-backup lock failed and a general error occurred.
-
-To check that a bit is set, use bitwise AND, as demonstrated by the following example of exit code `20`:
-
-<pre class="highlight ruby"><code><span class="mi">20</span> <span class="o">&amp;</span> <span class="mi">1</span>  <span class="o">==</span> <span class="mi">1</span>    <span class="c1"># false</span>
-<span class="mi">20</span> <span class="o">&amp;</span> <span class="mi">4</span>  <span class="o">==</span> <span class="mi">4</span>    <span class="c1"># true; lock failed</span>
-<span class="mi">20</span> <span class="o">&amp;</span> <span class="mi">8</span>  <span class="o">==</span> <span class="mi">8</span>    <span class="c1"># false</span>
-<span class="mi">20</span> <span class="o">&amp;</span> <span class="mi">16</span> <span class="o">==</span> <span class="mi">16</span>   <span class="c1"># true; cleanup failed</span>
-</code>
-</pre>
-
-Exit code `20` indicates that the pre-backup lock failed and cleanup failed.
-
-### <a id='logging'></a> Logging
+## <a id='logging'></a> Logging
 
 BBR outputs logs to stdout. By default, BBR logs:
 
@@ -512,7 +458,6 @@ If you require additional logging, use the optional `--debug` flag to print the 
 * All commands executed on remote instances
 * All commands executed on local environment
 * Standard in and standard out streams for the backup and restore scripts when they are executed
-
 
 ## <a id='canceling-backup'></a> Cancelling a Backup
 

@@ -1,0 +1,35 @@
+---
+title: Configuring Frontend Idle Timeout for Gorouter and HAProxy
+owner: Releng, routing
+---
+
+This topic describes how to configure the *Frontend Idle Timeout for Gorouter and HAProxy** field in the Pivotal Application Service (PAS) **Networking** pane. 
+
+You can optionally use the **Frontend Idle Timeout for Gorouter and HAProxy** field to help prevent connections from your load balancer to Gorouter or HAProxy from being closed prematurely. The value you enter sets the duration, in seconds, that Gorouter or HAProxy maintains an idle open connection from a load balancer that supports keep-alive.ß
+  
+In general, set the value higher than your load balancer's backend idle timeout to avoid the race condition where the load balancer sends a request before it discovers that Gorouter or HAProxy has closed the connection.
+
+See the following table for specific guidance and exceptions to this rule:
+
+<table>
+	<tr>
+		<th>IaaS</th>
+		<th>Guidance</th>
+	</tr>
+	<tr>
+		<td>AWS</td>
+		<td>AWS ELB has a default timeout of 60 seconds, so Pivotal recommends a value greater than <code>60</code>.</td>
+	</tr>
+	<tr>
+		<td>Azure</td>
+		<td>By default, Azure load balancer times out at 240 seconds without sending a TCP RST to clients, so as an exception, Pivotal recommends a value lower than <code>240</code> to force the load balancer to send the TCP RST.</td>
+	</tr>
+	<tr>
+		<td>GCP</td>
+		<td>GCP has a default timeout of 600 seconds, so Pivotal recommends a value greater than <code>600</code>. </td>
+	</tr>
+	<tr>
+		<td>Other</td>
+		<td>Set the timeout value to be greater than that of the load balancer's backend idle timeout.</td>
+	</tr>
+</table>

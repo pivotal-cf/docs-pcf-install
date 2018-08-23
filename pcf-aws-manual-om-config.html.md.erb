@@ -17,14 +17,12 @@ Before beginning this procedure, ensure that you have successfully completed all
 1. In a web browser, navigate to the fully qualified domain you created in the [Configure DNS Records](./pcf-aws-manual-config.html#pcfaws-dns) step of _Installing PCF on AWS Manually_.
 
 1. When Ops Manager starts for the first time, you must choose one of the following:
-    * [Use an Identity Provider](#idp): If you use an Identity Provider, an external identity server maintains your user database.
     * [Internal Authentication](#internal): If you use Internal Authentication, PCF maintains your user database.
+    * [SAML Identity Provider](#saml): If you use a SAML Identity Provider (Idp), an external identity server maintains your user database.
+    * [LDAP Server](#ldap): If you use a LDAP Server, an external identity server maintains your user database.
+
 
     <%= image_tag("select-authentication.png") %>
-
-### <a id='idp'></a> Use an Identity Provider (IdP)
-
-<%= partial 'using_idp_ops_manager' %> 
 
 ### <a id='internal'></a> Internal Authentication
 
@@ -41,6 +39,13 @@ Before beginning this procedure, ensure that you have successfully completed all
 
     <%= image_tag("cf-login.png") %>
 
+### <a id='saml'></a> SAML Identity Provider
+
+<%= partial 'using_saml_idp_ops_manager' %>
+
+### <a id='ldap'></a> LDAP Server
+
+<%= partial 'using_ldap_server_ops_manager' %>
 
 ## <a id='pcfaws-om-awsconfig'></a> Step 2: AWS Config Page
 
@@ -54,10 +59,10 @@ Before beginning this procedure, ensure that you have successfully completed all
 
 1. Select **Use AWS Keys** or **Use AWS Instance Profile**.
     * **Access Key ID** and **AWS Secret Key**: To retrieve your AWS key information, use the AWS Identity and Access Management (IAM) credentials that you generated in the [Step 3: Create an IAM User for PCF](pcf-aws-manual-config.html#create-iam) section of the _Installing PCF on AWS Manually_ topic.
-    * **AWS IAM Instance Profile**: Enter the name of the IAM profile you created in the [Step 3: Create an IAM User for PCF](pcf-aws-manual-config.html#create-iam) section of the _Installing PCF on AWS Manually_ topic. 
+    * **AWS IAM Instance Profile**: Enter the name of the IAM profile you created in the [Step 3: Create an IAM User for PCF](pcf-aws-manual-config.html#create-iam) section of the _Installing PCF on AWS Manually_ topic.
 
 1. Complete the rest of the **AWS Management Console Config** page:
-    * **Security Group ID**: Enter the **Group ID** of the `pcf-vms-security-group` you created for your PCF VMs in the [Step 6: Configure a Security Group for PCF VMs](pcf-aws-manual-config.html#pcfaws-om-ersecgrp) section of the _Installing PCF on AWS Manually_ topic. Locate the Group ID in the **Security Groups** tab of your EC2 Dashboard. 
+    * **Security Group ID**: Enter the **Group ID** of the `pcf-vms-security-group` you created for your PCF VMs in the [Step 6: Configure a Security Group for PCF VMs](pcf-aws-manual-config.html#pcfaws-om-ersecgrp) section of the _Installing PCF on AWS Manually_ topic. Locate the Group ID in the **Security Groups** tab of your EC2 Dashboard.
     * **Key Pair Name**: Enter `pcf-ops-manager-key`.
     * **SSH Private Key**: Open the AWS key pair `pcf-ops-manager-keys.pem` file you generated in the [Step 3: Create an IAM User for PCF](pcf-aws-manual-config.html#create-iam) section of the _Installing PCF on AWS Manually_ topic. Copy the contents of the `.pem` file and paste it into the **SSH Private Key** field.
     * **Region**: Select the region where you deployed Ops Manager.
@@ -91,7 +96,7 @@ Before beginning this procedure, ensure that you have successfully completed all
 
 1. <%= partial 'legacy-deploys' %>
 
-1. Select **Keep Unreachable Director VMs** if you want to preserve BOSH Director VMs after a failed deployment for troubleshooting purposes. 
+1. Select **Keep Unreachable Director VMs** if you want to preserve BOSH Director VMs after a failed deployment for troubleshooting purposes.
 
 1. (Optional) Select **HM Pager Duty Plugin** to enable Health Monitor integration with PagerDuty.
 
@@ -175,10 +180,10 @@ Before beginning this procedure, ensure that you have successfully completed all
 1. Select **Create Availability Zones**.
 <%= image_tag("cloudform/create-az.png") %>
 
-1. Perform the following steps to add the three AZs you specified in the [Step 4: Create a VPC](pcf-aws-manual-config.html#pcfaws-vpc) section of the _Installing PCF on AWS Manually_ topic: 
+1. Perform the following steps to add the three AZs you specified in the [Step 4: Create a VPC](pcf-aws-manual-config.html#pcfaws-vpc) section of the _Installing PCF on AWS Manually_ topic:
     1. Click **Add**.
     1. For **Amazon Availability Zone**, enter the name of the AZ.
-    1. Repeat until you have entered all three AZs, in the format `REGION-#a`, `REGION-#b`, and `REGION-#c`. For example, `us-west-2a`, `us-west-2b`, and `us-west-2c`. 
+    1. Repeat until you have entered all three AZs, in the format `REGION-#a`, `REGION-#b`, and `REGION-#c`. For example, `us-west-2a`, `us-west-2b`, and `us-west-2c`.
 
 1. Click **Save**.
 
@@ -358,7 +363,7 @@ choose **Automatic** from the drop-down menu to allocate the recommended resourc
 
 1. Return to the **Installation Dashboard**.
 
-1. Click **Apply Changes**. 
+1. Click **Apply Changes**.
 
 1. BOSH Director begins to install. The **Changes Applied** window displays when the installation process successfully completes.
 

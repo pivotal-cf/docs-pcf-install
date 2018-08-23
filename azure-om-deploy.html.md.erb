@@ -93,18 +93,28 @@ If you choose to deploy PCF on Azure Stack regardless of its beta status, comple
     --protocol Tcp --priority 300 \
     --destination-port-range 22 
     </pre>
-1. Create a virtual network named `pcf-net`.
+1. Create a virtual network named `PCF`.
     <pre class="terminal">
-    $ az network vnet create --name pcf-net \
+    $ az network vnet create --name PCF \
     --resource-group $RESOURCE_GROUP --location $LOCATION \
     --address-prefixes 10.0.0.0/16
     </pre>
-1. Add a subnet to the network for PCF VMs and attach the Network Security Group.
+1. Add subnets to the network for Ops Manager, BOSH director and PCF VMs and attach the Network Security Group.
     <pre class="terminal">
-    $ az network vnet subnet create --name pcf \
-    --vnet-name pcf-net \
+    $ az network vnet subnet create --name Management \
+    --vnet-name PCF \
     --resource-group $RESOURCE_GROUP \
-    --address-prefix 10.0.0.0/20 \
+    --address-prefix 10.0.4.0/22 \
+    --network-security-group pcf-nsg
+    $ az network vnet subnet create --name Deployment \
+    --vnet-name PCF \
+    --resource-group $RESOURCE_GROUP \
+    --address-prefix 10.0.12.0/20 \
+    --network-security-group pcf-nsg
+    $ az network vnet subnet create --name Services \
+    --vnet-name PCF \
+    --resource-group $RESOURCE_GROUP \
+    --address-prefix 10.0.8.0/20 \
     --network-security-group pcf-nsg
     </pre>
 
@@ -204,34 +214,26 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     1. Create a load balancer named `pcf-lb`. A static IP address will be automatically created for Standard sku load balancers.
         <pre class="terminal">
         $ az network lb create --name pcf-lb \
-        --resource-group $RESOURCE_GROUP --location $LOCATION --sku Standard
+        --resource-group $RESOURCE_GROUP --location $LOCATION \
+        --backend-pool-name pcf-lb-be-pool --frontend-ip-name pcf-lb-fe-ip \
+        --public-ip-address pcf-lb-ip --public-ip-address-allocation Static \
+        --sku Standard
         </pre>
-
-    1. Add a front-end IP configuration to the load balancer.
-        <pre class="terminal">
-        $ az network lb frontend-ip create --lb-name pcf-lb \
-        --name pcf-fe-ip --resource-group $RESOURCE_GROUP \
-        --public-ip-address PublicIPpcf-lb
-        </pre>
+        <p class="note"><strong>Note</strong>: If the Standard SKU is not available in Azure China, you can change to use the Basic SKU.</p>
+        <p class="note"><strong>Note</strong>: This backend pool is empty when you create it.</p>
     1. Add a probe to the load balancer.
         <pre class="terminal">
         $ az network lb probe create --lb-name pcf-lb \
         --name tcp80 --resource-group $RESOURCE_GROUP \
         --protocol Tcp --port 80
         </pre>
-    1. Add a backend address pool to the load balancer.
-        <pre class="terminal">
-        $ az network lb address-pool create --lb-name pcf-lb \
-        --name pcf-lbbepool --resource-group $RESOURCE_GROUP
-        </pre>
-        <p class="note"><strong>Note</strong>: This backend pool is empty when you create it.</p>
     1. Add a load balancing rule for HTTP.
         <pre class="terminal">
         $ az network lb rule create --lb-name pcf-lb \
         --name http --resource-group $RESOURCE_GROUP \
         --protocol Tcp --frontend-port 80 \
-        --backend-port 80 --frontend-ip-name pcf-fe-ip \
-        --backend-pool-name pcf-lbbepool \
+        --backend-port 80 --frontend-ip-name pcf-lb-fe-ip \
+        --backend-pool-name pcf-lb-be-pool \
         --probe-name tcp80
         </pre>
     1. Add a load balancing rule for HTTPS.
@@ -239,62 +241,43 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
         $ az network lb rule create --lb-name pcf-lb \
         --name https --resource-group $RESOURCE_GROUP \
         --protocol Tcp --frontend-port 443 \
-        --backend-port 443 --frontend-ip-name pcf-fe-ip \
-        --backend-pool-name pcf-lbbepool \
+        --backend-port 443 --frontend-ip-name pcf-lb-fe-ip \
+        --backend-pool-name pcf-lb-be-pool \
         --probe-name tcp80
         </pre>
 
-    1.  Navigate to your DNS provider, and create an entry that points `*.YOUR-SUBDOMAIN` to the public IP address of your load balancer that you recorded in a previous step. For example, create an entry that points `azure.example.com` to `198.51.100.1`.
-        <p class="note"><strong>Note</strong>: You can retrieve it by navigating to the Azure portal, clicking <strong>All resources</strong>, and clicking the <strong>Public IP address</strong> resource named <code>PublicIPpcf-lb</code>.</p>
+    1.  Navigate to your DNS provider, and create an entry that points `*.YOUR-SUBDOMAIN` to the public IP address of your load balancer. For example, create an entry that points `azure.example.com` to `198.51.100.1`.
+        <p class="note"><strong>Note</strong>: You can retrieve it by <code>az network public-ip show --name pcf-lb-ip --resource-group $RESOURCE_GROUP</code>.</p>
 
 1. **Optional:** Diego SSH Load Balancer
     1. Create a load balancer named `pcf-ssh-lb`.
         <pre class="terminal">
         $ az network lb create --name pcf-ssh-lb \
-        --resource-group $RESOURCE_GROUP --location $LOCATION
-        </pre>
-    1. Create a static IP address for the load balancer named `pcf-ssh-lb-ip`.
-        <pre class="terminal">
-        $ az network public-ip create --name pcf-ssh-lb-ip \
         --resource-group $RESOURCE_GROUP --location $LOCATION \
-        --allocation-method Static
+        --backend-pool-name pcf-ssh-lb-be-pool --frontend-ip-name pcf-ssh-lb-fe-ip \
+        --public-ip-address pcf-ssh-lb-ip --public-ip-address-allocation Static \
+        --sku Standard
         </pre>
-    1. Record the `ipAddress` from the output of the above command. This is the public IP address of your load balancer.
-    1. Add a front-end IP configuration to the load balancer.
-        <pre class="terminal">
-        $ az network lb frontend-ip create --lb-name pcf-ssh-lb \
-        --name pcf-fe-ip --resource-group $RESOURCE_GROUP \
-        --public-ip-address pcf-ssh-lb-ip
-        </pre>
+        <p class="note"><strong>Note</strong>: If the Standard SKU is not available in Azure China, you can change to use the Basic SKU.</p>
+        <p class="note"><strong>Note</strong>: This backend pool is empty when you create it.</p>
     1. Add a probe to the load balancer.
         <pre class="terminal">
         $ az network lb probe create --lb-name pcf-ssh-lb \
         --name tcp2222 --resource-group $RESOURCE_GROUP \
         --protocol Tcp --port 2222
         </pre>
-    1. Add a backend address pool to the load balancer.
-        <pre class="terminal">
-        $ az network lb address-pool create --lb-name pcf-ssh-lb \
-        --name pcf-ssh-lbbepool --resource-group $RESOURCE_GROUP
-        </pre>
-        <p class="note"><strong>Note</strong>: This backend pool is empty when you create it.</p>
     1. Add a load balancing rule for SSH.
         <pre class="terminal">
         $ az network lb rule create --lb-name pcf-ssh-lb \
         --name diego-ssh --resource-group $RESOURCE_GROUP \
         --protocol Tcp --frontend-port 2222 \
-        --backend-port 2222 --frontend-ip-name pcf-fe-ip \
-        --backend-pool-name pcf-ssh-lbbepool
+        --backend-port 2222 --frontend-ip-name pcf-ssh-lb-fe-ip \
+        --backend-pool-name pcf-ssh-lb-be-pool \
         --probe-name tcp2222
         </pre>
 
-    1.  Navigate to your DNS provider, and create an entry that points `ssh.sys.YOUR-SUBDOMAIN`
-    to the public IP address of your load balancer that you recorded in a previous step.
-    For example, create an entry that points `azure.example.com` to `198.51.100.1`.
-    <p class="note"><strong>Note</strong>: If you did not record the IP address
-    of your load balancer earlier, you can retrieve it by navigating to the Azure portal,
-    clicking <strong>All resources</strong>, and clicking the <strong>Public IP address</strong>
-    resource that ends with <code>pcf-ssh-lb-ip</code>.</p>
+    1.  Navigate to your DNS provider, and create an entry that points `ssh.sys.YOUR-SUBDOMAIN` to the public IP address of your load balancer. For example, create an entry that points `azure.example.com` to `198.51.100.1`.
+        <p class="note"><strong>Note</strong>: You can retrieve it by <code>az network public-ip show --name pcf-ssh-lb-ip --resource-group $RESOURCE_GROUP</code>.</p>
 
  
 ##<a id='boot'></a> Step 4: Boot Ops Manager
@@ -309,7 +292,7 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
 1. Download the Ops Manager image. For compatibility when upgrading to future versions of Ops Manager, choose a unique name for the image that includes the Ops Manager version number. For example, replace <code>opsman-image-2.0.x</code> in the following examples with <code>opsman-image-2.0.1</code>.
   * If you use unmanaged disks, perform the following steps:
   <p class="note"><strong>Note</strong>: Azure Stack requires unmanaged disks.</p>
-      1. Download the Ops Manager image to your local machine. The image size is 5&nbsp;GB.
+      1. Download the Ops Manager image to your local machine. The image size is 10&nbsp;GB.
         <pre class="terminal">$ wget $OPS\_MAN\_IMAGE\_URL -O opsman-image-2.0.x.vhd</pre>
       1. Upload the image to your storage account using the Azure CLI.
         <pre class="terminal">
@@ -331,7 +314,7 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
         <pre class="terminal">
         $ az storage blob show --name opsman-image-2.0.x.vhd \
         --container-name opsmanager \
-        --account-name $STORAGE_NAME
+        --connection-string $CONNECTION_STRING
         ...
         "copy": {
           "completionTime": "2017-06-26T22:24:11+00:00",
@@ -374,8 +357,8 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
 
 1. Create a network interface for Ops Manager.
     <pre class="terminal">
-    $ az network nic create --vnet-name pcf-net \
-    --subnet pcf --network-security-group opsmgr-nsg \
+    $ az network nic create --vnet-name PCF \
+    --subnet Management --network-security-group opsmgr-nsg \
     --private-ip-address 10.0.0.5 \
     --public-ip-address ops-manager-ip \
     --resource-group $RESOURCE_GROUP \
@@ -409,9 +392,9 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
     * If you are using Azure managed disks, perform the following steps:
         1. Create a managed image from the Ops Manager VHD file:
             <pre class="terminal">
-            $ az image create --resource-group $RESOURCE\_GROUP \
+            $ az image create --resource-group $RESOURCE_GROUP \
             --name opsman-image-2.0.x \
-            --source https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/image-2.0.x.vhd \
+            --source https://$STORAGE_NAME.blob.core.windows.net/opsmanager/image-2.0.x.vhd \
             --location $LOCATION \
             --os-type Linux
             </pre>
@@ -425,6 +408,7 @@ Azure for PCF uses multiple general-purpose Azure storage accounts. The BOSH and
              --location $LOCATION \
              --nics opsman-nic \
              --image opsman-image-2.0.x \
+             --os-disk-size-gb 128 \
              --os-disk-name opsman-2.0.x-osdisk \
              --admin-username ubuntu \
              --size Standard\_DS2_v2 \

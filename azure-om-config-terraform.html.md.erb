@@ -18,34 +18,40 @@ To complete the procedures in this topic, you must have access to the output fro
 
 ## <a id='access-om'></a> Step 1: Access Ops Manager
 
-<p class="note"><strong>Note:</strong> For security, Ops Manager v1.7 and later require that you log in using a fully qualified domain name.</a></p> 
+<p class="note"><strong>Note:</strong> For security, Ops Manager v1.7 and later require that you log in using a fully qualified domain name.</a></p>
 
 1. In a web browser, navigate to the fully qualified domain name (FQDN) of the BOSH Director. Use the `ops_manager_dns` value from running `terraform output`.
 
 1. When Ops Manager starts for the first time, you must choose one of the following:
-    * [Use an Identity Provider](#idp): If you use an Identity Provider, an external identity server maintains your user database.
     * [Internal Authentication](#internal): If you use Internal Authentication, PCF maintains your user database.
+    * [SAML Identity Provider](#saml): If you use a SAML Identity Provider (Idp), an external identity server maintains your user database.
+    * [LDAP Server](#ldap): If you use a LDAP Server, an external identity server maintains your user database.
+
 
     <%= image_tag("select-authentication.png") %>
 
-### <a id='idp'></a> Use an Identity Provider (IdP)
-
-<%= partial 'using_idp_ops_manager' %> 
-
 ### <a id='internal'></a> Internal Authentication
 
-1. When redirected to the **Internal Authentication** page, you must complete the following steps:
+1.  When redirected to the **Internal Authentication** page, you must complete the following steps:
     * Enter a **Username**, **Password**, and **Password confirmation** to create an Admin user.
-    * Enter a **Decryption passphrase** and the **Decryption passphrase confirmation**. This passphrase encrypts the Ops Manager datastore, and is not recoverable if lost.
+    * Enter a **Decryption passphrase** and the **Decryption passphrase confirmation**. This passphrase encrypts the Ops Manager datastore, and is not recoverable.
     * If you are using an **HTTP proxy** or **HTTPS proxy**, follow the instructions in the [Configuring Proxy Settings for the BOSH CPI](./pcf-director-proxy-settings.html) topic.
     * Read the **End User License Agreement**, and select the checkbox to accept the terms.
     * Click **Setup Authentication**.
 
- 	<%= image_tag("om-login.png") %>
+    <%= image_tag("om-login.png") %>
 
-1. Log in to Ops Manager with the Admin username and password that you created in the previous step.
+1. Log in to Ops Manager with the Admin username and password you created in the previous step.
 
     <%= image_tag("cf-login.png") %>
+
+### <a id='saml'></a> SAML Identity Provider
+
+<%= partial 'using_saml_idp_ops_manager' %>
+
+### <a id='ldap'></a> LDAP Server
+
+<%= partial 'using_ldap_server_ops_manager' %>
 
 
 ## <a id='azure-config'></a> Step 2: Azure Config Page
@@ -59,7 +65,7 @@ To complete the procedures in this topic, you must have access to the output fro
     <%= image_tag("azure/azure-config.png") %>
 
 1. Complete the following fields with information you obtained in the [Preparing to Deploy PCF on Azure](./azure-prepare-env.html) topic.
-	* **Subscription ID**: Enter the ID of your Azure subscription. 
+	* **Subscription ID**: Enter the ID of your Azure subscription.
 	* **Tenant ID**: Enter your `TENANT_ID`.
 	* **Application ID**: Enter the `APPLICATION_ID` that you created in the [Create an Azure Active Directory Application](./azure-prepare-env.html#create-aad) step of the _Preparing to Deploy PCF on Azure_ topic.
 	* **Client Secret**: Enter your `CLIENT_SECRET`.
@@ -73,9 +79,9 @@ To complete the procedures in this topic, you must have access to the output fro
 
 1. For **Default Security Group**, enter the `bosh_deployed_vms_security_group_name` output from Terraform.
 
-1. For **SSH Public Key**, enter the `ops_manager_ssh_public_key` output from Terraform. 
+1. For **SSH Public Key**, enter the `ops_manager_ssh_public_key` output from Terraform.
 
-1. For **SSH Private Key**, enter the `ops_manager_ssh_private_key` output from Terraform. 
+1. For **SSH Private Key**, enter the `ops_manager_ssh_private_key` output from Terraform.
 
 1. <%= partial "azure-environment" %>
 
@@ -106,7 +112,7 @@ To complete the procedures in this topic, you must have access to the output fro
 
 1. <%= partial 'legacy-deploys' %>
 
-1. Select **Keep Unreachable Director VMs** if you want to preserve BOSH Director VMs after a failed deployment for troubleshooting purposes. 
+1. Select **Keep Unreachable Director VMs** if you want to preserve BOSH Director VMs after a failed deployment for troubleshooting purposes.
 
 1. Select **HM Pager Duty Plugin** to enable Health Monitor integration with PagerDuty.
 

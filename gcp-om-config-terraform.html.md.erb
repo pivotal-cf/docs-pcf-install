@@ -13,39 +13,46 @@ This topic describes how to configure the BOSH Director for Pivotal Cloud Foundr
 
 ## <a id='prereq'></a> Prerequisite
 
-To complete the procedures in this topic, you must have access to the output from when you ran `terraform apply` to create resources for this deployment. You can view this output at any time by running `terraform output`. You use the values in your Terraform output to configure the BOSH Director tile. 
+To complete the procedures in this topic, you must have access to the output from when you ran `terraform apply` to create resources for this deployment. You can view this output at any time by running `terraform output`. You use the values in your Terraform output to configure the BOSH Director tile.
 
 
 ## <a id='access-om'></a> Step 1: Access Ops Manager
 
 1. In a web browser, navigate to the fully qualified domain name (FQDN) of the BOSH Director.
 Use the `ops_manager_dns` value from running `terraform output`.
-    <p class="note"><strong>Note:</strong> In order to set up Ops Manager authentication correctly, Pivotal recommends using a Fully Qualified Domain Name (FQDN) to access Ops Manager. Using an ephemeral IP address to access Ops Manager can cause authentication errors upon subsequent access.</p>
+
+<p class="note"><strong>Note:</strong> In order to set up Ops Manager authentication correctly, Pivotal recommends using a Fully Qualified Domain Name (FQDN) to access Ops Manager. Using an ephemeral IP address to access Ops Manager can cause authentication errors upon subsequent access.</p>
 
 1. When Ops Manager starts for the first time, you must choose one of the following:
-    * [Use an Identity Provider](#idp): If you use an Identity Provider, an external identity server maintains your user database.
     * [Internal Authentication](#internal): If you use Internal Authentication, PCF maintains your user database.
+    * [SAML Identity Provider](#saml): If you use a SAML Identity Provider (Idp), an external identity server maintains your user database.
+    * [LDAP Server](#ldap): If you use a LDAP Server, an external identity server maintains your user database.
+
 
     <%= image_tag("select-authentication.png") %>
 
-### <a id='idp'></a> Use an Identity Provider (IdP)
-
-<%= partial 'using_idp_ops_manager' %> 
-
 ### <a id='internal'></a> Internal Authentication
 
-1. When redirected to the **Internal Authentication** page, you must complete the following steps:
+1.  When redirected to the **Internal Authentication** page, you must complete the following steps:
     * Enter a **Username**, **Password**, and **Password confirmation** to create an Admin user.
-    * Enter a **Decryption passphrase** and the **Decryption passphrase confirmation**. This passphrase encrypts the Ops Manager datastore, and is not recoverable if lost.
+    * Enter a **Decryption passphrase** and the **Decryption passphrase confirmation**. This passphrase encrypts the Ops Manager datastore, and is not recoverable.
     * If you are using an **HTTP proxy** or **HTTPS proxy**, follow the instructions in the [Configuring Proxy Settings for the BOSH CPI](./pcf-director-proxy-settings.html) topic.
     * Read the **End User License Agreement**, and select the checkbox to accept the terms.
     * Click **Setup Authentication**.
 
- 	<%= image_tag("om-login.png") %>
+    <%= image_tag("om-login.png") %>
 
-1. Log in to Ops Manager with the Admin username and password that you created in the previous step.
+1. Log in to Ops Manager with the Admin username and password you created in the previous step.
 
     <%= image_tag("cf-login.png") %>
+
+### <a id='saml'></a> SAML Identity Provider
+
+<%= partial 'using_saml_idp_ops_manager' %>
+
+### <a id='ldap'></a> LDAP Server
+
+<%= partial 'using_ldap_server_ops_manager' %>
 
 
 ## <a id='gcp-config'></a> Step 2: Google Cloud Platform Config
@@ -88,7 +95,7 @@ Use the `ops_manager_dns` value from running `terraform output`.
 
 1. <%= partial 'legacy-deploys' %>
 
-1. (Optional) Select **Keep Unreachable Director VMs** if you want to preserve BOSH Director VMs after a failed deployment for troubleshooting purposes. 
+1. (Optional) Select **Keep Unreachable Director VMs** if you want to preserve BOSH Director VMs after a failed deployment for troubleshooting purposes.
 
 1. (Optional) Select **HM Pager Duty Plugin** to enable Health Monitor integration with PagerDuty.
     <%= image_tag("images/director_hm_pager.png") %>
@@ -110,11 +117,11 @@ Use the `ops_manager_dns` value from running `terraform output`.
 
 1. <%= partial "blobstore-location" %>
 
-1. For **Database Location**, if you configured your `terraform.tfvars` file to create an external database for Ops Manager, select **External MySQL Database** and complete the fields below. Otherwise, select **Internal**. 
-    * **Host**: Enter the value of `sql_db_ip` from your Terraform output. 
-    * **Port**: Enter `3306`. 
-    * **Username**: Enter the value of `opsman_sql_username` from your Terraform output. 
-    * **Password**: Enter the value of `opsman_sql_password` from your Terraform output. 
+1. For **Database Location**, if you configured your `terraform.tfvars` file to create an external database for Ops Manager, select **External MySQL Database** and complete the fields below. Otherwise, select **Internal**.
+    * **Host**: Enter the value of `sql_db_ip` from your Terraform output.
+    * **Port**: Enter `3306`.
+    * **Username**: Enter the value of `opsman_sql_username` from your Terraform output.
+    * **Password**: Enter the value of `opsman_sql_password` from your Terraform output.
     * **Database**: Enter the value of `opsman_sql_db_name` from your Terraform output.<br>
 In addition, if you selected **External MySQL Database**, you can fill out the following optional fields:
     * **Enable TLS:** Selecting this checkbox enables TLS communication between the BOSH Director and the database.
@@ -127,7 +134,7 @@ In addition, if you selected **External MySQL Database**, you can fill out the f
 
 1. (Optional) **Max Threads** sets the maximum number of threads that the BOSH Director can run simultaneously. Pivotal recommends that you leave the field blank to use the default value, unless doing so results in rate limiting or errors on your IaaS.
 
-1. (Optional) To add a custom URL for your BOSH Director, enter a valid hostname in **Director Hostname**. You can also use this field to configure [a load balancer in front of your BOSH Director](https://discuss.pivotal.io/hc/en-us/articles/225420588). 
+1. (Optional) To add a custom URL for your BOSH Director, enter a valid hostname in **Director Hostname**. You can also use this field to configure [a load balancer in front of your BOSH Director](https://discuss.pivotal.io/hc/en-us/articles/225420588).
 
      <%= image_tag("director_workers.png") %>
 
@@ -151,9 +158,9 @@ In addition, if you selected **External MySQL Database**, you can fill out the f
 
 1. Select **Create Availability Zones**.
 
-1. Use the **Add** button to add three availability zones corresponding to those listed in the `azs` field in your Terraform output. 
+1. Use the **Add** button to add three availability zones corresponding to those listed in the `azs` field in your Terraform output.
 
-1. Click **Save**. 
+1. Click **Save**.
 
 
 ## <a id='network'></a> Step 5: Create Networks Page
@@ -180,12 +187,12 @@ In addition, if you selected **External MySQL Database**, you can fill out the f
                     </tr>
                     <tr>
                         <th>Google Network Name</th>
-                        <td>Use the <code>network\_name</code>, <code>management\_subnet\_name</code>, and <code>region</code> fields from your Terraform output to enter the name of the management network created by Terraform. 
+                        <td>Use the <code>network\_name</code>, <code>management\_subnet\_name</code>, and <code>region</code> fields from your Terraform output to enter the name of the management network created by Terraform.
                         <br>The format is: <code>network\_name/management\_subnet\_name/region</code></td>
                     </tr>
                     <tr>
                         <th>CIDR</th>
-                        <td>Enter the value of <code>management\_subnet\_cidrs</code> from your Terraform output. 
+                        <td>Enter the value of <code>management\_subnet\_cidrs</code> from your Terraform output.
                         </td>
                     </tr>
                     <tr>
@@ -217,7 +224,7 @@ In addition, if you selected **External MySQL Database**, you can fill out the f
                     </tr>
                     <tr>
                         <th>Google Network Name</th>
-                        <td>Use the <code>network\_name</code>, <code>pas\_subnet\_name</code>, and <code>region</code> fields from your Terraform output to enter the name of the PAS network created by Terraform. 
+                        <td>Use the <code>network\_name</code>, <code>pas\_subnet\_name</code>, and <code>region</code> fields from your Terraform output to enter the name of the PAS network created by Terraform.
                         <br>The format is: <code>network\_name/pas\_subnet\_name/region</code></td>
                     </tr>
                     <tr>
@@ -253,7 +260,7 @@ In addition, if you selected **External MySQL Database**, you can fill out the f
                     </tr>
                     <tr>
                         <th>Google Network Name</th>
-                        <td>Use the <code>network\_name</code>, <code>services\_subnet\_name</code>, and <code>region</code> fields from your Terraform output to enter the name of the services network created by Terraform. 
+                        <td>Use the <code>network\_name</code>, <code>services\_subnet\_name</code>, and <code>region</code> fields from your Terraform output to enter the name of the services network created by Terraform.
                         <br>The format is: <code>network\_name/services\_subnet\_name/region</code></td>
                     </tr>
                     <tr>
@@ -307,7 +314,7 @@ In addition, if you selected **External MySQL Database**, you can fill out the f
 1. Select **Resource Config**.
 
 1. Verify that the **Internet Connected** checkbox for every job is checked. The Terraform templates do not provision a Network Address Translation (NAT) box for Internet connectivity to your VMs so instead they will be provided with ephemeral public IP addresses to allow the jobs to reach the Internet.
-   <p class="note"><strong>Note:</strong> If you want to provision a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses, deselect the <strong>Internet Connected</strong> checkboxes. For more information about using NAT in GCP, see the <a href="https://cloud.google.com/compute/docs/networking">GCP documentation</a>.</p>  
+   <p class="note"><strong>Note:</strong> If you want to provision a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses, deselect the <strong>Internet Connected</strong> checkboxes. For more information about using NAT in GCP, see the <a href="https://cloud.google.com/compute/docs/networking">GCP documentation</a>.</p>
 
 
 ## <a id='custom-vm-extensions'></a> Step 10: (Optional) Add Custom VM Extensions
@@ -318,7 +325,7 @@ In addition, if you selected **External MySQL Database**, you can fill out the f
 
 1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
 
-1. Click **Apply Changes**. If the following ICMP error message appears, return to the [Network Config](#network) screen, and make sure you have deselected the **Enable ICMP Checks** box. Then click **Apply Changes** again. 
+1. Click **Apply Changes**. If the following ICMP error message appears, return to the [Network Config](#network) screen, and make sure you have deselected the **Enable ICMP Checks** box. Then click **Apply Changes** again.
 
     <%= image_tag("cloudform/install-error.png") %>
 

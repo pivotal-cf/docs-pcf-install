@@ -21,31 +21,38 @@ See [Installing Runtimes](./runtimes.html) for more information about Pivotal Cl
 1. In a web browser, navigate to the fully qualified domain of your Ops Manager.
 
 1. When Ops Manager starts for the first time, you must choose one of the following:
-    * [Use an Identity Provider](#idp): If you choose **Use an Identity Provider**, an external identity server maintains your user database.
-    * [Internal Authentication](#internal): If you choose **Internal Authentication**, PCF maintains your user database.
+    * [Internal Authentication](#internal): If you use Internal Authentication, PCF maintains your user database.
+    * [SAML Identity Provider](#saml): If you use a SAML Identity Provider (Idp), an external identity server maintains your user database.
+    * [LDAP Server](#ldap): If you use a LDAP Server, an external identity server maintains your user database.
+
 
     <%= image_tag("select-authentication.png") %>
 
-### <a id='idp'></a> Use an Identity Provider
-
-<%= partial 'using_idp_ops_manager' %> 
-
-### <a id='internal'></a> Use Internal Authentication
+### <a id='internal'></a> Internal Authentication
 
 1.  When redirected to the **Internal Authentication** page, you must complete the following steps:
     * Enter a **Username**, **Password**, and **Password confirmation** to create an Admin user.
     * Enter a **Decryption passphrase** and the **Decryption passphrase confirmation**. This passphrase encrypts the Ops Manager datastore, and is not recoverable.
-    * If you are using an **HTTP proxy** or **HTTPS proxy**, follow the instructions in [Configuring Proxy Settings for the BOSH CPI](./pcf-director-proxy-settings.html).
+    * If you are using an **HTTP proxy** or **HTTPS proxy**, follow the instructions in the [Configuring Proxy Settings for the BOSH CPI](./pcf-director-proxy-settings.html) topic.
     * Read the **End User License Agreement**, and select the checkbox to accept the terms.
     * Click **Setup Authentication**.
 
     <%= image_tag("om-login.png") %>
 
-## <a id='vcenter-config'></a> Step 2: vCenter Configs Page
-
 1. Log in to Ops Manager with the Admin username and password you created in the previous step.
 
     <%= image_tag("cf-login.png") %>
+
+### <a id='saml'></a> SAML Identity Provider
+
+<%= partial 'using_saml_idp_ops_manager' %>
+
+### <a id='ldap'></a> LDAP Server
+
+<%= partial 'using_ldap_server_ops_manager' %>
+
+
+## <a id='vcenter-config'></a> Step 2: vCenter Configs Page
 
 1. Click the **BOSH Director** tile.
 
@@ -65,9 +72,9 @@ See [Installing Runtimes](./runtimes.html) for more information about Pivotal Cl
     <p class="note"><strong>Note:</strong> The following fields do not allow whitespace. Including whitespace characters in datastore or datastore folder names causes an error.</p>
     * **Ephemeral Datastore Names (comma delimited)**: The names of the datastores that store ephemeral VM disks deployed by Ops Manager.
     * **Persistent Datastore Names (comma delimited)**: The names of the datastores that store persistent VM disks deployed by Ops Manager.
-    * **VM Folder**: The vSphere datacenter folder where Ops Manager places VMs. This defaults to `pcf_vms`. 
+    * **VM Folder**: The vSphere datacenter folder where Ops Manager places VMs. This defaults to `pcf_vms`.
     * **Template Folder**: The vSphere datacenter folder where Ops Manager places VMs. This defaults to `pcf_templates`.
-    * **Disk path Folder**: The vSphere datastore folder where Ops Manager creates attached disk images. This defaults to `pcf_disk`. You must not nest this folder. 
+    * **Disk path Folder**: The vSphere datastore folder where Ops Manager creates attached disk images. This defaults to `pcf_disk`. You must not nest this folder.
 
 1. Select a network configuration from one of the following:
     * **Standard vCenter Networking**: This is the default option when upgrading Ops Manager.
@@ -116,7 +123,7 @@ For more information, see [Using Ops Manager Resurrector on VMware vSphere](./re
 
 1. <%= partial 'legacy-deploys' %>
 
-1. Select **Keep Unreachable Director VMs** if you want to preserve BOSH Director VMs after a failed deployment for troubleshooting purposes. 
+1. Select **Keep Unreachable Director VMs** if you want to preserve BOSH Director VMs after a failed deployment for troubleshooting purposes.
 
 1. Select **HM Pager Duty Plugin** to enable Health Monitor integration with PagerDuty.
     <%= image_tag("images/director_hm_pager.png") %>
@@ -178,7 +185,7 @@ Multiple AZs allow you to provide high-availability and load balancing to your a
 Pivotal recommends that you use at least three AZs for a highly available installation of your chosen runtime.
 
 1. Select **Create Availability Zones** to navigate to the pane.
-    
+
     <%= image_tag("create-az.png", :alt => "The 'Create Availability Zones' pane shows a list of two availability zones: 'first-az' and 'second-az' with a button to the right to 'Add'. The 'first-az' is expanded and shows the fields 'Name' and 'IaaS Configuration'. Below that, still in the expanded 'first-az', a subhead called 'Clusters' lists a group of two fields, 'Cluster' and 'Resource Pool' with a button to the right to 'Add Cluster'.") %>
 
 1. Use the following steps to create one or more AZs for your applications to use:
@@ -204,7 +211,7 @@ Pivotal recommends that you use at least three AZs for a highly available instal
 1. Use the following steps to create one or more Ops Manager networks:
     * Click **Add Network**.
     * Enter a unique **Name** for the network.
-    * Click **Add Subnet** to create one or more subnets for the network. 
+    * Click **Add Subnet** to create one or more subnets for the network.
     * Enter the full path and **vSphere Network Name** as it displays in vCenter. For example, enter `YOUR-DIRECTORY-NAME/YOUR-NETWORK-NAME`. If your vSphere Network Name contains a forward slash character, replace the forward slash with the URL-encoded forward slash character `%2f`.
     * For **CIDR**, enter a valid CIDR block in which to deploy VMs. For example, enter `192.0.2.0/24`.
     * For **Reserved IP Ranges**, enter any IP addresses from the **CIDR**
@@ -223,7 +230,7 @@ Pivotal recommends that you use at least three AZs for a highly available instal
 1. Select **Assign AZs and Networks**.
 <%= image_tag("assign-az.png") %>
 
-1. Use the dropdown to select a **Singleton Availability Zone**. The BOSH Director installs in this Availability Zone. 
+1. Use the dropdown to select a **Singleton Availability Zone**. The BOSH Director installs in this Availability Zone.
 
 1. Use the dropdown to select a **Network** for your BOSH Director.
 

@@ -1,0 +1,118 @@
+<%#
+OVERVIEW
+This partial separates by IaaS the config documentation for the **Database Locations** field
+in the Ops Manager **Director Config** pane.
+
+PARTIAL REFERENCES
+This partial is called from `_director-config.html.md.erb`.
+`_director-config.html.md.erb` is called in all IaaS-specific BOSH Director configuration topics. %>
+
+
+<%# For GCP Terraform config topic only: %>
+<% if current_page.data.iaas == "GCP" and current_page.data.install_type == "terraform" %>
+For **Database Location**, if you configured your `terraform.tfvars` file to create
+an external database for Ops Manager, select **External MySQL Database** and complete
+the fields below. Otherwise, select **Internal**.
+    * **Host**: Enter the value of `sql_db_ip` from your Terraform output.
+    * **Port**: Enter `3306`.
+    * **Username**: Enter the value of `opsman_sql_username` from your Terraform output.
+    * **Password**: Enter the value of `opsman_sql_password` from your Terraform output.
+    * **Database**: Enter the value of `opsman_sql_db_name` from your Terraform output.<br>
+In addition, if you selected **External MySQL Database**, you can fill out the following optional fields:
+    * **Enable TLS:** Selecting this checkbox enables TLS communication between the BOSH Director and the database.
+    * **TLS CA:** Enter the Certificate Authority for the TLS Certificate.
+    * **TLS Certificate:** Enter the client certificate for mutual TLS connections to the database.
+    * **TLS Private Key:** Enter the client private key for mutual TLS connections to the database.
+    <p class='note'><strong>Note:</strong> You must select <strong>Enable TLS for Director Database</strong> to configure
+    the TLS-related fields.</p>
+
+
+
+<%# For GCP Manual config topic only: %>
+<% elsif current_page.data.iaas == "GCP" %>
+For **Database Location**, if you configured an external MySQL database such as Cloud SQL, select **External MySQL Database** and complete the fields below. Otherwise, select **Internal**. For more information about creating a Cloud SQL instance, see [Quickstart for Cloud SQL for MySQL](https://cloud.google.com/sql/docs/mysql/quickstart) in the Google Cloud documentation.
+    * **Host:** Enter the value of your host.
+    * **Port:** Enter your port number. For example, `3306`.
+    * **Username:** Enter your username.
+    * **Password:** Enter your password.
+    * **Database:** Enter your database name.<br>
+In addition, if you selected the **Enable TLS for Director Database** checkbox, you can fill out the following optional fields:
+    * **Enable TLS:** Selecting this checkbox enables TLS communication between the BOSH Director and the database.
+    * **TLS CA:** Enter the Certificate Authority for the TLS Certificate.
+    * **TLS Certificate:** Enter the client certificate for mutual TLS connections to the database.
+    * **TLS Private Key:** Enter the client private key for mutual TLS connections to the database.
+
+
+
+<%# For AWS Terraform config topic only: %>
+<% elsif current_page.data.iaas == "AWS" and current_page.data.install_type == "terraform" %>
+For **Database Location**, if you choose to configure an external MySQL database with Amazon Relational Database Service (RDS) or another service, select **External MySQL Database** and complete the fields below. Otherwise, select **Internal**. For more information about creating a RDS MySQL instance, see [Creating a MySQL DB Instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_GettingStarted.CreatingConnecting.MySQL.html#CHAP_GettingStarted.Creating.MySQL) in the AWS documentation.
+    * **Host**: Enter the value of your host.
+    * **Port**: Enter your port number. For example, `3306`.
+    * **Username**: Enter your username.
+    * **Password**: Enter your password.
+    * **Database**: Enter your database name.<br>
+In addition, if you selected the **Enable TLS for Director Database** checkbox, you can fill out the following optional fields:
+    * **Enable TLS:** Selecting this checkbox enables TLS communication between the BOSH Director and the database.
+    * **TLS CA:** Enter the Certificate Authority for the TLS Certificate.
+    * **TLS Certificate:** Enter the client certificate for mutual TLS connections to the database.
+    * **TLS Private Key:** Enter the client private key for mutual TLS connections to the database.
+
+
+<%# For AWS Manual config topic only: %>
+<% elsif current_page.data.iaas == "AWS" %>
+For **Database Location**, select **External MySQL Database** and complete the following steps:
+    <%= image_tag("images/director_database.png") %>
+    * From the AWS Console, navigate to the RDS Dashboard.
+    * Select **Instances**, then click the arrow to the left of your instance and select the second icon to display the **Details** information.
+    * Refer to the following table to retrieve the values for the **Director Config** page:
+    <table border="1" class="nice" >
+      <tr>
+        <th><strong>RDS Instance Field </strong></th>
+        <th><strong>BOSH Director Field </strong></th>
+      </tr>
+      <tr>
+        <td>Endpoint</td>
+        <td><strong>Host</strong></td>
+      </tr>
+      <tr>
+        <td>Port</td>
+        <td><strong>Port</strong>, which is <code>3306</code>.</td>
+      </tr>
+      <tr>
+        <td>DB Name</td>
+        <td><strong>Database</strong>, which is <code>bosh</code>.</td>
+      </tr>
+      <tr>
+        <td>Username</td>
+        <td><strong>Username</strong></td>
+      </tr>
+    </table><br />
+    * For **Password**, enter the password that you defined for your MySQL database when you created in the [Step 19: Create a MySQL Database using AWS RDS](pcf-aws-manual-config.html#pcfaws-mysql-rds) section of the _Installing PCF on AWS Manually_ topic.
+  In addition, if you selected the **Enable TLS for Director Database** checkbox, you can fill out the following optional fields:
+    * **Enable TLS:** Selecting this checkbox enables TLS communication between the BOSH Director and the database.
+    * **TLS CA:** Enter the Certificate Authority for the TLS Certificate.
+    * **TLS Certificate:** Enter the client certificate for mutual TLS connections to the database.
+    * **TLS Private Key:** Enter the client private key for mutual TLS connections to the database.
+
+
+<%# For Azure Terraform topic only: %>
+<% elsif current_page.data.iaas == "Azure" and install_type == "terraform" %>
+For **Database Location**, select **Internal**.<Paste>
+
+
+
+
+<%# For all other IaaSes such as OpenStack, vSphere and manual Azure: %>
+<% else %>
+Select a **Database Location**. By default, PCF deploys and manages an **Internal** database for you.
+If you choose to use an **External MySQL Database**, complete the associated fields with information
+obtained from your external MySQL Database provider: **Host**, **Port**, **Username**, **Password**, and **Database**.
+    <%= image_tag("director_database.png") %>
+    In addition, if you selected the **Enable TLS for Director Database** checkbox, you can complete the following optional fields:
+    * **Enable TLS:** Select this checkbox enables TLS communication between the BOSH Director and the database.
+    * **TLS CA:** Enter the Certificate Authority for the TLS Certificate.
+    * **TLS Certificate:** Enter the client certificate for mutual TLS connections to the database.
+    * **TLS Private Key:** Enter the client private key for mutual TLS connections to the database.
+
+<% end %>

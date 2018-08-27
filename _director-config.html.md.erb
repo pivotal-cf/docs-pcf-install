@@ -1,26 +1,46 @@
+<%# OVERVIEW
+This partial is the procedure for the **Director Config** pane in the BOSH Director.
+IaaS-specific information is separated with `if` statements.
+
+PARTIAL REFERENCES
+This partial is called in all IaaS-specific BOSH Director configuration topics.
+%>
 
 1. In Ops Manager, select **Director Config**.
 
     <%= image_tag("images/director-config.png", :width => "500", :alt => "") %>
 
 <%# **NTP Servers** field, differentiated by IaaS %>
+
+<%# For OpenStack: %>
 <% if current_page.data.iaas == "OpenStack" %>
 1. Enter one or more NTP servers in the **NTP Servers (comma
 delimited)** field. For example, `us.pool.ntp.org`.
 
+
+
+<%# For GCP: %>
 <% elsif current_page.data.iaas == "GCP" %>
 1. In the **NTP Servers (comma delimited)** field, enter `metadata.google.internal`.
     <p class="note"><strong>Note:</strong> To resolve <code>metadata.google.internal</code>
     as the NTP server hostname, you must provide the two IP addresses for DNS configuration as
     described in <a href="#network">Step 5: Create Networks Page</a> of this procedure.</p>
 
+
+
+<%# For AWS: %>
 <% elsif current_page.data.iaas == "AWS" %>
 1. Enter at least two of the following NTP servers in the **NTP Servers (comma delimited)**
 field, separated by a comma: `0.amazon.pool.ntp.org,1.amazon.pool.ntp.org,2.amazon.pool.ntp.org,3.amazon.pool.ntp.org`.
 
+
+
+<%# For other IaaSes such as vSphere and Azure: %>
 <% else %>
 1. In the **NTP Servers (comma delimited)** field, enter a comma-separated list of valid NTP servers.
 <% end %>
+
+
 
 1. Leave the **JMX Provider IP Address** field blank.
 <p class="note"><strong>Note:</strong> Starting in PCF v2.0, BOSH-reported component metrics are
@@ -29,6 +49,8 @@ these component metrics outside of the Firehose, you may receive duplicate data.
 leave the <strong>JMX Provider IP Address</strong> field blank. For additional guidance, see
 <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>
 in the PCF v2.0 Release Notes.</p>
+
+
 
 1. Leave the **Bosh HM Forwarder IP Address** field blank.
 <p class="note"><strong>Note:</strong> Starting in PCF v2.0, BOSH-reported component
@@ -39,27 +61,42 @@ additional guidance, see
 <a href="http://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/runtime-rn.html#bosh-metrics">BOSH System Metrics Available in Loggregator Firehose</a>
 in the PCF v2.0 Release Notes.</p>
 
+
+
 1. Select the **Enable VM Resurrector Plugin** checkbox to enable the Ops Manager
 Resurrector functionality and increase PAS availability.
+
+
 
 1. Select **Enable Post Deploy Scripts** to run a post-deploy script after deployment.
 This script allows the job to execute additional commands against a deployment.
 
+
+
 1. Select **Recreate all VMs** to force BOSH to recreate all VMs on the next deploy.
 This process does not destroy any persistent disk data.
+
+
 
 1. Select **Enable bosh deploy retries** to instruct Ops Manager to retry failed
 BOSH operations up to five times.
 
+
+
 1. <%= partial 'legacy-deploys' %>
+
+
 
 1. Select **Keep Unreachable Director VMs** if you want to preserve BOSH Director VMs
 after a failed deployment for troubleshooting purposes.
+
 
 1. Select **HM Pager Duty Plugin** to enable Health Monitor integration with PagerDuty.
     <%= image_tag("images/director_hm_pager.png") %>
     * **Service Key**: Enter your API service key from PagerDuty.
     * **HTTP Proxy**: Enter an HTTP proxy for use with PagerDuty.
+
+
 
 1. Select **HM Email Plugin** to enable Health Monitor integration with email.
     <%= image_tag("images/director_hm_email.png") %>
@@ -73,18 +110,28 @@ after a failed deployment for troubleshooting purposes.
     * **Enable TLS**: Select this checkbox to enable Transport Layer Security.
 1. <%= partial "credhub-encryption" %>
 
+
+
 1. <%= partial "blobstore-location" %>
 
+
+
 1. <%= partial "director-database-location" %>
+
+
 
 1. (Optional) Modify the **Director Workers** value,
   which sets the number of workers available to execute
   Director tasks. This field defaults to `5`.
 
+
+
 1. (Optional) **Max Threads** sets the maximum number of
   threads that the BOSH Director can run simultaneously. Pivotal
   recommends that you leave the field blank to use the defaul
   value, unless doing so results in rate limiting or errors on your IaaS.
+
+
 
 1. (Optional) To add a custom URL for your BOSH Director,
   enter a valid hostname in **Director Hostname**. You can
@@ -93,16 +140,26 @@ after a failed deployment for troubleshooting purposes.
 
    <%= image_tag("director_workers.png") %>
 
+
+
 1. <%= partial "exclude-recursors" %>
+
+
 
 1. <%= partial "disable_bosh_dns" %>
     <p class="note"><strong>Note:</strong> Disabling BOSH DNS affects <a href="#network">Step 5: Create Networks Page</a> below
     when you configure your network DNS. You must first navigate to your PAS tile and enter <code>8.8.8.8</code> into the <strong>DNS Servers</strong> field.</p>
     <p class="note breaking"><strong>Breaking Change:</strong> Do not disable BOSH DNS without consulting Pivotal Support.</p>
 
+
+
 1. (Optional) To set a custom banner that users see when logging in to the Director using SSH, enter text in the **Custom SSH Banner** field.
      <%= image_tag("disable-bosh-dns.png") %>
 
+
+
 1. <%= partial "identification-tags" %>
+
+
 
 1. Click **Save**.

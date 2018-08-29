@@ -177,16 +177,28 @@ For more information, see the [Viewing Logs in the Command Line Interface](../..
     Exited with 0.
     </pre>
 
-### <a id="check-external-blobstore-backup-restore-addon"></a> Prep 11: Check External Blobstore Backup and Restore Add-On
+### <a id="disable-addon"></a> Prep 11: Disable External Blobstore Backup and Restore Add-On
 
-If you have enabled external blobstore backups for **unversioned S3-compatible** blostore using the Blobstore Addon, you need to update your runtime configuration when upgrading to PCF v2.3. Remove `s3-unversioned-blobstore-backup-restorer` from your runtime configuration before upgrading.
-If you don't remove this job, upgrading PAS will fail with error:
-<pre>
-Preparing deployment: Preparing deployment (00:00:01)
-  L Error: Colocated job 's3-unversioned-blobstore-backup-restorer' is already added to the instance group 'backup-prepare'.
-</pre>
-After removing this job from your runtime configuration, you will need to ensure the `Versioning is enabled for all buckets listed below` checkbox is disabled and the backup buckets are configured in the PAS tile. Please see [External S3 or Ceph Filestore](https://docs.pivotal.io/pivotalcf/2-2/customizing/pcf-aws-manual-er-config.html#external_s3) topic for instructions.
+If you enabled external blobstore backups for unversioned S3-compatible
+blobstores using the Blobstore Add-on, follow the steps below to disable the
+add-on before upgrading to PCF v2.3.
 
+1. Remove the `s3-unversioned-blobstore-backup-restorer` job from your runtime
+configuration. If you fail to remove this job, PAS fails with the following
+error:
+    <pre>
+    Preparing deployment: Preparing deployment (00:00:01)
+      L Error: Colocated job 's3-unversioned-blobstore-backup-restorer' is
+      already added to the instance group 'backup-prepare'.
+    </pre>
+
+1. In the PAS tile, verify that the `Versioning is enabled for all buckets listed below` checkbox is disabled.
+
+1. In the PAS tile, verify that the backup buckets are configured. If your
+backup buckets are not configured, follow the steps in the
+[External S3 or Ceph Filestore](./pcf-aws-manual-er-config.html#external_s3)
+section of _Deploying PAS on AWS_ to configure an external S3-compatible
+filestore for PAS file storage.
 
 ## <a id="upgrade_ops"></a> Upgrade Ops Manager and Installed Products to v2.3
 

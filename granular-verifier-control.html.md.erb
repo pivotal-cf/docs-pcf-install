@@ -1,6 +1,177 @@
 ---
-title: Granular Verifier Control
+title: Disabling Ops Manager Verifiers
 owner: Ops Manager
 ---
 
-STUB STUB STUB
+This topic describes how to disable and re-enable verifiers for fields in the BOSH
+Director and other product tiles.
+
+Ops Manager provides this option for troubleshooting
+purposes. For example, you can unblock a deployment with a unique configuration that the
+verifier cannot detect.
+
+<p class="note"><strong>Note:</strong> Pivotal recommends contacting support before you
+disable Ops Manager verifiers.</p>
+
+<p class="warning note"><strong>WARNING:</strong> When you disable a verifier, your
+verifier is disabled persistently through major and minor Ops Manager updates. Keep a
+record of the verifiers you disable.</p>
+
+## <a id="about-verifiers"></a> About Verifiers
+
+Ops Manager verifiers reach out and find objects in the world. For example, given an IP, a
+verifier can ping the IP to see that it responds.
+
+If a verifier fails, Ops Manager displays an error message with the `type` of your
+verifier. You can use the verifier type to disable verifiers with the Ops Manager API.
+
+Verifiers run on two occasions:
+
+- When you click **Save** in a pane. If the verifier fails, the error message is a
+warning. Your configuration still saves.
+
+- When you click **Apply Changes**. If the verifier fails, Ops Manager blocks you from
+deploying. Disabling verifiers unblocks deployment.
+
+## <a id="disable"></a> Disable Verifiers by Type
+
+You can disable verifiers by verifier type. For example, you can disable all MySQL
+verifiers for a tile. To disable a verifier type for a tile, you
+must find and record the type, then use the Ops Manager API.
+
+### <a id="record-type"></a> Step 1: Record the Verifier Type
+
+To record the verifier type, do the following:
+
+1. Log in to Ops Manager and go to **Review Pending Changes**.
+
+1. Click **Apply Changes** and see the verifier error message.
+
+1. Record the `type` in the verifier error message. For example,
+`WildcardDomainVerifier`.
+
+<%= image_tag("verifier-error.png", :alt=>"The Ops Manager screenshot shows the following
+	      error: The domain '*.apps.example.com' failed to resolve,
+	      type:WildcardDomainVerifier") %>
+
+### <a id="api-put"></a> Step 2: Use the Ops Manager API
+
+To disable verifiers, you must use the Ops Manager API. To get started with
+the Ops Manager API, follow the procedures in [Using the Ops Manager API](./ops-man-api.html).
+
+The API endpoint varies by tile. Go to one of the procedures below:
+
+- [Disable Verifiers for the Bosh Director Tile](#bosh-director-disable)
+
+- [Disable Verifiers for Other Tiles](#tile-disable)
+
+#### <a id="bosh-director-disable"></a> Disable Verifiers for the BOSH Director Tile
+
+To disable a verifier type for the BOSH Director, do the following:
+
+1. Run the following API command:
+
+    ```
+    curl "https://OPS-MAN-FQDN/api/v0/staged/director/verifiers/install_time/VERIFER-TYPE" \
+     -X PUT \
+     -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{ "enabled": false }'
+     ```
+
+    Where:
+    - `OPS-MAN-FQDN` is the fully-qualified domain name (FQDN) for your Ops Manager deployment.
+    - `VERIFIER-TYPE` is the verifier type you recorded in [Step 1: Record the Verifier Type
+](#verifier-type).
+    - `UAA_ACCESS_TOKEN` is your UAA access token. For more information, see [Access the
+    API](./ops-man-api.html#access-api). 
+
+    For more information about this endpoint, see [Turning off a verifier for the
+    director](http://docs.pivotal.io/pivotalcf/2-3/opsman-api/#turning-off-a-verifier-for-the-director)
+    in the Ops Manager API documentation.
+
+1. To confirm your verifier type is disabled, run the following command:
+
+    ```
+    curl "https://OPS-MAN-FQDN/api/v0/staged/director/verifiers/install_time" \
+     -X GET \
+     -H "Authorization: Bearer UAA-ACCESS-TOKEN"
+    ```
+
+    And see output similar to the following. See `false` corresponding to your
+    verifier type:
+    <pre class="terminal" style="height: 300px; scroll: auto;">
+{
+  "verifiers": [
+    {
+      "type": "AllocatedIpAddressVerifier",
+      "enabled": true
+    },
+    {
+      "type": "AvailabilityZonesVerifier",
+      "enabled": true
+    },
+    {
+      "type": "DirectorConfigurationVerifier",
+      "enabled": false
+    },
+    {
+      "type": "IaasConfigurationVerifier",
+      "enabled": true
+    },
+    {
+      "type": "NetworksExistenceVerifier",
+      "enabled": true
+    },
+    {
+      "type": "NetworksPingableVerifier",
+      "enabled": true
+    },
+    {
+      "type": "PrivilegeVerifier",
+      "enabled": true
+    }
+  ]
+}
+</pre>
+
+    For more information about this endpoint, see [Retrieving a list of install time
+    verifiers for a specific
+    product](http://docs.pivotal.io/pivotalcf/2-3/opsman-api/#retrieving-a-list-of-install-time-verifiers-for-a-specific-product)
+    in the Ops Manager API documentation.
+
+#### <a id="tile-disable"></a> Disable Verifiers for Other Tiles
+
+To disable a verifier type for tiles other than the BOSH Director, do the following:
+
+1. Run the following command and record the `guid` corresponding to your product.
+
+    ```
+    curl "https://OPS-MAN-FQDN/api/v0/staged/products" \
+    -X GET \
+    -H "Authorization: Bearer UAA_ACCESS_TOKEN"
+    ```
+    See the following example output:
+    <pre class="terminal">
+    [
+  {
+    "installation_name": "component-type1-installation-name",
+    "guid": "component-type1-guid",
+    "type": "component-type1"
+  },
+  {
+    "installation_name": "p-bosh-installation-name",
+    "guid": "p-bosh-guid",
+    "type": "p-bosh"
+  }
+  ]
+    </pre>
+    For more information about this endpoint, see [Listing all staged
+    products](http://docs.pivotal.io/pivotalcf/2-3/opsman-api/#listing-all-staged-products)
+    in the Ops Manager API Documentation. 
+
+
+## <a id="re-enable"></a> Re-enable Verifiers by Type
+
+To re-enable verifiers, follow the steps detailed in [Disable Verifiers](#disable) above. Instead of setting `enabled`
+to `false`, set it to `true`.

@@ -7,15 +7,15 @@ This topic describes how to disable and re-enable verifiers for fields in the BO
 Director and other product tiles.
 
 Ops Manager provides this option for troubleshooting
-purposes. For example, you can unblock a deployment with a unique configuration that the
-verifier cannot detect.
+purposes. For example, your deployment may have a unique configuration that the
+verifier cannot detect. In this case, you can unblock your deployment by disabling the verifier. 
 
 <p class="note"><strong>Note:</strong> Pivotal recommends contacting support before you
 disable Ops Manager verifiers.</p>
 
-<p class="warning note"><strong>WARNING:</strong> When you disable a verifier, your
-verifier is disabled persistently through major and minor Ops Manager updates. Keep a
-record of the verifiers you disable.</p>
+<p class="warning note"><strong>WARNING:</strong> Pivotal recommends recording and routinely revisiting which verifiers you disable.
+The Ops Manager UI does not indicate which verifiers you disable. Disabled verifiers
+persist through upgrades.</p>
 
 ## <a id="about-verifiers"></a> About Verifiers
 
@@ -98,8 +98,8 @@ To disable a verifier type for the BOSH Director, do the following:
      -H "Authorization: Bearer UAA-ACCESS-TOKEN"
     ```
 
-    And see output similar to the following. See `false` corresponding to your
-    verifier type:
+    See that the Ops Manager API shows `false` for the verifier type you disabled. In
+    the following example, `DirectorConfigurationVerifer` is set to `false`:
     <pre class="terminal" style="height: 300px; scroll: auto;">
 {
   "verifiers": [
@@ -140,7 +140,11 @@ To disable a verifier type for the BOSH Director, do the following:
     product](http://docs.pivotal.io/pivotalcf/2-3/opsman-api/#retrieving-a-list-of-install-time-verifiers-for-a-specific-product)
     in the Ops Manager API documentation.
 
-#### <a id="tile-disable"></a> Disable Verifiers for Other Tiles
+1. Record the product and the verifier type that you disabled in a secure location.
+Pivotal recommends recording and routinely revisiting which verifiers you disable.
+
+
+### <a id="tile-disable"></a> Disable Verifiers for Other Tiles
 
 To disable a verifier type for tiles other than the BOSH Director, do the following:
 
@@ -151,27 +155,101 @@ To disable a verifier type for tiles other than the BOSH Director, do the follow
     -X GET \
     -H "Authorization: Bearer UAA_ACCESS_TOKEN"
     ```
+    Where:
+    - `OPS-MAN-FQDN` is the fully-qualified domain name (FQDN) for your Ops Manager deployment.
+    - `UAA_ACCESS_TOKEN` is your UAA access token. For more information, see [Access the
+    API](./ops-man-api.html#access-api). 
+
+
+
     See the following example output:
-    <pre class="terminal">
+    <pre class="terminal">{
     [
   {
-    "installation_name": "component-type1-installation-name",
-    "guid": "component-type1-guid",
-    "type": "component-type1"
+      "installation_name": "component-type1-installation-name",
+      "guid": "component-type1-guid",
+      "type": "component-type1"
   },
   {
-    "installation_name": "p-bosh-installation-name",
-    "guid": "p-bosh-guid",
-    "type": "p-bosh"
-  }
+      "installation_name": "p-bosh-installation-name",
+      "guid": "p-bosh-guid",
+      "type": "p-bosh"
+    }
   ]
-    </pre>
+}</pre>
     For more information about this endpoint, see [Listing all staged
     products](http://docs.pivotal.io/pivotalcf/2-3/opsman-api/#listing-all-staged-products)
-    in the Ops Manager API Documentation. 
+    in the Ops Manager API documentation.
 
+1. To disable your verifier by type, run the following command.
+
+    ```
+    curl "https://example.com/api/v0/staged/products/PRODUCT-GUID/verifiers/install_time/VERIFIER-TYPE" \
+    -X PUT \
+    -H "Authorization: Bearer UAA_ACCESS_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{ "enabled": false }'
+    ```
+
+    Where:
+    - `PRODUCT-GUID` is the GUID you recorded in the previous step.
+    - `VERIFIER-TYPE` is the verifier type you recorded in [Step 1: Record the Verifier Type
+](#verifier-type).
+
+    For more information about this endpoint, see [Turning off a verifier for a specific
+    product](http://docs.pivotal.io/pivotalcf/2-3/opsman-api/#turning-off-a-verifier-for-a-specific-product)
+    in the Ops Manager API documentation.
+
+1. To confirm your verifier type is disabled, run the following command.
+
+    ```
+    curl "https://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/verifiers/install_time" \
+    -X GET \
+    -H "Authorization: Bearer UAA_ACCESS_TOKEN"
+    ```
+
+    See that the Ops Manager API shows `false` for the verifier type you disabled. In
+    the following example, `MysqlDatabaseVerifier` is set to `false`:
+    <pre class="terminal" style="height: 300px; scroll: auto;">{
+      "verifiers":[
+      {
+	  "type":"BlobstoreVerifier",
+	  "enabled":true
+	},
+	{
+	  "type":"MysqlDatabaseVerifier",
+	  "enabled":false
+	},
+	{
+	  "type":"SsoUrlVerifier",
+	  "enabled":true
+	},
+	{
+	  "type":"WildcardDomainVerifier",
+	  "enabled":true
+	}
+      ]
+    }</pre>
+
+    For more information about this endpoint, see [Retrieving a list of install time
+    verifiers for a specific
+    product](http://docs.pivotal.io/pivotalcf/2-3/opsman-api/#retrieving-a-list-of-install-time-verifiers-for-a-specific-product100)
+    in the Ops Manager API documentation.
+
+1. Record the product and the verifier type that you disabled in a secure location.
+Pivotal recommends recording and routinely revisiting which verifiers you disable.
 
 ## <a id="re-enable"></a> Re-enable Verifiers by Type
 
-To re-enable verifiers, follow the steps detailed in [Disable Verifiers](#disable) above. Instead of setting `enabled`
-to `false`, set it to `true`.
+Pivotal recommends recording and routinely revisiting which verifiers you disable.
+The Ops Manager UI does not indicate which verifiers you disable. Disabled verifiers
+persist through upgrades.
+
+To re-enable verifiers, follow the steps detailed in [Use the Ops Manager API](#api-put)
+above. Instead of setting `enabled` to `false`, set it to `true`.
+
+If you do not know what verifiers are disabled, `curl` the `verifiers` endpoint for each
+installed product. For more information, see [Retrieving a list of install time verifiers
+for a specific
+product](http://docs.pivotal.io/pivotalcf/2-3/opsman-api/#retrieving-a-list-of-install-time-verifiers-for-a-specific-product100)
+in the Ops Manager API documentation.

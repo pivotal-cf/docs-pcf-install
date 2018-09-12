@@ -11,25 +11,27 @@ Platform operators use the Ops Manager API to automate deployments, retrieve and
 
 For the complete Ops Manager API documentation, see either of the following:
 
-* https://docs.pivotal.io/pivotalcf/2-2/opsman-api 
+* https://docs.pivotal.io/pivotalcf/2-2/opsman-api
 * `https://YOUR-OPS-MANAGER-FQDN/docs`, adding `/docs` to the URL of your Ops Manager
 
-##<a id='reqs'></a> Requirements
+
+## <a id='reqs'></a> Requirements
 
 You must install the User Account and Authentication Command Line Interface (UAAC) to perform the procedures in this topic. To install the UAAC, run the following command from a terminal window:
 <pre class="terminal">$ gem install cf-uaac</pre>
 
-##<a id='auth'></a> Step 1: Authenticate
+
+## <a id='auth'></a> Step 1: Authenticate
 
 To use the Ops Manager API, you must authenticate and retrieve a token from the Ops Manager User Account and Authentication (UAA) server. For more information about UAA, see the [User Account and Authentication (UAA) Server](../concepts/architecture/uaa.html) topic.
 
-Perform the procedures in the [Internal Authentication](#internal-auth) or [External Identity Provider](#external-idp) section below depending on which authentication system you configured for Ops Manager. 
+Perform the procedures in the [Internal Authentication](#internal-auth) or [External Identity Provider](#external-idp) section below depending on which authentication system you configured for Ops Manager.
 
-###<a id='internal-auth'></a> Internal Authentication
+### <a id='internal-auth'></a> Internal Authentication
 
 If you configured your Ops Manager for Internal Authentication, perform the following procedures specific to your IaaS:
 
-####<a id='vsphere'></a> vSphere
+#### <a id='vsphere'></a> vSphere
 
 You need the credentials used to import the PCF .ova or .ovf file into your virtualization system.
 
@@ -37,31 +39,30 @@ You need the credentials used to import the PCF .ova or .ovf file into your virt
 
 1. When prompted, enter the password that you set during the .ova deployment
 into vCenter. For example:
-
     <pre class='terminal'>
     $ ssh ubuntu@my-opsmanager-fqdn.example.com
     Password: ***********
     </pre>
+
 1. Proceed to [Authenticate into Ops Manager](#opsman_login).
 
-####<a id='aws'></a> AWS, Azure, and OpenStack
+#### <a id='aws'></a> AWS, Azure, and OpenStack
 
 1. Locate the Ops Manager FQDN on the AWS **EC2 instances** page, Azure **Virtual machines** page, or the OpenStack **Access & Security** page.
 
 1. Run `chmod 600 ops_mgr.pem` to change the permissions on the `.pem` file to be more restrictive:
-
 	<pre class="terminal">
 	$ chmod 600 ops_mgr.pem
 	</pre>
 
 1. Run `ssh -i ops_mgr.pem ubuntu@OPS-MANAGER-FQDN` to SSH into the Ops Manager VM. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager. For example:
-
 	<pre class="terminal">
 	$ ssh -i ops_mgr.pem ubuntu@my-opsmanager-fqdn.example.com
 	</pre>
+
 1. Proceed to [Authenticate into Ops Manager](#opsman_login).
 
-####<a id='gcp'></a> GCP
+#### <a id='gcp'></a> GCP
 
 1. Confirm that you have installed the gcloud CLI. If you do not have the gcloud CLI, see [the Google Cloud Platform documentation](https://cloud.google.com/sdk/gcloud/#downloading_gcloud).
 
@@ -84,7 +85,7 @@ into vCenter. For example:
 
 1. Proceed to [Authenticate into Ops Manager](#opsman_login).
 
-####<a id='opsman_login'></a> Authenticate into Ops Manager
+#### <a id='opsman_login'></a> Authenticate Into Ops Manager
 
 1. After successfully SSHing into the Ops Manager VM, use the UAAC to target your Ops Manager UAA server:
 	<pre class="terminal">$ uaac target http<span>s:</span>//OPS-MAN-FQDN/uaa</pre>
@@ -96,12 +97,11 @@ into vCenter. For example:
 	User name: OPS-MAN-USERNAME
 	Password: OPS-MAN-PASSWORD
 	</pre>
-
 	Replace `OPS-MAN-USERNAME` and `OPS-MAN-PASSWORD` with the credentials that you use to log in to the Ops Manager web interface.
 
-###<a id='external-idp'></a> External Identity Provider
+### <a id='external-idp'></a> External Identity Provider
 
-If you configured your Ops Manager for an external Identity Provider with SAML, perform the following steps:
+If you configured your Ops Manager for an external Identity Provider with SAML, do the following:
 
 1. From your local machine, target your Ops Manager UAA server:
 	<pre class="terminal">$ uaac target http<span>s:</span>//OPS-MAN-FQDN/uaa</pre>
@@ -113,8 +113,9 @@ If you configured your Ops Manager for an external Identity Provider with SAML, 
 	Passcode: YOUR-PASSCODE
 	</pre>
 	If authentication is successful, the UAAC displays the following message: `Successfully fetched token via owner password grant.`
- 
-##<a id='access-api'></a> Step 2: Access the API
+
+
+## <a id='access-api'></a> Step 2: Access the API
 
 Ops Manager uses authorization tokens to allow access to the API. You must pass an access token to the API endpoint in a header that follows the format `Authorization: Bearer YOUR-ACCESS-TOKEN`.
 
@@ -127,10 +128,11 @@ If you use Internal Authentication, you must perform the following procedures fr
 	$ uaac contexts
 	</pre>
 	Locate the entry for your Ops Manager FQDN. Under `client_id: opsman`, record the value for `access_token`.
+
 1. Use the `GET /api/v0/deployed/products` endpoint to retrieve a list of deployed products, replacing `UAA-ACCESS-TOKEN` with the access token recorded in the previous step:
 	<pre class="terminal">
-	$ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products" \ 
-	    -X GET \ 
+	$ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products" \
+	    -X GET \
 	    -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
 	The request produces the following response:
 	<pre class="terminal">
@@ -141,4 +143,3 @@ If you use Internal Authentication, you must perform the following procedures fr
 	00000000000000000000","guid":"cf-0000000000000
 	0000000","type":"cf","product\_version":"1.10.0"}]
 	</pre>
-

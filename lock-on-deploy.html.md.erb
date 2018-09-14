@@ -1,0 +1,86 @@
+---
+title: Ops Manager Fields That Lock On Deploy
+owner: OpsManager
+---
+
+Some fields in Ops Manager lock during deployment. Not all fields lock, but the ones that do lock to prevent irrevocable VM malfunction, deployment corruption, and data loss. Most users will not need to edit these fields after initial deployment.
+
+However, locking these fields permanently prevents you from reconfiguring some aspects of an Ops Manager instance after initial deployment. Users with evolving deployment requirements may find that restriction too severe for reasonable use.
+
+To accomodate the need for deployment modification over time, you can unlock and reconfigure some of the locked fields after deployment. Unlocking locked fields requires you to use Ops Manager's Advanced Mode. For more information about Advanced Mode, see [Unlockable fields](#unlock).
+
+<p class="note warning"><strong>WARNING:</strong> Pivotal recommends that only skilled operators use Ops Manager's Advanced Mode. If you use Advanced Mode incorrectly, you could disable or destroy your deployment.</p> 
+
+
+## <a id='unlock'></a>Unlockable fields
+
+This section describes the fields that lock during deployment and can be unlocked and configured after deployment. To unlock these fields, you must use Ops Manager's [Advanced Mode](https://community.pivotal.io/s/article/How-to-Enable-Advanced-Mode-in-the-Ops-Manager). 
+
+After you have enabled Advanced Mode, you can use the API or Ops Manager UI to reconfigure some fields that were locked previously. Those fields are listed in the following section. 
+
+<p class="note warning"><strong>WARNING:</strong> Pivotal recommends that only skilled operators use Ops Manager's Advanced Mode. If you use Advanced Mode incorrectly, you could disable or destroy your deployment.</p> 
+
+### <a id='director-tile'></a>Unlockable fields in the Director tile
+
+In the **Director Config** pane, the following fields lock after deployment:
+
+In the *CredHub Encryption Provider* fields, when you are using a Luna HSM, the following fields are locked: 
+
+* *Encryption Key Name* 
+* *Provider Partition* 
+* *HSM Host Address*
+* *HSM Port Address*
+* *Partition Serial Number*
+
+In the **Assign AZs and Networks** pane, the following fields lock after deployment:
+
+* The *Singleton Availability Zone* dropdown
+
+### <a id='product-tiles'></a>Unlockable fields in product tiles
+
+In product tiles, the following fields lock after deployment:
+
+In the **Assign AZs and Networks** pane, the following fields lock after deployment:
+
+* *Place singleton jobs in*
+* *Balance other jobs* 
+
+
+## <a id='locked-permanently'></a>Fields that cannot be unlocked
+
+This section describes the fields that lock during deployment and cannot be unlocked. These fields cannot be configured after deployment, either via the Ops Manager UI or via API endpoints. 
+
+### <a id='director-tile-locked'></a>Locked fields in the Director tile
+
+In the Director Config pane, the following fields are not configurable after deployment:
+
+In the *Blobstore Location* section:
+
+* *Enable TLS* in the *Internal* section
+* *S3 Endpoint* in the *S3 Compatible Blobstore* section
+* *Bucket Name* in the *S3 Compatible Blobstore* section
+* *V2 Signature* in the *S3 Compatible Blobstore* section
+* *V4 Signature* in the *S3 Compatible Blobstore* section
+	* *Region* in the *S3 Compatible Blobstore* > *V4 Signature* section
+
+<p class="note"><strong>Note:</strong> Changes to the <em>Internal</em> or <em>S3 Compatible Blobstore</em> radio buttons in the <em>Blobstore Location</em> section will not affect a deployed Ops Manager.</p>
+
+In the Database Location section:
+
+* *Host* in the *External MySQL Database* section
+* *Port* in the *External MySQL Database* section
+* *Username* in the *External MySQL Database* section
+* *Password* in the *External MySQL Database* section
+* *Database* in the *External MySQL Database* section
+
+<p class="note"><strong>Note:</strong> Changes to the <em>Internal</em> or <em>External MySQL Database</em> radio buttons in the <em>Database Location</em> section will not affect a deployed Ops Manager.</p>
+
+In the **Create Availability Zone** pane, the following fields lock after deployment:
+
+* You cannot delete an in-use Availability Zone (AZ) 
+
+In the **Assign AZs and Networks** pane, all fields lock after deployment.
+
+### <a id="product-tiles-locked"></a>Locked fields in product tiles
+
+No additional fields lock automatically in third-party product tiles. However, tile authors can specify which fields should lock on deploy by passing the `freeze-on-deploy` flag. For more information about this flag, see [Common property blueprint attributes](https://docs.pivotal.io/tiledev/2-2/property-reference.html#common-attributes LINK TO 2.3 DOCS).

@@ -7,84 +7,58 @@ owner: Ops Manager
 
 This topic provides instructions for deploying Ops Manager to VMware vSphere. 
 
-1. Refer to the [Known Issues](http://docs.pivotal.io/pivotalcf/pcf-release-notes/opsmanager-rn.html#known-issues) section of the _Ops Manager Release Notes_ topic before starting.
-1. Download the [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) Ops Manager `.ova` file at [Pivotal Network](https://network.pivotal.io). Click the **Pivotal Cloud Foundry** region to access the PCF product page. Use the dropdown menu to select an Ops Manager release.
+<p class="note"><strong>Note</strong>: The instructions in this topic are based on vSphere 6.5.</p>
 
-    <%= image_tag("vm_ops-man.png") %>
+1. Download [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) Ops Manager for vSphere from [Pivotal Network](https://network.pivotal.io). 
 
-1. Log into vCenter.
-1. Select the **VM and Templates** view.
+1. Log in to vCenter.
 
-    <%= image_tag("vm_template_view.png") %>
+1. In the **Navigator**, click the **VMs and Templates** tab.
+    ![vms and templates folder creation](vms-templates.png)
 
-1. Right click on your datacenter and select **New Folder**.
+1. Right click your datacenter. 
+    1. Select **New Folder** > **New VM and Template Folder**.
+        ![New folder creation](new-folder.png)
+    1. Name the folder `pivotal_cf`. 
+    1. Click **Ok**.
 
-    <%= image_tag("new_folder.png") %>
+1. Click your newly created folder.
 
-1. Name the folder `pivotal_cf` and select it.
+1. Click the **Deploy OVF Template** icon and complete the following steps:
+    <p class="note"><strong>Note</strong>: The vSphere Web Client requires Flash. If the **Deploy OVF Template** buttton is unresponsive, ensure you have Flash enabled in your browser and reload the page.</p>
+    ![Ova form fill](ova.png)
+    1. **Select template**
+        1. Click **Browse** and select the `.ova` file you downloaded from Pivotal Network.
+        1. Click **Next**.
+    1. **Select name and location**
+        1. Name the virtual machine and click **Next**.
+            <p class="note"><strong>Note</strong>: The selected folder is the one you created.</p>
+    1. **Select a resource**
+        1. Select the resource you want to use to launch the VM and click **Next**.
+            <p class="note"><strong>Note</strong>: Hardware virtualization must be off if your vSphere host does not support VT-X/EPT. Refer to the <a href="./vsphere.html#vsphere-reqs">Installing Pivotal Cloud Foundry on vSphere</a> topic for more information.</p>
+    1. **Review Details**
+        1. Verify the template details and click **Next**. 
+    1. **Select storage**
+        1. Select a disk format. For information about disk formats, see [Provisioning a Virtual Disk](./disk-format.html).
+            <p class="note warning"><strong>Warning</strong>: Ops Manager requires a Director VM with at least 8&nbsp;GB memory.</p>
+        1. Select a storage destination.
+        1. Click **Next**.
+    1. **Select networks**
+        1. Select a network from the drop down list and click **Next**.
+    1. **Customize template**
+        1. In the **Admin Password** field, enter a default password for the account with the username `ubuntu`. Alternatively, you can enter a pre-existing SSH key value in the **Public SSH Key** field. 
+            <p class="note"><strong>Note</strong>: You must specify either a default password or an SSH key. If you do not have either of these fields configured, Ops Manager will not boot up.</p>
+        1. Complete the remaining network information and passwords for the Ops Manager VM admin user.
+            <p class="note"><strong>Note</strong>: Record this network information. The IP Address will be the location of the Ops Manager interface.</p>
+        1. Click **Next**.
+    1. **Ready to complete**
+        1. Review the configuration data and click **Finish**. 
 
-    <%= image_tag("folder_name.png") %>
-
-1. Select **File > Deploy OVF Template**.
-
-    <%= image_tag("deploy_ova.png") %>
-
-1. Select the .ova file and click **Next**.
-
-    <%= image_tag("next.png") %>
-
-1. Review the product details and click **Next**.
-1. Accept the license agreement and click **Next**.
-1. Name the virtual machine and click **Next**.
-
-    <%= image_tag("vm_name.png") %>
-
-    <p class="note"><strong>Note</strong>: The selected folder is the one you created.</p>
-
-1. Select a vSphere cluster and click **Next**.
-
-    <%= image_tag("anchovy-cluster.png") %>
-
-1. If prompted, select a resource pool and click **Next**.
-
-1. If prompted, select a host and click **Next**.
-
-    <p class="note"><strong>Note</strong>: Hardware virtualization must be off if your vSphere host does not support VT-X/EPT. Refer to the <a href="./vsphere.html#vsphere-reqs">Installing Pivotal Cloud Foundry on vSphere</a> topic for more information.</p>
-
-    <%= image_tag("host.png") %>
-
-1. Select a storage destination and click **Next**.
-
-    <%= image_tag("storage.png") %>
-
-1. Select a disk format and click **Next**. For information about disk formats, see [Provisioning a Virtual Disk](./disk-format.html).
-
-    <p class="note warning"><strong>Warning</strong>: Ops Manager v2.0 requires a Director VM with at least 8&nbsp;GB memory.</p>
-
-    <%= image_tag("disk_format.png") %>
-
-1. Select a network from the drop down list and click **Next**.
-
-    <%= image_tag("network.png") %>
-
-1. Enter network information and passwords for the Ops Manager VM admin user.
-
-    <%= image_tag("vm_admin.png", :height => "375px", :width => "400px") %>
-
-    <p class="note"><strong>Note</strong>: Record this network information. The IP Address will be the location of the Ops Manager interface.</p>
-
-1. In the **Admin Password** field, enter a default password for the ubuntu user. If you do not enter a default password, your Ops Manager will not boot up. 
-
-    <%= image_tag("admin-login.png", :height => "375px", :width => "400px") %>
-
-1. Click **Next**.
-
-1. Check the **Power on after deployment** checkbox and click **Finish**. Once the VM boots, the interface is available at the IP address you specified.
+1. With the VM selected, click **Actions** > **Power** > **Power On**. Once the VM boots, the interface is available at the IP address you specified.
 
      <p class="note"><strong>Note</strong>: It is normal to experience a brief delay before the interface is accessible while the web server and VM start up.</p>
 
 1. Create a DNS entry for the IP address that you used for Ops Manager. You must use this fully qualified domain name when you log into Ops Manager in the [Installing Pivotal Cloud Foundry on vSphere](../customizing/vsphere.html#paas) topic.
-
-<p class="note"><strong>Note</strong>: Ops Manager security features require you to create a fully qualified domain name to access Ops Manager during the <a href="../customizing/vsphere.html#paas">initial configuration.</a></p>
+    <p class="note"><strong>Note</strong>: Ops Manager security features require you to create a fully qualified domain name to access Ops Manager during the <a href="../customizing/vsphere.html#paas">initial configuration.</a></p>
 
 [Return to the Installing Pivotal Cloud Foundry Guide](../installing/index.html)

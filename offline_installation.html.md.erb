@@ -5,9 +5,151 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-This topic describes one solution that has been used in the past to deploy Pivotal Cloud Foundry (PCF) in airgapped or disconnected environments.
+This topic provides an overview of the components and resources needed to install PCF in airgapped environments, including the typical corresponding automation resources. It also describes one example solution that has been used in the past. 
 
-##<a id="airgap"></a> Install in Airgapped Environments 
+##<a id="offline-components"></a> Offline Components
+
+To run PCF offline, you must obtain resources from the internet and move them into offline components that store and use them. The method you use to move a resource from Pivotal Network or GitHub into an offline environment can vary from setting up a designated proxy to burning a DVD.
+
+The following image displays types of resources and the components you must move them to in your offline environment. It also includes a jumpbox. 
+
+<%= image_tag("offline-components.png", :class => "no-border") %>
+[//]:https://docs.google.com/drawings/d/1SeyhGSoohmRmgxO41WTlWS03NU6iCnz0AGVkuLl2P7A/edit?usp=sharing
+
+The following table provides more detail about resources and the component you must move them to:
+
+<table>
+  <tr>
+    <th>Resource</th>
+    <th>Component</th>
+  </tr>
+  <tr>
+    <td>Pivotal Network products such as tiles, stemcells, BOSH releases, and Ops Manager</td>
+    <td>S3 and artifact store</td>
+  </tr>
+  <tr>
+    <td>Pipelines and scripts</td>
+    <td>Git</td>
+  </tr>
+  <tr>
+    <td>Configuration</td>
+    <td>Git</td>
+  </tr>
+  <tr>
+    <td>Container images</td>
+    <td>Docker Registry, S3, or artifact store</td>
+  </tr>
+  <tr>
+    <td>Third Party Resources such as NSX-T and OSS BOSH releases</td>
+    <td>Artifact store</td>
+  </tr>
+  <tr>
+    <td>Backup artifacts</td>
+    <td>S3</td>
+  </tr>
+</table>
+
+
+##<a id="architectural-patterns"></a> Architectural Patterns
+
+The following sections describe three architectural patterns for running PCF in airgapped environments. The pattern you use depends on how your environment is set up. 
+
+###<a id="pattern-one"></a> Pattern One: Artifact Store with Internet Access
+
+It is common for organizations to deploy an artifact store such as Artifactory or Nexus  as a gateway to the Internet. In this configuration, the artifact store is typically configured as a Docker mirror.
+
+This pattern includes an S3 component that is used only for backups of the PCF installation. 
+
+<%= image_tag("internet-artifact-store.png", :class => "no-border") %>
+[//]:https://docs.google.com/drawings/d/14_35uZLsBxCM6ebbj85uqWv1o2QWv00bw52H6H94HX0/edit?usp=sharing
+
+The following table provides an example of how you might handle resources in this scenario:
+
+<table>
+  <tr>
+    <th>Resource</th>
+    <th>Component</th>
+  </tr>
+  <tr>
+    <td>Pivotal Network products such as tiles, stemcells, BOSH releases, and Ops Manager</td>
+    <td>This architectural pattern presents the challenge of getting Pivotal Network resources from the Internet into the artifact store. You could do this through a remote Concourse worker with access to the Internet or some other method.</td>
+  </tr>
+  <tr>
+    <td>Pipelines and scripts</td>
+    <td>Store in Git. Use manual clone and push. Modify pipelines to use <code>registry_mirror</code>.</td>
+  </tr>
+  <tr>
+    <td>Configuration</td>
+    <td>Store in Git. Use manual clone and push.</td>
+  </tr>
+  <tr>
+    <td>Container images</td>
+    <td>Store in the artifact store that you configured as a mirror.</td>
+  </tr>
+  <tr>
+    <td>Third Party Resources such as NSX-T and OSS BOSH releases</td>
+    <td>Store in a generic artifact store repository.</td>
+  </tr>
+  <tr>
+    <td>Backup artifacts</td>
+    <td>Store in a S3 blobstore.</td>
+  </tr>
+</table>
+
+
+###<a id="pattern-two"></a> Pattern Two: Completely Offline
+
+In completely offline environments, you must bring in all resources manually and store them in the available local components. 
+
+<%= image_tag("completely-offline.png", :class => "no-border") %>
+[//]:https://docs.google.com/drawings/d/1eVQcGOu6U0QFRghkAm4W5JjoWUdXs_dYIuxsMMjmfjU/edit?usp=sharing
+
+In this architectural pattern, you must configure pipelines to watch components for changes and apply updates when available. The following table provides an example of how you might handle resources in this scenario:
+
+<table>
+  <tr>
+    <th>Resource</th>
+    <th>Guidance</th>
+  </tr>
+  <tr>
+    <td>Pivotal Network products such as tiles, stemcells, BOSH releases, and Ops Manager</td>
+    <td>Manually upload to Nexus.</td>
+  </tr>
+  <tr>
+    <td>Pipelines and scripts</td>
+    <td>Modify pipelines to use a local Harbor Docker registry. Manualy clone an online environment, bring it to the offline environment on DVD, and push it to offline git.</td>
+  </tr>
+  <tr>
+    <td>Configuration</td>
+    <td>Store in your corporate Git.</td>
+  </tr>
+  <tr>
+    <td>Container Images</td>
+    <td>Get from the Internet, transfer to USB, and push to offline Harbor.</td>
+  </tr>
+  <tr>
+    <td>Third Party Resources such as NSX-T and OSS BOSH releases</td>
+    <td>Store in a generic artifact store repository.</td>
+  </tr>
+  <tr>
+    <td>Backup artifacts</td>
+    <td>Store in a S3 blobstore.</td>
+  </tr>
+</table>
+
+###<a id="pattern-three"></a> Pattern Three: TLS Intercepting Proxy
+
+This pattern allows Internet access, but only through a proxy that decrypts and rewrites  TLS certificates. In general, this resembles an online install, however it requires that you add your corporate certificate to all BOSH-deployed VMs.
+
+<%= image_tag("tls-intercepting-proxy.png", :class => "no-border") %>
+[//]:https://docs.google.com/drawings/d/1xDiLcmQdXQunFR03bhegMhQ4zHmuQzX4QHOpMyZkPac/edit?usp=sharing
+
+Some of the challenges in this pattern include the following:
+
+* Any automation that calls to the Internet will fail if it does not have the corporate certificate in its trust store.
+* Concourse tasks that do not use resources do not receive updated BOSH root certificates. This means you must configure tasks to ignore TLS errors or update the root certificates as part of the tasks.
+
+##<a id="airgap"></a> Example Installation in Airgapped Environment
 
 In this example solution, an operator uses [Concourse](https://concourse-ci.org/) as the [control plane architecture](../refarch/control.html) and specialized [PCF Pipelines](https://github.com/pivotal-cf/pcf-pipelines) to deploy PCF to computer networks physically isolated from the Internet. 
 

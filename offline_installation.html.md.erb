@@ -5,32 +5,174 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-This topic describes one solution that has been used in the past to deploy Pivotal Cloud Foundry (PCF) in airgapped or disconnected environments.
+This topic provides an overview of the components and resources needed to install PCF in airgapped environments, including the typical corresponding automation resources. It also describes one example solution that has been used in the past. 
 
-##<a id="airgap"></a> Install in Airgapped Environments 
+##<a id="offline-components"></a> Offline Components
+
+To run PCF offline, you must obtain resources from the internet and move them into offline components that store and use them. The method you use to move a resource from Pivotal Network or GitHub into an offline environment can vary from setting up a designated proxy to burning a DVD.
+
+The following image displays types of resources and the components you must move them to in your offline environment. It also includes a jumpbox. The jumpbox is a Linux host for running commands such as `bosh`, `uaac`, and `fly`. You could use the Ops Manager VM for this purpose. 
+
+<%= image_tag("offline-components.png", :class => "no-border") %>
+[//]:https://docs.google.com/drawings/d/1SeyhGSoohmRmgxO41WTlWS03NU6iCnz0AGVkuLl2P7A/edit?usp=sharing
+
+The following table provides more detail about resources and the component you must move them to:
+
+<table>
+  <tr>
+    <th>Resource</th>
+    <th>Component</th>
+  </tr>
+  <tr>
+    <td>Pivotal Network products such as tiles, stemcells, BOSH releases, and Ops Manager</td>
+    <td>S3 and artifact store</td>
+  </tr>
+  <tr>
+    <td>Pipelines and scripts</td>
+    <td>Git</td>
+  </tr>
+  <tr>
+    <td>Configuration</td>
+    <td>Git</td>
+  </tr>
+  <tr>
+    <td>Container images</td>
+    <td>Docker Registry, S3, or artifact store</td>
+  </tr>
+  <tr>
+    <td>Third Party Resources such as NSX-T and OSS BOSH releases</td>
+    <td>Artifact store</td>
+  </tr>
+  <tr>
+    <td>Backup artifacts</td>
+    <td>S3</td>
+  </tr>
+</table>
+
+
+##<a id="architectural-patterns"></a> Architectural Patterns
+
+The following sections describe three architectural patterns for running PCF in airgapped environments. The pattern you use depends on how your environment is set up. 
+
+###<a id="pattern-one"></a> Pattern One: Artifact Store with Internet Access
+
+It is common for organizations to deploy an artifact store such as Artifactory or Nexus  as a gateway to the Internet. In this configuration, the artifact store is typically configured as a Docker mirror.
+
+This pattern includes an S3 component that is used only for backups of the PCF installation. 
+
+<%= image_tag("internet-artifact-store.png", :class => "no-border") %>
+[//]:https://docs.google.com/drawings/d/14_35uZLsBxCM6ebbj85uqWv1o2QWv00bw52H6H94HX0/edit?usp=sharing
+
+The following table provides an example of how you might handle resources in this scenario:
+
+<table>
+  <tr>
+    <th>Resource</th>
+    <th>Component</th>
+  </tr>
+  <tr>
+    <td>Pivotal Network products such as tiles, stemcells, BOSH releases, and Ops Manager</td>
+    <td>This architectural pattern presents the challenge of getting Pivotal Network resources from the Internet into the artifact store. For example, Artifactory and Nexus cannot interact directly with Pivotal Network. You could place Pivotal Network resources in an artifact store either through a remote Concourse worker with access to the Internet, by downloading them from the Internet and placing them in the artifact store manually, or some other method.</td>
+  </tr>
+  <tr>
+    <td>Pipelines and scripts</td>
+    <td>Store in Git. Use manual clone and push. Modify pipelines to use <code>registry_mirror</code>.</td>
+  </tr>
+  <tr>
+    <td>Configuration</td>
+    <td>Store in Git. Use manual clone and push.</td>
+  </tr>
+  <tr>
+    <td>Container images</td>
+    <td>Store in the artifact store that you configured as a mirror.</td>
+  </tr>
+  <tr>
+    <td>Third Party Resources such as NSX-T and OSS BOSH releases</td>
+    <td>Store in a generic artifact store repository.</td>
+  </tr>
+  <tr>
+    <td>Backup artifacts</td>
+    <td>Store in a S3 blobstore.</td>
+  </tr>
+</table>
+
+
+###<a id="pattern-two"></a> Pattern Two: Completely Offline
+
+In completely offline environments, you must bring in all resources manually and store them in the available local components. 
+
+<%= image_tag("completely-offline.png", :class => "no-border") %>
+[//]:https://docs.google.com/drawings/d/1eVQcGOu6U0QFRghkAm4W5JjoWUdXs_dYIuxsMMjmfjU/edit?usp=sharing
+
+In this architectural pattern, you must configure pipelines to watch components for changes and apply updates when available. The following table provides an example of how you might handle resources in this scenario:
+
+<table>
+  <tr>
+    <th>Resource</th>
+    <th>Component</th>
+  </tr>
+  <tr>
+    <td>Pivotal Network products such as tiles, stemcells, BOSH releases, and Ops Manager</td>
+    <td>Manually upload to Nexus.</td>
+  </tr>
+  <tr>
+    <td>Pipelines and scripts</td>
+    <td>Modify pipelines to use a local Harbor Docker registry. Manualy clone an online environment, bring it to the offline environment on DVD, and push it to offline Git.</td>
+  </tr>
+  <tr>
+    <td>Configuration</td>
+    <td>Store in your offline Git.</td>
+  </tr>
+  <tr>
+    <td>Container Images</td>
+    <td>Get from the Internet, transfer to USB, and push to offline Harbor.</td>
+  </tr>
+  <tr>
+    <td>Third Party Resources such as NSX-T and OSS BOSH releases</td>
+    <td>Store in a generic artifact store repository.</td>
+  </tr>
+  <tr>
+    <td>Backup artifacts</td>
+    <td>Store in a S3 blobstore.</td>
+  </tr>
+</table>
+
+###<a id="pattern-three"></a> Pattern Three: TLS Intercepting Proxy
+
+This pattern allows Internet access, but only through a proxy that decrypts and rewrites  TLS certificates. In general, this resembles an online install, however it requires that you add your corporate certificate to all BOSH-deployed VMs.
+
+<%= image_tag("tls-intercepting-proxy.png", :class => "no-border") %>
+[//]:https://docs.google.com/drawings/d/1xDiLcmQdXQunFR03bhegMhQ4zHmuQzX4QHOpMyZkPac/edit?usp=sharing
+
+Some of the challenges in this pattern include the following:
+
+* Any automation that calls to the Internet will fail if it does not have the corporate certificate in its trust store.
+* Concourse tasks that do not use resources do not receive updated BOSH root certificates. This means you must configure tasks to ignore TLS errors or update the root certificates as part of the tasks.
+
+##<a id="airgap"></a> Example Installation in Airgapped Environment
 
 In this example solution, an operator uses [Concourse](https://concourse-ci.org/) as the [control plane architecture](../refarch/control.html) and specialized [PCF Pipelines](https://github.com/pivotal-cf/pcf-pipelines) to deploy PCF to computer networks physically isolated from the Internet. 
 
 <p class="note warning"><strong>Warning: </strong> At time of publication, the PCF Pipelines repository is undergoing planned deprecation. Use this document only as a model and reference when implementing your own solution.</p>
 
-The following diagram presents a high level overview of this solution:
+The following diagram presents a high-level overview of this solution:
 
 <%= image_tag("offline-env-diagram.png") %>
 
-The current implementation of these pipelines applies to airgapped environments where the internal S3 repository is bootstrapped by moving tar files previously packaged from another Internet-connected environment. Also, it assumes the existence of one Concourse server in each environment to run the corresponding pipeline.
+This implementation runs in two environments, one airgapped and one Internet-connected. Each environment has its own Concourse server and pipeline. The airgapped environment bootstraps from an internal S3 repository populated by contents moved over as `tar` files from the Internet-connected environment.
 
-###<a id="implementation"></a> Implementation
+###<a id="requirements"></a> Requirements
 
 This solution requires the following:
 
 * Internet-connected environment with access to DockerHub and PivNet.
-* Concourse v3.3.3 or later installed in both the Internet-connected and airgapped environments.
-* All artifacts, such as release files, Docker images and scripts, must be provided from within the airgapped environment. Therefore, you must first download and package any artifacts within an Internet-connected network and then bring them into the airgapped environment. 
-* The offline pipelines implementation rely on Concourse's [s3-resource](https://github.com/concourse/s3-resource) to retrieve the required artifacts from an S3-compatible blobstore. There are many S3-compatible blobstores that can be used from within airgapped environments such as [Minio](https://minio.io/) and [Dell EMC Elastic Cloud Storage](https://www.dellemc.com/en-us/storage/ecs/index.htm).
+* Concourse v3.3.3 or later, installed in both the Internet-connected and airgapped environments.
+* A path from the Internet-connected environment to the airgapped environment. All artifacts, such as release files, Docker images and scripts, must be downloaded and packaged within an Internet-connected network, then transferred to the airgapped environment.
+* An offline S3-compatible blobstore. The airgapped Concourse pipeline retrieves artifacts from a Concourse [S3 Resource](https://github.com/concourse/s3-resource). There are many S3-compatible blobstores that you can use within airgapped environments, such as [Minio](https://minio.io/) and [Dell EMC Elastic Cloud Storage](https://www.dellemc.com/en-us/storage/ecs/index.htm).
 
-###<a id="bootstrap"></a> Bootstrap
+###<a id="bootstrap"></a> Bootstrap the Pipelines
 
-As illustrated in the diagram below, two pipelines are provided to help bootstrap the offline environment, `create-offline-pinned-pipelines` and `unpack-pcf-pipelines-combined`. These pipelines are meant to facilitate physical transfer of artifacts to the airgapped environment.
+As illustrated in the diagram below, two pipelines help bootstrap the offline environment, `create-offline-pinned-pipelines` and `unpack-pcf-pipelines-combined`. These pipelines are meant to facilitate physical transfer of artifacts to the airgapped environment.
 
 <%= image_tag('offline-full-diagram.png') %>
 

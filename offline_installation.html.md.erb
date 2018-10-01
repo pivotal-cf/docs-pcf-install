@@ -5,7 +5,7 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-This topic provides an overview of the components and resources needed to install PCF in airgapped environments, including the typical corresponding automation resources. It also describes one example solution that has been used in the past. 
+This topic provides an overview of the components and resources needed to install PCF in airgapped environments, including the typical corresponding automation resources. It also describes example solutions that have been used in the past. 
 
 ##<a id="offline-components"></a> Offline Components
 
@@ -50,15 +50,15 @@ The following table provides more detail about resources and the component you m
 </table>
 
 
-##<a id="architectural-patterns"></a> Architectural Patterns
+##<a id="architectures"></a> Architectures for Airgapped Environments
 
-The following sections describe three architectural patterns for running PCF in airgapped environments. The pattern you use depends on how your environment is set up. 
+The following sections describe three architectures for populating an airgapped environment with PCF resources obtained online. 
 
-###<a id="pattern-one"></a> Pattern One: Artifact Store with Internet Access
+###<a id="artifact-store"></a> Artifact Store with Internet Access
 
 It is common for organizations to deploy an artifact store such as Artifactory or Nexus  as a gateway to the Internet. In this configuration, the artifact store is typically configured as a Docker mirror.
 
-This pattern includes an S3 component that is used only for backups of the PCF installation. 
+This architecture includes an S3 component that is used only for backups of the PCF installation. 
 
 <%= image_tag("internet-artifact-store.png", :class => "no-border") %>
 [//]:https://docs.google.com/drawings/d/14_35uZLsBxCM6ebbj85uqWv1o2QWv00bw52H6H94HX0/edit?usp=sharing
@@ -72,7 +72,7 @@ The following table provides an example of how you might handle resources in thi
   </tr>
   <tr>
     <td>Pivotal Network products such as tiles, stemcells, BOSH releases, and Ops Manager</td>
-    <td>This architectural pattern presents the challenge of getting Pivotal Network resources from the Internet into the artifact store. For example, Artifactory and Nexus cannot interact directly with Pivotal Network. You could place Pivotal Network resources in an artifact store either through a remote Concourse worker with access to the Internet, by downloading them from the Internet and placing them in the artifact store manually, or some other method.</td>
+    <td>This architecture presents the challenge of getting Pivotal Network resources from the Internet into the artifact store. For example, Artifactory and Nexus cannot interact directly with Pivotal Network. You could place Pivotal Network resources in an artifact store either through a remote Concourse worker with access to the Internet, by downloading them from the Internet and placing them in the artifact store manually, or some other method.</td>
   </tr>
   <tr>
     <td>Pipelines and scripts</td>
@@ -97,14 +97,14 @@ The following table provides an example of how you might handle resources in thi
 </table>
 
 
-###<a id="pattern-two"></a> Pattern Two: Completely Offline
+###<a id="offline"></a> Completely Offline with Manual Transfer
 
 In completely offline environments, you must bring in all resources manually and store them in the available local components. 
 
 <%= image_tag("completely-offline.png", :class => "no-border") %>
 [//]:https://docs.google.com/drawings/d/1eVQcGOu6U0QFRghkAm4W5JjoWUdXs_dYIuxsMMjmfjU/edit?usp=sharing
 
-In this architectural pattern, you must configure pipelines to watch components for changes and apply updates when available. The following table provides an example of how you might handle resources in this scenario:
+In this architecture, you must configure pipelines to watch components for changes and apply updates when available. The following table provides an example of how you might handle resources in this scenario:
 
 <table>
   <tr>
@@ -137,14 +137,14 @@ In this architectural pattern, you must configure pipelines to watch components 
   </tr>
 </table>
 
-###<a id="pattern-three"></a> Pattern Three: TLS Intercepting Proxy
+###<a id="tls-proxy"></a> Intercepting TLS Proxy
 
-This pattern allows Internet access, but only through a proxy that decrypts and rewrites  TLS certificates. In general, this resembles an online install, however it requires that you add your corporate certificate to all BOSH-deployed VMs.
+This architecture allows Internet access, but only through a proxy that decrypts and rewrites  TLS certificates. In general, this resembles an online install, however it requires that you add your corporate certificate to all BOSH-deployed VMs.
 
 <%= image_tag("tls-intercepting-proxy.png", :class => "no-border") %>
 [//]:https://docs.google.com/drawings/d/1xDiLcmQdXQunFR03bhegMhQ4zHmuQzX4QHOpMyZkPac/edit?usp=sharing
 
-Some of the challenges in this pattern include the following:
+Some of the challenges in this architecture include the following:
 
 * Any automation that calls to the Internet will fail if it does not have the corporate certificate in its trust store.
 * Concourse tasks that do not use resources do not receive updated BOSH root certificates. This means you must configure tasks to ignore TLS errors or update the root certificates as part of the tasks.

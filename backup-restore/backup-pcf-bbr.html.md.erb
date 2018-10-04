@@ -431,11 +431,11 @@ To spin up a second environment that matches the original in order to test a res
 
 1. Create a new Ops Manager VM in a different network to the original. Ensure that the Ops Manager VM has enough persistent disk to accommodate the files exported in the previous step. Consult the topic specific to your IaaS:<br><br>
   * [Deploying BOSH and Ops Manager to AWS](../aws-terraform.html)
-	* [Configuring AWS for PCF](../pcf-aws-manual-config.html)
-	* [Launching a BOSH Director Instance with an ARM Template](../azure-arm-template.html)
-    * [Launching a BOSH Director Instance on GCP](../gcp-om-deploy.html)
-    * [Provisioning the OpenStack Infrastructure](../openstack-setup.html)
-    * [Deploying Operations Manager to vSphere](../deploying-vm.html)
+  * [Configuring AWS for PCF](../pcf-aws-manual-config.html)
+  * [Launching a BOSH Director Instance with an ARM Template](../azure-arm-template.html)
+  * [Launching a BOSH Director Instance on GCP](../gcp-om-deploy.html)
+  * [Provisioning the OpenStack Infrastructure](../openstack-setup.html)
+  * [Deploying Operations Manager to vSphere](../deploying-vm.html)
 
 After you deploy the second environment, follow the instructions in [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html).
 
@@ -465,20 +465,28 @@ If you need to cancel a backup, perform the following steps:
 
 1. Enter `CTRL-C` to terminate the BBR process, then enter `yes` to confirm.
 
-1. Log in to your BOSH Director with the BOSH CLI by performing the procedures in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section above.
+1. Run the BBR `backup-cleanup` command from your jumpbox.
 
-1. Perform the following steps for each `cloud_controller` VM in your deployment:
-	1. List the VMs in your deployment:
-		<pre class="terminal">$ bosh -e BOSH-DIRECTOR-IP \
-		--ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
-		-d DEPLOYMENT-NAME \
-		ssh</pre>
-	1. Select the VM you want to SSH into.
-	1. Run the following command from the VM:
-		<pre class="terminal">$ sudo /var/vcap/jobs/cloud-controller-backup/bin/bbr/post-backup-unlock</pre>
+  * For a cancelled director backup, run the following:
 
-1. Run the BBR pre-backup check from your jumpbox by following the steps in the [Step 7: Check Your Deployment](#check) section above. If the command reports that it cannot back up the deployment, SSH onto each VM mentioned in the error using the BOSH CLI and remove the `/var/vcap/store/bbr-backup` directory if present.
+    ```
+    bbr director \
+    --private-key-path PRIVATE-KEY \
+    --username bbr \
+    --host HOST \
+    backup-cleanup
+    ```
+  * For a cancelled deployment backup, run the following:
 
+    ```
+    bbr deployment \
+    --target BOSH-DIRECTOR-IP \
+    --username BOSH-CLIENT \
+    --password BOSH-PASSWORD \
+    --deployment DEPLOYMENT-NAME \
+    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+    backup-cleanup
+    ```
 
 ## <a id="gdpr"></a> European Union's General Data Protection Regulation (GDPR)
 

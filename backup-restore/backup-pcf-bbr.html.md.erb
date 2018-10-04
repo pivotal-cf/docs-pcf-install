@@ -534,26 +534,28 @@ If you need to cancel a backup, perform the following steps:
 
 1. Enter `CTRL-C` to terminate the BBR process, then enter `yes` to confirm.
 
-1. Log in to your BOSH Director with the BOSH CLI by performing the procedures in the [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section above.
+1. Run the BBR `backup-cleanup` command from your jumpbox
+  1. For a cancelled director backup, run
 
-1. Perform the following steps for each `cloud_controller` VM in your deployment:
-	1. List the VMs in your deployment:
-		
-        ```
-      bosh -e BOSH-DIRECTOR-IP \
+      ```
+      bbr director \
+      --private-key-path PRIVATE-KEY \
+      --username bbr \
+      --host HOST \
+      pre-backup-check
+      ```
+
+  1. For a cancelled deployment backup, run
+
+      ```
+      bbr deployment \
+      --target BOSH-DIRECTOR-IP \
+      --username BOSH-CLIENT \
+      --password BOSH-PASSWORD \
+      --deployment DEPLOYMENT-NAME \
       --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
-      -d DEPLOYMENT-NAME \
-      ssh
+      backup-cleanup
       ```
-	1. Select the VM you want to SSH into.
-	1. Run the following command from the VM:
-
-		  ```
-      sudo /var/vcap/jobs/cloud-controller-backup/bin/bbr/post-backup-unlock
-      ```
-
-1. Run the BBR pre-backup check from your jumpbox by following the steps in the [Step 7: Check Your Deployment](#check) section above. If the command reports that it cannot back up the deployment, SSH onto each VM mentioned in the error using the BOSH CLI and remove the `/var/vcap/store/bbr-backup` directory if present.
-
 
 ## <a id="gdpr"></a> European Union's General Data Protection Regulation (GDPR)
 

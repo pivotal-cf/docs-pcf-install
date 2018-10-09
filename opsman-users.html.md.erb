@@ -4,35 +4,15 @@ title: Creating and Managing Ops Manager User Accounts
 
 <strong><%= modified_date %></strong>
 
-[Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) supports multiple user accounts in Ops Manager. A User Account and Authentication (UAA) module colocated on the Ops Manager VM manages access permissions to Ops Manager.
+[Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf)  supports multiple user accounts in Ops Manager. A User Account and Authentication (UAA) module co-located on the Ops Manager VM manages access permissions to Ops Manager.
 
-When Ops Manager boots for the first time, you create an admin user. The admin user is the only user you create through the Ops Manager UI. If you want to create additional users who can log into Ops Manager, you must use the UAA API, either through `curl` or the UAA Command Line Client (UAAC).
+When Ops Manager boots for the first time, you create an admin user. However, you do not create additional users through the Ops Manager web interface. If you want to create additional users who can log into Ops Manager, you must use the UAA API, either through `curl` or the UAA Command Line Client (UAAC).
 
 <p class="note"><strong>Note:</strong> You can only manage users on the Ops Manager UAA module if you chose to use Internal Authentication instead of an external Identity Provider when configuring Ops Manager.</p>
 
-## <a id="manage-users"></a>Managing Users in Ops Manager
+Follow these steps to add or remove users via the UAAC. If you do not already have the UAAC installed, run `gem install cf-uaac` from a terminal window.
 
-Ops Manager allows multiple admin users to log in simultaneously. Admin users can make changes to and redeploy Ops Manager to change deployment components and behavior. 
-
-There is no maximum number of users that can log into Ops Manager simultaneously. 
-
-There are no functionality restrictions placed on users who are logged in simultaneously. Multiple users can reconfigure the same fields at the same time. If you intend to have two or more users reconfiguring the same fields, coordinate their planned actions so they do not accidentally overwrite each other's work.
-
-However, only one redeploy can occur at a time. If one user clicks **Apply Changes**, all other redeploy attempts will fail until the first redeploy completes.
-
-For example: User A and User B both authenticate and access the same Ops Manager instance at the same time. User A reconfigures a field in the Syslog pane of the BOSH Director, clicks **Save**, and clicks **Apply Changes** to redeploy Ops Manager. User A's redeploy initiates.
-
-Two minutes later, User B reconfigures a field in the Syslog pane of the BOSH Director, clicks **Save**, and clicks **Apply Changes** to redeploy Ops Manager. User B receives a `422` error code because the redeploy User A initiated is already in progress. User B must wait for User A's redeploy to complete before their **Apply Changes** will initiate successfully.
-
-<p class="note"><strong>Note</strong>: Some Ops Manager administrators configure external apps to modify their Ops Manager instances (for example, continuous integration and deployment (CI/CD) pipelines. These apps have admin user privileges identical to human admin user accounts. A human user's actions can be delayed or overwritten by an automated admin user.</p>
-
-## <a id="add-remove-users"></a>Adding and Removing Users from Ops Manager
-
-Follow the procedures below to add or remove users via the UAAC. If you do not already have the UAAC installed, run `gem install cf-uaac` from a terminal window.
-
-### <a id='add-user'></a>Adding Users to Ops Manager
-
-The following procedure explains how to add users to Ops Manager.
+## <a id='add-user'></a>Adding Users to Ops Manager
 
 1. Target your Ops Manager UAA:
 <pre class='terminal'>$ uaac target <span>https</span>://YOUR-OPSMAN-FQDN/uaa/</pre>
@@ -50,10 +30,7 @@ The following procedure explains how to add users to Ops Manager.
 <pre class="terminal">$ uaac user add YOUR-USER-NAME -p YOUR-USER-PASSWORD --emails YOUR-USER-EMAIL<span>@</span>EXAMPLE.COM</pre>
 1. (Optional) Set your user's Role-Based Access Control (RBAC) permissions. For more information, see [Configuring Role-Based Access Control (RBAC) in Ops Manager](../opsguide/config-rbac.html).
 
-### <a id='remove-user'></a>Removing Users from Ops Manager
-
-The following procedure explains how to remove users from Ops Manager.
-
+## <a id='remove-user'></a>Removing Users from Ops Manager
 1. Target your Ops Manager UAA:
 <pre class='terminal'>$ uaac target <span>https</span>://YOUR-OPSMAN-FQDN/uaa/</pre>
 1. Get your token:

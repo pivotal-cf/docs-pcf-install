@@ -202,27 +202,33 @@ For example:
     <pre class='terminal'>Logged in as admin@example.org
     </pre>
 
+## <a id='bosh-director-ssh'></a> SSH Into BOSH Director VM 
 
-## <a id='bosh-director-ssh-gcp'></a> SSH Into BOSH Director VM in GCP
+Do the following steps to SSH into the BOSH Director VM:
 
-To SSH into BOSH Director VM in GCP, do the following:
+1. From the Ops Manager UI, go to the BOSH Director tile.
 
-1. Confirm that you have installed the [Google Cloud SDK and CLI](https://cloud.google.com/sdk/docs/quickstart-macos). See the [Google Cloud Platform documentation](https://cloud.google.com/sdk/gcloud/#downloading_gcloud) for more information.
+1. Select the **Credentials** tab, then **bbr ssh Credentials**.
 
-1. Initialize Google Cloud CLI, using a user account with Owner, Editor, or Viewer permissions to access the project. Ensure that the Google Cloud CLI can login to the project by running the command `gcloud auth login`.
+1. Copy the `RSA PRIVATE KEY` and paste it into a file named `bbr.pem`.  Include `-----BEGIN RSA PRIVATE KEY-----` and `-----END RSA PRIVATE KEY-----`.
+  <p class="note warning"><strong>WARNING</strong>: Pivotal recommends you keep the key secure. The key provides full access to the entire PCF environment.</p>
 
-1. From the GCP web console, navigate to **Compute Engine**.
+1. Replace all `\n` characters in `bbr.pem` with a line break. 
 
-1. Locate the BOSH Director VM in the **VM Instances** list.
+1. Copy `bbr.pem` to the `~/.ssh/` directory on your machine. 
 
-1. Under **Remote access**, click the **SSH** dropdown and select **View gcloud command**.
+1. Modify the permissions of the file by running `chmod 600 ~/.ssh/bbr.pem`.  
 
-1. Copy the SSH command that appears in the popup window.
+1. SSH into the BOSH Director from your machine.
+  
+    ```
+    ssh bbr@Bosh_director_External_IP  -i  ~/.ssh/bbr.pem
+    ```
+    <p class="note"><strong>Note: </strong> If you are using GCP, ensure SSH port <code>22</code> is open for your BOSH Director VM in your GCP console. If the SSH port is not open, open it by creating a firewall rule.</p>
 
-1. Paste the command into your terminal window to SSH to the VM. For example:
-    <pre class="terminal">
-    $ gcloud compute --project "YOUR-PROJECT-ID" ssh --zone "YOUR-ZONE-ID" "YOUR-VM"
-    </pre>
+1. Run `sudo -i` to get the root privilege.
+
+
 
 
 ## <a id='cli'></a> Use the BOSH CLI for Troubleshooting

@@ -5,198 +5,29 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-<p class='note'><strong>Note:</strong> Elastic Runtime has been renamed Pivotal Application Service.</p>
+<p class='note'><strong>Note:</strong> Elastic Runtime has been renamed Pivotal Application Service (PAS).</p>
 
 This topic describes upgrading Pivotal Cloud Foundry (PCF) to v2.0. The upgrade procedure below describes upgrading Pivotal Cloud Foundry Operations Manager (Ops Manager), Pivotal Application Service (PAS), and product tiles.
 
-For an up-to-date checklist that incorporates much of the information below, see [Upgrade Checklist for PCF v2.0](../upgrading/checklist.html).
+<p class="note breaking"><strong>Breaking Changes:</strong> Read the <a href="https://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/index.html">Release Notes</a> and <a href="https://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/breaking-changes.html">Breaking Changes</a> for this release, including the Known Issues sections, before starting the upgrade process.</p>
 
 The apps in your deployment continue to run during the upgrade. However, you cannot write to your deployment or make changes to apps during the upgrade.
 
-<p class='note warning'><strong>WARNING</strong>: Read the <a href="https://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/index.html">Release Notes</a> and <a href="https://docs.pivotal.io/pivotalcf/2-0/pcf-release-notes/breaking-changes.html">Breaking Change</a> for this release, including the Known Issues sections, before starting the upgrade process.</p>
+For details about how upgrading PCF impacts individual PCF components, see [PAS Component Behavior During Upgrade](../opsguide/single-component.html).
 
-For more details about the impact of upgrading on individual PCF components, see <a href="../opsguide/single-component.html" class="subnav">PAS Component Behavior During Upgrade</a>.
+## <a id="prepare"></a> Prepare to Upgrade
 
-
-## <a id="beforeupgrade"></a> Before You Upgrade
-
-This section contains important preparation steps, **Preps**, that you must follow before beginning an upgrade to PCF v2.0. Failure to follow these instructions may jeopardize your existing deployment data and cause your upgrade to fail.
-
-Pivotal recommends that you back up your PCF deployment before upgrading. In case of failure, you can restore your deployment from the backup. To back up your PCF deployment, follow the instructions in <a href="./backup-restore/backup-pcf-bbr.html">Backing Up Pivotal Cloud Foundry with BBR</a>. 
-
-<p class='note breaking'><strong>Breaking Change</strong>: If you have the Single Sign-On (SSO) service tile installed, you must first upgrade the SSO tile to v1.5.3 and configure the Apps Manager errand before you can upgrade the PAS tile to v2.0. To properly upgrade your SSO tile, see <a href="https://discuss.pivotal.io/hc/en-us/articles/115015727408">Upgrade SSO Service Tile resource instance between PCF 1.12 and PCF 2.0</a> in the Pivotal Knowledge Base.</p>
-
-### <a id="storage"></a> Prep 1: Review File Storage IOPS and Other Upgrade Limiting Factors
-
-The PCF upgrade process moves a large quantity of data on disk. 
-
-To ensure a successful upgrade of PCF, verify that your underlying PAS file storage is performant enough to handle the upgrade. For more information about the configurations to evaluate, see <a href="../opsguide/storage_considerations.html" class="subnav">Upgrade Considerations for Selecting Pivotal Cloud Foundry Storage</a>.
-
-In addition to file storage IOPS, other existing deployment factors can impact overall upgrade duration and performance.
-
-|**Factor**|**Impact**|
-|----------|----------|
-|**Network latency** | Network latency can contribute to how long it takes to move app instance data to new containers. |
-|**Number of ASGs**| A large number of [Application Security Groups](../concepts/asg.html) in your deployment can contribute to an increase in app instance container startup time.|
-|**Number of app instances and application growth**| A large increase in the number of app instances and average droplet size since the initial deployment can increase the upgrade impact on your system. |
-
-To review example upgrade-related performance measurements of an existing production Cloud Foundry deployment, see <a href="../opsguide/pws_upgrade_load.html" class="subnav">Pivotal Web Services Performance During Upgrade</a>. 
-
-### <a id="app_usage"></a> Prep 2: Verify App Usage Service Remedial Steps
-
-If you want to upgrade from a PCF deployment that at one point included Elastic Runtime v1.7.16 or earlier, you must perform the remedial steps outlined in <a href="https://discuss.pivotal.io/hc/en-us/articles/228639827-App-Usage-Data-and-Events-Data-Becomes-Corrupted-After-Upgrade-or-Install">App Usage Data and Events Data Become Corrupted After Upgrade or Install</a> before proceeding.
-
-<p class="note warning"><strong>WARNING</strong>: If you fail to perform the remedial steps for this issue, the upgrade process may corrupt your existing usage data.</p>
-
-### <a id="cert-expiry"></a> Prep 3: Check Certificate Authority Expiration Dates
-
-Depending on the requirements of your deployment, you may need to rotate your Certificate Authority (CA) certificates. The non-configurable certificates in your deployment expire every two years. You must regenerate and rotate these certificates so that critical components do not face a complete outage.
-
-<p class="note"><strong>Note:</strong> PCF uses SHA-2 certificates and hashes by default. You can convert existing SHA-1 hashes into SHA-2 hashes by rotating your Ops Manager certificates using the procedure described in the <a href="../security/pcf-infrastructure/api-cert-rotation.html#rotate-ca">Rotate Root and Leaf Certificates</a> section of <em>Managing Certificates</em>.</p>
-
-To retrieve information about all the RSA and CA certificates for the BOSH Director and other products in your deployment, you can use the `GET /api/v0/deployed/certificates?expires_within=TIME` request of the Ops Manager API.
-
-In this request, the `expires_within` parameter is optional. Valid values for the parameter are `d` for days, `w` for weeks, `m` for months, and `y` for years. For example, to search for certificates expiring within one month, replace `TIME` with `1m`:
-
-<pre class="terminal">$ curl "https://OPS-MAN-FQDN/api/v0/deployed/certificates?expires_within=1m" \
- -X GET \
- -H "Authorization: Bearer UAA_ACCESS_TOKEN"
-</pre>
-
-For information about regenerating and rotating CA certificates, see [Managing Certificates](../security/pcf-infrastructure/api-cert-rotation.html).
-
-### <a id="review-partners"></a> Prep 4: Review Partner Service Tiles
-
-Some partner service tiles may be incompatible with PCF v2.0. Pivotal works with partners to ensure their tiles are updated to work with the latest versions of PCF. For information about which partner service releases are currently compatible with PCF v2.0, review the appropriate partners services release documentation at [http://docs.pivotal.io](http://docs.pivotal.io), or contact the partner organization that produces the service tile.
-
-### <a id="download-targets"></a>Prep 5: Download Upgrade Versions
-
-To minimize disruptions to your deployment during the upgrade, and to satisfy any simultaneous upgrade requirements, download the version of the product files you wish to upgrade from [Pivotal Network](https://network.pivotal.io/). 
-
-At the minimum, you must download PAS v2.0.
-
-### <a id="prepare-env"></a> Prep 6: Prepare Your Environment
-
-1. Install the releases from your currently deployed version to the target version in sequential order. For example, if your deployment uses Ops Manager v1.8 and you are upgrading to v2.0, you must sequentially install v1.9, v1.10, v1.11, and v1.12 before proceeding with the upgrade to v2.0.
-
-1. If you have disabled lifecycle errands for any installed product to reduce deployment time, Pivotal recommends that you re-enable these errands before upgrading. For more information, see <a href="./add-delete.html#add-import">Adding and Deleting Products</a>.
-
-1. <%= partial 'check_disk_before_upgrade' %>
-
-1. If not already disabled, disable the VM Resurrector:
-   1. From your **Installation Dashboard**, select the **Ops Manager Director** tile. 
-   2. Click **Director Config**.
-   3. Clear the **Enable VM resurrector plugin** checkbox.
-   4. Click **Save**.
-   5. Return to the **Installation Dashboard** and click **Apply Changes**.
-
-1. Check the required machine specifications for Ops Manager v2.0. These specifications depend on your IaaS. If these specifications do not match your existing Ops Manager, modify the values in your Ops Manager virtual machine (VM) instance. For example, if the boot disk of your existing Ops Manager is 50&nbsp;GB and the new Ops Manager requires 100&nbsp;GB, increase the size of your Ops Manager boot disk to 100&nbsp;GB. 
-
-1. If you are upgrading a vSphere environment, ensure that you have the following information about your existing environment before starting the upgrade:
-  * **IP Addresses**: Record the following IP addresses, which you can find in the vSphere web client under **Manage** > **Settings** > **vApp Options**. 
-This is the same information you entered at the end of deploying [Ops Manager on vSphere](./deploying-vm.html). 
-     * IP Address of the Ops Manager
-     * Netmask
-     * Default Gateway
-     * DNS Servers
-     * NTP Servers
-  * **Hardware Information**: Record the following VM hardware information so you can configure the new VM with similar settings. You can find this information in the vSphere web client under **Manage** > **Settings** > **VM Hardware**.
-       * CPU
-       * Memory
-       * Hard Disk 1
-       * Network Adapter 1. When you configure the new VM, ensure your network adapters are configured properly and are on the same network.
-
-### <a id="upgrade-mysql"></a> Prep 7: Upgrade MySQL for PCF
-
-If your PCF deployment includes both <a href="../windows2012r2/index.html">PAS for Windows 2012R2</a> and <strong>MySQL for PCF v1.x</strong>, download and upgrade to MySQL for PCF v1.10.6 or later. For upgrade instructions, see the <a href="https://docs.pivotal.io/p-mysql/1-10/index.html">MySQL for PCF</a> documentation.
-
-### <a id="upgrade-rmq"></a> Prep 8: Upgrade and Configure RabbitMQ for PCF
-
-If your PCF deployment contains **RabbitMQ for PCF**, download and upgrade RabbitMQ for PCF to v1.11 or later. For upgrade instructions, see the [RabbitMQ for PCF](https://docs.pivotal.io/rabbitmq-cf/index.html) documentation. As part of the upgrade, ensure that the firewall rules on your Rabbit VM instances allow inbound traffic on port `8301`.  
-
-### <a id="upgrade-redis"></a> Prep 9: Upgrade and Configure Redis for PCF
-
-If your PCF deployment contains **Redis for PCF**, download and upgrade to Redis for PCF v1.10. Verify that you complete the following as part of the upgrade:
- 
-* Ensure that you set persistent disk to 3.5x the amount of RAM for your Dedicated-VM Redis instances. See [Networks, Security, and Assigning AZs](https://docs.pivotal.io/redis/installing.html#azs) for more information.
-* Ensure that you have configured appropriate firewall rules for your Redis VM instances. See [Required Networking Rules for On-Demand Services](https://docs.pivotal.io/redis/1-10/odnetworking.html#network-rules) for more information.
-
-For upgrade instructions, see the [Redis for PCF](https://docs.pivotal.io/redis/1-11/index.html) documentation.
-
-### <a id="upgrade-add-ons"></a> Prep 10: Check OS Compatibility of PCF and BOSH-Managed Add-Ons
-
-If both the following conditions are true, you must modify the add-on manifest to specify a compatible OS stemcell before upgrading to PCF v2.0: 
-
-* You have deployed any PCF add-ons such as **ClamAV for PCF**, **IPsec for PCF**, or **File Integrity Monitoring for PCF**
-
-* You have deployed or are planning to deploy [PAS for Windows 2012R2](../windows2012r2/index.html).
-
-For example, if you deployed **ClamAV for PCF** and you plan to deploy PAS for Windows 2012R2, you must specify the target OS stemcell of `ubuntu-trusty` in the add-on manifest.
-
-To update an add-on manifest, perform the following steps:
-
-1. Locate your existing add-on manifest file. For example, for ClamAV, locate the `clamav.yml` you uploaded to the Ops Manager VM.
-
-1. Modify the manifest to include following `include` directive:
-
-    ```yml
-      include:
-        stemcell:
-          - os: ubuntu-trusty
-    ```
-
-1. Upload the manifest file to your PCF deployment. For example instructions, see [Create the ClamAV Manifest](https://docs.pivotal.io/addon-antivirus/index.html#create-mfest). 
-
-If you use any other BOSH-managed add-ons in your deployment, you should verify OS compatibility for those component as well. For more information about configuring BOSH add-on manifests, see the [BOSH documentation](https://bosh.io/docs/runtime-config.html#addons). 
-
-### <a id="check-health"></a> Prep 11: Check System Health Before Upgrade
-
-1. Run `bosh <%= vars.bosh_cloud_check %>` to confirm that the VMs in your deployment are healthy. For more information, see [BOSH Cloud Check](./trouble-advanced.html#cck) in _Advanced Troubleshooting with the BOSH CLI_.
-
-1. Check the system health of installed products. In the **Installation Dashboard**, select the **Status** tab for each service tile. Confirm that all jobs are healthy.
-
-1. (Optional) Check the logs for errors before proceeding with the upgrade.
-For more information, see [Viewing Logs in the Command Line Interface](../devguide/deploy-apps/streaming-logs.html#view) in _Application Logging in Cloud Foundry_.
-
-1. Confirm no outstanding changes exist in Ops Manager or any other tile. All tiles should display **green**. Click **Apply Changes** if necessary. 
-
-1. After applying changes, click **Recent Install Logs** to confirm that the changes completed cleanly. You should see the following message:
-    <pre>
-    Cleanup complete
-    {"type": "step\_finished", "id": "clean\_up\_bosh.cleaning\_up"}
-    Exited with 0.
-    </pre>
+If you have not already, complete the steps in the [Upgrade Preparation Checklist for PCF v2.0](../upgrading/checklist.html).
 
 ## <a id="upgrade_ops"></a> Upgrade Ops Manager and Installed Products to v2.0
 
-### <a id="export"></a> Step 1: Export Your Ops Manager
+Follow these steps to upgrade Ops Manager and Installed Products to PCF v2.0. 
 
-1. In your Ops Manager v1.12.x **Installation Dashboard**, click the account drop-down menu and select **Settings**.
+### <a id="upgrade"></a> Import Installation to Ops Manager v2.0 VM
 
-    <%= image_tag("./images/upgrading/upgrade_to_1.9.png") %>
+1. Download the Ops Manager VM Template v2.0 from the [Pivotal Network](https://network.pivotal.io/products/ops-manager) site.
 
-1. On the **Settings** screen, select **Export Installation Settings** from the left menu, then click **Export Installation Settings**. This exports the current Ops Manager installation with all of its assets.
-
-    <%= image_tag("./images/upgrading/export_install_settings.png") %>
-
-This exports the current PCF installation with all of its assets.<br/><br/>
-
-When you export an installation, the export contains the base VM images, necessary packages, and configuration settings, but does not include releases between upgrades if Ops Manager has already uploaded them to BOSH. When backing up PCF, you must take this into account by backing up the BOSH blobstore that contains the uploaded releases. BOSH Backup and Restore (BBR) backs up the BOSH blobstore. For more information, see [Backing Up Pivotal Cloud Foundry with BBR](./backup-restore/backup-pcf-bbr.html).
-
-* The export time depends on the size of the exported file.
-* Some browsers do not provide feedback on the status of the export
-process and might appear to hang.
-    
-<p class="note"><strong>Note</strong>: Some operating systems automatically unzip the exported installation. If this occurs, create a ZIP file of the unzipped export. Do not start compressing at the "installation" folder level. Instead, start compressing at the level containing the <code>config.yml</code> file:</p>
-
-<%= image_tag("./images/upgrading/compress.png") %>
-
-### <a id="upgrade"></a> Step 2: Deploy Ops Manager v2.0
-
-1. Download the Ops Manager VM Template v2.0.x from [Pivotal
-Network](https://network.pivotal.io/products/ops-manager).
-
-1. Record the FQDN of the existing Ops Manager VM.
+1. Record the FQDN address of the existing Ops Manager VM.
 
 1. To avoid conflicts, power off the existing Ops Manager VM.
 
@@ -211,25 +42,23 @@ Network](https://network.pivotal.io/products/ops-manager).
 
     <%= image_tag("./images/upgrading/welcome.png") %>
 
-1. When prompted, enter the **Decryption Passphrase** for this Ops Manager installation. You set this passphrase during your initial installation of Ops Manager. 
-
-    <p class="note"><strong>Note</strong>: If lost, the <strong>Decryption Passphrase</strong> cannot be recovered.</p>
+1. When prompted, enter the **Decryption Passphrase** for this Ops Manager installation. You set this passphrase during your initial installation of Ops Manager.
+    <p class="note"><strong>Note:</strong> If lost, the <strong>Decryption Passphrase</strong> cannot be recovered.</p>
 
 1. Click **Choose File** and browse to the installation ZIP file exported in [Step 1](#export) above.
 
     <%= image_tag("./images/upgrading/decryption_passphrase.png") %>
 
 1. Click **Import**.
-
-    <p class="note"><strong>Note</strong>: Some browsers do not provide feedback on the status of the import process, and might appear to hang.</p>
+    <p class="note"><strong>Note:</strong> Some browsers do not provide feedback on the status of the import process, and might appear to hang.</p>
 
 1. A "Successfully imported installation" message appears upon completion.
 
     <%= image_tag("./images/upgrading/success.png") %>
 
-### <a id="upgrade_products"></a> Step 4: Upgrade PAS and Product Tiles
+### <a id="upgrade_products"></a> Import New PAS and Product Tiles
 
-After upgrading to Ops Manager v2.0, follow the step below to upgrade your PAS and product tiles. 
+<a name="success"></a> After upgrading to Ops Manager v2.0, upgrade your product versions:
 
 1. Import the product file to your Ops Manager **Installation Dashboard**.
 
@@ -237,23 +66,119 @@ After upgrading to Ops Manager v2.0, follow the step below to upgrade your PAS a
 
 1. Click the newly added tile to review any configurable options.
 
-1. (Optional) If you are using other service tiles, you can upgrade them following the same procedure. See <a href="./upgrading-products.html" class="subnav">Upgrading PAS and Other Pivotal Cloud Foundry Products</a> for more information.
+1. (Optional) If you use other service tiles, you can upgrade them following the same procedure. See the [Upgrading PAS and Other Pivotal Cloud Foundry Products](./upgrading-products.html) topic for more information.
 
-### <a id="perform-upgrade"></a> Step 5: Complete the Upgrade
+### <a id="perform-upgrade"></a> Perform Your Upgrade
+
+<p class="note warning"><strong>WARNING:</strong> If the installation fails or returns errors, contact <%= vars.support_link %>. Do not attempt to roll back the upgrade by restarting the previous (v1.12) Ops Manager VM.</p>
 
 1. Navigate to the Ops Manager **Installation Dashboard**.
 
 1. Click **Apply Changes**. This immediately imports and applies upgrades to all tiles in a single transaction.
 
-    <p class="note warning"><strong>WARNING</strong>: If the installation fails or returns errors, contact <%= vars.support_link %>. Do not attempt to roll back the upgrade by restarting the previous (v1.12.x) Ops Manager VM.</p>
+1. Click each service tile, select the **Status** tab, and confirm that all VMs
+appear and are in good health.
 
-1. Click each service tile, select the **Status** tab, and confirm that all VMs appear and are in good health.
+1. After confirming that the new installation functions correctly, remove the
+v1.12 Ops Manager VM.
 
-1. After confirming that the new installation functions correctly, remove the previous (v1.12.x) Ops Manager VM.
+## <a id="monitor"></a> Monitor Upgrade
+
+During the upgrade, you can do the following to monitor your PCF foundation and help troubleshoot any issues.
+
+###  <a id="status"></a> Check Status and Performance
+
+**Note/Reason**: <br>
+Monitor the progress of the upgrade, checking the status of the foundation at various locations.<br>
+**Product/component**:<br>
+PCF
+
+Monitor upgrade progress with methods such as:
+
+* Run BOSH CLI status checks: 
+  * <code>bosh -e ALIAS task TASK_NUMBER</code>
+  * <code>bosh -e ALIAS vms --vitals, bosh -e ALIAS instances --ps</code>
+* Check app availability
+* Run cf CLI Commands
+* Check the availability of the Ops Manager GUI
+* Check NAS performance (if using NAS)
+* Check vSphere performance (if on vSphere)
+
+###  <a id="diego"></a> Check Diego State
+
+**Note/Reason**:<br>
+See the <a href="https://github.com/cloudfoundry/cfdot">cfdot documentation</a> on github for details.<br>
+**Product/component**:<br>
+PAS
+
+Use the CF Diego Operator Toolkit (cfdot) to check Diego component instance count by current state.
+
+###  <a id="storage"></a> (Optional) Take Snapshots of Storage Metrics
+
+**Note/Reason**:<br>
+Pivotal recommends this if you have a large foundation and have experienced storage issues in the past.<br>
+**Product/component**:<br>
+PCF
+
+Periodically take snapshots of storage metrics
 
 
-## <a id="after-upgrade"></a> After You Upgrade
+###  <a id="collect-logs"></a> (Optional) Collect Logs
 
-### <a id="cli-upgrade"></a> Upgrade Cloud Foundry Command Line Interface 
+**Note/Reason**:<br>
+This information helps determine the cause of upgrade issues.<br>
+**Product/component**:<br>
+PCF
 
-To use the experimental push commands, [multiple buildpack](../buildpacks/use-multiple-buildpacks.html) support, and [container networking commands](../devguide/deploy-apps/cf-networking.html#create-policies) in PCF v2.0, make sure you have the latest version of the Cloud Foundry Command Line Interface (cf CLI). For more information, see [Using the cf CLI](../cf-cli/index.html).
+If you encounter problems during upgrade, collect the following information:
+
+* All job logs
+* Task debug logs for VM upgrade tasks
+* Installation log from Ops Manager
+
+## <a id="after"></a> After Upgrade
+
+After your upgrade, do the following to prepare for use of your new environment, check its health status, and clean-up. 
+
+### <a id="bosh-alias"></a> Re-create BOSH Alias
+
+Re-create your alias using BOSH: <code>bosh alias-env ALIAS -e DIRECTOR_IP</code>
+
+* **Note/Reason**: To log into BOSH after upgrading PCF, you need to recreate your alias.
+* **Product/component**: BOSH
+
+### <a id="cf-cli"></a> Install New cf CLI
+
+Download the version of the Cloud Foundry Command Line Interface (cf CLI) packaged with the [PAS](https://network.pivotal.io/products/elastic-runtime/) tile on Pivotal Network.
+
+### <a id="health"></a> Check the Health of your Deployment
+
+1. Run BOSH CLI commands to check system status:
+  1. <code>bosh -e ALIAS -d DEPLOYMENT_NAME instances --ps</code>
+  1. <code>bosh -e ALIAS vms --vitals</code>
+  1. <code>bosh -e ALIAS -d DEPLOYMENT_NAME cck --report</code>
+
+    **Note/Reason**: To ensure that all jobs and process are running as expected<br>
+    **Product/component**: PCF and all tiles
+
+1. Push and horizontally scale a test application.
+  * **Note/Reason**: This is a performance test for PAS.
+  * **Product/component**: PCF
+
+1. If you are running PAS MySQL as a cluster, run the <code>mysql-diag</code> tool to validate health of the cluster.
+  * **Note/Reason**: See the BOSH CLI v2 instructions in the <a href="https://docs.pivotal.io/pivotalcf/2-0/pas/mysql-diag.html">Running mysql-diag</a> topic.
+  * **Product/component**: PAS
+
+### <a id="resource-settings"></a> Check Resource Settings
+
+If you added custom <strong>VM Type</strong> or <strong>Persistent Disk Type</strong>options, ensure that these values are correctly set and were not overwritten.
+
+* **Note/Reason**: Verify that the Ops Manager <strong>Resource Config</strong> pane still lists your custom options.
+* **Product/component**: PCF
+
+### <a id="bosh-cleanup"></a> Run BOSH clean-up
+
+Run <code>bosh -e ALIAS clean-up --all</code> to clean up old stemcells, releases, orphaned disks, and other unused resources.
+
+* **Product/component**: Tiles
+

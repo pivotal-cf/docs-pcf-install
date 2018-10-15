@@ -50,28 +50,32 @@ BBR can back up the following components:
 - [Pivotal Application Service (PAS)](#pas-support)
 - [BOSH Director](#bosh-director-support)
 
-To determine if BBR can back up and restore your PAS or BOSH Director external database and blobstore, see the table below.
-
-<%= image_tag("images/bbr-supported-components.png") %>
-
 ### <a id='pas-support'></a> PAS
-You can configure PAS with either an internal MySQL database or a supported external database.
-You can configure PAS with either WebDAV/NFS blobstore or a versioned S3-compatible external blobstore.
+In PCF v2.2, BBR can back up and restore PAS configured with the following:
 
-  * **External databases**&mdash;For a list of supported external databases,
-  see [Supported External Databases](https://docs.cloudfoundry.org/bbr/cf-backup.html#supported-external-databases)
-  in the _Configuring Cloud Foundry for BOSH Backup and Restore_ in the Cloud Foundry documentation.
+* An internal MySQL database or a supported external database.
+For a list of supported external databases, see the
+[Supported External Databases](https://docs.cloudfoundry.org/bbr/cf-backup.html#supported-external-databases) section
+of _Configuring Cloud Foundry for BOSH Backup and Restore_ in the Cloud Foundry documentation.
 
-  * **External blobstores**&mdash;BBR supports PAS with configured with versioned
-  or unversioned S3-compatible blobstores.
-  To configure your PCF installation to use an external S3-compatible blobstore,
-  see [External S3 or Ceph Filestore](../pcf-aws-manual-er-config.html#external_s3).
-
-  For more information, see [Backup and Restore with External Blobstores](https://docs.cloudfoundry.org/bbr/external-blobstores.html) 
-  in the Cloud Foundry documentation.
+* An internal WebDAV/NFS blobstore or an external AWS or Azure blobstore.
+<p class="note"><strong>Note</strong>: In PAS v2.2, BBR supports backing up and restoring versioned and unversioned S3 or
+  S3-compatible blobstores by default. To back up and restore Azure blobstores
+  with BBR, you must install Blobstore Addon. For more information, see
+  <a href="./enabling-external-blobstore-backups.html">Enabling External Blobstore Backups</a>.
+</p>
+For guidance about backing up unsupported databases and blobstores, see
+[Unsupported External Blobstores and Databases in PAS](#guidelines).
 
 ### <a id='bosh-director-support'></a> BOSH Director
-The BOSH Director must have an internal Postgres database and an internal blobstore to be backed up and restored with BBR. As part of backing up the BOSH Director, BBR backs up the BOSH UAA database and the CredHub database.
+The BOSH Director must have an internal Postgres database and an internal blobstore
+to be backed up and restored with BBR. As part of backing up the BOSH Director, BBR backs up the BOSH UAA
+database and the CredHub database.
+
+<p class="note"><strong>Note</strong>: BBR support for backing up and restoring external databases and
+  blobstores varies across PCF versions. For more information, see
+  <a href="#version-compatibility">External Storage Support Across PCF Versions</a>.
+</p>
 
 <div class="note">
   <strong>Note:</strong>
@@ -81,7 +85,14 @@ The BOSH Director must have an internal Postgres database and an internal blobst
   </ul>
 </div>
 
-## <a id="guidelines"></a> Unsupported Blobstores and Databases in PAS
+## <a id="version-compatibility"></a> External Storage Support Across PCF Versions
+
+The following table shows what types of external databases and blobstores you can back up and restore
+with BBR in PCF v1.11 through v2.3.
+
+<%= image_tag("images/bbr-supported-components.png") %>
+
+## <a id="guidelines"></a> Unsupported External Blobstores and Databases in PAS
 
 If you configured an unsupported external blobstore or an unsupported external database in PAS, see the following guidelines to perform a backup successfully:
 

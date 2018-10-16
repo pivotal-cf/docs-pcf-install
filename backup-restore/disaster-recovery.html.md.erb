@@ -101,23 +101,22 @@ The table below gives an indication of the downtime that you can expect. Actual 
 
 Blobstores can be very large. To minimize downtime, BBR only takes blob metadata during the backup. For example, in the case of internal blobstores (Webdav/NFS), BBR takes a list of hardlinks that point to the blobs. Once the API becomes available, BBR makes copies of the blobs. 
 
+### <a id="not-supported"></a>Unsupported Products
 
-### <a id="not-supported"></a>Products and Hardware Not Supported 
+* **Data services**. The Pivotal data services listed below do not support BBR. Operators
+of these services should use the automatic backups feature of each tile, available
+within Ops Manager.
 
-The follow components and products do not yet support BBR:
+  * MySQL for PCF
+  * Pivotal Cloud Cache for PCF
+  * RabbitMQ for PCF
+  * Redis for PCF
 
-* **Data services**: BBR is not yet supported in Pivotal's flagship data services (MySQL, RabbitMQ, Redis, PCC). In the meantime, operators should use the automatic backups feature of each tile, available within Ops Manager.
-* **External blobstores**: BBR only supports S3-compatible external blobstores. Any other type of external blobstore is not supported by BBR, but BBR can be used to back up the rest of PAS. Pivotal recommends that operators copy incompatible blobstores using IaaS tooling, in conjunction with backing up <%= vars.product_short %> with BBR.
-* **External databases**: BBR supports a defined list of external databases.
-See [Supported External Databases](https://docs.cloudfoundry.org/bbr/cf-backup.html#supported-external-databases) in _Configuring Cloud Foundry for BOSH Backup and Restore_ in the Cloud Foundry documentation for the list.
-For external databases not supported by BBR, Pivotal recommends that operators copy the databases using their IaaS tooling.
-BBR does not support backing up and restoring the BOSH Director configured with an external database.
-
-To address the limitations noted above, follow the guidelines below when using BBR to back up PCF when <%= vars.product_short %> configured with an unsupported external blobstore or external database:
-
-* With <%= vars.product_short %> configured with an internal database and an unsupported external blobstore, follow the PCF backup process using BBR and copy the external blobstore using your IaaS. Inconsistencies between the blobstore and database may result in apps failing to restart during the restore. You can push these apps again to restart them. 
-
-* With <%= vars.product_short %> configured with an unsupported external database and an unsupported external blobstore, follow the PCF backup process using BBR, but skip the backup of <%= vars.product_short %>. Copy the external database and blobstore using your IaaS. Inconsistencies between the blobstore and database may result in apps failing to restart during the restore. You can push these apps again to restart them. 
+* **External blobstores and databases**. BBR support for backing up and restoring external
+databases and blobstores varies across PCF versions. For more information, see
+[Supported Components](backup-pcf-bbr.html#supported) and
+[External Storage Support Across PCF Versions](backup-pcf-bbr.html#version-compatibility)
+in _Backing up Pivotal Cloud Foundry with BBR_.
 
 ### <a id="best-practices"></a> Best Practices
 

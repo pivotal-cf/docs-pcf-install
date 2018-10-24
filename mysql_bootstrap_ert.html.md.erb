@@ -163,25 +163,25 @@ To recreate your missing VMs, do the following:
     bosh -e YOUR-ENV update-resurrection off
     ```
 
-2. Download the current manifest.
+1. Download the current manifest.
     
     ```
     bosh -e YOUR-ENV -d YOUR-DEPLOYMENT manifest > /tmp/manifest.yml
     ```
 
-3. Redeploy and expect one of the MySQL VMs to fail. Deploying causes BOSH to create new VMs and install the software. Forming a cluster is in a subsequent step. 
+1. Redeploy and expect one of the MySQL VMs to fail. Deploying causes BOSH to create new VMs and install the software. Forming a cluster is in a subsequent step. 
     
     ```
     bosh -e YOUR-ENV -d YOUR-DEPLOYMENT deploy /tmp/manifest.yml
     ``` 
 
-4. Run the following command and record the instance GUID of the VM that attempted to start. Your instance GUID is the string after `mysql/` in your BOSH instances output.
+1. Run the following command and record the instance GUID of the VM that attempted to start. Your instance GUID is the string after `mysql/` in your BOSH instances output.
     
     ```
     bosh -e YOUR-ENV -d YOUR-DEPLOYMENT instances
     ```
 
-5. Tell BOSH to ignore your MySQL instance. Ignoring the state allows BOSH to deploy software to the failed instance.
+1. Tell BOSH to ignore your MySQL instance. Ignoring the state allows BOSH to deploy software to the failed instance.
     
     ```
     bosh -e YOUR-ENV -d YOUR-DEPLOYMENT ignore mysql/INSTANCE_GUID
@@ -195,7 +195,7 @@ To recreate your missing VMs, do the following:
     $ bosh -e prod -d mysql ignore mysql/220fe72a-9026-4e2e-9fe3-1f5c0b6bf09b
     </pre>
 
-6. Repeat steps 3 through 5 until all MySQL instances have attempted to start.
+1. Repeat steps 3 through 5 until all MySQL instances have attempted to start.
 
 1. Re-enable BOSH resurrection if you disabled it in the first step.
 
@@ -241,8 +241,7 @@ To bootstrap, do the following:
 
 ##### <a id="reset-deployment"></a> Restore the BOSH Configuration 
 
-<p class="note warning"><strong>WARNING:</strong> If you do not set each of your ignored instances to <code>unignore</code>, 
-your instances are never updated in future deploys.</p>
+<p class="note warning"><strong>WARNING:</strong> If you do not set each of your ignored instances to <code>unignore</code>, your instances are never updated in future deploys.</p>
 
 To restore your BOSH configuration to its previous state, this procedure unignores each instance that was previously ignored.
 
@@ -269,22 +268,19 @@ To restore your BOSH configuration to its previous state, this procedure unignor
 
 If the bootstrap errand is not able to automatically recover the cluster, you might need to do the steps manually. 
 
-<p class="note warning"><strong>WARNING:</strong> The following procedures are prone to user-error and can result in lost data if followed incorrectly. Follow the procedure in <a href="#assisted-bootstrap">Bootstrap with the BOSH Errand</a> above first, and only resort to the manual process if the errand fails to repair the cluster.</p>
+<p class="note warning"><strong>WARNING:</strong> The following procedures are prone to user error and can result in lost data if followed incorrectly. Follow the procedure in <a href="#assisted-bootstrap">Bootstrap with the BOSH Errand</a> above first, and only resort to the manual process if the errand fails to repair the cluster.</p>
 
-Do the procedures in the sections below to manually bootstrap your cluster.
+Do the procedures in the sections below to manually bootstrap your cluster. Fresh installs of PCF v2.2 use a [Percona server](https://www.percona.com/software/mysql-database/percona-server) for their internal system MySQL databases (called MySQL or `mysqld` below), while older installations of PCF v2.2 use [MariaDB](https://mariadb.org/). Use the commands below that are appropriate for your installation of PCF.
 
-### <a id="shut-down-mariadb"></a> Shut Down MariaDB
+### <a id="shut-down-mariadb"></a> Shut Down MariaDB or MySQL
 
 Do the following for each node in the cluster:
 
 1. SSH into the node. See the [BOSH CLI v2 instructions](https://docs.pivotal.io/pivotalcf/1-11/customizing/trouble-advanced.html#ssh-v2) for SSHing into BOSH-deployed VMs.
 
-1. Shut down the `mariadb` process on the node. Run the following command:
-    ```
-    monit stop mariadb_ctrl
-    ```
+1. Shut down the `mariadb` or `mysqld` process on the node, depending on which database is running. Run either `monit stop mariadb_ctrl` (for `mariadb`) or `monit stop galera-init` (for `mysqld`).
 
-Re-bootstrapping the cluster is not successful unless you shut down the `mariadb` process on all nodes in the cluster.
+Re-bootstrapping the cluster is not successful unless you shut down the `mariadb` or `mysqld` process on all nodes in the cluster.
 
 ### <a id="choose-node"></a> Choose Node to Bootstrap 
 
@@ -296,6 +292,7 @@ Do the following to find the node with the highest `seqno`:
     ```
     cat /var/vcap/store/mysql/grastate.dat | grep 'seqno:'
     ```
+
 1. If a node shut down gracefully, the `seqno` is in the Galera state file. Retrieve the `seqno` and continue to [Bootstrap the First Node](#set-bootstrap-node). 
 <br><br>
 If a node crashed or was killed, the `seqno` in the Galera state file is recorded as `-1`. In this case, the `seqno` might be recoverable from the database. Run the following command to start up the database, log the recovered `seqno`, and then exit:
@@ -307,7 +304,7 @@ If a node crashed or was killed, the `seqno` in the Galera state file is recorde
     $ grep "Recovered position" /var/vcap/sys/log/mysql/mysql.err.log | tail -1
     150225 18:09:42 mysqld_safe WSREP: Recovered position e93955c7-b797-11e4-9faa-9a6f0b73eb46:15
     </pre>
-    If the node never connected to the cluster before crashing, it may not even have a group id (`uuid` in `grastate.dat`). In this case, there is nothing to recover. Unless all nodes crashed this way, do not choose this node for bootstrapping.
+    If the node never connected to the cluster before crashing, it may not even have a group ID (`uuid` in `grastate.dat`). In this case, there is nothing to recover. Unless all nodes crashed this way, do not choose this node for bootstrapping.
 
 1. After determining the `seqno` for all nodes in your cluster, identify the node with the highest `seqno`. If all nodes have the same `seqno`, you can choose any node as the new bootstrap node.
 
@@ -315,25 +312,26 @@ If a node crashed or was killed, the `seqno` in the Galera state file is recorde
 
 After determining the node with the highest `seqno`, do the following to bootstrap the node:
 
-<p class="note"><strong>Note:</strong> Only run these bootstrap commands on the node with the highest <code>seqno</code>. Otherwise the node with the highest <code>seqno</code> is unable to join the new cluster unless its data is abandoned. Its <code>mariadb</code> process exits with an error.</p>
+<p class="note"><strong>Note:</strong> Only run these bootstrap commands on the node with the highest <code>seqno</code>. Otherwise the node with the highest <code>seqno</code> is unable to join the new cluster unless its data is abandoned. Its <code>mariadb</code> or <code>mysqld</code> process exits with an error.</p>
 
-1. On the new bootstrap node, update the state file and restart the <code>mariadb</code> process. Run the following commands:
+1. On the new bootstrap node, update the state file and restart the `mariadb` or `mysqld` process. Run either of the following commands, depending on which database is running:
     <pre><code>echo -n "NEEDS_BOOTSTRAP" > /var/vcap/store/mysql/state.txt
     monit start mariadb_ctrl</code></pre>
+    <pre><code>echo -n "NEEDS_BOOTSTRAP" > /var/vcap/store/mysql/state.txt
+    monit start galera-init</code></pre>
 
-1. It can take up to ten minutes for <code>monit</code> to start the <code>mariadb</code> process.
-   To check if the <code>mariadb</code> process has started successfully, run the following command:
+1. It can take up to ten minutes for `monit` to start the `mariadb` or `mysqld` process.
+   To check if the `mariadb` or `mysqld` process has started successfully, run the following command:
     <pre><code>watch monit summary</code></pre>
 
 ### <a id="restart-nodes"></a> Restart Remaining Nodes
 
-1. After the bootstrapped node is running, start the <code>mariadb</code> process on the remaining nodes with <code>monit</code>. From the bootstrap node, run the following command:
-    <pre><code>monit start mariadb_ctrl</code></pre>
+1. After the bootstrapped node is running, start the `mariadb` process on the remaining nodes with `monit`. From the bootstrap node, run either `monit start mariadb_ctrl` (for `mariadb`) or `monit start galera-init` (for `mysqld`).
     If the node is prevented from starting by the [Interruptor](https://docs.pivotal.io/p-mysql/interruptor.html), do the manual procedure to force the node to rejoin the cluster, documented in [Pivotal Knowledge Base](https://discuss.pivotal.io/hc/en-us/articles/115014258668). 
     <p class="note warning"><strong>WARNING:</strong> Forcing a node to rejoin the cluster is a destructive procedure.
        Only do the procedure with the assistance of <a href="https://support.pivotal.io">Pivotal Support</a>.</p>
 
-1. If the `monit start` command fails, it might be because the node with the highest `seqno` is `mysql/0`. In this case, do the following:
+1. If the `monit start` command fails, it might be because the node with the highest `seqno` is the lowest BOSH-indexed node (`mysql/0`). In this case, do the following:
     1. From the Ops Manager VM, use the BOSH CLI to make BOSH ignore updating `mysql/0`:
         ```
         bosh -e MY-ENV -d MY-DEP ignore mysql/0

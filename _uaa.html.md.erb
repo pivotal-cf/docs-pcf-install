@@ -26,7 +26,7 @@
 1. (Optional) The **Proxy IPs Regular Expression** field contains a pipe-delimited set of regular expressions that UAA considers to be reverse proxy IP addresses. UAA respects the `x-forwarded-for` and `x-forwarded-proto` headers coming from IP addresses that match these regular expressions. To configure UAA to respond properly to Gorouter or HAProxy requests coming from a public IP address, append a regular expression or regular expressions to match the public IP address.
 
 1. You can configure UAA to use an internal MySQL database provided with PCF, or you can configure an external database provider. Follow the procedures in either the [Internal Database Configuration](#uaa-internal) or the [External Database Configuration](#uaa-external) section below.
-
+  <% if current_page.data.iaas == "GCP" %><p class="note"><strong>Note</strong>: For GCP installations, Pivotal recommends selecting <strong>External</strong> and using Google Cloud SQL.</p><% end %>
   <p class="note"><strong>Note:</strong> If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data before changing the configuration. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information, and contact <a href="https://support.pivotal.io">Pivotal Support</a> for help. </p>
 
 ### <a id='uaa-internal'></a> Internal Database Configuration
@@ -45,6 +45,76 @@ When you configure the UAA to use an internal MySQL database, it uses the type o
 
 ### <a id='uaa-external'></a> External Database Configuration
 
+
+<%# If procedure is for AWS terraform %>
+<% if current_page.data.iaas == "AWS" and current_page.data.install_type == "terraform" %>
+
+
+<p class="note"><strong>Note</strong>: The exact procedure to create databases depends upon the database provider you select for your deployment. The following procedure uses AWS RDS as an example, but UAA also supports Azure SQL Server.
+</p>
+
+<p class="note warning">
+<strong>Warning</strong>: Protect whichever database you use in your deployment with a password.
+</p>
+
+To create your UAA database, perform the following steps:
+
+1. Add the `ubuntu` account key pair from your IaaS deployment to your local SSH profile so you can access the Ops Manager VM. This is the value of the `ops_manager_ssh_private_key` from the Terraform output.
+
+    <pre class='terminal'>$ ssh-add aws-keypair.pem</pre>
+
+1. SSH in to your Ops Manager using the Ops Manager FQDN and the username `ubuntu`:
+
+    <pre class='terminal'>$ ssh ubuntu@OPS-MANAGER-FQDN</pre>
+
+1. Log in to your MySQL database instance using the appropriate hostname and user login values configured in your IaaS account. For example, to log in to your AWS RDS instance, run the following MySQL command:
+
+     <pre class='terminal'>$ mysql --host=RDSHOSTNAME --user=RDSUSERNAME --password=RDSPASSWORD</pre>
+
+1. Run the following MySQL commands to create a database for UAA:
+  <pre class="terminal">CREATE database uaa;</pre>
+
+1. Type `exit` to quit the MySQL client, and `exit` again to close your connection to the Ops Manager VM.
+
+1. Reboot the RDS instance in the AWS console. 
+
+1. From the **UAA** section in Pivotal Application Service (PAS), select **External**.
+    <%= image_tag('ert_uaa_external.png') %>
+1. For **Hostname**, enter the hostname of the database server. This is the value from the `rds_address` key in the Terraform output.
+1. For **TCP Port**, enter the port of the database server. This is the value from the `rds_port` key in the Terraform output.
+1. For **User Account and Authentication database username**, specify the username that can access this database on the database server. This is the value from the `rds_username` key in the Terraform output.
+1. For **User Account and Authentication database password**, specify a password for the provided username. This is the value from the `rds_password` key in the Terraform output.
+1. Click **Save**.
+
+
+
+<%# If procedure is for GCP terraform %>
+<% elsif current_page.data.iaas == "GCP" and current_page.data.install_type == "terraform" %>
+
+
+If you chose to deploy a Google Cloud SQL database with Terraform, follow these steps. 
+
+1. From the **UAA** section in Pivotal Application Service (PAS), select **External**.
+    <%= image_tag('ert_uaa_external.png') %>
+
+1. Complete the fields as follows:
+  * **Hostname**: Enter the value of `sql_db_ip` from your Terraform output. 
+  * **TCP Port**: Enter `3306`. 
+  * **User Account and Authentication database username**: Enter the value of `pas_sql_username` from your Terraform output. 
+  * **User Account and Authentication database password**: Enter the value of `pas_sql_password` from your Terraform output. 
+
+1. Click **Save**.
+
+
+
+
+<%# All other IaaS procedures %>
+<% else %>
+
+
+To create your UAA database, do the following:
+
+
 1. From the **UAA** section in Pivotal Application Service (PAS), select **External**.
     <%= image_tag('ert_uaa_external.png') %>
 
@@ -57,3 +127,4 @@ When you configure the UAA to use an internal MySQL database, it uses the type o
 1. For **User Account and Authentication database password**, specify a password for the provided username.
 
 1. Click **Save**.
+<% end %>

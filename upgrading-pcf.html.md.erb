@@ -13,9 +13,11 @@ The apps in your deployment continue to run during the upgrade. However, you can
 
 For details about how upgrading PCF impacts individual PAS components, see [Understanding PAS Upgrades](../upgrading/understanding-pas.html#upgrade-limitations).
 
+
 ## <a id="prepare"></a> Prepare to Upgrade
 
 If you have not already, complete the steps in the [Upgrade Preparation Checklist for PCF v2.2](../upgrading/checklist.html).
+
 
 ## <a id="upgrade_ops"></a> Upgrade Ops Manager and Installed Products to v2.2
 
@@ -75,11 +77,10 @@ Follow these steps to upgrade Ops Manager and Installed Products to PCF v2.2.
 1. Click **Apply Changes**. This immediately imports and applies upgrades to all tiles in a single transaction.
   <p class="note breaking"><strong>Breaking Change:</strong> Only use **Apply Changes** to upgrade tiles immediately after upgrade. Do not use <strong>Review Pending Changes</strong> for selective deployment. For more information, see <a href="https://docs.pivotal.io/pivotalcf/2-2/pcf-release-notes/breaking-changes.html#bosh-dns">Redeploy All Products After Upgrading to Ops Manager v2.2</a>.</p>
 
-1. Click each service tile, select the **Status** tab, and confirm that all VMs
-appear and are in good health.
+1. Click each service tile, select the **Status** tab, and confirm that all VMs appear and are in good health.
 
-1. After confirming that the new installation functions correctly, remove the
-v2.1 Ops Manager VM.
+1. After confirming that the new installation functions correctly, remove the v2.1 Ops Manager VM.
+
 
 ## <a id="monitor"></a> Monitor Upgrade
 
@@ -104,8 +105,8 @@ For more information, see the [PCF Healthwatch documentation](https://docs.pivot
 If you are not using PCF Healthwatch, you can do some or all of the following to monitor upgrade progress:
 
 * Run BOSH CLI status checks: 
-  * <code>bosh -e ALIAS task TASK_NUMBER</code>
-  * <code>bosh -e ALIAS vms --vitals, bosh -e ALIAS instances --ps</code>
+  * `bosh -e ALIAS task TASK_NUMBER`
+  * `bosh -e ALIAS vms --vitals, bosh -e ALIAS instances --ps`
 * Check app availability
 * Run cf CLI Commands
 * Check the availability of the Ops Manager GUI
@@ -115,7 +116,7 @@ If you are not using PCF Healthwatch, you can do some or all of the following to
 ###  <a id="diego"></a> Check Diego State
 
 **Note/Reason**:<br>
-See the <a href="https://github.com/cloudfoundry/cfdot">cfdot documentation</a> on github for details.<br>
+See the [cfdot documentation](https://github.com/cloudfoundry/cfdot) on GitHub for details.<br>
 **Product/component**:<br>
 PAS
 
@@ -128,8 +129,7 @@ Pivotal recommends this if you have a large foundation and have experienced stor
 **Product/component**:<br>
 PCF
 
-Periodically take snapshots of storage metrics
-
+Periodically take snapshots of storage metrics.
 
 ###  <a id="collect-logs"></a> (Optional) Collect Logs
 
@@ -144,16 +144,17 @@ If you encounter problems during upgrade, collect the following information:
 * Task debug logs for VM upgrade tasks
 * Installation log from Ops Manager
 
+
 ## <a id="after"></a> After Upgrade
 
-After your upgrade, do the following to prepare for use of your new environment, check its health status, and clean-up. 
+After your upgrade, do the following to prepare for use of your new environment, check its health status, and clean up. 
 
-### <a id="bosh-alias"></a> Re-create BOSH Alias
+### <a id="bosh-alias"></a> Re-Create BOSH Alias
 
-Re-create your alias using BOSH: <code>bosh alias-env ALIAS -e DIRECTOR_IP</code>
+Re-create your alias using BOSH: `bosh alias-env ALIAS -e DIRECTOR_IP`
 
 * **Note/Reason**: To log into BOSH after upgrading PCF, you need to recreate your alias.
-* **Product/component**: BOSH
+* **Product/Component**: BOSH
 
 ### <a id="cf-cli"></a> Install New cf CLI
 
@@ -161,33 +162,32 @@ Download the version of the Cloud Foundry Command Line Interface (cf CLI) packag
 
 <p class='note warning'><strong>WARNING:</strong> Due to a regression with x.509 certificates in Go v1.10, Pivotal recommends downloading cf CLI v6.36.2 or later, which use Go v1.9. For more information, see the <a href=https://github.com/cloudfoundry/cli/releases/tag/v6.36.2>v6.36.2</a> change log and <a href=https://docs.pivotal.io/pivotalcf/2-2/pcf-release-notes/runtime-rn.html#golang-x509>Known Issues</a> in the <em>Pivotal Application Service v2.2 Release Notes</em> topic.</p>
 
-### <a id="health"></a> Check the Health of your Deployment
+### <a id="health"></a> Check the Health of Your Deployment
 
 1. Run BOSH CLI commands to check system status:
-  1. <code>bosh -e ALIAS -d DEPLOYMENT_NAME instances --ps</code>
-  1. <code>bosh -e ALIAS vms --vitals</code>
-  1. <code>bosh -e ALIAS -d DEPLOYMENT_NAME cck --report</code>
-
+  1. `bosh -e ALIAS -d DEPLOYMENT_NAME instances --ps`
+  1. `bosh -e ALIAS vms --vitals`
+  1. `bosh -e ALIAS -d DEPLOYMENT_NAME cck --report`
     **Note/Reason**: To ensure that all jobs and process are running as expected<br>
-    **Product/component**: PCF and all tiles
+    **Product/Component**: PCF and all tiles
 
 1. Push and horizontally scale a test application.
   * **Note/Reason**: This is a performance test for PAS.
-  * **Product/component**: PCF
+  * **Product/Component**: PCF
 
-1. If you are running PAS MySQL as a cluster, run the <code>mysql-diag</code> tool to validate health of the cluster.
-  * **Note/Reason**: See the BOSH CLI v2 instructions in the <a href="https://docs.pivotal.io/pivotalcf/2-2/pas/mysql-diag.html">Running mysql-diag</a> topic.
-  * **Product/component**: PAS
+1. If you are running PAS MySQL as a cluster, run the `mysql-diag` tool to validate health of the cluster.
+  * **Note/Reason**: See the BOSH CLI v2 instructions in the [Running mysql-diag](https://docs.pivotal.io/pivotalcf/2-2/pas/mysql-diag.html) topic.
+  * **Product/Component**: PAS
 
 ### <a id="resource-settings"></a> Check Resource Settings
 
-If you added custom <strong>VM Type</strong> or <strong>Persistent Disk Type</strong>options, ensure that these values are correctly set and were not overwritten.
+If you added custom **VM Type** or **Persistent Disk Type** options, ensure that these values are correctly set and were not overwritten.
 
-* **Note/Reason**: Verify that the Ops Manager <strong>Resource Config</strong> pane still lists your custom options.
-* **Product/component**: PCF
+* **Note/Reason**: Verify that the Ops Manager **Resource Config** pane still lists your custom options.
+* **Product/Component**: PCF
 
-### <a id="bosh-cleanup"></a> Run BOSH clean-up
+### <a id="bosh-cleanup"></a> Run BOSH Clean-Up
 
-Run <code>bosh -e ALIAS clean-up --all</code> to clean up old stemcells, releases, orphaned disks, and other unused resources.
+Run `bosh -e ALIAS clean-up --all` to clean up old stemcells, releases, orphaned disks, and other unused resources.
 
-* **Product/component**: Tiles
+* **Product/Component**: Tiles

@@ -6,34 +6,10 @@ owner: Ops Manager, Release Integration
 <strong><%= modified_date %></strong>
 <html class="list-style-none"></html>
 
-This topic describes how to troubleshoot known issues when deploying Pivotal Cloud Foundry (PCF) on Azure.
+This topic describes how to troubleshoot known issues when deploying or running Pivotal Cloud Foundry (PCF) on Azure.
 
 
-## <a id="install-issues"></a> Troubleshoot Installation Issues
-
-### <a id="timeouts"></a> Slow Performance or Timeouts
-
-#### Symptom
-
-Developers suffer from slow performance or timeouts when pushing or managing apps, and end users suffer from slow performance or timeouts when accessing apps
-
-#### Explanation
-
-The Azure Load Balancer (ALB) disconnects active TCP connections lying idle for over four minutes.
-
-#### Solution
-
-To mitigate slow performance or timeouts, the default value of the **Router Timeout to Backends (in seconds)** field is set to 900 seconds. This default value is set high to mitigate performance issues but operators should tune this parameter to fit their infrastructure.
-
-To edit the **Router Timeout to Backends (in seconds)** field:
-
-1. Select the Pivotal Application Service (PAS) tile that is located within your **Installation Dashboard**. 
-1. Select the **Networking** tab.
-1. Enter your desired time, in seconds, within the **Router Timeout to Backends (in seconds)** field.
- <%= image_tag('images/router-timeout-ert.png') %>
-1. Click **Save**.
-
-<hr>
+## <a id="install-issues"></a>Installation Issues
 
 ### <a id="cannot-copy-om"></a> Cannot Copy the Ops Manager Image
 
@@ -87,3 +63,45 @@ Create a new key pair with no passphrase and redo the installation, beginning wi
 ### <a id="database-permissions"></a> Insufficient External Database Permissions
 
 Upgrade issues can be caused when the external database user used for the network policy DB is given insufficient permissions. To avoid this upgrade issue, ensure that the networkpolicyserver database user has the `ALL PRIVILEGES` permission.
+
+## <a id="operation-issues"></a>Operation Issues
+
+### <a id="timeouts"></a> Slow Performance or Timeouts
+
+#### Symptom
+
+Developers suffer from slow performance or timeouts when pushing or managing apps, and end users suffer from slow performance or timeouts when accessing apps
+
+#### Explanation
+
+The Azure Load Balancer (ALB) disconnects active TCP connections lying idle for over four minutes.
+
+#### Solution
+
+To mitigate slow performance or timeouts, the default value of the **Router Timeout to Backends (in seconds)** field is set to 900 seconds. This default value is set high to mitigate performance issues but operators should tune this parameter to fit their infrastructure.
+
+To edit the **Router Timeout to Backends (in seconds)** field:
+
+1. Select the Pivotal Application Service (PAS) tile that is located within your **Installation Dashboard**. 
+1. Select the **Networking** tab.
+1. Enter your desired time, in seconds, within the **Router Timeout to Backends (in seconds)** field.
+ <%= image_tag('images/router-timeout-ert.png') %>
+1. Click **Save**.
+
+<hr>
+
+### <a id="service-create-fail"></a> Service Instance Creation Times Out
+
+#### Symptom
+
+You are unable to provision a service instance of a Java or Go service. `cf create-service` fails with error `Failure provisioning service instance... Timed out after 8 minutes...` or similar.
+
+#### Explanation
+
+HTTP libraries for Java and Go, running with default settings, prune idle (for 240 seconds) connections from their connection pool without sending a TCP reset message back to the client service broker. This removes the ability of the broker to provision new service instances.
+
+#### Solution
+
+In the PAS tile **Configure Networking** pane, set **Frontend Idle Timeout** to 240 seconds or less, so that Cloud Foundry regenerates the front-end connection before it times out.
+
+See the Knowledge Base article [Azure Networking Connection Idle for more than Four minutes](https://community.pivotal.io/s/article/Azure-Networking-Connection-Idle-for-more-than-Four-minutes) for details.

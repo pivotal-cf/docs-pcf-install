@@ -296,9 +296,15 @@ Do the following to find the node with the highest `seqno`:
 1. If a node shut down gracefully, the `seqno` is in the Galera state file. Retrieve the `seqno` and continue to [Bootstrap the First Node](#set-bootstrap-node). 
 <br><br>
 If a node crashed or was killed, the `seqno` in the Galera state file is recorded as `-1`. In this case, the `seqno` might be recoverable from the database. Run the following command to start up the database, log the recovered `seqno`, and then exit:
-    ```
-    /var/vcap/packages/mariadb/bin/mysqld --wsrep-recover
-    ```
+    * **For Mariadb clusters**:
+        ```
+        /var/vcap/packages/mariadb/bin/mysqld --wsrep-recover
+        ```
+    * **For Percona clusters**:
+        ```
+        /var/vcap/packages/pxc/bin/mysqld --wsrep-recover
+        ```
+
     Scan the error log for the recovered `seqno`. It is the last number after the group id (`uuid`). For example:
     <pre class="terminal">
     $ grep "Recovered position" /var/vcap/sys/log/mysql/mysql.err.log | tail -1

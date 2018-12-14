@@ -288,29 +288,26 @@ To choose the node to bootstrap, you must find the node with the highest transac
 
 Do the following to find the node with the highest `seqno`:
 
-1. Run the following command from the node:    
-    ```
-    cat /var/vcap/store/mysql/grastate.dat | grep 'seqno:'
-    ```
+1. Run one of the following commands.    
+    - **For MariaDB clusters:** `cat /var/vcap/store/mysql/grastate.dat | grep 'seqno:'`
+    - **For Percona clusters:** `cat /var/vcap/store/pxc-mysql/grastate.dat | grep 'seqno:'`
 
 1. If a node shut down gracefully, the `seqno` is in the Galera state file. Retrieve the `seqno` and continue to [Bootstrap the First Node](#set-bootstrap-node). 
-<br><br>
-If a node crashed or was killed, the `seqno` in the Galera state file is recorded as `-1`. In this case, the `seqno` might be recoverable from the database. Run the following command to start up the database, log the recovered `seqno`, and then exit:
-    * **For Mariadb clusters**:
-        ```
-        /var/vcap/packages/mariadb/bin/mysqld --wsrep-recover
-        ```
-    * **For Percona clusters**:
-        ```
-        /var/vcap/packages/pxc/bin/mysqld --wsrep-recover
-        ```
-
-    Scan the error log for the recovered `seqno`. It is the last number after the group id (`uuid`). For example:
-    <pre class="terminal">
-    $ grep "Recovered position" /var/vcap/sys/log/mysql/mysql.err.log | tail -1
-    150225 18:09:42 mysqld_safe WSREP: Recovered position e93955c7-b797-11e4-9faa-9a6f0b73eb46:15
-    </pre>
-    If the node never connected to the cluster before crashing, it may not even have a group ID (`uuid` in `grastate.dat`). In this case, there is nothing to recover. Unless all nodes crashed this way, do not choose this node for bootstrapping.
+    1. If a node crashed or was killed, the `seqno` in the Galera state file is recorded as `-1`. In this case, the `seqno` might be recoverable from the database. Run the following command to start up the database, log the recovered `seqno`, and then exit:
+        * **For MariaDB clusters**:
+            ```
+            /var/vcap/packages/mariadb/bin/mysqld --wsrep-recover
+            ```
+        * **For Percona clusters**:
+            ```
+            /var/vcap/packages/pxc/bin/mysqld --wsrep-recover
+            ```
+    1. Scan the error log for the recovered `seqno`. It is the last number after the group id (`uuid`). For example:
+        <pre class="terminal">
+        $ grep "Recovered position" /var/vcap/sys/log/pxc-mysql/mysql.err.log | tail -1
+        150225 18:09:42 mysqld_safe WSREP: Recovered position e93955c7-b797-11e4-9faa-9a6f0b73eb46:15
+        </pre>
+    1. If the node never connected to the cluster before crashing, it may not even have a group ID (`uuid` in `grastate.dat`). In this case, there is nothing to recover. Unless all nodes crashed this way, do not choose this node for bootstrapping.
 
 1. After determining the `seqno` for all nodes in your cluster, identify the node with the highest `seqno`. If all nodes have the same `seqno`, you can choose any node as the new bootstrap node.
 
@@ -323,7 +320,7 @@ After determining the node with the highest `seqno`, do the following to bootstr
 1. On the new bootstrap node, update the state file and restart the `mariadb` or `mysqld` process. Run either of the following commands, depending on which database is running:
     <pre><code>echo -n "NEEDS_BOOTSTRAP" > /var/vcap/store/mysql/state.txt
     monit start mariadb_ctrl</code></pre>
-    <pre><code>echo -n "NEEDS_BOOTSTRAP" > /var/vcap/store/mysql/state.txt
+    <pre><code>echo -n "NEEDS_BOOTSTRAP" > /var/vcap/store/pxc-mysql/state.txt
     monit start galera-init</code></pre>
 
 1. It can take up to ten minutes for `monit` to start the `mariadb` or `mysqld` process.

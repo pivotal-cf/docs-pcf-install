@@ -1,5 +1,5 @@
 ---
-title: Using BOSH Resurrector on vSphere
+title: Using BOSH Resurrector and vSphere HA
 owner: Ops Manager
 ---
 
@@ -7,24 +7,32 @@ owner: Ops Manager
 
 This topic describes the BOSH Resurrector and vSphere High Availability (HA), as well as how to enable them for your Pivotal Cloud Foundry (PCF) deployment. 
 
-## <a id="about-resurrector"></a>About BOSH Resurrector ##
+Pivotal recommends BOSH Resurrector, vSphere HA, and a highly-available storage solution to protect the VMs in your deployment. 
+
+
+## <a id="bosh-resurrector"></a> BOSH Resurrector
+
+The following sections describe the BOSH Resurrector and how to enable it.
+
+
+### <a id="about-resurrector"></a>About BOSH Resurrector ##
 
 The Ops Manager Resurrector increases Pivotal Application Service (PAS) availability in the following ways:
 
-- Reacts to hardware failure and network disruptions by restarting virtual
+- Reacts to hardware failure and network disruptions by recreating virtual
 machines on active, stable hosts
 - Detects operating system failures by continuously monitoring virtual
-machines and restarting them as required
+machines and recreating them as required
 - Continuously monitors the BOSH Agent running on each virtual machine and
-restarts the VMs as required
+recreates the VMs as required
 
 The Ops Manager Resurrector continuously monitors the status of all virtual
 machines in an PAS deployment.
 The Resurrector also monitors the BOSH Agent on each VM.
-If either the VM or the BOSH Agent fail, the Resurrector restarts the virtual
+If either the VM or the BOSH Agent fail, the Resurrector recreates the virtual
 machine on another active host.
 
-### <a id="limitations"></a>Limitations ###
+### <a id="limitations"></a> BOSH Resurrector Limitations ###
 
 The following limitations apply to using the Ops Manager Resurrector:
 
@@ -34,17 +42,9 @@ Director VM.
 entire host.
 * The Resurrector does not monitor or protect data storage.
 
-For increased reliability, in addition to using BOSH Resurrector, Pivotal recommends that you use vSphere HA to protect all of the VMs in your deployment, and that you use a highly-available storage solution.
+To mitigate these limitations, Pivotal recommends vSphere HA. For more information, see [vSphere HA](#vsphere-ha) below.
 
-## <a id="about-vsphere-ha"></a>About vSphere HA  ##
-
-In the event of a host failure, vSphere HA restarts but does not recreate VMs on alternate ESXi hosts in the same cluster. A host failure could result from a sudden power off, crash due to hardware fault, or the vSphere host becoming disconnected from the network.
-
-BOSH Resurrector cannot recover from a host failure. It issues calls to vCenter to power down and destroy the old VM. These calls fail because those VMs are temporarily inaccessible until either the vSphere host comes back up, or vSphere HA moves the now powered-off VMs to another vSphere host (which can be done even if the vSphere host is off, as the VM's storage lives on shared storage not local to that individual vSphere host) so it's just registering the VM to an alternate vSphere host.
-
-If the problematic vSphere host does recover/come back up, vCenter just tells it "hey, you aren't running any of these X VMs anymore" so there isn't any confusion and consistency is maintained.
-
-## <a id="enabling"></a>Enable BOSH Resurrector ##
+### <a id="enabling"></a>Enable BOSH Resurrector ##
 
 To enable the Ops Manager Resurrector:
 
@@ -60,7 +60,22 @@ To enable the Ops Manager Resurrector:
 
 1. Select **Enable VM Resurrector Plugin** and click **Save**.
 
-## <a id="enable-vsphere-ha"></a>Enable vSphere HA ##
+
+
+## <a id="vsphere-ha"></a> vSphere HA
+
+The following sections describe vSphere HA and how to enable it.
+
+
+
+### <a id="about-vsphere-ha"></a>About vSphere HA  ##
+
+In the event of a host failure, vSphere HA restarts but does not recreate VMs on alternate ESXi hosts in the same cluster. A host failure could result from a sudden power off, crash due to hardware fault, or the vSphere host becoming disconnected from the network. BOSH Resurrector cannot recover from a host failure. 
+
+For more information, see [vSphere High Availability](https://bosh.io/docs/vsphere-ha/) in the BOSH documentation. 
+
+
+### <a id="enable-vsphere-ha"></a>Enable vSphere HA ##
 
 Follow the steps below to enable vSphere High Availability:
 

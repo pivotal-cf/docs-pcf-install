@@ -1,0 +1,66 @@
+---
+title: Configuring PAS
+owner: PAS Releng
+---
+
+This topic describes how to configure Pivotal Application Service (PAS) as part of deploying Pivotal Cloud Foundry (PCF). 
+
+Before beginning this procedure, ensure that you have successfully completed the steps to prepare your environment for PCF and install and configure the BOSH Director. 
+
+<p class="note"><strong>Note:</strong> If you plan to <a href="http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the PAS Runtime tile.</p>
+
+## <a id='om-add'></a> Step 1: Add PAS to Ops Manager
+
+1. If you have not already downloaded PAS, log in to [Pivotal Network](https://network.pivotal.io/products/pivotal-cf), and click on PAS
+1. From the **Releases** drop-down, select the release to install and choose one of the following:
+  1. Click PAS download the PAS `.pivotal` file
+  1. Click **PCF Small Footprint Runtime** to download the Small Footprint Runtime `.pivotal` file. For more information, see [Getting Started with Small Footprint Runtime](./small-footprint.html).
+
+1. Navigate to the Pivotal Cloud Foundry Operations Manager Installation
+Dashboard.
+
+1. Click **Import a Product** to add your tile to Ops Manager. For more information, refer to the [Adding and Deleting Products](./add-delete.html) topic.
+
+1. Click the PAS tile in the Installation Dashboard.
+
+    <%= image_tag("images/er-tile.png") %>
+
+## <a id='assign-azs-networks'></a> Step 2: Assign AZs and Networks
+
+<p class="note"><strong>Note</strong>For azure environments, this configuration pane is <strong>Assign Networks</strong> and does not include AZ configuration.</p>
+
+1. Select **Assign AZ and Networks**. 
+
+1. Select the first Availability Zone under **Place singleton jobs**. Ops Manager runs any job with a single instance in this Availability Zone.
+
+1. Select all Availability Zones under **Balance other jobs**. Ops Manager balances instances of jobs with more than one instance across the Availability Zones that you specify.
+    <p class="note"><strong>Note:</strong> For production deployments, Pivotal recommends at least three Availability Zones for a highly available installation of PAS.</p>
+
+1. From the **Network** drop-down box, choose the network for PAS that you created when configuring the BOSH Director tile.
+
+1. Click **Save**.
+
+## <a id='domains'></a> Step 3: Configure Domains
+
+1. Select **Domains**.
+
+     <%= image_tag("domains.png") %>
+
+1. Enter the system and application domains. The **System Domain** defines your target when you push apps to PAS. For example, `system.example.com`. The **Apps Domain** defines where PAS should serve your apps. For example, `apps.example.com`. For additional guidance based on your installation method, see the following table: 
+	<p class="note"><strong>Note:</strong> Pivotal recommends that you use the same domain name but different subdomain names for your system and app domains. Doing so allows you to use a single wildcard certificate for the domain while preventing apps from creating routes that overlap with system routes.</p>
+	<table>
+		<tr>
+			<th>Installation Method</th>
+			<th>Guidance</th>
+		</tr>
+		<tr>
+			<td>Manual</td>
+			<td>Enter the domains you created when preparing your environment for PCF.</td>
+		</tr>
+		<tr>
+			<td>Terraform, AWS</td>
+			<td>Enter the values for <code>sys_domain</code> and <code>apps_domain</code> from the Terraform output.</td>
+		</tr>
+	</table>
+
+1. Click **Save**. 

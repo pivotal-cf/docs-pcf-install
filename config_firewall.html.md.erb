@@ -7,13 +7,16 @@ owner: Ops Manager
 
 This topic describes how to configure your firewall for [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) and how to verify that PCF resolves DNS entries behind your firewall.
 
-## <a id='firewall_configuration'></a>Configure Your Firewall for PCF
+
+## <a id='firewall_configuration'></a> Configure Your Firewall for PCF
+
 Ops Manager and Pivotal Application Service (PAS) require the following open TCP ports:
 
 - **25555**: Routes from Ops Manager to the BOSH Director.
 - **443**: Routes to HAProxy or, if configured, your own load balancer.
 - **80**: Routes to HAProxy or, if configured, your own load balancer.
 - **8844**: Routes from Ops Manager to BOSH CredHub.
+- **8443**: Routes from Ops Manager to BOSH Director UAA.
 - **2222**: Necessary for using Application SSH. For details, see the [Diego Architecture Diagram](../concepts/diego/diego-architecture.html#diagram)
 - **25595**: Routes from the Traffic Controller to the BOSH Director, to enable sending BOSH health metrics to the Firehose.
 
@@ -22,23 +25,20 @@ UDP port **123** must be open if you want to use an external NTP server.
 For more information about required ports for additional installed products,
 refer to the [Network Communication Paths](https://docs.pivotal.io/pivotalcf/1-12/security/networking/index.html#net_commpaths) and other product documentation.
 
-### <a id='example'></a>Example: Configure Firewall with iptables
+### <a id='example'></a> Example: Configure Firewall with iptables
 
 The following example procedure uses `iptables` commands to configure a firewall.
 
-<p class="note"><strong>Note</strong>: <code>GATEWAY_EXTERNAL_IP</code> is a
-placeholder. Replace this value with your <code>PUBLIC_IP</code>.</p>
+<p class="note"><strong>Note:</strong> <code>GATEWAY_EXTERNAL_IP</code> is a placeholder. Replace this value with your <code>PUBLIC_IP</code>.</p>
 
-1. Open `/etc/sysctl.conf`, a file that contains configurations for Linux kernel
-settings, with the command below:
+1. Open `/etc/sysctl.conf`, a file that contains configurations for Linux kernel settings, with the command below:
   <pre class='terminal'>
   $ sudo vi /etc/sysctl.conf
   </pre>
 
 1. Add the line `net.ipv4.ip_forward=1` to `/etc/sysctl.conf` and save the file.
 
-1. If you want to remove all existing filtering or Network Address Translation
-(NAT) rules, run the following commands:
+1. If you want to remove all existing filtering or Network Address Translation (NAT) rules, run the following commands:
     <pre class='terminal'>
     $ iptables --flush
     $ iptables --flush -t nat
@@ -93,35 +93,24 @@ settings, with the command below:
     $ service iptables save
     </pre>
 
-For more information about administering IP tables with `iptables`, refer to the
-[iptables documentation](http://ipset.netfilter.org/iptables.man.html).
+For more information about administering IP tables with `iptables`, refer to the [iptables documentation](http://ipset.netfilter.org/iptables.man.html).
 
-## <a id='DNS_fails'></a>Verify PCF Resolves DNS Entries Behind a Firewall ##
 
-When you install PCF in an environment that uses a strong firewall, the firewall
-might block DNS resolution.
-For example, if you use [xip.io](http://xip.io/) to test your DNS configuration,
-the tests will fail without warning if the firewall prevents PAS
-from accessing `*.xip.io`.
+## <a id='DNS_fails'></a> Verify PCF Resolves DNS Entries Behind a Firewall
+
+When you install PCF in an environment that uses a strong firewall, the firewall might block DNS resolution.
+For example, if you use [xip.io](http://xip.io/) to test your DNS configuration, the tests will fail without warning if the firewall prevents PAS from accessing `*.xip.io`.
 
 To verify that PAS can correctly resolve DNS entries:
 
-1. SSH into the Pivotal Ops Manager VM.
+1. SSH into the Pivotal Ops Manager VM. For more information, refer to the [SSH into Ops Manager](./trouble-advanced.html#ssh) section of the Advanced Troubleshooting with the BOSH CLI topic.
 
-    For more information, refer to the [SSH into Ops
-    Manager](./trouble-advanced.html#ssh) section of the Advanced
-    Troubleshooting with the BOSH CLI topic.
-
-1. Run any of the following network administration commands with the IP address
-of the VM:
+1. Run any of the following network administration commands with the IP address of the VM:
   * `nslookup`
   * `dig`
   * `host`
   * The appropriate `traceroute` command for your OS
 
-1. Review the output of the command and fix any blocked routes.
-
-    If the output displays an error message, review the firewall logs to
-    determine which blocked route or routes you need to clear.
+1. Review the output of the command and fix any blocked routes. If the output displays an error message, review the firewall logs to determine which blocked route or routes you need to clear.
 
 1. Repeat steps 1-3 with the BOSH Director VM and the HAProxy VM.

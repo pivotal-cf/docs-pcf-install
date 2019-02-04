@@ -1,51 +1,37 @@
-<p class="note warning"><strong>WARNING:</strong> Protect whichever database you use in your deployment with a password.</p>
-
-To create your Pivotal Application Service (PAS) databases, do the following:
-
-<p class='note'><strong>Note:</strong> Exact configurations depend on your database provider. The following procedure uses AWS RDS as an example.</p>
-
-1. Add the `ubuntu` account key pair from your IaaS deployment to your local SSH profile so you can access the Ops Manager VM. For example, in AWS, you add a key pair created in AWS:
-
-    <pre class='terminal'>$ ssh-add aws-keypair.pem</pre>
-
-1. SSH in to your Ops Manager using the Ops Manager FQDN and the username `ubuntu`:
-
-    <pre class='terminal'>$ ssh ubuntu@OPS-MANAGER-FQDN</pre>
-
-1. Log in to your MySQL database instance using the appropriate hostname and user login values configured in your IaaS account. For example, to log in to your AWS RDS instance, run the following MySQL command:
-
-     <pre class='terminal'>$ mysql --host=RDSHOSTNAME --user=RDSUSERNAME --password=RDSPASSWORD</pre>
-
-1. Run the following MySQL commands to create databases for the eleven PAS components that require a relational database:
-  <pre class="terminal">CREATE database ccdb;
-  CREATE database notifications;
-  CREATE database autoscale;
-  CREATE database app\_usage\_service;
-  CREATE database routing;
-  CREATE database diego;
-  CREATE database account;
-  CREATE database nfsvolume;
-  CREATE database networkpolicyserver;
-  CREATE database silk;
-  CREATE database locket;
-  CREATE database uaa;
-  CREATE database credhub;
-  </pre>
-
-1. Type `exit` to quit the MySQL client, and `exit` again to close your connection to the Ops Manager VM.
+1. Ensure that you have a database instance with the following databases created. The steps vary depending on your database type. For an example procedure, see [Creating Databases for PAS](./create-pas-dbs.html). 
+  * `account` 
+  * `app\_usage\_service` 
+  * `autoscale` 
+  * `credhub` 
+  * `diego` 
+  * `locket` 
+  * `networkpolicyserver` 
+  * `nfsvolume` 
+  * `notifications` 
+  * `routing` 
+  * `silk` 
+  * `uaa` 
 
 1. In PAS, select **Databases**. 
 
 1. Select the **External Databases** option.
   <p class="note"><strong>Note:</strong> If you configure external databases, you cannot configure an internal database in the <strong>UAA</strong> pane.</p>
 
-1. For **Hostname**, enter the hostname of the database server.
+1. For **Hostname**, enter the hostname of the database server. If you are installing PCF using Terraform, this value corresponds to the following variable:
+  * **AWS Terraform**: `rds_address`
+  * **GCP Terraform**: `sql_db_ip`
 
-1. For **TCP Port**, enter the port of the database server.
 
-1. Each component that requires a relational database has two corresponding fields: one for the database username and one for the database password. For each set of fields, specify a unique username that can access this specific database on the database server and a password for the provided username.
+1. For **TCP Port**, enter the port of the database server. 
+  * If you are using GCP CloudSQL, enter `3306`. 
+  * If you are installing PCF on AWS using Terraform, enter the value for `rds_port`. 
+
+1. Each component that requires a relational database has two corresponding fields: one for the database username and one for the database password. For each set of fields, specify a unique username that can access this specific database on the database server and a password for the provided username. If you are installing PCF using Terraform, these values correspond to the following variables:
+  * **AWS Terraform**: `rds_username` and `rds_password`
+  * **GCP Terraform**: `pas_sql_username` and `pas_sql_password`
     <p class='note'><strong>Note:</strong> Ensure that the networkpolicyserver database user has the <code>ALL PRIVILEGES</code> permission.</p>
 
 1. (Optional) If you want to enable TLS for your external databases, paste your Certificate Authority (CA) certificate in the **Database CA Certificate** field.
+  <p class='note'><strong>Note:</strong> TLS is not currently supported for databases that do not include a matching hostname in their server certificate, e.g. GCP. For more information, see <a href="https://cloud.google.com/sql/docs/mysql/external-connection-methods?hl=en_US&_ga=2.66322158.-1313814630.1518122831">Connection Options for External Applications</a> in the GCP documentation.</p>
 
 1. Click **Save**.

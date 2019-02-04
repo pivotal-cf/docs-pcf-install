@@ -9,7 +9,7 @@ Before beginning this procedure, ensure that you have successfully completed the
 
 <p class="note"><strong>Note:</strong> If you plan to <a href="http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the PAS Runtime tile.</p>
 
-## <a id='om-add'></a> Step 1: Add PAS to Ops Manager
+## <a id='om-add'></a> Add PAS to Ops Manager
 
 1. If you have not already downloaded PAS, log in to [Pivotal Network](https://network.pivotal.io/products/pivotal-cf), and click on PAS
 1. From the **Releases** drop-down, select the release to install and choose one of the following:
@@ -25,7 +25,7 @@ Dashboard.
 
     <%= image_tag("images/er-tile.png") %>
 
-## <a id='assign-azs-networks'></a> Step 2: Assign AZs and Networks
+## <a id='assign-azs-networks'></a> Assign AZs and Networks
 
 <p class="note"><strong>Note</strong>For azure environments, this configuration pane is <strong>Assign Networks</strong> and does not include AZ configuration.</p>
 
@@ -40,7 +40,7 @@ Dashboard.
 
 1. Click **Save**.
 
-## <a id='domains'></a> Step 3: Configure Domains
+## <a id='domains'></a> Configure Domains
 
 1. Select **Domains**.
 
@@ -58,13 +58,113 @@ Dashboard.
 			<td>Enter the domains you created when preparing your environment for PCF.</td>
 		</tr>
 		<tr>
-			<td>Terraform, AWS</td>
+			<td>Terraform</td>
 			<td>Enter the values for <code>sys_domain</code> and <code>apps_domain</code> from the Terraform output.</td>
 		</tr>
 	</table>
 
 1. Click **Save**. 
 
-## <a id='networking'></a> Step 4: Configure Networking
+## <a id='networking'></a> Configure Networking
 
 <%= partial 'networking-master' %>
+
+## <a id='application-containers-config'></a> Configure Application Containers
+
+<%= partial 'application_container_config' %>
+
+## <a id='appdevctrl-config'></a> Configure Application Developer Controls
+
+<%= partial 'application_developer_controls' %>
+
+## <a id='app-security'></a> Configure Application Security Groups
+
+<%= partial 'application_security_group' %>
+
+## <a id='auth-config'></a> Configure Authentication and Enterprise SSO
+
+<%= partial 'authsso_config' %>
+
+## <a id='uaa'></a> Configure UAA
+
+<%= partial 'uaa' %>
+
+## <a id='uaa'></a> Configure CredHub
+
+<%= partial 'credhub' %>
+
+## <a id='sys-db'></a> Configure System Databases
+
+You can configure PAS to use an internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by PAS.
+
+<p class="note"><strong>Note:</strong> If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data first before changing the configuration. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information.</p>
+
+### <a id='internal-db'></a> Internal Database Configuration
+
+<p class="note"><strong>Note:</strong> For Runtime CredHub to work on GCP installations, you must use internal MySQL. See <a href="https://docs.pivotal.io/pivotalcf/2-4/pcf-release-notes/runtime-rn.html#external-credhub">CredHub Database Cannot be External on GCP</a>.</p>
+
+<p class="note"><strong>Note:</strong> For GCP installations, Pivotal recommends selecting <strong>External</strong> and using Google Cloud SQL. Only use internal MySQL for non-production or test installations on GCP.</p>
+
+<%= partial 'ert_database_internal' %>
+
+Then proceed to [Configure Internal MySQL](#internal-mysql) to configure high availability for your internal MySQL databases.
+
+### <a id='create-dbs'></a> External System Database Configuration
+
+<p class="note"><strong>Note:</strong> If you use external MySQL, you cannot use Runtime CredHub. See <a href="https://docs.pivotal.io/pivotalcf/2-4/pcf-release-notes/runtime-rn.html#external-credhub">CredHub Database Cannot be External on GCP</a>.</p
+
+<%= partial 'ert_database_external' %>
+
+## <a id='internal-mysql'></a> Configure Internal MySQL
+
+<%= partial 'mysql_proxy_config' %>
+
+## <a id='file-storage'></a> Configure File Storage
+
+<%= partial 'max_droplets_packages_config' %>
+
+## <a id='sys-logging'></a> Configure System Logging
+
+<%= partial '_system_logging' %>
+
+## <a id='customize-apps-man'></a> Configure Custom Branding and Apps Manager 
+
+<%= partial 'custombranding' %> 
+
+## <a id='smtp'></a> Configure Email Notifications
+
+<%= partial 'email-notifs' %>
+
+## <a id='config-autoscaler'></a> Configure App Autoscaler
+
+<%= partial 'app-autoscaler' %>
+
+## <a id='config-cc'></a> Configure Cloud Controller
+
+<%= partial 'cloud-controller' %>
+
+## <a id='config-smoke-test'></a> Configure Smoke Tests
+
+<%= partial 'smoketests' %>
+
+## <a id='advanced'></a> Configure  Advanced Features
+
+<%= partial 'advanced-features' %>
+
+## <a id='metric-registrar'></a> Configure  Metric Registrar
+
+<%= partial 'metric-registrar' %>
+
+## <a id='errands'></a> Configure Errands
+
+<%= partial 'errands' %>
+
+## <a id='resources'></a> Configure Resources
+
+### <a name='lb'></a> Configure Load Balancing
+
+In the Resource Config pane, you can associate load balancers with the VMs in your deployment to enable traffic. See [Configure Load Balancing for PAS](configure-lb.html). 
+
+### <a name='scale-down'></a> Scale Down and Disable Resources
+
+<%= partial 'disable_resources' %>

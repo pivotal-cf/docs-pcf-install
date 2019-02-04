@@ -1,0 +1,42 @@
+---
+title: Creating Databases for PAS
+owner: Releng
+---
+
+This topic provides an example procedure for creating the necessary databases on your external database instance so that you can deploy Pivotal Application Service (PAS) with an external database. 
+
+<p class="note warning"><strong>WARNING:</strong> Protect whichever database you use in your deployment with a password.</p>
+
+To create your Pivotal Application Service (PAS) databases, do the following:
+
+<p class='note'><strong>Note:</strong> Exact configurations depend on your database provider. The following procedure uses AWS RDS as an example.</p>
+
+1. Add the `ubuntu` account key pair from your IaaS deployment to your local SSH profile so you can access the Ops Manager VM. For example, in AWS, you add a key pair created in AWS:
+
+    <pre class='terminal'>$ ssh-add aws-keypair.pem</pre>
+
+1. SSH in to your Ops Manager using the Ops Manager FQDN and the username `ubuntu`:
+
+    <pre class='terminal'>$ ssh ubuntu@OPS-MANAGER-FQDN</pre>
+
+1. Log in to your MySQL database instance using the appropriate hostname and user login values configured in your IaaS account. For example, to log in to your AWS RDS instance, run the following MySQL command:
+
+     <pre class='terminal'>$ mysql --host=RDSHOSTNAME --user=RDSUSERNAME --password=RDSPASSWORD</pre>
+
+1. Run the following MySQL commands to create databases for the eleven PAS components that require a relational database:
+  <pre class="terminal">CREATE database ccdb;
+  CREATE database notifications;
+  CREATE database autoscale;
+  CREATE database app\_usage\_service;
+  CREATE database routing;
+  CREATE database diego;
+  CREATE database account;
+  CREATE database nfsvolume;
+  CREATE database networkpolicyserver;
+  CREATE database silk;
+  CREATE database locket;
+  CREATE database uaa;
+  CREATE database credhub;
+  </pre>
+
+1. Type `exit` to quit the MySQL client, and `exit` again to close your connection to the Ops Manager VM.

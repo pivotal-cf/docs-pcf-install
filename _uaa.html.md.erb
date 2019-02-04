@@ -6,69 +6,24 @@
 
     <p class="note warning"><strong>Warning</strong>: Protect whichever database you use in your deployment with a password.</p>
 
-    <% if current_page.data.iaas == "GCP" %><p class="note"><strong>Note</strong>: For GCP installations, Pivotal recommends using an external database on Google Cloud SQL.</p><% end %>
-
-<%# If procedure is for AWS terraform %>
-<% if current_page.data.iaas == "AWS" and current_page.data.install_type == "terraform" %>
-
-1. (Optional) If you selected **Other external database** for the UAA database location, perform the following steps to create and configure the dedicated UAA database:
-
-    <p class="note"><strong>Note</strong>: The exact procedure to create databases depends on the database provider you select for your deployment. The following procedure uses AWS RDS as an example, but UAA also supports Azure SQL Server.</p>
-
-    1. Add the `ubuntu` account key pair from your IaaS deployment to your local SSH profile so you can access the Ops Manager VM. This is the value of the `ops_manager_ssh_private_key` from the Terraform output.
-      <pre class='terminal'>$ ssh-add aws-keypair.pem</pre>
-
-    1. SSH in to your Ops Manager using the Ops Manager FQDN and the username `ubuntu`:
-      <pre class='terminal'>$ ssh ubuntu@OPS-MANAGER-FQDN</pre>
-
-    1. Log in to your MySQL database instance using the appropriate hostname and user login values configured in your IaaS account. For example, to log in to your AWS RDS instance, run the following MySQL command:
-      <pre class='terminal'>$ mysql --host=RDSHOSTNAME --user=RDSUSERNAME --password=RDSPASSWORD</pre>
-
-    1. Run the following MySQL commands to create a database for UAA:
-      <pre class="terminal">CREATE database uaa;</pre>
-
-    1. Type `exit` to quit the MySQL client, and `exit` again to close your connection to the Ops Manager VM.
-
-    1. Reboot the RDS instance in the AWS console. 
-
-    1. Navigate back to the PAS tile > **UAA** pane.
-    <%= image_tag('ert_uaa_external.png') %>
-
-    1. For **Hostname**, enter the hostname of the database server. This is the value from the `rds_address` key in the Terraform output.
-
-    1. For **TCP Port**, enter the port of the database server. This is the value from the `rds_port` key in the Terraform output.
-
-    1. For **Username**, specify the username that can access this database on the database server. This is the value from the `rds_username` key in the Terraform output.
-
-    1. For **Password**, specify a password for the provided username. This is the value from the `rds_password` key in the Terraform output.
-
-    1. For **CA Certificate**, enter a certificate to use for encrypting traffic to and from the database.
-    <p class="note"><strong>Note</strong>: The CA Certificate field only works if your external database hostname matches a name specified in the certificate. This is not true with GCP CloudSQL.</p>
-
-<%# If procedure is for GCP terraform %>
-<% elsif current_page.data.iaas == "GCP" and current_page.data.install_type == "terraform" %>
-1. (Optional) If you selected **Other external database** to deploy a Google Cloud SQL database with Terraform, complete the fields as follows:  
-  <%= image_tag('ert_uaa_external.png') %>
-  * **Hostname**: Enter the value of `sql_db_ip` from your Terraform output. 
-  * **TCP Port**: Enter `3306`. 
-  * **Username**: Enter the value of `pas_sql_username` from your Terraform output. 
-  * **Password**: Enter the value of `pas_sql_password` from your Terraform output. 
-  * **CA Certificate**, enter a certificate to use for encrypting traffic to and from the database.
-    <p class="note"><strong>Note</strong>: The CA Certificate field only works if your external database hostname matches a name specified in the certificate. This is not true with GCP CloudSQL.</p>
-
-<%# All other IaaS procedures %>
-<% else %>
+    <p class="note"><strong>Note</strong>: For GCP installations, Pivotal recommends using an external database on Google Cloud SQL.</p>
 
 1. (Optional) If you selected **Other external database**, complete the fields as follows:  
     <%= image_tag('ert_uaa_external.png') %>
-  * For **Hostname**, enter the hostname of the database server.
-  * For **TCP Port**, enter the port of the database server.
-  * For **Username**, specify a unique username that can access this specific database on the database server.
-  * For **Password**, specify a password for the provided username.
+  * For **Hostname**, enter the hostname of the database server. 
+      * **AWS Terraform**: Enter the value of `rds_address` in your Terraform output. 
+      * **GCP Terraform**: Enter the value of `sql_db_ip` from your Terraform output. 
+  * For **TCP Port**, enter the port of the database server. 
+      * **AWS Terraform**: Enter the value of `rds_port` in the Terraform output. 
+      * **GCP and GCP Terraform**: Enter `3306`. 
+  * For **Username**, specify a unique username that can access this specific database on the database server. 
+      * **AWS Terraform**: Enter the value of `rds_username` from your Terraform output. 
+      * **GCP Terraform**: Enter the value of `pas_sql_username` from your Terraform output. 
+  * For **Password**, specify a password for the provided username. 
+      * **AWS Terraform**: Enter the value of `rds_password` from your Terraform output. 
+      * **GCP Terraform**: Enter the value of `pas_sql_password` from your Terraform output.
   * For **CA Certificate**, enter a certificate to use for encrypting traffic to and from the database.
     <p class="note"><strong>Note</strong>: The CA Certificate field only works if your external database hostname matches a name specified in the certificate. This is not true with GCP CloudSQL.</p>
-
-<% end %>
 
 1. (Optional) Under **JWT Issuer URI**, enter the URI that UAA uses as the issuer when generating tokens. 
 

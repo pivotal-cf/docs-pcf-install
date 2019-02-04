@@ -1,0 +1,160 @@
+---
+title: Configuring Load Balancing for PAS
+owner: Releng
+---
+
+This topic describes how to configure load balancing for Pivotal Application Service (PAS) by entering the names of your load balancers in the **Resource Config** pane of the PAS tile. This procedure varies by IaaS an installation method. See the section below that corresponds to your use case. 
+
+## <a id="aws"></a> AWS
+
+To configure the Gorouter or HAProxy to AWS Elastic Load Balancers, do the following:
+
+1. Record the names of your ELBs. If you followed the procedures in the [Installing PCF on AWS Manually](../om/aws/prepare-env-manual.html) topic, you created the following: 
+  * `pcf-ssh-elb`: A SSH load balancer
+  * `pcf-web-elb`: A web load balancer
+  * `pcf-tcp-elb`: A TCP load balancer
+
+1. In the PAS tile, click **Resource Config**.
+  <%= image_tag("images/resource_config.png") %>
+
+1. Enter the name of your SSH load balancer depending on which release you are using. You can specify multiple load balancers by entering the names separated by commas.
+  * **PAS**: In the **ELB Name** field of the **Diego Brain** row, enter the name of your SSH load balancer: `pcf-ssh-elb`.
+  * **Small Footprint Runtime**: In the **ELB Name** field of the **Control** row, enter the name of your SSH load balancer: `pcf-ssh-elb`.
+
+1. In the **ELB Name** field of the **Router** row, enter the name of your web load balancer: `pcf-web-elb`. You can specify multiple load balancers by entering the names separated by commas.
+  <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, then put the name of the load balancers in the **ELB Name** field of the **HAProxy** row instead of the **Router** row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
+
+1. In the **ELB Name** field of the **TCP Router** row, enter the name of your TCP load balancer if you enabled TCP routing: `pcf-tcp-elb`. You can specify multiple load balancers by entering the names separated by commas.
+
+## <a id="aws-terraform"></a> AWS Terraform
+
+To configure the Gorouter or HAProxy to AWS Elastic Load Balancers, do the following:
+
+1. In the PAS tile, click **Resource Config**.
+  <%= image_tag("images/resource_config.png") %>
+
+1. Enter the name of your SSH load balancer depending on which release you are using. You can specify multiple load balancers by entering the names separated by commas.
+  * **Pivotal Application Service (PAS)**: In the **ELB Name** field of the **Diego Brain** row, enter the value of `ssh_elb_name` from the Terraform output.
+  * **Small Footprint Runtime**: In the **ELB Name** field of the **Control** row, enter the value of `ssh_elb_name` from the Terraform output.
+
+1. In the **ELB Name** field of the **Router** row, enter the value of `web_elb_name` from the Terraform output.
+    <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, then put the name of the load balancers in the **ELB Name** field of the **HAProxy** row instead of the **Router** row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
+
+1. In the **ELB Name** field of the **TCP Router** row, enter the value of `tcp_elb_name` from the Terraform output.
+
+1. Click **Save**.
+
+## <a id="azure"></a> Azure
+
+To configure the Gorouter to Azure Load Balancers, do the following:
+
+1. Select **Resource Config**.
+	<%= image_tag("azure/resource-config.png") %>
+
+1. Ensure a `Standard` VM type is selected for the **Router** VM. The PAS deployment fails if you select a `Basic` VM type.
+
+1. Retrieve the name(s) of your external ALB by navigating to the Azure portal, clicking **All resources**, and locating your **Load balancer** resource.
+<p class="note"><strong>Note:</strong> The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource. `az network lb list`</p>
+
+1. Locate the **Router** job in the **Resource Config** pane and enter the name of your external ALB in the field under **Load Balancers**.
+
+1. Retrieve the name of your Diego SSH Load Balancer by navigating to the Azure portal, clicking **All resources**, and locating your **Load balancer** resource.
+
+1. Locate the **Diego Brain** job in the **Resource Config** pane and enter the name of the Diego SSH Load Balancer in the field under **Load Balancers**.
+
+1. Ensure that the **Internet Connected** checkboxes are deselected for all jobs.
+
+1. Scale the number of instances as appropriate for your deployment.
+<p class="note"><strong>Note:</strong> For a high availability deployment of PCF on Azure, Pivotal recommends scaling the number of each PAS job to a minimum of three (3) instances. Using three or more instances for each job creates a sufficient number of availability sets and fault domains for your deployment. For more information, see <a href="../refarch/azure/azure_ref_arch.html">Reference Architecture for Pivotal Cloud Foundry on Azure</a>.</p>
+
+## <a id="azure-terraform"></a> Azure Terraform
+
+To configure the Gorouter to Azure Load Balancers, do the following:
+
+1. Select **Resource Config**.
+	<%= image_tag("azure/resource-config.png") %>
+
+  1. Ensure a `Standard` VM type is selected for the **Router** VM. The PAS deployment fails if you select a `Basic` VM type.
+
+1. Enter the value of `web_lb_name` from your Terraform output in the **Resource Config** pane under **Load Balancers** for the **Router** job.
+
+1. Enter the value of `diego_ssh_lb_name` from your Terraform output in the **Resource Config** pane under **Load Balancers** for the **Diego Brain** job.
+
+1. Ensure that the **Internet Connected** checkboxes are deselected for all jobs.
+
+1. Scale the number of instances as appropriate for your deployment.
+  <p class="note"><strong>Note:</strong> For a high availability deployment of PCF on Azure, Pivotal recommends scaling the number of each PAS job to a minimum of three (3) instances. Using three or more instances for each job creates a sufficient number of availability sets and fault domains for your deployment. For more information, see <a href="../refarch/azure/azure_ref_arch.html">Reference Architecture for Pivotal Cloud Foundry on Azure</a>.</p>
+
+## <a id="gcp"></a> GCP 
+
+To Configure Gorouter to GCP Load Balancers, do the following:
+
+1. Navigate to the GCP Console and click **Load balancing**.
+
+    <%= image_tag('gcp/config-lb.png') %>
+
+    You should see the SSH load balancer, the HTTP(S) load balancer, the TCP WebSockets load balancer, and the TCP router that you created in the _Preparing to Deploy PCF on GCP_ topic.
+
+1. Record the name of your SSH load balancer and your TCP WebSockets load balancer, `MY-PCF-wss-logs` and `MY-PCF-ssh-proxy`.
+
+1. Click your HTTP(S) load balancer, `MY-PCF-global-pcf`.
+    <%= image_tag('gcp/pcf-router.png') %>
+
+1. Under **Backend services**, record the name of the backend service of the HTTP(S) load balancer, `MY-PCF-http-lb-backend`.
+
+1. In the PAS tile, click **Resource Config**.
+
+    <%= image_tag("images/resource_config.png") %>
+
+1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-delimited list consisting of the name of your TCP WebSockets load balancer and the name of your HTTP(S) load balancer backend with the protocol prepended. For example, `tcp:MY-PCF-wss-logs,http:MY-PCF-http-lb-backend`.
+
+    <p class="note"><strong>Note:</strong> Do not add a space between key/value pairs in the <code>LOAD BALANCER</code> field or it will fail.</p>
+    <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, then enter the above load balancer values in the <code>LOAD BALANCERS</code> field of the <strong>HAProxy</strong> row instead of the <strong>Router</strong> row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
+
+1. If you have enabled TCP routing in the <a href="#tcp-routing-enable">Networking</a> pane and set up the <a href="../om/gcp/prepare-env-manual.html#tcp_websockets_lb">TCP Load Balancer in GCP</a>, add the name of your TCP load balancer, prepended with <code>tcp:</code>, to the <strong>LOAD BALANCERS</strong> column of the <strong>TCP Router</strong> row. For example, <code>tcp:pcf-tcp-router</code>.
+
+1. Enter the name of you SSH load balancer depending on which release you are using.
+  * **PAS**: Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the name of your SSH load balancer prepended with `tcp:`. For example, `tcp:MY-PCF-ssh-proxy`.
+  * **Small Footprint Runtime**: Under the **LOAD BALANCERS** column of the **Control** row, enter the name of your SSH load balancer prepended with `tcp:`.
+
+1. Verify that the **Internet Connected** checkbox for every job is unchecked. When preparing your GCP environment, you provisioned a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses to allow the jobs to reach the Internet.
+   <p class="note"><strong>Note:</strong> If you want to provision a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses, deselect the <strong>Internet Connected</strong> checkboxes. For more information about using NAT in GCP, see the <a href="https://cloud.google.com/compute/docs/networking">GCP documentation</a>.</p>
+
+1. Click **Save**.
+
+## <a id="gcp-terraform"></a> GCP Terraform
+
+To Configure Gorouter to GCP Load Balancers, do the following:
+
+1. Click **Resource Config**.
+
+1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-delimited list consisting of the values of `ws_router_pool` and `http_lb_backend_name` from your Terraform output. For example, `tcp:pcf-cf-ws,http:pcf-httpslb`. These are the names of the TCP WebSockets and HTTP(S) load balancers for your deployment.
+    <p class="note"><strong>Note:</strong> Do not add a space between key/value pairs in the <code>LOAD BALANCER</code> field or it will fail.</p>
+    <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, then enter the above load balancer values in the <code>LOAD BALANCERS</code> field of the <strong>HAPRoxy</strong> row instead of the <strong>Router</strong> row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
+
+1. If you have enabled TCP routing in the [Networking](#tcp-routing-enable) pane, add the value of `tcp_router_pool` from your Terraform output, prepended with `tcp:`, to the **LOAD BALANCERS** column of the **TCP Router** row. For example, `tcp:pcf-cf-tcp`.
+
+1. Enter the name of your SSH load balancer depending on which release you are using.
+  * **PAS**: Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the value of `ssh_router_pool` from your Terraform output, prepended with `tcp:`. For example, `tcp:MY-PCF-ssh-proxy`.
+  * **Small Footprint Runtime**: Under the **LOAD BALANCERS** column of the **Control** row, enter the value of `ssh_router_pool` from your Terraform output, prepended with `tcp:`.
+
+1. Verify that the **Internet Connected** checkbox for every job is checked. The terraform templates do not provision a Network Address Translation (NAT) box for Internet connectivity to your VMs so instead they will be provided with ephemeral public IP addresses to allow the jobs to reach the Internet.
+   <p class="note"><strong>Note:</strong> If you want to provision a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses, deselect the <strong>Internet Connected</strong> checkboxes. For more information about using NAT in GCP, see the <a href="https://cloud.google.com/compute/docs/networking">GCP documentation</a>.</p>
+
+1. Click **Save**.
+
+## <a id="openstack"></a> Openstack
+
+Unless you are using your own load balancer, you must enable traffic flow to the OpenStack private subnet as follows. Give each HAProxy a way of routing traffic into the private subnet by providing public IP addresses as floating IP addresses.
+
+1. Click **Resource Config**.
+
+    <%= image_tag("images/resource_config.png") %>
+
+1. Enter one or more IP addresses in **Floating IPs** for each HAProxy.
+
+1. (Optional) If you have enabled the TCP Routing feature, enter one or more IP addresses in **Floating IPs** column for each TCP Router.
+
+1. Click **Save**.
+
+## <a id="vsphere"></a> vSphere

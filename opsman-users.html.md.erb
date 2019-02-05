@@ -47,3 +47,56 @@ Follow these steps to add or remove users via the UAAC. If you do not already ha
 
 1. Delete a user:
 <pre class="terminal">$ uaac user delete YOUR-USER-NAME</pre>
+
+## <a id="clients"></a> Creating UAA Clients for Ops Manager
+
+If you want to automate aspects of Ops Manager, Pivotal recommends using a UAA client account to configure automation for Ops Manager. A user account can configure automated components, but client accounts are not bound to authentication protocols the way imported or new user accounts can be. A user account that controls automated components can cause those components to fail if the account experiences inconsistent availability due to permission or authentication issues.
+
+### <a id="athenticate"></a> Logging in to UAAC as an Admin
+
+In order to configure a client, you must first log in to UAAC as an admin. You can use one of the following two methods to authenticate to UAAC.
+
+### <a id="saml"></a> Authenticate via SAML or SSO
+
+If you're using SAML or SSO, authenticate to UAAC by entering these commands:
+
+1. Target your UAA server and log in as an admin:
+
+`uaac target https://YOUR-OPSMAN-DOMAIN/uaa
+uaac token sso get`
+
+1. When prompted, enter the Client ID and passcode. Leave the client secret blank.
+
+`Client ID: opsman
+Client secret:
+Passcode (from http://YOUR-OPSMAN-DOMAIN/uaa/passcode): YOUR-UAA-PASSCODE`
+
+### <a id="ldap"></a> Authenticate via LDAP
+
+If you're not using SAML or SSO, authenticate to UAAC by entering these commands:
+
+1. Target your UAA server and log in as an admin:
+
+`uaac target https://YOUR-OPSMAN-DOMAIN/uaa
+uaac token owner get`
+
+1. When prompted, enter the Client ID, your username, and your password. Leave the client secret blank.
+
+`Client ID: opsman
+Client secret: 
+ User name:  admin 
+Password:  ***** `
+
+1. A message appears confirming that UAAC has `Successfully fetched token`.
+
+You have successfully authenticated to UAAC as an admin. Next, you'll create the client.
+
+### <a id="client-create"> Creating a Client
+
+After you authenticate to UAAC, create aclient to manage automated components and tasks. Use the following command to create a client with role-based permissions, an ID, and an authentication secret:
+
+`$ uaac client add CLIENT-ID --authorized_grant_types client_credentials --authorities opsman.admin --secret CLIENT-SECRET`
+
+The `opsman.admin` authorities referenced in the example above grant specific permissions to the client. You can choose which permissions you wish the client to have by assigning a different role. For more information about Ops Manager roles and what they do, see [Understanding Roles in Ops Manager](../opsguide/config-rbac.html#about).
+
+

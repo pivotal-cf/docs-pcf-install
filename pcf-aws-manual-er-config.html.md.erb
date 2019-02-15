@@ -174,10 +174,11 @@ For more factors to consider when selecting file storage, see the [Consideration
 
 ## <a id='config-elb'></a> Step 23: Configure Router to Elastic Load Balancers
 
-1. Record the names of your ELBs. If you followed the procedures in the [Installing PCF on AWS Manually](../om/aws/prepare-env-manual.html) topic, you created the following: 
-  * `pcf-ssh-elb`: A SSH load balancer
-  * `pcf-web-elb`: A web load balancer
-  * `pcf-tcp-elb`: A TCP load balancer
+1. Record the names of your ELBs. If you followed the procedures in the [Installing PCF on AWS Manually](../om/aws/prepare-env-manual.html) topic, you created the following:
+  * `pcf-ssh-elb`: A SSH load balancer. This is a Classic Load Balancer. 
+  * `pcf-tcp-elb`: A TCP load balancer. This is a Classic Load Balancer. 
+  * `pcf-web-elb`: A web load balancer. This is an Application Load Balancer. 
+    * `pcf-web-elb-target-group`: a target group for the web load balancer
 
 1. In the PAS tile, click **Resource Config**.
   <%= image_tag("images/resource_config.png") %>
@@ -186,7 +187,9 @@ For more factors to consider when selecting file storage, see the [Consideration
   * **PAS**: In the **Load Balancers** field of the **Diego Brain** row, enter the name of your SSH load balancer: `pcf-ssh-elb`.
   * **Small Footprint Runtime**: In the **Load Balancers** field of the **Control** row, enter the name of your SSH load balancer: `pcf-ssh-elb`.
 
-1. In the **Load Balancers** field of the **Router** row, enter the name of your web load balancer: `pcf-web-elb`. 
+1. In the **Load Balancers** field of the **Router** row, enter the value determined by the type of load balancer you are using:
+  * **Application Load Balancer**: Enter the name of the target group of your web load balancer, prefixed with `alb:`: `alb:pcf-web-elb-target-group`. The prefix indicates to Ops Manager that you entered the name of a target group, and is required for AWS Application Load Balancers or Network Load Balancers.  
+  * **Clasic Load Balancer**: Enter the name of the load balancer: `pcf-web-elb`.  
   <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, then put the name of the load balancers in the **Load Balancers** field of the **HAProxy** row instead of the **Router** row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
 
 1. In the **Load Balancers** field of the **TCP Router** row, enter the name of your TCP load balancer if you enabled TCP routing: `pcf-tcp-elb`. 

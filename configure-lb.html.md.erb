@@ -10,9 +10,9 @@ This topic describes how to configure load balancing for Pivotal Application Ser
 To configure the Gorouter or HAProxy to AWS Elastic Load Balancers, do the following:
 
 1. Record the names of your ELBs. If you followed the procedures in the [Installing PCF on AWS Manually](../om/aws/prepare-env-manual.html) topic, you created the following:
-  * `pcf-ssh-elb`: A SSH load balancer (Classic Load Balancer)
-  * `pcf-tcp-elb`: A TCP load balancer (Classic Load Balancer)
-  * `pcf-web-elb`: A web load balancer (Application Load Balancer)
+  * `pcf-ssh-elb`: A SSH load balancer. This is a Classic Load Balancer. 
+  * `pcf-tcp-elb`: A TCP load balancer. This is a Classic Load Balancer. 
+  * `pcf-web-elb`: A web load balancer. This is an Application Load Balancer. 
     * `pcf-web-elb-target-group`: a target group for the web load balancer
 
 1. In the PAS tile, click **Resource Config**.
@@ -22,7 +22,9 @@ To configure the Gorouter or HAProxy to AWS Elastic Load Balancers, do the follo
   * **PAS**: In the **Load Balancers** field of the **Diego Brain** row, enter the name of your SSH load balancer: `pcf-ssh-elb`.
   * **Small Footprint Runtime**: In the **Load Balancers** field of the **Control** row, enter the name of your SSH load balancer: `pcf-ssh-elb`.
 
-1. In the **Load Balancers** field of the **Router** row, enter the name of your web load balancer's target group, prefixed with `alb:`: `alb:pcf-web-elb-target-group`. Pay special attention to the `alb:` prefix.  This prefix indicates to Operations Manager that you entered the name of a target group, and is necssary if you use AWS Applciation Load Balancers (ALBs) or Network Load Balancers (NLBs).  If you are using Clasic Load Balancers then omit the `alb:` prefix and enter the name of the load balancer instead of the name of the target group.
+1. In the **Load Balancers** field of the **Router** row, enter the value determined by the type of load balancer you are using:
+  * **Application Load Balancer**: Enter the name of the target group of your web load balancer, prefixed with `alb:`: `alb:pcf-web-elb-target-group`. The prefix indicates to Ops Manager that you entered the name of a target group, and is required for AWS Application Load Balancers or Network Load Balancers.  
+  * **Clasic Load Balancer**: Enter the name of the load balancer: `pcf-web-elb`.  
   <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, then put the name of the load balancers in the **Load Balancers** field of the **HAProxy** row instead of the **Router** row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
 
 1. In the **Load Balancers** field of the **TCP Router** row, enter the name of your TCP load balancer if you enabled TCP routing: `pcf-tcp-elb`.

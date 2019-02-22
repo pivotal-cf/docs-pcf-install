@@ -1,83 +1,61 @@
 ---
-title: PCF on vSphere Requirements
+title: Installing Pivotal Cloud Foundry on vSphere
 owner: Ops Manager
 iaas: vSphere
 ---
 
 <strong><%= modified_date %></strong>
 
-This guide describes how to install [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on vSphere.
+This guide describes how to install [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on vSphere. 
 
 If you experience a problem while following the steps below, refer to the [Known Issues](https://docs.pivotal.io/pivotalcf/pcf-release-notes/index.html) topics or to [Diagnosing Problems in PCF](./diagnostics.html).
 
+## <a id='prerequisites'></a> Requirements
 
-## <a id='general'></a> General Requirements
-
-<%= partial "requirements" %>
-
-## <a id='vsphere-reqs'></a> vSphere Requirements
+This section describes the resource requirements for installing PCF. 
 
 <p class='note'><strong>Note:</strong> If you are using the Cisco Nexus 1000v Switch, refer to the <a href="nexus-switch.html">Using the Cisco Nexus 1000v Switch with Ops Manager</a> topic for more information.</p>
 
 <p class='note'><strong>Note:</strong> When installing Ops Manager on a vSphere environment with multiple ESXi hosts, you must use network-attached or shared storage devices. Local storage devices do not support sharing across multiple ESXi hosts.</p>
 
-### <a id='pcf-deployment'></a> Minimum Resource Requirements for PCF Deployment with Pivotal Application Service
+### <a id='runtimes'></a> Resource Requirements 
 
-The following are the minimum resource requirements for maintaining a [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) deployment with Ops Manager and Pivotal Application Service (PAS) on vSphere:
+You can install PCF with one of two runtimes. For more information about the requirements for each runtime, see the following:
 
-* vSphere v6.7, v6.5, v6.0, or v5.5
-* Disk space: 2&nbsp;TB recommended
-* Memory: 120&nbsp;GB
-* Two public IP addresses: One for PAS and one for Ops Manager
-* vCPU cores: 80
-* Overall CPU: 28 GHz
-* vSphere editions: standard and above
-* Ops Manager must have HTTPS access to vCenter and ESX hosts on TCP port 443.
-* A configured vSphere cluster:
-  * If you enable vSphere DRS (Distributed Resource Scheduler) for the cluster, you must set the Automation level to **Partially automated** or **Fully automated**. If you set the Automation level to **Manual**, the BOSH automated installation will fail with a `power_on_vm` error when BOSH attempts to create virtual machines (VMs).
-  * Disable hardware virtualization if your vSphere hosts do not support VT-X/EPT. If you are unsure whether the VM hosts support VT-x/EPT, you should disable this setting. If you leave this setting enabled and the VM hosts do not support VT-x/EPT, then each VM requires manual intervention in vCenter to continue powering on without the Intel virtualized VT-x/EPT. Refer to the vCenter help topic at [Configuring Virtual Machines > Setting Virtual Processors and Memory > Set Advanced Processor Options](http://pubs.vmware.com/fusion-6/index.jsp?topic=%2Fcom.vmware.fusion.help.doc%2FGUID-38178690-1234-4843-B135-4063F9AA73E4.html) for more information.
-* If you configure an external load balancer, an HTTP keep-alive connection timeout greater than five seconds 
-
-<p class="note"><strong>Note:</strong> If you are deploying PCF behind a firewall, see the <a href="config_firewall.html">Preparing Your Firewall for Deploying Pivotal Cloud Foundry</a> topic.</p>
-
-### <a id='small-footprint-deployment'></a> Minimum Resource Requirements for PCF Deployment with Small Footprint PAS
-
-The following are the minimum resource requirements for maintaining a PCF deployment with Ops Manager and Small Footprint PAS on vSphere:
-
-* 1 vSphere cluster/1 AZ
-* 2 resource pools: 1 for NSX-T components and 1 for PAS or PKS
-* 3 hosts minimum for vSphere HA (4 hosts for vSphere VSAN)
-* Shared storage/VSAN
-* 1 NSX Manager
-* 3 NSX controllers
-* 4 large edge VMs in a cluster
-* PCF: Ops Manager, the BOSH Director, and Small Footprint PAS
-
-### <a id='instance-number-scaling-reqs'></a> Instance Number and Scaling Requirements
-
-By default, PAS deploys the number of VM instances required to run a highly available configuration of PCF. If you are deploying a test or sandbox PCF that does not require HA, then you can scale down the number of instances in your deployment. 
-
-For information about the number of instances required to run a minimal, non-HA PCF deployment, see [Scaling PAS](../opsguide/scaling-ert-components.html).
+* **Pivotal Application Service (PAS)**: [PAS on vSphere Requirements](./pas-vsphere-requirements.html). For information requirements when deploying with NSX-T, see the _Requirements_ section of [Deploying PAS with NSX-T Networking](./vsphere-nsx-t.html). 
+* **Pivotal Container Service (PKS)**: 
+    * **Without NSX-T**: [vSphere Prerequisites and Resource Requirements](https://docs.pivotal.io/runtimes/pks/1-3/vsphere-requirements.html)
+    * **With NSX-T**: See the _Preparing to Install PKS on vSphere with NSX-T_ section of [Installing PKS on vSphere with NSX-T Data Center](https://docs.pivotal.io/runtimes/pks/1-3/vsphere-nsxt-index.html). 
 
 
-## <a id='permissions'></a> vSphere Service Account Requirements
+
+
+
+### <a id='permissions'></a> vSphere Service Account Requirements
 
 Ops Manager requires read/write permissions to the data center level of the [vSphere Inventory Hierarchy](http://pubs.vmware.com/vsphere-4-esx-vcenter/index.jsp?topic=/com.vmware.vsphere.dcadmin.doc_41/vsp_dc_admin_guide/managing_users_groups_roles_and_permissions/c_hierarchical_inheritance_of_permissions.html) to successfully install. Pivotal recommends defining a custom role for the service account that has all privileges for all objects in the data center, including propagating privileges to children.
 
-For a complete list of the minimum required vSphere privileges, see the [vSphere Service Account Requirements](./vsphere-service-account.html) topic.  
-
 Since Ops Manager passes all required credentials through to BOSH, you only need one service account with the required vSphere privileges to complete the installation. Setting up separate service accounts for Ops Manager and BOSH is not necessary or recommended.
+
+For more information about service account requirements, see the following topics:
+
+* **PAS**: [vSphere Service Account Requirements](./vsphere-service-account.html) 
+* **PKS**: _Step 3:Create the BOSH/Ops Manager Service Account_ of [Preparing vSphere Before Deploying PKS](https://docs.pivotal.io/runtimes/pks/1-3/vsphere-prepare-env.html#create-bosh-ops-man) 
+
 
 <p class="note"><strong>Note:</strong> You can also apply the default <a href="http://pubs.vmware.com/vsphere-51/topic/com.vmware.wssdk.pg.doc/PG_Appx_Privileges_Reference.22.4.html">VMware Administrator System Role</a> to the service account to achieve the appropriate permission level.</p>
 
 
-## <a id="security"></a> vSphere Security Documents
+### <a id="security"></a> vSphere Security Documents
 
 * [vSphere Security guide (PDF)](http://pubs.vmware.com/vsphere-65/topic/com.vmware.ICbase/PDF/vsphere-esxi-vcenter-server-65-security-guide.pdf)<br />
 This guide contains best practices for securing and managing a vSphere installation.
 
+## <a id='procedure'></a> Procedure
 
-## <a id='install-om'></a> Step 1: Install Ops Manager
+This section describes the steps for installing PCF. 
+
+### <a id='install-om'></a> Step 1: Install Ops Manager
 
 Complete the following procedures to install Ops Manager on vSphere:
 
@@ -85,59 +63,27 @@ Complete the following procedures to install Ops Manager on vSphere:
 
 1. [Configuring BOSH Director on vSphere](../om/vsphere/config.html)
 
+### <a id='install-er'></a> Step 2: Install a Runtime
 
-## <a id='ipsec'></a> (Optional) Step 2: Install the IPsec Add-on
+Follow the procedure that corresponds to your desired runtime and networking configuration:
 
-The PCF IPsec add-on secures network traffic within a PCF deployment and provides internal system protection if a malicious actor breaches your firewall. See the [Securing Data in Transit with the IPsec Add-on](http://docs.pivotal.io/addon-ipsec/index.html) topic for installation instructions.
-
-<p class="note"><strong>Note:</strong> You must install the PCF IPsec add-on before installing any other tiles to enable the IPsec functionality. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the PAS tile.</p>
-
-
-## <a id='nsx-t'></a> (Optional) Step 3: Install the NSX-T Tile
-
-The NSX-T tile provides a single network for containers, VMs, and other entities. It enables NSX to enforce C2C policy and operators to configure additional policies through NSX Manager.
-
-- You must install the NSX-T tile after you install or upgrade the BOSH Director tile. 
-- You must install the NSX-T tile before you install or upgrade the PAS tile.
-
-See the [NSX-T Container Plug-In for Kubernetes and Cloud Foundry - Installation and
-Administration Guide](https://docs.vmware.com/en/VMware-NSX-T/2.1/nsxt_21_ncp_kubernetes.pdf) for more information.
+* **PAS**: 
+    * **Without NSX-T**: [Configuring PAS](./configure-pas.html) 
+    * **With NSX-T**: [Deploying PAS with NSX-T Networking](./vsphere-nsx-t.html)
+        <p class="note"><strong>Note</strong>: You must install the NSX-T tile before you install or Upgrade the PAS tile.</p>
+* **PKS**: 
+    * **Without NSX-T**: [Installing PKS](https://docs.pivotal.io/runtimes/pks/1-3/vsphere-index.html)
+    * **With NSX-T**: [Deploying NSX-T for PKS](https://docs.pivotal.io/runtimes/pks/1-3/nsxt-deploy.html)
 
 
-## <a id='install-er'></a> Step 4: Install PAS
-
-To install PAS on vSphere, perform the procedures in the [Configuring PAS](./configure-pas.html) topic.
-
-
-## <a id='new-users'></a> Step 5: Create New User Accounts
-
-Once you have successfully deployed PCF, add users to your account.
-Refer to the [Creating New PAS User Accounts](../opsguide/creating-account.html) topic for more information.
-
-
-## <a id='target'></a> Step 6: Target Your Deployment
-
-Use the Cloud Foundry Command Line Interface (cf CLI) to target your deployment.
-If you have not installed the cf CLI, follow the instructions in [Installing the cf CLI](../cf-cli/install-go-cli.html). For more information about the cf CLI, see [Getting Started with the cf CLI](../cf-cli/getting-started.html).
-
-<p class="note"><strong>Note:</strong> To obtain the UAA admin name and
-    password, refer to PAS <strong>Credentials</strong> in Ops Manager. You can also use the user that you created in Apps Manager, or create another user with the <code>create-user</code> command.</p>
 
 
 ## <a id='additional'></a> Additional Configuration
 
-See the following topics for additional configuration information:
+See the following topics for additional configuration options:
 
-* [Deploying PAS with NSX-T Networking](./vsphere-nsx-t.html)
-
-* [Provisioning a Virtual Disk in vSphere](./disk-format.html)
-
-* [Using the Cisco Nexus 1000v Switch with Ops Manager](./nexus-switch.html)
-
+* [Provisioning a Virtual Disk in vSphere](./disk-format.html) 
 * [Using BOSH Resurrector and vSphere HA](./resurrector.html)
-
-* [Configuring SSL Termination for vSphere Deployments](../opsguide/ssl-term.html)
-
 * [Availability Zones in vSphere](./understand-az.html)
-
 * [Updating NSX Security Group and Load Balancer Information](./update-nsx.html)
+

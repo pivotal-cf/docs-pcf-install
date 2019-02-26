@@ -4,7 +4,7 @@ title: Creating and Managing Ops Manager User and Client Accounts
 
 <strong><%= modified_date %></strong>
 
-[Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf)  supports multiple user accounts in Ops Manager. A User Account and Authentication (UAA) module co-located on the Ops Manager VM manages access permissions to Ops Manager.
+[Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) supports multiple user accounts in Ops Manager. A User Account and Authentication (UAA) module co-located on the Ops Manager VM manages access permissions to Ops Manager.
 
 When Ops Manager boots for the first time, you create an admin user. However, you do not create additional users through the Ops Manager web interface. If you want to create additional users who can log into Ops Manager, you must use the UAA API, either through `curl` or the UAA Command Line Client (UAAC).
 
@@ -26,6 +26,14 @@ Follow these steps to add or remove users via the UAAC. If you do not already ha
   Successfully fetched token via client credentials grant.
   Target <span>https</span>://YOUR-OPSMAN-FQDN/uaa/
 </pre>
+
+ Where: 
+
+  * `Client ID` is the name of the client you are using
+  * `Client Secret` is the client secret. You do not need to specify the secret. You can bypass this step by pressing **Enter**.
+  * `Username` is the username of your administrator account.
+  * `Password` is the password of your administrator account.
+
 1. Add a user:
 <pre class="terminal">$ uaac user add YOUR-USER-NAME -p YOUR-USER-PASSWORD --emails YOUR-USER-EMAIL<span>@</span>EXAMPLE.COM</pre>
 1. (Optional) Set your user's Role-Based Access Control (RBAC) permissions. For more information, see [Configuring Role-Based Access Control (RBAC) in Ops Manager](../opsguide/config-rbac.html).
@@ -45,6 +53,13 @@ Follow these steps to add or remove users via the UAAC. If you do not already ha
   Target <span>https</span>://YOUR-OPSMAN-FQDN/uaa/
 </pre>
 
+ Where: 
+
+ * `Client ID` is the name of the client you are using
+ * `Client Secret` is the client secret. You do not need to specify the secret. You can bypass this step by pressing **Enter**.
+ * `Username` is the username of your administrator account.
+ * `Password` is the password of your administrator account.
+
 1. Delete a user:
 <pre class="terminal">$ uaac user delete YOUR-USER-NAME</pre>
 
@@ -56,31 +71,34 @@ A user account can configure automated components, but client accounts are not b
 
 ### <a id="athenticate"></a> Log in to UAAC as an Admin
 
-In order to configure a client, you must first log in to UAAC as an admin. You can use one of the following two methods to authenticate to UAAC.
+In order to configure a client, you must first log in to UAAC as an admin. You can use one of the following two methods to authenticate to UAAC:
+
+* [Authenticate Using SAML or SSO](#saml)
+* [Authenticate Using LDAP](#ldap)
 
 ### <a id="saml"></a> Authenticate Using SAML or SSO
 
 If you're using SAML or SSO, authenticate to UAAC by entering these commands:
 
 1. Target your UAA server and log in as an admin:
- <pre class='terminal'>uaac target https://YOUR-OPSMAN-DOMAIN/uaa
+ <pre class='terminal'>uaac target http<span>s</span>://YOUR-OPSMAN-DOMAIN/uaa
  uaac token sso get</pre>
 1. When prompted, enter the Client ID and passcode. Leave the client secret blank.
  <pre class='terminal'>Client ID: opsman
  Client secret:
- Passcode (from http://YOUR-OPSMAN-DOMAIN/uaa/passcode): YOUR-UAA-PASSCODE</pre>
+ Passcode (from <span>http</span>://YOUR-OPSMAN-DOMAIN/uaa/passcode): YOUR-UAA-PASSCODE</pre>
 
 ### <a id="ldap"></a> Authenticate Using LDAP
 
-If you're not using SAML or SSO, authenticate to UAAC by entering these commands:
+If you're not using SAML or SSO, authenticate to UAAC with these commands:
 
 1. Target your UAA server and log in as an admin:
- <pre class='terminal'>uaac target https://YOUR-OPSMAN-DOMAIN/uaa
+ <pre class='terminal'>uaac target http<span>s</span>://YOUR-OPSMAN-DOMAIN/uaa
  uaac token owner get</pre>
 1. When prompted, enter the Client ID, your username, and your password. Leave the client secret blank.
  <pre class='terminal'>Client ID: opsman
  Client secret: 
-  User name:  admin 
+ User name:  admin 
  Password:  ***** </pre>
 1. A message appears confirming that UAAC has `Successfully fetched token`.
 

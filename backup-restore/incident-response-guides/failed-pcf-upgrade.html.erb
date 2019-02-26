@@ -1,0 +1,27 @@
+# PCF Upgrade Failure
+
+This guide explains how to use `bbr` to restore PCF back to a healthy state after a failed upgrade between PCF minor versions.  This is only possible if you have previously used `bbr deployment --deployment <DEPLOYMENT_NAME> backup` to backup specified deployments, `bbr director backup` to backup your BOSH Director, and exported your OpsManager settings. These commands produce artifacts of the form `<DEPLOYMENT_NAME>_<TIMESTAMP>/`,  `<DIRECTOR_IP>_<TIMESTAMP>/`, and `installation.zip` respectively.
+
+## 1. Before Restore
+Before a restore is attempted, you must clarify the following about the current state of your PCF and its deployments:
+
++ The BOSH Director must be in a healthy state for a `bbr` restore to succeed as it uses the BOSH Director to orchestrate the restore.  A healthy BOSH Director will have all its jobs running.
++ Any deployment that you want to restore on top of, must have some level of functionality e.g. all the VMs are responsive.
+
+If your BOSH Director or deployments are not in a functional state, then BOSH Subject Matter Experts (SMEs) may need to manually intervene.
+
+<p class="note"><strong>Note:</strong> BBR can only restore across the same PCF minor versions.  The version of PCF, that the backup artifact was taken from, can be found as <tt>metadata/cf-VERSION.yml</tt> in the backup artifact.</p>
+
+## 2. Restore 
+
+If the BOSH Director is not in a healthy state, Pivotal recommends following [our full restore flow](../restore-pcf-bbr.html#restore-diagram) regain your OpsManager, BOSH Director, and its deployments.
+
+If your BOSH Director is healthy, you can use `bbr director restore` to restore your previous director state and from there use `bbr deployment --deployment <DEPLOYMENT_NAME> restore` to restore each of your deployments through the BOSH Director.
+
++ [Restoring your BOSH Director](../restore-pcf-bbr.html#restore-bosh)
++ [Restoring your deployment](../restore-pcf-bbr.html#restore-ert)
+
+If your BOSH Director is healthy, its data is intact, and all VMs in your deployment to restore are responsive, you can use `bbr deployment --deployment <DEPLOYMENT_NAME> restore` to restore each of your deployments through the BOSH Director.
+
++ [Restoring your deployment](../restore-pcf-bbr.html#restore-ert)
+  

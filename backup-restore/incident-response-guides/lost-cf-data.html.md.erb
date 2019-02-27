@@ -7,11 +7,10 @@ owner: Platform Recovery
 
 This guide explains how to use `bbr` to restore a piece of Cloud Foundry data, such as a user or space, which has been lost.  This is only possible if you have previously taken a backup using `bbr deployment --deployment <DEPLOYMENT_NAME> backup`, which produces an artifact of the form `<DEPLOYMENT_NAME>_<TIMESTAMP>/`.
 
-## 1. Before Restore
+## <a id="before-restore"></a>1. Before Restore
 Before restoring, you should check whether the backup artifact you have is suitable for your restore need. You can untar and explore the Cloud Foundry backup artifact to verify that it contains the data that you need to restore.  Depending on the data to be restore, the check varies, so we have provided the following examples:
 
-
-### Checking if an org is present
+### <a id="check-org-present"></a>Checking if an org is present
 To check whether your backup artifact possesses the org you want to restore, you can do the following:
 
 ```bash
@@ -25,7 +24,7 @@ INSERT INTO `organizations` VALUES (..., ,'<ORG_TO_RESTORE>', ...);
 ```
 is present in the standard output of the last command, then you can restore this org.
 
-### Checking if a space is present
+### <a id="check-space-present"></a>Checking if a space is present
 To check whether your backup artifact possesses the space you want to restore, you can do the following:
 
 ```bash
@@ -39,7 +38,7 @@ INSERT INTO `spaces` VALUES (..., ,'<SPACE_TO_RESTORE>', ...);
 ```
 is present in the standard output of the last command, then you can restore this space.
 
-### Checking if a user is present
+### <a id="check-user-present"></a>Checking if a user is present
 To check whether your backup artifact possesses the user you want to restore, you can do the following:
 
 ```bash
@@ -53,7 +52,7 @@ INSERT INTO `users` VALUES (..., ,'<USER_TO_RESTORE>', ...);
 ```
 is present in the standard output of the last command, then you can restore this user.
 
-### Checking if a route is present
+### <a id="check-route-present"></a>Checking if a route is present
 To check whether your backup artifact possesses the route you want to restore, you can do the following:
 
 ```bash
@@ -67,7 +66,7 @@ INSERT INTO `routes` VALUES (..., ,'<ROUTE_TO_RESTORE>', ...);
 ```
 is present in the standard output of the last command, then you can restore this route.
 
-### Checking if a domain is present
+### <a id="check-domain-present"></a>Checking if a domain is present
 To check whether your backup artifact possesses the domain you want to restore, you can do the following:
 
 ```bash
@@ -81,7 +80,7 @@ INSERT INTO `domains` VALUES (..., ,'<DOMAIN_TO_RESTORE>', ...);
 ```
 is present in the standard output of the last command, then you can restore this domain.
 
-### Checking if an app is present
+### <a id="check-app-present"></a>Checking if an app is present
 To check whether your backup artifact possesses the app you want to restore, you can do the following:
 
 ```bash
@@ -107,7 +106,7 @@ If the droplet, `<APP_DROPLET>`, appears in the output of the last command, then
 
 <p class="note"><strong>Note:</strong> If you are using an external blobstore, you will have to go into your IaaS console and check the backup bucket to see if the droplet is present.</p>
 
-## 2. Restore
+## <a id="restore"></a>2. Restore
 <p class="note warning"><strong>WARNING:</strong> BBR restore is a destructive process which will remove any data currently held in your deployment.  If your backup artifact was not taken recently, this will lead to the loss of all new data since the backup was taken when you do a restore.</p>
 
 Pivotal recommends that you verify the compatibility of your artifact with the target environment by attempting a restore on an identical environment to the intended target.  If this is not possible, it is highly recommended to check that the artifact is compatible, defined by the [BBR compatibility restrictions](../restore-pcf-bbr.html#compatibility).
@@ -116,6 +115,6 @@ You can now run `bbr deployment --deployment <DEPLOYMENT_NAME> restore` by follo
 
 After a `bbr deployment --deployment <DEPLOYMENT_NAME> restore`, Cloud Foundry should have rolled back to its state at the time when the backup was taken, and contain the data that you had previously lost.
 
-## 3. After Restore
+## <a id="after-restore"></a>3. After Restore
 
 If service instances have been created but were not present when the backup was taken, then the BOSH service deployments will be orphaned from PCFs point of view. PCF will have no reference to these service deployments but they will continue to exist and can be found via the BOSH command-line interface. Orphaned on-demand service instances can be identified by running the on-demand-service-broker errand `orphan-deployments`.

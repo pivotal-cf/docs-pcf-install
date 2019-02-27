@@ -1,16 +1,15 @@
-# Loss of Cloud Foundry data
+---
+title: Loss of Cloud Foundry data
+owner: Platform Recovery
+---
+
+<strong><%= modified_date %></strong>
 
 This guide explains how to use `bbr` to restore a piece of Cloud Foundry data, such as a user or space, which has been lost.  This is only possible if you have previously taken a backup using `bbr deployment --deployment <DEPLOYMENT_NAME> backup`, which produces an artifact of the form `<DEPLOYMENT_NAME>_<TIMESTAMP>/`.
 
 ## 1. Before Restore
 Before restoring, you should check whether the backup artifact you have is suitable for your restore need. You can untar and explore the Cloud Foundry backup artifact to verify that it contains the data that you need to restore.  Depending on the data to be restore, the check varies, so we have provided the following examples:
 
-<!-- + [Checking if an org is present](#org)
-+ [Checking if a space is present](#space)
-+ [Checking if a user is present](#user)
-+ [Checking if a route is present](#route)
-+ [Checking if a domain is present](#domain)
-+ [Checking if an app is present](#app) -->
 
 ### Checking if an org is present
 To check whether your backup artifact possesses the org you want to restore, you can do the following:
@@ -56,6 +55,7 @@ is present in the standard output of the last command, then you can restore this
 
 ### Checking if a route is present
 To check whether your backup artifact possesses the route you want to restore, you can do the following:
+
 ```bash
 $> tar -xvf backup_restore-0-bbr-cloudcontrollerdb.tar
 $> cat cloudcontroller-artifact-file | grep “<ROUTE_TO_RESTORE>”
@@ -85,13 +85,13 @@ is present in the standard output of the last command, then you can restore this
 To check whether your backup artifact possesses the app you want to restore, you can do the following:
 
 ```bash
-$> tar -xvf backup_restore-0-bbr-cloudcontrollerdb.tar`
-$> cat cloudcontroller-artifact-file | grep “<APP_TO_RESTORE>”`
+$> tar -xvf backup_restore-0-bbr-cloudcontrollerdb.tar
+$> cat cloudcontroller-artifact-file | grep “<APP_TO_RESTORE>”
 ```
 
 If the line
 ```
-INSERT INTO `apps` VALUES (..., ,'<APP_TO_RESTORE>', '<APP_DROPLET>'', ...);
+INSERT INTO `apps` VALUES (..., ,'<APP_TO_RESTORE>', '<APP_DROPLET>', ...);
 ```
 is present in the standard output of the last command, then you can restore this app if the corresponding droplet for it is present.
 If you have also backed up your blobstore, the the droplet should also be present.
@@ -110,11 +110,12 @@ If the droplet, `<APP_DROPLET>`, appears in the output of the last command, then
 ## 2. Restore
 <p class="note warning"><strong>WARNING:</strong> BBR restore is a destructive process which will remove any data currently held in your deployment.  If your backup artifact was not taken recently, this will lead to the loss of all new data since the backup was taken when you do a restore.</p>
 
-Pivotal recommends that you verify the compatibility of your artifact with the environemnt by using it in a identical environment to the intended target.  If this is not possible, it is highly recommended to check that the artifact is compatible, defined by the [BBR compatibility restrictions](../restore-pcf-bbr.html#compatibility).
+Pivotal recommends that you verify the compatibility of your artifact with the target environment by attempting a restore on an identical environment to the intended target.  If this is not possible, it is highly recommended to check that the artifact is compatible, defined by the [BBR compatibility restrictions](../restore-pcf-bbr.html#compatibility).
 You can now run `bbr deployment --deployment <DEPLOYMENT_NAME> restore` by following the `bbr` instructions to 
 <a href="../restore-pcf-bbr.html#restore-ert">restore your Cloud Foundry deployment.</a>
 
 After a `bbr deployment --deployment <DEPLOYMENT_NAME> restore`, Cloud Foundry should have rolled back to its state at the time when the backup was taken, and contain the data that you had previously lost.
 
 ## 3. After Restore
+
 If service instances have been created but were not present when the backup was taken, then the BOSH service deployments will be orphaned from PCFs point of view. PCF will have no reference to these service deployments but they will continue to exist and can be found via the BOSH command-line interface. Orphaned on-demand service instances can be identified by running the on-demand-service-broker errand `orphan-deployments`.

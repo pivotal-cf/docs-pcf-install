@@ -5,18 +5,24 @@ owner: Platform Recovery
 
 <strong><%= modified_date %></strong>
 
-This guide explains how to use `bbr` to restore a BOSH Director which has lost its persistent disk.  This is only possible if you have previously taken a backup using `bbr director backup` which produces an artifact of the form `<DIRECTOR_IP>_<TIMESTAMP>/`.
+This guide explains how to use `bbr` to restore a BOSH Director which has lost its persistent disk. This is only possible if you have previously taken a backup using:
+
+```
+bbr director backup
+```
+
+This will produce an artifact of the form `<DIRECTOR_IP>_<TIMESTAMP>/`.
 
 <p class="note warning"><strong>WARNING:</strong> BOSH Director backups require identical references to all BOSH-deployed VMs. Any change that caused the recreation of all VMs such as a change in stemcell, network or availability zones will make previous backups incompatible for restore.</p>
 
 ## <a id="preparing-environment"></a>Preparing your environment
-Your BOSH Director must be in a healthy state before you can proceed with `bbr director restore`.  A healthy state is one where all jobs are running on the BOSH Director.  For persistent disk loss, the following steps may be applicable to getting your director healthy:
+Your BOSH Director must be in a healthy state before you can proceed with a director restore.  A healthy state is one where all jobs are running on the BOSH Director.  For persistent disk loss, the following steps may be applicable to getting your director healthy:
 
 1. Create a new persistent disk using your IaaS console
 
 2. SSH onto the OpsManager VM and modify the `bosh-state.json` file so that the disks section, specifically the `disks.cid`, points to the new disk.
 
-3. Update the persistent disk size using OpsManager UI to force a `bosh create-env`.  Then “Apply Changes”, which will create a new BOSH Director VM and attach the new disk to it.
+3. Update the persistent disk size using the OpsManager UI and then click “Apply Changes”. This will create a new BOSH Director VM and attach the new disk to it.
 
 <p class="note"><strong>Note:</strong> As the loss of the BOSH Director could occur for many reasons, the instructions to get your BOSH Director into a healthy state may not suit your restore case.</p>
 
@@ -24,7 +30,7 @@ Your BOSH Director must be in a healthy state before you can proceed with `bbr d
 
 <p class="note warning"><strong>WARNING:</strong> BBR restore is a destructive process which will remove any data currently held in your director.  If your backup artifact was not taken recently, this will lead to the loss of all new data since the backup was taken when you do a restore.</p>
 
-You can now run `bbr director restore` by following the `bbr` instructions in 
+You can now run a director restore by following the `bbr` instructions in
 <a href="../restore-pcf-bbr.html#restore-bosh">Step 8: Restore the BOSH Director</a>.
 
 ## <a id="consolidating-environment"></a>Consolidating your environment
@@ -32,7 +38,12 @@ After successfully restoring your BOSH Director, the director will now be using 
 
 If changes have occurred, take the following steps to ensure that the BOSH director’s database is consistent with the current state of your IaaS after the restore:
 
-+ If VMs were deleted, the BOSH Director will still have references to these deleted VMs after the restore. You can run `bosh --deployment <DEPLOYMENT_NAME> cloud-check` to find and delete these VM references for a specified deployment.
++ If VMs were deleted, the BOSH Director will still have references to these deleted VMs after the restore. In order to find and delete outdated VM references for a specified environment, you can run:
+
+```
+bosh --deployment <DEPLOYMENT_NAME> cloud-check
+```
+
 + If VMs were added, the BOSH Director will have no knowledge of the new VMs, so you must go onto the IaaS console and delete the orphaned VMs after the restore.
 
 Your BOSH Director should now be in a healthy state, with the the new persistent disk attached, and aligned with the current state of your IaaS.

@@ -7,17 +7,52 @@ owner: Platform Recovery
 
 This guide explains how to use `bbr` to restore OpsManager and Pivotal Application Service (PAS) back to a healthy state after a failed upgrade between PAS minor versions.  This is only possible if you have previously:
 
-+ Backed up your deployments using `bbr deployment --deployment <DEPLOYMENT_NAME> backup`
-+ Backed up you BOSH director using `bbr director backup`
++ Backed up your deployments using:
+
+```
+bbr deployment --deployment <DEPLOYMENT_NAME> backup
+```
+
++ Backed up you BOSH director using:
+
+```
+bbr director backup
+```
+
 + Exported your OpsManager settings
 
 These commands produce artifacts of the form `<DEPLOYMENT_NAME>_<TIMESTAMP>/`,  `<DIRECTOR_IP>_<TIMESTAMP>/`, and `installation.zip` respectively.
 
 ## <a id="validating-environment-restore"></a>Validating your environment for restore
-Before a restore is attempted, you must clarify the following about the current state of your OpsManager and PAS:
+Before a restore is attempted, you must clarify that the BOSH Director and PAS are healthy.
 
-+ The BOSH Director must be in a healthy state for a `bbr` restore to succeed as it uses the BOSH Director to orchestrate the restore.  A healthy BOSH Director will have all its jobs running.
-+ Any deployment that you want to restore on top of, must have some level of functionality e.g. all the VMs are responsive.
+### BOSH Director
+To check that the BOSH Director is in a healthy state for a `bbr` restore to succeed you can [SSH](../../trouble-advanced.html#bosh-director-ssh) on and ensure that the all jobs are running by running the following:
+
+```
+monit summary
+```
+
+Monit should report back that all jobs are `running`
+
+You must also ensure that the BOSH API is responsive. You can check that by running the following:
+
+```
+bosh deployments
+```
+
+If this command returns a list of deployments then the BOSH Director API is in a healthy and responsive state.
+
+
+### PAS
+
+To check that PAS is in a healthy state you can run the following:
+
+```
+bosh -d <DEPLOYMENT_NAME> vms
+```
+
+This should report back that all vms are `running`
 
 If your BOSH Director or PAS are not in a functional state, then contact [Pivotal Support](https://support.pivotal.io/) for guidance.
 

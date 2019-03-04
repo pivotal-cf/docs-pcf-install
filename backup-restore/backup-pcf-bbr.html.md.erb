@@ -223,8 +223,6 @@ Keep in mind the following when backing up services:
 
 ## <a id='workflow'></a> Backup Workflow
 
-To install BBR, you download the `bbr` executable and copy it to a jumpbox. Once installed on your jumpbox, you can run BBR commands, specifying the name of the BOSH deployment.
-
 BBR examines the jobs in the BOSH deployment, and triggers the scripts in the following stages:
 
 1. **Pre-backup lock**: The pre-backup lock scripts locks the job so backups are consistent across the cluster.
@@ -239,9 +237,6 @@ The following diagram shows a sample backup flow.
 
 <%= image_tag('backup-flow.png') %>
 
-Before using BBR, follow the instructions in [Setting Up Your Jumpbox for BBR](system-setup-bbr.html).
-
-
 ## <a id='prepare'></a> Preparing to Create Your Backup
 
 ### <a id='setup-jumpbox'></a> Step 1: Set Up Your Jumpbox
@@ -250,11 +245,12 @@ You must have a jumpbox before you can install BBR to the jumpbox. A jumpbox is 
 hardened server on your network that provides a controlled means of access to the VMs other
 computers on your network.
 
-See the [jumpbox-deployment](https://github.com/cloudfoundry/jumpbox-deployment) GitHub repository for an example jumpbox deployment.
+Pivotal recommends using the Ops Manager VM as your jumpbox. If you use the Ops Manager VM as your jumpbox, the path to the root Certificate Authority (CA) certificate is `/var/tempest/workspaces/default/root_ca_certificate`. You must have this path to run BBR commands.
 
-Prepare your jumpbox for BBR by following the steps in [Setting Up Your Jumpbox for BBR](system-setup-bbr.html).
+As an alternative to using the Ops Manager VM as your jumpbox, you can also do the following:
 
-<p class="note"><strong>Note:</strong> Pivotal recommends that you regularly update the BBR binary on your jumpbox to the latest version. See <a href="system-setup-bbr.html#scp">Transfer BBR Binary to Your Jumpbox</a> in <em>Setting Up Your Jumpbox for BBR</em> for more information.</p>
+* Use Concourse to back up a PCF installation using BBR. For more information, see the [BBR PCF Pipeline Tasks](https://github.com/pivotal-cf/bbr-pcf-pipeline-tasks) GitHub repo.
+* Configure a custom jumpbox. For more information, see the [Configuring a Custom Jumpbox for BBR]() article in the Pivotal Support Knowledge Base.
 
 ### <a id='encrypt-key'></a> Step 2: Record the Cloud Controller Database Encryption Credentials
 
@@ -299,11 +295,11 @@ You can establish a connection to your jumpbox in one of the following ways.
 * [Connect with SSH](#ssh)
 * [Connect with BOSH_ALL_PROXY](#bosh-all-proxy)
 
-For general information about the jumpbox, see [Setting Up Your Jumpbox for BBR](system-setup-bbr.html).
-
 <a id='ssh'></a> **Connect with SSH**
 
-SSH into your jumpbox.
+If you are using the Ops Manager VM as your jumpbox, see the [Log in to the Ops Manager VM with SSH](../trouble-advanced.html#ssh) section of <em>Advanced Troubleshooting with the BOSH CLI</em> for procedures on how to use SSH to connect to the Ops Manager VM.
+
+Otherwise, run the following command to SSH into your jumpbox:
 
 ```
 ssh -i LOCAL-PATH-TO-JUMPBOX-PRIVATE-KEY JUMPBOX-USER@JUMPBOX-ADDRESS
@@ -437,9 +433,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
     For more information, see [Using the Ops Manager API](../ops-man-api.html).
     * `DEPLOYMENT-NAME` is the deployment name retrieved in 
     [Step 6: Identify Your Deployment](#identify-deployment).
-    * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
-    (CA) certificate for the BOSH Director. 
-    For more information, see [Ensure BOSH Director Certificate Availability](./system-setup-bbr.html#root-ca-cert).
+    * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the root CA certificate for the BOSH Director. If you are using the Ops Manager VM as your jumpbox, the path is `/var/tempest/workspaces/default/root_ca_certificate`. 
 
 1. If the pre-backup check succeeds, continue to [Create Your Backup](#procedure) below. If the
 pre-backup check fails, the deployment you selected might not have the correct backup scripts, or

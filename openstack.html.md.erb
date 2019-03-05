@@ -5,39 +5,62 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-This guide describes how to install [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on OpenStack.
+This guide describes how to install Pivotal Cloud Foundry (PCF) on OpenStack with Ops Manager and the Pivotal Application Service (PAS) runtime.
 
-## <a id='versions'></a> Supported Versions
+## <a id="overview"></a> Overview
 
-PCF is supported on the OpenStack Liberty, Mitaka, and Newton releases. OpenStack is a collection of interoperable components and requires general OpenStack expertise to troubleshoot issues that may occur when installing Pivotal Cloud Foundry on particular releases and distributions.
+OpenStack is a cloud operating system that controls large pools of compute, storage, and networking resources throughout a datacenter. For information about how to create and scope OpenStack accounts for PCF and for general guidance on OpenStack service credential management, see [OpenStack Permissions Guidelines](#permissions) and [Open Stack Security Documents](#security) below.
 
-In addition, to verify that your OpenStack platform is compatible with PCF, you can use the [OpenStack Validator Tool](https://github.com/cloudfoundry-incubator/cf-openstack-validator).
+### <a id="permissions"></a> OpenStack Permissions Guidelines
 
+Pivotal recommends following the principle of least privilege by scoping privileges to the most restrictive permissions possible for a given role. For information about how to create and scope OpenStack accounts for PCF, see [IaaS Permissions Guidelines](./iaas-user-roles.html).
 
-## <a id="general"></a> General Requirements
+### <a id="security"></a> OpenStack Security Documents
+
+These documents provide a general reference for OpenStack service credential management.
+
+* [OpenStack credential configuration](https://docs.openstack.org/openstack-ansible/13.3.6/install-guide/configure-creds.html)
+* [OpenStack credential creation](http://docs.openstack.org/project-install-guide/ec2-api/draft/credentials-creation.html)
+* [OpenStack deployment configuration](http://docs.openstack.org/project-deploy-guide/openstack-ansible/newton/configure.html)
+
+## <a id="requirements"></a> Requirements
+
+This section describes the requirements for installing PCF on OpenStack, including runtime requirements, general requirements for installing PCF with Ops Manager and PAS, and OpenStack requirements. 
+
+### <a id="runtime"></a> Pivotal Runtime Requirements
+
+You can install PCF on OpenStack with the Pivotal Application Service (PAS) runtime. For more information about PAS, see [PAS Concepts](../concepts/index.html).
+
+### <a id="general"></a> General Requirements
 
 <%= partial 'requirements' %>
 
-## <a id="openstack"></a> OpenStack Requirements
+### <a id="openstack"></a> OpenStack Requirements
 
-To deploy Pivotal Cloud Foundry on OpenStack, you must have a dedicated OpenStack project (formerly known as an OpenStack tenant) that meets the requirements described in this section.
+The following are OpenStack requirements for deploying PCF: 
 
-* You must have Keystone access to the OpenStack tenant, including the following:
+* PCF is supported on the OpenStack Liberty, Mitaka, and Newton releases. OpenStack is a collection of inter-operable components and requires general OpenStack expertise to troubleshoot issues that may occur when installing Pivotal Cloud Foundry on particular releases and distributions. To verify that your OpenStack platform is compatible with PCF, use the OpenStack Validator tool. To access the OpenStack Validator tool, see [CF OpenStack Validator](https://github.com/cloudfoundry-incubator/cf-openstack-validator) on GitHub.
+
+* Pivotal recommends granting complete access to the OpenStack logs to the operator managing the PCF installation process.
+
+* You must have a dedicated OpenStack project, formerly known as an OpenStack tenant.
+
+* You must have Keystone access to the dedicated OpenStack project, including the following:
   * Auth URL
   * Username and password
   * Project name
   * Region (with multiple availability zones if you require high availability)
   * SSL certificate for your wildcard domain (see below)
 
-* You must have the ability to do the following:
-  * Create and modify VM flavors. See the [VM flavor configuration table](#vm-flavors)
+* You must have the ability to do the following in OpenStack:
+  * Create and modify VM flavors
   * Enable DHCP if required
   * Create a network and then connect that network with a router to an external network
   * Create an external network with a pool of floating IP addresses
   * Boot VMs directly from image
   * Create two wildcard domains for separate system and app domains
 
-* Your OpenStack project must have the following resources before you install PCF:
+* The following are resource requirements for the dedicated OpenStack project:
   * 118&nbsp;GB of RAM
   * 22 available instances
   * 16 small VMs (1 vCPU, 1024&nbsp;MB of RAM, 10&nbsp;GB of root disk)
@@ -47,93 +70,28 @@ To deploy Pivotal Cloud Foundry on OpenStack, you must have a dedicated OpenStac
   * 1&nbsp;TB of storage
   * Nova or Neutron networking with floating IP support
   
-  By default, Pivotal Application Service (PAS) deploys the number of VM instances required to run a highly available configuration of PCF. If you are deploying a test or sandbox PCF that does not require HA, then you can scale down the number of instances in your deployment. For information about the number of instances required to run a minimal, non-HA PCF deployment, see [Scaling PAS](../opsguide/scaling-ert-components.html).
+      <p class="note"><b>Note:</b> By default, PAS deploys the number of VM instances required to run a highly available configuration of PCF. If you are deploying a test or sandbox PCF that does not require HA, then you can scale down the number of instances in your deployment. For information about the number of instances required to run a minimal, non-HA PCF deployment, see [Scaling PAS](../opsguide/scaling-ert-components.html).</p>
 
-* Requirements for your Cinder back end:
-  * PCF requires RAW root disk images. The Cinder back end for your OpenStack project must support RAW.
-  * Pivotal recommends that you use a Cinder back end that supports snapshots. This is required for some BOSH functionalities.
-  * Pivotal recommends enabling your Cinder back end to delete block storage asynchronously. If this is not possible, it must be able to delete multiple 20&nbsp;GB volumes within 300 seconds.
+* The following are requirements for the OpenStack Cinder back-end:
+  * PCF requires RAW root disk images. The Cinder back-end for your OpenStack project must support RAW.
+  * Pivotal recommends that you use a Cinder back-end that supports snapshots. This is required for some BOSH functionalities.
+  * Pivotal recommends enabling your Cinder back-end to delete block storage asynchronously. If this is not possible, it must be able to delete multiple 20&nbsp;GB volumes within 300 seconds.
 
-* Using an Overlay Network with VXLAN or GRE Protocols:
+* The following are requirements for using an Overlay Network with VXLAN or GRE Protocols:
   * If an overlay network is being used with VXLAN or GRE protocols, the MTU of the created VMs must be adjusted to the best practices recommended by the plugin vendor (if any).
   * DHCP must be enabled in the internal network for the MTU to be assigned to the VMs automatically.
-  * Review the [Installing PAS on OpenStack](../customizing/openstack-er-config.html#networking) topic to adjust your MTU values.
+  * Review the [Configuring PAS](../customizing/configure-pas.html#networking) topic to adjust your MTU values.
   * Failure to configure your overlay network correctly could cause Apps Manager to fail since applications will not be able to connect to the UAA.
     <p class='note'><strong>Note:</strong> If you are using IPsec, your resource usage will increase by approximately 36 bytes. View the <a href="https://docs.pivotal.io/addon-ipsec/installing.html"> Installing IPsec topic</a> for information, including setting correct MTU values.</p>
 
-* Miscellaneous
-  * Pivotal recommends granting complete access to the OpenStack logs to the operator managing the installation process.
-  * Your OpenStack environment should be thoroughly tested and considered stable before deploying PCF. To validate that your OpenStack platform meets the needs of PCF, you can use the [OpenStack Validator Tool](https://github.com/cloudfoundry-incubator/cf-openstack-validator).
+## <a id='outputs'></a> Install PCF on OpenStack with PAS
 
+To install PCF on OpenStack with the PAS runtime, do the following:
 
-## <a id="permissions"></a> OpenStack Permissions Guidelines
+1. Provision the OpenStack Infrastructure. See [Provisioning the OpenStack Infrastructure](../om/openstack/setup.html).
 
-Pivotal recommends following the principle of least privilege by scoping privileges to the most restrictive permissions possible for a given role. See [IaaS Permissions Guidelines](./iaas-user-roles.html) for recommendations on how to create and scope OpenStack accounts for PCF.
+1. Configure BOSH Director on OpenStack. See [Configuring BOSH Director on OpenStack](../om/openstack/config.html).
 
-### <a id='vm-flavors'></a> OpenStack VM Flavors
+1. (Optional) Install the PCF IPSec add-on. See [(Optional) Installing the PCF IPsec Add-On](http://docs.pivotal.io/addon-ipsec/installing.html).
 
-Configure your OpenStack VM flavors as follows:
-<p class="note"><strong>Note:</strong> Do not change the names of the VM flavors in the table below.</p>
-<table class='nice' border='1'>
-  <tr>
-    <th><strong>ID</strong></th>
-    <th><strong>Name</strong></th>
-    <th><strong>Memory_MB</strong></th>
-    <th><strong>Disk</strong></th>
-    <th><strong>Ephemeral</strong></th>
-    <th><strong>VCPUs</strong></th>
-  </tr>
-    <tr>
-    <td>1</td>
-    <td>m1.small</td>
-    <td>2048</td>
-    <td>20</td>
-    <td>0</td>
-    <td>1</td>
-  </tr>
-  <tr>
-    <td>2</td>
-    <td>m1.medium</td>
-    <td>4096</td>
-    <td>40</td>
-    <td>0</td>
-    <td>2</td>
-  </tr>
-  <tr>
-    <td>3</td>
-    <td>m1.large</td>
-    <td>8192</td>
-    <td>80</td>
-    <td>0</td>
-    <td>4</td>
-  </tr>
-  <tr>
-    <td>4</td>
-    <td>m1.xlarge</td>
-    <td>16384</td>
-    <td>160</td>
-    <td>0</td>
-    <td>8</td>
-  </tr>
-</table>
-
-
-## <a id="security"></a> OpenStack Security Documents
-
-* [OpenStack credential configuration](https://docs.openstack.org/openstack-ansible/13.3.6/install-guide/configure-creds.html)<br />
-* [OpenStack credential creation](http://docs.openstack.org/project-install-guide/ec2-api/draft/credentials-creation.html)<br /> 
-* [OpenStack deployment configuration](http://docs.openstack.org/project-deploy-guide/openstack-ansible/newton/configure.html)<br />
-These documents provide a general reference for OpenStack service credential management.
-
-
-## <a id='outputs'></a> Install PCF on OpenStack
-
-Complete the following procedures to install PCF on OpenStack:
-
-1. [Provisioning the OpenStack Infrastructure](../om/openstack/setup.html)
-
-1. [Configuring BOSH Director on OpenStack](../om/openstack/config.html)
-
-1. [(Optional) Installing the PCF IPsec Add-On](http://docs.pivotal.io/addon-ipsec/installing.html)
-
-1. [Deploying PAS on OpenStack](./openstack-er-config.html)
+1. Configure PAS. See [Deploying PAS on OpenStack](./openstack-er-config.html).

@@ -155,31 +155,57 @@ You can add a pre-created client to Ops Manager using the Ops Manager API. There
 
 ### <a id="pcc-initial-setup"></a>Add a Pre-Created Client Before Initial Deployment
 
-Follow these steps to add a pre-created client before you deploy Ops Manager for the first time. If you do not already have the UAAC installed, run `gem install cf-uaac` on the command line.
+Follow these steps to add a pre-created client before you deploy Ops Manager for the first time. 
+
+If you do not already have the UAAC installed, run `gem install cf-uaac` on the command line.
 
 This is how to add a pre-created client before you deploy Ops Manager:
 
-1. Authenticate to and access the Ops Manager API by following the steps in [Using the Ops Manager API](./ops-man-api.html).
-1. TK
+<ol>
+<li>Authenticate to and access the Ops Manager API by following the steps in <a href="./ops-man-api.html">Using the Ops Manager API</a>.</li>
+<li>Pass the following command:
+ <pre class="terminal">POST /api/v0/setup<br/>
+ "precreated_client_secret": "YOUR-SECRET"</pre><br/>
+ Where:
+  <ul>
+  <li><code>YOUR-SECRET</code> is the authentication secret you will use to access the pre-created client.</li>
+  </ul>
+ <p class="note"><strong>Note</strong>: The authentication secret for the pre-created client must be between 1 and 255 ASCII characters. You may also use emoji.</p></li> 
+</ol>
 
-if they want to use a pre-created client, they pass setup[precreated_client_secret] and that creates a UAA client for Ops Manager (not BOSH director) and then use that client to do whatever automation tasks they want to do.
+When <code>precreated_client_secret</code> is passed, a UAA client is created called <code>precreated-client</code>. To use this client, see [Authenticate as the Pre-Created Client](#pcc-login).
+
 
 ### <a id="pcc-existing-deployment"></a>Add or Modify a Pre-Created Client for an Existing Deployment 
 
-Follow these steps to add a pre-created client after you have already deployed Ops Manager. If you do not already have the UAAC installed, run `gem install cf-uaac` on the command line.
+Follow these steps to add a pre-created client after you have already deployed Ops Manager. You may only have one pre-created client at a time. If you have an existing pre-created client, you may also use this procedure to change its authentication secret.
 
-<p class="note"><strong>Note:</strong> </p>
-
-This is how to add a pre-created client to an Ops Manager that has already been deployed:
+This is how to add a pre-created client to an Ops Manager that has already been deployed, or change the secret of an existing pre-created client:
 
 1. Authenticate to and access the Ops Manager API by following the steps in [Using the Ops Manager API](./ops-man-api.html).
-1. 
+1. Pass the following command:
+<pre class="terminal">PUT /api/v0/uaa/precreated_client
+<br/>
+ "precreated_client_secret": "NEW-SECRET"</pre><br/>
+ Where:
+ * `NEW-SECRET` is the authentication secret you will use to access the pre-created client. This secret must differ from the previous secret you used. The secret cannot be blank.
 
-Second workflow is "I already have Ops Manager and UAAC configured, now I want to EITHER change the password of my existing PCC OR create a new one" --> [recreated_client[precreated_client_secret]
+ <p class="note"><strong>Note</strong>: The authentication secret for the pre-created client must be between 1 and 255 ASCII characters. You may also use emoji.</p>
 
+To use this client, see [Authenticate as the Pre-Created Client](#pcc-login).
 
+### <a id="pcc-login"></a> Authenticate as the Pre-Created Client
 
-### <a id="">
+To authenticate to UAAC as the pre-created client, do the following:
 
+1. Target your UAA server.
+ <pre class='terminal'>uaac target http<span>s</span>://YOUR-OPSMANAGER-FQDN/uaa</pre>
+ Where:
+ * `YOUR-OPSMANAGER-FQDN` is the fully qualified domain name of your Ops Manager installation.
+1. Log in as a client.
+ <pre class='terminal'>uaac token client get precreated-client -s "PRECREATED-CLIENT-SECRET"</pre>
+1. A message appears confirming that UAAC has `Successfully fetched token`.
+
+You have authenticated to UAAC as the pre-created client. Use this client to perform any automation tasks you wish.
 
 For more information about the Ops Manager API, see [Using the Ops Manaager API](./ops-man-api.html).

@@ -1,21 +1,37 @@
 ---
-title: Creating and Managing Ops Manager User Accounts
+title: Creating and Managing Ops Manager User and Client Accounts
 ---
 
 <strong><%= modified_date %></strong>
 
-[Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf)  supports multiple user accounts in Ops Manager. A User Account and Authentication (UAA) module co-located on the Ops Manager VM manages access permissions to Ops Manager.
+This topic describes how to add and remove Ops Manager users. It also descibes how you can
+use an admin Ops Manager account to create client accounts that you can use for Ops
+Manager automation.
+
+## <a id="about-om-users"></a> Overview 
+
+Pivotal Cloud Foundry supports multiple user accounts in Ops Manager. A User Account and Authentication (UAA) module co-located on the Ops Manager VM manages access permissions to Ops Manager.
 
 When Ops Manager boots for the first time, you create an admin user. However, you do not create additional users through the Ops Manager web interface. If you want to create additional users who can log into Ops Manager, you must use the UAA API, either through `curl` or the UAA Command Line Client (UAAC).
 
+Users are not the only type of account you can create for Ops Manager. You can also create client accounts, which connect automation tools and scripts to Ops Manager. Pivotal recommends using clients to handle automated tasks.
+
+Client accounts are not bound to the same authentication protocols as user accounts. A user account that controls automated components can cause those components to fail if the account experiences inconsistent availability due to permission or authentication issues.
+
+You can create client accounts after deploying Ops Manager, or during configuration for an initial deployment. For more information about adding clients during initial configuration or after deployment, see [Add Pre-Created Client](#pre-created-clients).
+
+## <a id='add-user'></a>Add Ops Manager Users
+
+This section describes how to add or remove users with UAAC. If you do not already have the UAAC installed, run `gem install cf-uaac` on the command line.
+
 <p class="note"><strong>Note:</strong> You can only manage users on the Ops Manager UAA module if you chose to use Internal Authentication instead of an external Identity Provider when configuring Ops Manager.</p>
 
-Follow these steps to add or remove users via the UAAC. If you do not already have the UAAC installed, run `gem install cf-uaac` from a terminal window.
-
-## <a id='add-user'></a>Adding Users to Ops Manager
+To add Ops Manager users, do the following:
 
 1. Target your Ops Manager UAA:
-<pre class='terminal'>$ uaac target <span>https</span>://YOUR-OPSMAN-FQDN/uaa/</pre>
+<pre class='terminal'>$ uaac target <span>https</span>://YOUR-OPSMANAGER-FQDN/uaa/</pre>
+ Where:
+ * `YOUR-OPSMANAGER-FQDN` is the fully qualified domain name of your Ops Manager installation.
 1. Get your token:
 <pre class='terminal'>$ uaac token owner get
   Client ID: opsman
@@ -24,15 +40,24 @@ Follow these steps to add or remove users via the UAAC. If you do not already ha
   Password: *******
   &nbsp;
   Successfully fetched token via client credentials grant.
-  Target <span>https</span>://YOUR-OPSMAN-FQDN/uaa/
+  Target <span>https</span>://YOUR-OPSMANAGER-FQDN/uaa/
 </pre>
-1. Add a user:
-<pre class="terminal">$ uaac user add YOUR-USER-NAME -p YOUR-USER-PASSWORD --emails YOUR-USER-EMAIL<span>@</span>EXAMPLE.COM</pre>
-1. (Optional) Set your user's Role-Based Access Control (RBAC) permissions. For more information, see [Configuring Role-Based Access Control (RBAC) in Ops Manager](../opsguide/config-rbac.html).
+ Where:
+ * `YOUR-OPSMANAGER-FQDN` is the fully qualified domain name of your Ops Manager installation.
+1. Add a user.
+<pre class="terminal">$ uaac user add USER-NAME -p USER-PASSWORD --emails USER-EMAIL<span>@</span>EXAMPLE.COM</pre>
+ Where: 
+ * `USER-NAME` is the username of the user you are adding.
+ * `USER-PASSWORD` is the password with which this user authenticates.
+ * `USER-EMAIL` is the email address associated with this user.
+1. (Optional) Set the Role-Based Access Control (RBAC) permissions for your user. For more information, see [Configuring Role-Based Access Control (RBAC) in Ops Manager](../opsguide/config-rbac.html).
 
-## <a id='remove-user'></a>Removing Users from Ops Manager
+## <a id='remove-user'></a>Remove Ops Manager Users
+
+To remove Ops Manager users, do the following:
+
 1. Target your Ops Manager UAA:
-<pre class='terminal'>$ uaac target <span>https</span>://YOUR-OPSMAN-FQDN/uaa/</pre>
+<pre class='terminal'>$ uaac target <span>https</span>://YOUR-OPSMANAGER-FQDN/uaa/</pre>
 1. Get your token:
 <pre class='terminal'>
   $ uaac token owner get
@@ -44,6 +69,144 @@ Follow these steps to add or remove users via the UAAC. If you do not already ha
   Successfully fetched token via client credentials grant.
   Target <span>https</span>://YOUR-OPSMAN-FQDN/uaa/
 </pre>
-
+ Where:
+ * `YOUR-OPSMANAGER-FQDN` is the fully qualified domain name of your Ops Manager installation.
 1. Delete a user:
-<pre class="terminal">$ uaac user delete YOUR-USER-NAME</pre>
+<pre class="terminal">$ uaac user delete USER-NAME</pre>
+ Where:
+ * `USER-NAME` is the username of the user you wish to delete.
+
+## <a id="clients"></a> Add Ops Manager Client Accounts
+
+The following sections describe how to create client accounts for Ops Manager automation using an admin account. 
+
+### <a name="authenticate"></a> Log in to UAAC as an Admin
+
+In order to configure a client, you must first log in to UAAC as an admin.
+
+Use one of the following two methods to authenticate to UAAC:
+
+* [Authenticate Using SAML or SSO](#saml)
+* [Authenticate Using LDAP](#ldap)
+
+### <a name="saml"></a> Authenticate Using SAML or SSO
+
+If you're using SAML or SSO, authenticate to UAAC as an admin before creating a client.
+
+To authenticate to UAAC, do the following:
+
+1. Target your UAA server. 
+ <pre class='terminal'>uaac target http<span>s</span>://YOUR-OPSMANAGER-FQDN/uaa</pre>
+ Where:
+ * `YOUR-OPSMANAGER-FQDN` is the fully qualified domain name of your Ops Manager installation.
+1. Log in as an admin. 
+ <pre class='terminal'>uaac token sso get</pre>
+1. When prompted, type the Client ID and passcode. Leave the client secret blank.
+ <pre class='terminal'>Client ID: opsman
+ Client secret:
+ Passcode (from <span>http</span>://YOUR-OPSMANAGER-FQDN/uaa/passcode): YOUR-UAA-PASSCODE</pre>
+ 
+    Where:
+    * `YOUR-OPSMANAGER-FQDN` is the fully qualified domain name of your Ops Manager installation.
+    * `YOUR-UAA-PASSCODE` is the passcode with which you authenticate to UAA.
+
+### <a name="ldap"></a> Authenticate Using LDAP
+
+If you're not using SAML or SSO, authenticate to UAAC as an admin before creating a client.
+
+To authenticate to UAAC, do the following:
+
+1. Target your UAA server.
+ <pre class='terminal'>uaac target http<span>s</span>://YOUR-OPSMANAGER-FQDN/uaa</pre>
+ Where:
+ * `YOUR-OPSMANAGER-FQDN` is the fully qualified domain name of your Ops Manager installation.
+1. Log in as an admin.
+ <pre class='terminal'>uaac token owner get</pre>
+1. When prompted, type the Client ID, your username, and your password. Leave the client secret blank.
+ <pre class='terminal'>Client ID: opsman
+ Client secret: 
+ User name:  admin 
+ Password:  ***** </pre>
+1. A message appears confirming that UAAC has `Successfully fetched token`.
+
+
+### <a name="client-create"></a> Create a Client
+
+After you authenticate to UAAC, create a client to manage automated components and tasks. 
+
+To create a client, do the following: 
+
+1. Create a client with role-based permissions, an ID, and an authentication secret using UAAC:
+ <pre class='terminal'>$ uaac client add CLIENT-ID --authorized_grant_types client_credentials --authorities opsman.admin --secret CLIENT-SECRET</pre>
+ Where: 
+   * `CLIENT-ID` is the name of your client.
+   * `CLIENT-SECRET` is the secret you use to authenticate to your client.
+
+The `opsman.admin` authority referenced in the example above grant specific permissions to the client. You can choose which permissions you wish the client to have by assigning a different role.
+
+For more information about Ops Manager roles and what they do, see [Understanding Roles in Ops Manager](../opsguide/config-rbac.html#about).
+
+## <a id="pre-created-clients"></a>Add Pre-Created Client
+
+You can add a pre-created client to Ops Manager using the Ops Manager API in either of the following ways:
+
+* [Add a Pre-Created Client Before Initial Deployment](#pcc-initial-setup), or 
+* [Add or Modify a Pre-Created Client for an Existing Deployment ](#pcc-existing-deployment)
+
+### <a id="pcc-initial-setup"></a>Add a Pre-Created Client Before Initial Deployment
+
+This section describes how to add a pre-created client before you deploy Ops Manager for the first time. 
+
+If you do not already have the UAAC installed, run `gem install cf-uaac` on the command line.
+
+To add a pre-created client before you deploy Ops Manager, do the following:
+
+<ol>
+<li>Authenticate to and access the Ops Manager API by following the steps in <a href="./ops-man-api.html">Using the Ops Manager API</a>.</li>
+<li>Pass the following command:
+ <pre class="terminal">POST /api/v0/setup</pre>
+ Include any configuration details your deployment requires. For more information about configuring Ops Manager with the API, see the <a href="http://docs.pivotal.io/pivotalcf/2-5/opsman-api/#setting-up-with-saml">Setting Up with SAML</a> in the Ops Manager API documentation.</li>
+ <li>In the configuration details, specify this parameter:
+ <pre class="terminal">"precreated_client_secret": "YOUR-SECRET"</pre>
+ Where:
+  <ul>
+  <li><code>YOUR-SECRET</code> is the authentication secret you use to access the pre-created client.</li>
+  </ul>
+ <p class="note"><strong>Note</strong>: The authentication secret for the pre-created client must be between 1 and 255 ASCII characters.</p></li>
+</ol>
+
+When <code>precreated_client_secret</code> is passed, a UAA client is created called <code>precreated-client</code>. To use this client, see [Authenticate as the Pre-Created Client](#pcc-login).
+
+
+### <a id="pcc-existing-deployment"></a>Add or Modify a Pre-Created Client for an Existing Deployment 
+
+This section describes how to add a pre-created client after you have already deployed Ops Manager. You may only have one pre-created client at a time. If you have an existing pre-created client, you may also use this procedure to change its authentication secret.
+
+To add a pre-created client to an Ops Manager that has already been deployed, or change the secret of an existing pre-created client, do the following:
+
+1. Authenticate to and access the Ops Manager API by following the steps in [Using the Ops Manager API](./ops-man-api.html).
+1. Pass the following command:
+<pre class="terminal">PUT /api/v0/uaa/precreated_client
+<br/>
+ "precreated_client_secret": "NEW-SECRET"</pre><br/>
+ Where:
+ * `NEW-SECRET` is the authentication secret you use to access the pre-created client. This secret must differ from the previous secret you used. The secret cannot be blank.
+  <p class="note"><strong>Note</strong>: The authentication secret for the pre-created client must be between one and 255 ASCII characters.</p>
+
+To use this client, see [Authenticate as the Pre-Created Client](#pcc-login).
+
+### <a id="pcc-login"></a> Authenticate as the Pre-Created Client
+
+To authenticate to UAAC as the pre-created client, do the following:
+
+1. Target your UAA server.
+ <pre class='terminal'>uaac target http<span>s</span>://YOUR-OPSMANAGER-FQDN/uaa</pre>
+ Where:
+ * `YOUR-OPSMANAGER-FQDN` is the fully qualified domain name of your Ops Manager installation.
+1. Log in as a client.
+ <pre class='terminal'>uaac token client get precreated-client -s "PRECREATED-CLIENT-SECRET"</pre>
+1. A message appears confirming that UAAC has `Successfully fetched token`.
+
+You have authenticated to UAAC as the pre-created client. Use this client to perform any automation tasks you wish.
+
+For more information about the Ops Manager API, see [Using the Ops Manaager API](./ops-man-api.html).

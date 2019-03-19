@@ -10,7 +10,7 @@ This topic describes how to install Pivotal Application Service (PAS) on vSphere
 
 ## <a id='introduction'></a> Introduction
 
-PAS v2.3 uses a Container Network Interface (CNI) plugin to support secure and direct internal communication between containers. This plugin can be:
+PAS v2.4 uses a Container Network Interface (CNI) plugin to support secure and direct internal communication between containers. This plugin can be:
 
 * The internal Silk plugin that comes packaged with PAS, or
 * On vSphere, [VMware NSX-T Container Plug-in for PCF](https://network.pivotal.io/products/vmware-nsx-t), which installs as an Ops Manager tile.
@@ -24,7 +24,7 @@ PAS v2.3 uses a Container Network Interface (CNI) plugin to support secure and d
 * The [PAS tile](https://network.pivotal.io/products/elastic-runtime) downloaded from Pivotal Network and imported to the Ops Manager **Installation Dashboard**. The PAS tile must be in one of the following two states:
   * Not deployed yet; you have not yet clicked **Review Pending Changes**, then **Apply Changes** on this version of PAS.
   * Deployed previously, with the **Networking** pane > **Container Network Interface Plugin** set to **External**.
-  <p class="note"><strong>Note:</strong> Deploying PAS with its Container Network Interface (CNI) set to **Silk** configures Diego cells to use an internally-managed container network. Subsequently switching the CNI interface to **External** NSX-T leads to errors.</p>  
+  <p class="note"><strong>Note:</strong> Deploying PAS with its Container Network Interface (CNI) set to **Silk** configures Diego cells to use an internally-managed container network. Subsequently switching the CNI interface to **External** NSX-T leads to errors.</p>
 
 
 ## <a id='architecture'></a> Architecture
@@ -50,19 +50,23 @@ Installing NSX-T to run with PAS requires the following actions, which are descr
 
 ### <a id='nsx-t-setup'></a> Set up NSX-T to Integrate with PAS
 
+#### <a id='nsx-t-logical-switches'></a>Setup Logical Switches
+
 1.  In vSphere, create logical network switches to correspond to the networks that PCF uses.
-  1. Log into the **NSX Manager Dashboard**.  
+  1. Log into the **NSX Manager Dashboard**.
   1. Open the **Switching** tab.
   1. For each of these networks...
       - **Infrastructure** (BOSH and Ops Manager, defined in BOSH Director tile > **Assign AZs and Networks** pane)
       - **Deployment** (PAS, defined in PAS tile > **Assign AZs and Networks** pane)
       - **Services** and **Dynamic Services** (marketplace services and on-demand services, also defined in the PAS tile)
-      - **Isolation Segment** (optional, defined in the Isolation Segment tile > **Assign AZs and Networks** pane)  
+      - **Isolation Segment** (optional, defined in the Isolation Segment tile > **Assign AZs and Networks** pane)
 ...do the following:
           1. Click **Add New Logical Switch**.
           1. Enter a name for the logical switch (e.g. `infrastructure-ls`, `deployment-ls`).
           1. Click **Save**.
 ![NSX ](nsx-t/nsx-t-logical-switch.png)
+
+#### <a id='nsx-t-routers'></a>Setup Routers
 
 1. Create T0 network address translation (NAT) rules to facilitate communication between Ops Manager and the BOSH Director.
   1. Create and configure a T0 router and router port for PCF.
@@ -76,10 +80,10 @@ Installing NSX-T to run with PAS requires the following actions, which are descr
       - The external IP address to put in each outgoing packet header, indicating its source
 ![NSX ](nsx-t/nsx-t-snat-rule.png)
 
-1. Create T1 Routers for PAS, to connect from the T0 router. For each PCF network, Infrastructure, Deployment, and so on, create a T1 router as follows: 
+1. Create T1 Routers for PAS, to connect from the T0 router. For each PCF network, Infrastructure, Deployment, and so on, create a T1 router as follows:
   1. In the NSX Manager UI, navigate to **Routing** > **Routers**
   1. Click **Add** > **Tier-1 Router**.
-  1. Configure the router. For example, the Infrastructure network router configuration might look like:
+  1. Configure the router. Include the Edge Cluster and Edge Cluster Members; they are required to enable the Load Balancer. The Infrastructure network router configuration might look like:
 ![NSX ](nsx-t/nsx-t-t1-router.png)
 
 1. Create T1 router ports for PAS. For each T1 router you created, add a **New Router Port** as follows, to to allow traffic in and out:
@@ -117,6 +121,146 @@ Installing NSX-T to run with PAS requires the following actions, which are descr
   1. Add two tags to the SNAT IP pool.
 ![NSX ](nsx-t/nsx-t-external-ip-tags.png)
 
+#### <a id='nsx-t-load-balancer'></a>Setup Load Balancer
+
+1. Create Active Health Monitors (health checks) for use by the Virtual Server later on:
+  1. In the NSX Manager UI, navigate to **Networking** > **Load Balancing** > **Monitors** > **Active Health Monitors**
+  1. Create the health monitor for web load balancing:
+    1. Click **Add**
+    1. Fill out **Monitor Properties**:
+        - **Name**: `pcf-web-monitor`
+        - **Health Check Protocol**: `LbHttpMonitor`
+        - **Monitoring Port**: 8080
+    1. Click **Next**
+    1. Fill out **Health Check Parameters**:
+        - **HTTP Method**: `GET`
+        - **HTTP Request URL**: `/health`
+        - **HTTP Response Code**: 200
+    1. Click **Finish**
+  1. Create the health monitor for TCP load balancing:
+    1. Click **Add**
+    1. Fill out **Monitor Properties**:
+        - **Name**: `pcf-tcp-monitor`
+        - **Health Check Protocol**: `LbHttpMonitor`
+        - **Monitoring Port**: 80
+    1. Click **Next**
+    1. Fill out **Health Check Parameters**:
+        - **HTTP Method**: `GET`
+        - **HTTP Request URL**: `/health`
+        - **HTTP Response Code**: 200
+  1. Create the health monitor for SSH load balancing:
+    1. Click **Add**
+    1. Fill out **Monitor Properties**:
+        - **Name**: `pcf-ssh-monitor`
+        - **Health Check Protocol**: `LbTcpMonitor`
+        - **Monitoring Port**: 2222
+    1. Click **Next** > **Finish**
+
+1. Create Server Pools (collections of VMs which handle traffic) for use by the Virtual Server later on:
+  1. In the NSX Manager UI, navigate to **Networking** > **Load Balancing** > **Server Pools**
+  1. Create the server pool for web load balancing:
+    1. Click **Add** to add a new pool
+    1. Fill out **General Properties**:
+        - **Name**: `pcf-web-pool`
+    1. Click **Next**
+    1. Fill out **SNAT Translation**:
+        - **Translation Mode**: `Auto Map`
+    1. Click **Next**
+    1. Fill out **Pool Members**:
+        - **Membership Type**: `Static`
+    1. Click **Next**
+    1. Fill out **Health Monitors**:
+        - **Active Health Monitor**: `pcf-web-monitor`
+    1. Click **Finish**
+  1. Create the server pool for TCP load balancing:
+    1. Click **Add** to add new pool
+    1. Fill out **General Properties**:
+        - **Name**: `pcf-tcp-pool`
+    1. Click **Next**
+    1. Fill out **SNAT Translation**:
+        - **Translation Mode**: `Transparent`
+    1. Click **Next**
+    1. Fill out **Pool Members**:
+        - **Membership Type**: `Static`
+    1. Click **Next**
+    1. Fill out **Health Monitors**:
+        - **Active Health Monitor**: `pcf-tcp-monitor`
+    1. Click **Finish**
+  1. Create the server pool for ssh load balancing:
+    1. Click **Add** to add new pool
+    1. Fill out **General Properties**:
+        - **Name**: `pcf-ssh-pool`
+    1. Click **Next**
+    1. Fill out **SNAT Translation**:
+        - **Translation Mode**: `Transparent`
+    1. Click **Next**
+    1. Fill out **Pool Members**:
+        - **Membership Type**: `Static`
+    1. Click **Next**
+    1. Fill out **Health Monitors**:
+        - **Active Health Monitor**: `pcf-ssh-monitor`
+    1. Click **Finish**
+
+1. Create Virtual Servers:
+  1. In the NSX Manager UI, navigate to **Networking** > **Load Balancing** > **Virtual Servers**
+  1. Create the Virtual Server which forwards unencrypted web (HTTP) traffic to the Foundation:
+<p class="note"><strong>Note:</strong> Foundations requiring end-to-end encryption should not
+enable the virtual server on port 80, or, if enabled, should configure it to redirect traffic
+to the encrypted port (443)</p>
+    1. Click **Add**
+    1. Fill out **General Properties**:
+        - **Name**: `pcf-web-vs`
+        - **Application Type**: `Layer 4 (TCP)`
+        - **Application Profile**: `nsx-default-lb-fast-tcp-profile`
+    1. Click **Next**
+    1. Fill out **Virtual Server Identifiers**:
+        - **IP Address**: use the address of the DNS record of `*.system.YOUR-SYSTEM-DOMAIN.com`
+        - **Port**: `80,443`
+    1. Fill out **Server Pool and Rules**:
+        - **Default Server Pool**: `pcf-web-pool`
+    1. Click **Next** several times, then **Finish**
+  1. Create the Virtual Server which forwards traffic to apps with custom ports to the Foundation:
+    1. Click **Add** to add a new Virtual Server
+    1. Fill out **General Properties**:
+        - **Name**: `pcf-tcp-vs`
+        - **Application Type**: `Layer 4 (TCP)`
+        - **Application Profile**: `nsx-default-lb-fast-tcp-profile`
+    1. Click **Next**
+    1. Fill out **Virtual Server Identifiers**:
+        - **IP Address**: use the address of the DNS record of `tcp.apps.YOUR-SYSTEM-DOMAIN.com`
+        - **Port**: use the same ports as configured in the **PAS Tile** > **Networking** > **TCP Routing Ports**,
+          e.g. `1024-1123,5900`
+    1. Click **Next**
+    1. Fill out **Server Pool and Rules**:
+        - **Default Server Pool**: `pcf-tcp-pool`
+    1. Click **Next** > **Finish**
+  1. Create the Virtual Server which forwards ssh traffic to the Foundation:
+    1. Click **Add** to add a new Virtual Server
+    1. Fill out **General Properties**:
+        - **Name**: `pcf-ssh-vs`
+        - **Application Type**: `Layer 4 (TCP)`
+        - **Application Profile**: `nsx-default-lb-fast-tcp-profile`
+    1. Click **Next**
+    1. Fill out **Virtual Server Identifiers**:
+        - **IP Address**: use the address of the DNS record of `ssh.system.YOUR-SYSTEM-DOMAIN.com`
+        - **Port**: `2222`
+    1. Click **Next**
+    1. Fill out **Server Pool and Rules**:
+        - **Default Server Pool**: `pcf-ssh-pool`
+    1. Click **Next** > **Finish**
+
+1. Create the Load Balancer:
+  1. In the NSX Manager UI, navigate to **Networking** > **Load Balancing** > **Load Balancers**
+    1. Click **Add**
+    1. Fill out the fields:
+        - **Name**: `pcf-lb`
+        - **Load Balancer Size**: Choose `Small` unless you have a larger Foundation
+    1. Click **OK**
+  1. Select `pcf-lb`
+  1. Click **Actions** > **Attach to a Virtual Server**, and then select `pcf-web-vs`.
+     Repeat this procedure for the Virtual Servers `pcf-tcp-vs` and `pcf-ssh-vs`.
+  1. Click **Action** > **Attach to a Logical Router**, and then select `deployment-t1`
+
 ### <a id='nsx-t-mode'></a> Enable NSX-T Mode in the BOSH Director
 
 1. From the Ops Manager **Installation Dashboard**, open the **BOSH Director** tile.
@@ -131,7 +275,6 @@ Installing NSX-T to run with PAS requires the following actions, which are descr
     * **NSX Password**: The password for the username specified above.
     * **NSX CA Cert**: A CA certificate in PEM format that authenticates to the NSX server.
     If the NSX Manager generated a self-signed certificate, you can retrieve the CA certificate using OpenSSL with the command `openssl s_client -host NSX-ADDRESS -port 443 -prexit -showcerts`.
-    <p class="note"><strong>Note:</strong> To update NSX security group and load balancer information, see the <a href="update-nsx.html">Updating NSX Security Group and Load Balancer Information</a> topic.</p>
 
 ### <a id='external-net'></a> Configure PAS for External Container Networking
 
@@ -141,13 +284,15 @@ Installing NSX-T to run with PAS requires the following actions, which are descr
 1. Configure PAS, following the directions in [Deploying PAS on vSphere](./config-er-vmware.html). When you configure **Networking**, select **External** under **Container Networking Interface Plugin**.<br>
 ![NSX ](nsx-t/nsx-t-pas-cni.png)
 
+1. Update the server pool membership for the NSX-T Load Balancers by following [Updating NSX-T Load Balancer Server Pool Membership](./update-nsx-t.html). Make sure to make a VM extension for each of the three server pools: `pcf-web-pool`, `pcf-tcp-pool`, and `pcf-ssh-pool`.
+
 ### <a id='nsx-t-tile'></a> Install and Configure the NSX-T tile
 
 1. If you have not already done so, download the VMware NSX-T tile version 2.3 or later from [Pivotal Network](https://network.pivotal.io/products/vmware-nsx-t) and import it to the **Installation Dashboard**. See [Adding and Importing Products](./add-delete.html#add-import) for directions.
 ![Ops Manager Installation Dashboard with NSX-T tile](nsx-t/nsx-t-install-dash.png)
 
 1. Click the **VMware NSX-T** tile to open its **Settings** tab, and configure the **NSX Manager** pane as follows:
-  - **NSX Manager Address**:  NSX Manager host address or IP address                            
+  - **NSX Manager Address**:  NSX Manager host address or IP address
   - **Use Client Certificates or Username/Password**: Select **Basic Authentication with Username and Password** and enter **NSX Manager Admin Username** and **Admin Password** credentials in the fields underneath.
   - **NSX Manager CA Cert**: Obtain this certificate from NSX Manager as follows:
       1. `ssh` into NSX Manager using the admin account that you created when you deployed NSX Manager.
@@ -173,5 +318,5 @@ Installing NSX-T to run with PAS requires the following actions, which are descr
 ## <a id='automation'></a> Automation
 
 * [Concourse Pipelines: Configure NSX-T for PAS](https://github.com/pivotalservices/concourse-pipeline-samples/tree/master/pipelines/pcf/vsphere/nsxt): This sample Concourse pipeline provides jobs setup switches, routers, an IP block, and an IP pool to be used by PAS.
- 
+
 * [PyNSXT](https://github.com/pivotalservices/pynsxt): This is a Python library that can be used as a CLI to run commands against a VMware NSX-T installation. It exposes operations for working with logical switches, logical routers, and pools. It uses version 2.1 of NSX-T for the swagger client.

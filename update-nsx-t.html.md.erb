@@ -11,7 +11,7 @@ this information, you must use the Ops Manager API.
 
 See the [Ops Manager API documentation](https://docs.pivotal.io/pivotalcf/2-3/opsman-api) for more information about the API.
 
-<p class="note"><strong>Note:</strong> Ops Manager v2.3 supports NSX-T v2.2 and later.</p>
+<p class="note"><strong>Note:</strong> This procedure requires NSX-T v2.2 or later.</p>
 
 
 ## <a id='authenticate'></a> Authenticate
@@ -21,36 +21,83 @@ To use the Ops Manager API, you must authenticate and retrieve a token from the 
 
 ## <a id='update'></a> Update Load Balancer Server Pool Membership
 
-1. Create a VM extension for each of the jobs that will become members of the load balancer pools. Jobs can belong to multiple pools; for example, the router job may belong to pools for both the HTTP and HTTPS load balancers. Below is an example of the VM extension configuration for the Router job:
-<pre class="terminal">
-{
-  "cloud_properties": {
-    "nsxt": {
-      "lb": {
-        "server_pools": [
-          {
-            "name": "PAS-GoRouter443ServerPool",
-            "port": 443
-          },
-          {
-            "name": "PAS-GoRouter80ServerPool",
-            "port": 80
-          }
-        ]
-      }
-    }
-  },
-  "name": "http_https_lb"
-}
-</pre>
+Follow the instructions below to create VM extensions for each of the jobs that
+will back the load balancer pools. Jobs can belong to multiple pools. After
+creation, stage and associate the VM extensions with the relevant jobs'
+resource configs. Finally, redeploy (via **Apply Changes**) to apply the VM
+extensions.
 
-1. For each VM extension, use a `curl` command to stage it with the Ops Manager API, (where VM_EXTENSION_FILE_PATH is the path to the VM extension file, e.g. `/tmp/router_ext.json`):
+### <a id='create'></a> Create VM Extensions
+1. Create the VM extension for the VMs which serve as the HTTP/HTTPS endpoint of the Foundation. Name the file `web.json`:
+  <pre class="terminal">
+	{
+		"name": "pcf_web_vm_extension",
+		"cloud_properties": {
+			"nsxt": {
+				"lb": {
+					"server_pools": [
+						{
+							"name": "pcf-web-pool"
+						}
+					]
+				}
+			}
+		}
+	}
+  </pre>
+
+1. Next, create a VM extension for the VMs which serve as the ssh endpoint of the Foundation. Name the file `ssh.json`:
+  <pre class="terminal">
+	{
+		"name": "pcf_ssh_vm_extension",
+		"cloud_properties": {
+			"nsxt": {
+				"lb": {
+					"server_pools": [
+						{
+							"name": "pcf-ssh-pool"
+						}
+					]
+				}
+			}
+		}
+	}
+  </pre>
+
+1. Finally, create a VM extension for the VMs which serve as the endpoint of applications requiring custom TCP ports. Name the file `tcp.json`:
+  <pre class="terminal">
+	{
+		"name": "pcf_tcp_vm_extension",
+		"cloud_properties": {
+			"nsxt": {
+				"lb": {
+					"server_pools": [
+						{
+							"name": "pcf-tcp-pool"
+						}
+					]
+				}
+			}
+		}
+	}
+  </pre>
+
+  <p class="note info"><strong>Technical Note:</strong><br />
+  The BOSH instance group `router` serves as the HTTP/HTTPS endpoint.<br />
+  The BOSH instance group `diego_brain` serves as the ssh endpoint; on Small Footprint PAS
+  the instance group is called `control`.<br />
+  The BOSH instance group `tcp_router` serves as the custom TCP port endpoint; on Small Footprint PAS
+  this instance group is not deployed by default.<br />
+  </p>
+
+### <a id='stage'></a> Stage and Associate VM Extensions
+1. For each VM extension, use `curl` to stage it via the Ops Manager API, (where $VM_EXTENSION_FILE_PATH is the path to the VM extension file, e.g. `web.json`):
 <pre class="terminal">
 curl "https://OPS-MAN-FQDN/api/v0/staged/vm_extensions' \
 -X POST \
 -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
 -H "Content-Type: application/json" \
--d "@VM_EXTENSION_FILE_PATH"
+-d "$(cat $VM_EXTENSION_FILE_PATH)"
 </pre>
 
 1. Retrieve a list of staged products:
@@ -74,7 +121,7 @@ curl "https://OPS-MAN-FQDN/api/v0/staged/vm_extensions' \
 	</pre>
 	Record the GUID of the `cf` product. In the above example, the GUID is `cf-01222ab1111111aaa1a`.
 
-1. Retrieve a list of jobs for your product:
+1. Retrieve a list of the `cf` product's jobs:
 	<pre class='terminal'>
 	$ curl 'http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs' \
 	-H 'Authorization: Bearer UAA-ACCESS-TOKEN'
@@ -94,29 +141,29 @@ curl "https://OPS-MAN-FQDN/api/v0/staged/vm_extensions' \
       },
       ...
 	</pre>
-  Record the GUIDs of the jobs whose security groups you want to update.
+  Record the GUIDs of the `router`, `tcp_router`, and `diego_brain` jobs.
 
-1. To update the load balancer server pool membership for your job, use the following command:
-		<pre class="terminal">
-		$ curl "http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs/JOB-GUID/resource\_config" \
-		    -X PUT \
-		    -H "Content-Type: application/json" \
-		    -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
-        -d '{"instance\_type": {"id": "INSTANCE-TYPE"},
-             "instances": INSTANCE-COUNT,
-             "additional_vm_extensions": ["VM-EXTENSION-NAME"]
-		        }'
-		</pre>
-		Replace the placeholder values as follows:
-    * `INSTANCE-TYPE`: The instance type for the job. For the default instance type, use `"automatic"`.
-    * `INSTANCE-COUNT`: The number of instances for the job. The default number for each job is visible in the Resource Config section of the Ops Manager UI.
-    * `VM-EXTENSION-NAME`: The `name` field of the VM Extension JSON config file written in step 1. In our example above, the name would be `http_https_lb`.
+1. Associate each job with its appropriate VM extension by running the following command (once for each job):
+  <pre class="terminal">
+  $ curl "http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs/JOB-GUID/resource\_config" \
+      -X PUT \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
+      -d '{"instance\_type": {"id": "INSTANCE-TYPE"},
+	    "instances": INSTANCE-COUNT,
+	    "additional_vm_extensions": ["VM-EXTENSION-NAME"]
+	      }'
+  </pre>
+  Replace the placeholder values as follows:
+  * `INSTANCE-TYPE`: The instance type for the job. For the default instance type, use `"automatic"`.
+  * `INSTANCE-COUNT`: The number of instances for the job. The default number for each job is visible in the Resource Config section of the Ops Manager UI.
+  * `VM-EXTENSION-NAME`: The `name` field of the VM extension JSON config file written in steps 1-3; i.e. `pcf_web_vm_extension`, `pcf_tcp_vm_extension`, or `pcf_ssh_vm_extension`.
 
-    <p class="note warning"><strong>WARNING:</strong> Do not use the resource config fields
-    for <code>nsx_lbs</code> and <code>nsx_security_groups</code>; these fields only work on
-    NSX-V. To configure load balancers on NSX-T, you must use the VM
-    Extensions API.</p>
+  <p class="note warning"><strong>WARNING:</strong> Do not use the resource config fields
+  for <code>nsx_lbs</code> and <code>nsx_security_groups</code>. These fields are only for NSX-V.
+  </p>
 
+### Apply Changes
 1. Navigate to `OPS-MAN-FQDN` in a browser and log in to the Ops Manager Installation Dashboard.
 
 1. Click **Review Pending Changes**, then **Apply Changes** to redeploy.

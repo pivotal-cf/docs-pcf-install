@@ -20,7 +20,7 @@ During the backup, BBR stops the Cloud Controller API and the Cloud Controller w
     <li><strong>Compatibility:</strong> A BBR backup can only be restored to environments matching its source environment. 
       To ensure that a restore environment is compatible with a backup see <a href="#restore-compatibility">Compatibility of Restore</a>.</li>
     <li><strong>Failed Restrore:</strong> Restore is a destructive operation. BBR is designed to restore PCF after a disaster. 
-      If restore fails, the environment may be left in an unusable state and require re-provisioning. For more information, 
+      If a restore fails, the environment might be left in an unusable state and require re-provisioning. For more information, 
       see <a href="restore-pcf-bbr.html">Restoring Pivotal Cloud Foundry from Backup with BBR</a>.</li>      
     <li><strong>Service Data:</strong> BBR does not back up any service data.</li>
     <li><strong>API Outage:</strong> The Cloud Controller API does not send or receive calls during PCF restoration.</li>
@@ -54,17 +54,19 @@ For a list of supported external databases, see the
 [Supported External Databases](https://docs.cloudfoundry.org/bbr/cf-backup.html#supported-external-databases) section
 of _Configuring Cloud Foundry for BOSH Backup and Restore_ in the Cloud Foundry documentation.
 
-* An internal WebDAV/NFS blobstore, an external AWS S3 or S3-compatible blobstore, or an external Azure blobstore.
+* An internal WebDAV/NFS blobstore, an external Amazon S3 or S3-compatible blobstore, or an external Azure blobstore.
 <p class="note"><strong>Note</strong>: In PAS v2.2, BBR supports backing up and restoring versioned and unversioned S3 or
   S3-compatible blobstores by default. To back up and restore Azure blobstores
   with BBR, you must install Blobstore Addon. For more information, see
   <a href="./enabling-external-blobstore-backups.html">Enabling External Blobstore Backups</a>.
 </p>
+
 For guidance about backing up unsupported databases and blobstores, see
 [Unsupported External Blobstores and Databases in PAS](#guidelines).
 
 ### <a id='bosh-director-support'></a> BOSH Director
-The BOSH Director must have an internal Postgres database and an internal blobstore
+
+The BOSH Director must have an internal PostgreSQL database and an internal blobstore
 to be backed up and restored with BBR. As part of backing up the BOSH Director, BBR backs up the BOSH UAA
 database and the CredHub database.
 
@@ -112,7 +114,7 @@ with BBR in PCF v1.11 through v2.3.
     <td class="cell green">Yes</td>
   </tr>
   <tr>
-    <td style="color: black;">PAS with AWS S3 Blobstore<sup>*</sup></td>
+    <td style="color: black;">PAS with Amazon S3 Blobstore<sup>*</sup></td>
     <td class="cell pale-green">Add-on</td>
     <td class="cell pale-green">Add-on</td>
     <td class="cell pale-green">Add-on</td>
@@ -121,7 +123,7 @@ with BBR in PCF v1.11 through v2.3.
     <td class="cell green">Yes</td>
   </tr>
   <tr>
-    <td style="color: black;">BOSH Director with AWS S3 Blobstore<sup>*</sup></td>
+    <td style="color: black;">BOSH Director with Amazon S3 Blobstore<sup>*</sup></td>
     <td class="cell peach">No</td>
     <td class="cell peach">No</td>
     <td class="cell peach">No</td>
@@ -203,7 +205,7 @@ If you configured an unsupported external blobstore or an unsupported external d
   </tr>
 </table>
 
-<p class="note warning"><strong>WARNING:</strong> You may encounter inconsistencies between the blobstore and database. If apps do not appear during a restore, repush those apps.</p>
+<p class="note warning"><strong>WARNING:</strong> You might encounter inconsistencies between the blobstore and database. If apps do not appear during a restore, re-push those apps.</p>
 
 ## <a id='backup-services'></a> Backing Up Services
 
@@ -226,7 +228,7 @@ BBR examines the jobs in the BOSH deployment, and triggers the scripts in the fo
 1. **Backup**: The backup script backs up the release.
 1. **Post-backup unlock**: The post-backup unlock script unlocks the job after the backup is complete.
 
-Scripts in the same stage are all triggered together. For instance, BBR triggers all pre-backup lock scripts before any backup scripts. Scripts within a stage may be triggered in any order.
+Scripts in the same stage are all triggered together. For instance, BBR triggers all pre-backup lock scripts before any backup scripts. Scripts within a stage can be triggered in any order.
 
 The backup artifacts are drained to the jumpbox, where the operator can transfer them to storage and use them to restore PCF.
 
@@ -308,7 +310,8 @@ If you connect to your jumpbox with SSH, you must run the BBR commands in the fo
 
 <a id='bosh-all-proxy'></a> **Connect with BOSH_ALL_PROXY**
 
-Set and use `BOSH_ALL_PROXY`. Using `BOSH_ALL_PROXY` opens an SSH tunnel with SOCKS5 to the jumpbox. This tunnel allows you to forward requests to the BOSH Director through the jumpbox from your local machine.
+Set and use `BOSH_ALL_PROXY`. Using `BOSH_ALL_PROXY` opens an SSH tunnel with SOCKS5 to the jumpbox. 
+This tunnel enables you to forward requests to the BOSH Director through the jumpbox from your local machine.
 
 Use one of the following methods to create the tunnel:
 
@@ -461,7 +464,7 @@ Decryption Passphrase because this is needed to restore the Ops Manager settings
 <p class="note"><strong>Note:</strong>
   When exporting installation settings for Ops Manager v1.12 and later, releases
   are not included in the output file.
-  Releases are now included in the BOSH director backup, therefore, the output file is
+  Releases are now included in the BOSH Director backup, therefore, the output file is
   much smaller than in previous Ops Manager versions.
 </p>
 
@@ -475,13 +478,13 @@ There are two ways to export Ops Manager installation settings:
 To export your installation settings using the Ops Manager UI, do the following:
 
 1. From the **Installation Dashboard** in the Ops Manager interface, click your
-user name at the top right navigation.
+username at the top right navigation.
 
 1. Select **Settings**.
 
 1. Select **Export Installation Settings**.
 
-1. Click the **Export Installation Settings** button.
+1. Click **Export Installation Settings**.
     <%= image_tag("settings.png") %>
 
 #### <a id='export-using-api'></a> Option 2: Use the Ops Manager API
@@ -549,7 +552,8 @@ backup-cleanup
   </ul>
 </div>
 
-1. (Optional) If you are not using an internal blobstore or a versioned S3-compatible external blobstore, create a copy of the blobstore with your IaaS specific tool. Your blobstore backup may be slightly inconsistent with your PAS backup depending on the duration of time between performing the backups.
+1. (Optional) If you are not using an internal blobstore or a versioned S3-compatible external blobstore, create a copy of the blobstore with your IaaS specific tool. 
+Your blobstore backup might be slightly inconsistent with your PAS backup depending on the duration of time between performing the backups.
 
 1. Run the BBR `backup` command to back up your PAS deployment:
 
@@ -614,7 +618,7 @@ After creating your backup successfully, perform the following steps:
 
 1. Attempt to restore every backup to validate the artifacts. Perform the procedures in the next step, [Step 12: Validate Your Backup](#validate-backup).
 
-<p class="note"><strong>Note:</strong> Backup artifacts may contain data covered by the <a href="#gdpr">European Union's <em>General Data Protection Regulation (GDPR)</em></a>.</p>
+<p class="note"><strong>Note:</strong> Backup artifacts might contain data covered by the <a href="#gdpr">European Union's <em>General Data Protection Regulation (GDPR)</em></a>.</p>
 
 ### <a id='validate-backup'></a> Step 12: (Optional) Validate Your Backup
 
@@ -622,14 +626,18 @@ To validate your backup, follow the instructions below:
 
 <div class="note warning"><strong>WARNING:</strong>
   <ul>
-    <li><strong>The VMs and disks from the backed-up BOSH Director should not be visible to the new BOSH Director</strong> when validating your backup. As a result, Pivotal recommends that you deploy the new BOSH Director to a different IaaS network and account than the VMs and disks of the backed-up BOSH Director.</li>
-    <li><strong>Data services outside of PCF may produce unexpected side effects during restoration.</strong> The services will try to connect to those data services when you restore to a new environment. For example, consider an app that processes mail queues and connects to an external database. When you validate your backup in a test environment, the app may start processing the queue, and this work may be lost.</li>
+    <li><strong>The VMs and disks from the backed-up BOSH Director should not be visible to the new BOSH Director</strong> when validating your backup. 
+    As a result, Pivotal recommends that you deploy the new BOSH Director to a different IaaS network and account than the VMs and disks of the backed-up BOSH Director.</li>
+    <li><strong>Data services outside of PCF might produce unexpected side effects during restoration.</strong> 
+    The services will try to connect to those data services when you restore to a new environment. For example, 
+consider an app that processes mail queues and connects to an external database. When you validate your backup in a test environment, 
+the app might start processing the queue, and this work might be lost.</li>
   </ul>
 </div>
 
 ## <a id="restore-compatibility"></a> Compatibility of Restore
 
-After backing up PCF, you may want to validate your backup by restoring it to a similar environment and checking the applications. 
+After backing up PCF, consider validating your backup by restoring it to a similar environment and checking the applications. 
 
 BBR is designed for disaster recovery and BBR backups are only compatible with environments configured to match their source environment configuration. 
 To ensure that a restore environment is compatible with the backup see [Compatibility of Restore](./restore-pcf-bbr.html#compatibility).
@@ -699,4 +707,6 @@ If you need to cancel a backup, perform the following steps:
 
 ## <a id="gdpr"></a> European Union's General Data Protection Regulation (GDPR)
 
-Backup artifacts may contain data covered by the European Union's _General Data Protection Regulation (GDPR)_. Please be mindful that any backup artifacts may contain personal data. For example, a backup of PAS could contain user email addresses. As such, backup artifacts should be handled in accordance with organizational policies and applicable laws as they pertain to security, confidentiality, and privacy.
+Backup artifacts might contain personal and other data covered by the European Union's _General Data Protection Regulation (GDPR)_. 
+For example, a PAS backup could contain user email addresses. As such, handle backup artifacts in accordance with organizational policies 
+and applicable laws as they pertain to security, confidentiality, and privacy. 

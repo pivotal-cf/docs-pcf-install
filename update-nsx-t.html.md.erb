@@ -21,15 +21,19 @@ To use the Ops Manager API, you must authenticate and retrieve a token from the 
 
 ## <a id='update'></a> Update Load Balancer Server Pool Membership
 
-Follow the instructions below to create VM extensions for each of the jobs that
-will back the load balancer pools. Jobs can belong to multiple pools. After
-creation, stage and associate the VM extensions with the relevant jobs'
-resource configs. Finally, redeploy (via **Apply Changes**) to apply the VM
-extensions.
+To update load balancer server pool membership, do the following:
+
+1. [Create VM Extensions](#create)
+2. [Stage and Associate VM Extensions](#stage)
+3. [Apply Changes](#apply-changes)
 
 ### <a id='create'></a> Create VM Extensions
-1. Create the VM extension for the VMs which serve as the HTTP/HTTPS endpoint of the Foundation. Name the file `web.json`:
-  <pre class="terminal">
+
+To create VM extensions, do the following:
+
+1. Create a file named `web.json` and paste the following. This is the VM extension for the VMs that serve as the HTTP or HTTPS endpoint of the foundation. The BOSH instance group `router` serves as the HTTP or HTTPS endpoint.
+	
+	```json
 	{
 		"name": "pcf_web_vm_extension",
 		"cloud_properties": {
@@ -44,10 +48,12 @@ extensions.
 			}
 		}
 	}
-  </pre>
+   ```
 
-1. Next, create a VM extension for the VMs which serve as the ssh endpoint of the Foundation. Name the file `ssh.json`:
-  <pre class="terminal">
+1. Create a file named `ssh.json` and paste the following. This is the VM extension for the VMs that serve as the SSH endpoint of the foundation. The BOSH instance group `diego_brain` serves as the SSH endpoint. On Small Footprint PAS
+  the instance group is called `control`.
+  
+    ```json
 	{
 		"name": "pcf_ssh_vm_extension",
 		"cloud_properties": {
@@ -62,10 +68,12 @@ extensions.
 			}
 		}
 	}
-  </pre>
+    ```
 
-1. Finally, create a VM extension for the VMs which serve as the endpoint of applications requiring custom TCP ports. Name the file `tcp.json`:
-  <pre class="terminal">
+1. Create a file named `tcp.json`. This is the VM extension for the VMs that serve as the endpoint of apps that require custom TCP ports. The BOSH instance group `tcp_router` serves as the custom TCP port endpoint On Small Footprint PAS
+  this instance group is not deployed by default.
+
+    ```json
 	{
 		"name": "pcf_tcp_vm_extension",
 		"cloud_properties": {
@@ -80,31 +88,38 @@ extensions.
 			}
 		}
 	}
-  </pre>
-
-  <p class="note info"><strong>Technical Note:</strong><br />
-  The BOSH instance group `router` serves as the HTTP/HTTPS endpoint.<br />
-  The BOSH instance group `diego_brain` serves as the ssh endpoint; on Small Footprint PAS
-  the instance group is called `control`.<br />
-  The BOSH instance group `tcp_router` serves as the custom TCP port endpoint; on Small Footprint PAS
-  this instance group is not deployed by default.<br />
-  </p>
+    ```
 
 ### <a id='stage'></a> Stage and Associate VM Extensions
-1. For each VM extension, use `curl` to stage it via the Ops Manager API, (where $VM_EXTENSION_FILE_PATH is the path to the VM extension file, e.g. `web.json`):
-<pre class="terminal">
-curl "https://OPS-MAN-FQDN/api/v0/staged/vm_extensions' \
--X POST \
--H "Authorization: Bearer UAA-ACCESS-TOKEN" \
--H "Content-Type: application/json" \
--d "$(cat $VM_EXTENSION_FILE_PATH)"
-</pre>
 
-1. Retrieve a list of staged products:
-	<pre class="terminal">
-	$ curl 'http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products' \
+To stage and associate VM extensions with the load balancer, do the following:
+
+1. Run the following command to stage the `web.json` VM extension:
+
+	```
+	curl "https://OPS-MAN-FQDN/api/v0/staged/vm_extensions' \
+	-X POST \
+	-H "Authorization: Bearer UAA-ACCESS-TOKEN" \
+	-H "Content-Type: application/json" \
+	-d "$(cat $VM_EXTENSION_FILE_PATH)"
+	```
+	Where:
+	* `OPS-MAN-FQDN` is the fully qualified domain name of your Ops Manager installation.
+	* `UAA-ACCESS-TOKEN` is the access token you retrieved when authenticating with the Ops Manager API. 
+	* `VM_EXTENSION_FILE_PATH` is the path to the VM extension file.
+
+1. Repeat the previous step for the `ssh.json` and `tcp.json` VM extensions. 
+
+1. Run the following command to retrieve a list of staged products:
+
+	```
+	curl 'http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products' \
 	-H "Authorization: Bearer UAA-ACCESS-TOKEN"
-	[
+	```
+
+1. Record the GUID of the `cf` product. In the following example output, the GUID is `cf-01222ab1111111aaa1a`.
+	<pre class="terminal">
+		[
 	   {
 	      "product\_version" : "1.10.6.0",
 	      "guid" : "p-bosh-dee11e111e1111ee1e1a",
@@ -117,19 +132,23 @@ curl "https://OPS-MAN-FQDN/api/v0/staged/vm_extensions' \
 	      "installation\_name" : "cf-01222ab1111111aaa1a",
 	      "guid" : "cf-01222ab1111111aaa1a"
 	   }
-	]
-	</pre>
-	Record the GUID of the `cf` product. In the above example, the GUID is `cf-01222ab1111111aaa1a`.
+	]</pre>
 
-1. Retrieve a list of the `cf` product's jobs:
-	<pre class='terminal'>
-	$ curl 'http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs' \
+1. Retrieve the list of jobs for `cf`:
+	
+	```
+	curl 'http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs' \
 	-H 'Authorization: Bearer UAA-ACCESS-TOKEN'
+	```
+
+1. Record the value of `guid` for the `router`, `tcp_router`, and `diego_brain` jobs. See the following example output:
+
+	<pre class="terminal">
 	{
    "jobs" : [
       {
-         "guid" : "router-9c37cf48ae7412f2afd1",
-         "name" : "router"
+      	 "name" : "router",
+         "guid" : "router-9c37cf48ae7412f2afd1" 
       },
       {
          "name" : "tcp\_router",
@@ -140,12 +159,31 @@ curl "https://OPS-MAN-FQDN/api/v0/staged/vm_extensions' \
          "guid" : "diego\_brain-b49b0b2aed247302c0e1"
       },
       ...
-	</pre>
-  Record the GUIDs of the `router`, `tcp_router`, and `diego_brain` jobs.
+      </pre>
 
-1. Associate each job with its appropriate VM extension by running the following command (once for each job):
-  <pre class="terminal">
-  $ curl "http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs/JOB-GUID/resource\_config" \
+1. To associate each job with its appropriate VM extension, run the following command:
+
+<table>
+	<tr>
+		<th><code>JOB-GUID</code></th>
+		<th><code>VM-EXTENSION-NAME</code></th>
+	</tr>
+	<tr>
+		<td>The GUID of the <code>router</code> job you recorded previously</td>
+		<td><code>web</code></td>
+	</tr>
+	<tr>
+		<td>The GUID of the <code>tcp_router</code> job you recorded previously</td>
+		<td><code>tcp</code></td>
+	</tr>
+	<tr>
+		<td>The GUID of the <code>diego_brain</code> job you recorded previously</td>
+		<td><code>ssh</code></td>
+	</tr>
+</table>
+
+  ```
+  curl "https://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs/JOB-GUID/resource\_config" \
       -X PUT \
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
@@ -153,17 +191,28 @@ curl "https://OPS-MAN-FQDN/api/v0/staged/vm_extensions' \
 	    "instances": INSTANCE-COUNT,
 	    "additional_vm_extensions": ["VM-EXTENSION-NAME"]
 	      }'
-  </pre>
-  Replace the placeholder values as follows:
-  * `INSTANCE-TYPE`: The instance type for the job. For the default instance type, use `"automatic"`.
-  * `INSTANCE-COUNT`: The number of instances for the job. The default number for each job is visible in the Resource Config section of the Ops Manager UI.
-  * `VM-EXTENSION-NAME`: The `name` field of the VM extension JSON config file written in steps 1-3; i.e. `pcf_web_vm_extension`, `pcf_tcp_vm_extension`, or `pcf_ssh_vm_extension`.
+  ```
+
+  Where:
+
+  * `PRODUCT-GUID` is the GUID you recorded for the `cf` product.
+
+  * `JOB-GUID` is the GUID you recorded for the job.
+
+  * `INSTANCE-TYPE` is the instance type for the job. For the default instance type, use `"automatic"`.
+  
+  * `INSTANCE-COUNT` is the number of instances for the job. The default number for each job is visible in the Resource Config section of the Ops Manager UI.
+  
+  * `VM-EXTENSION-NAME` is the `name` of the VM extension. 
 
   <p class="note warning"><strong>WARNING:</strong> Do not use the resource config fields
   for <code>nsx_lbs</code> and <code>nsx_security_groups</code>. These fields are only for NSX-V.
   </p>
 
-### Apply Changes
+### <a id="apply-changes"></a> Apply Changes
+
+To apply changes, do the following:
+
 1. Navigate to `OPS-MAN-FQDN` in a browser and log in to the Ops Manager Installation Dashboard.
 
 1. Click **Review Pending Changes**, then **Apply Changes** to redeploy.

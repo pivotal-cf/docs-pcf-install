@@ -627,43 +627,45 @@ After creating your backup successfully, perform the following steps:
 
 ### <a id='validate-backup'></a> Step 12: (Optional) Validate Your Backup
 
-To validate your backup, follow the instructions below:
+After backing up PCF, consider validating your backup by restoring it and checking the applications. 
+BBR is designed for disaster recovery and BBR backups are only compatible 
+with environments matching their source environment's configuration. 
 
 <div class="note warning"><strong>WARNING:</strong>
   <ul>
-    <li><strong>The VMs and disks from the backed-up BOSH Director should not be visible to the new BOSH Director</strong> when validating your backup. 
+    <li><strong>The VMs and disks from the backed-up BOSH Director must not be visible to the new BOSH Director</strong> when validating your backup. 
     As a result, Pivotal recommends that you deploy the new BOSH Director to a different IaaS network and account than the VMs and disks of the backed-up BOSH Director.</li>
     <li><strong>Data services outside of PCF might produce unexpected side effects during restoration.</strong> 
-    The services will try to connect to those data services when you restore to a new environment. For example, 
+    Restored apps and services might attempt to connect to data services when you restore to a new environment. For example, 
 consider an app that processes mail queues and connects to an external database. When you validate your backup in a test environment, 
 the app might start processing the queue, and this work might be lost.</li>
   </ul>
 </div>
 
-## <a id="restore-compatibility"></a> Compatibility of Restore
+#### <a id='full-validate'></a> Validate Your Backup in a Second Environment
 
-After backing up PCF, consider validating your backup by restoring it to a similar environment and checking the applications. 
+To spin up a second environment and test the backup, perform the following steps:
 
-BBR is designed for disaster recovery and BBR backups are only compatible with environments configured to match their source environment configuration. 
-To ensure that a restore environment is compatible with the backup see [Compatibility of Restore](./restore-pcf-bbr.html#compatibility).
+1. Export your Ops Manager installation by performing the steps in the [Step 8: Export Installation Settings](#export) section above.
 
-To spin up a second environment that matches the original in order to test a restore, do the following:
-
-1. Export your Ops Manager installation by performing the steps in the [Step 8: Export Installation Settings](#export) section.
-
-1. Create a new Ops Manager VM in a different network to the original. Ensure that the Ops Manager VM has enough persistent disk to accommodate the files exported in the previous step. Consult the topic specific to your IaaS:
+1. Create a new Ops Manager VM in a different network to the original. 
+Ensure that the Ops Manager VM has enough persistent disk to accommodate the files exported in the previous step. 
+Consult the topic specific to your IaaS:
   * [Deploying BOSH and Ops Manager to AWS](../aws-terraform.html)
   * [Configuring AWS for PCF](../../om/aws/prepare-env-manual.html)
   * [Deploying Ops Manager on GCP Manually](../../om/gcp/deploy-manual.html)
   * [Provisioning the OpenStack Infrastructure](../../om/openstack/setup.html)
   * [Deploying Operations Manager to vSphere](../../om/vsphere/deploy.html)
 
-After you deploy the second environment, follow the instructions in the [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html) topic.
+1. Ensure that the restore environment is compatible with the backup. For more information, see [Compatibility of Restore](./restore-pcf-bbr.html#compatibility).
+
+1. Follow the instructions in the [Restoring Pivotal Cloud Foundry from Backup with BBR](restore-pcf-bbr.html) topic.
 
 #### <a id='ert-validate'></a> Validate Your PAS Backup Only
 
-For a sandbox or other non-production environment, you can optionally perform an _in-place_ restore of PAS only. In this case, you restore the PAS backup to the same PCF environment that the backup was created from. Follow the procedures in [Restoring PCF from Backup with BBR](restore-pcf-bbr.html#restore-ert).
-
+For a sandbox or other non-production environment, you can optionally perform an _in-place_ restore of PAS only. 
+In this case, you restore the PAS backup to the same PCF environment that the backup was created from. 
+Follow the procedures in [Restoring PCF from Backup with BBR](restore-pcf-bbr.html#restore-ert).
 
 ## <a id='logging'></a> Logging
 

@@ -161,58 +161,43 @@ To stage and associate VM extensions with the load balancer, do the following:
       ...
       </pre>
 
-1. To associate each job with its appropriate VM extension, run the following command:
-
-<table>
-	<tr>
-		<th><code>JOB-GUID</code></th>
-		<th><code>VM-EXTENSION-NAME</code></th>
-	</tr>
-	<tr>
-		<td>The GUID of the <code>router</code> job you recorded previously</td>
-		<td><code>web</code></td>
-	</tr>
-	<tr>
-		<td>The GUID of the <code>tcp_router</code> job you recorded previously</td>
-		<td><code>tcp</code></td>
-	</tr>
-	<tr>
-		<td>The GUID of the <code>diego_brain</code> job you recorded previously</td>
-		<td><code>ssh</code></td>
-	</tr>
-</table>
-
-  ```
-  curl "https://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs/JOB-GUID/resource\_config" \
+1. To associate your job with its appropriate VM extension, run the following command:<pre>
+  curl "<span>https:</span>//OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs/JOB-GUID/resource\_config" \
       -X PUT \
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
       -d '{"instance\_type": {"id": "INSTANCE-TYPE"},
-	    "instances": INSTANCE-COUNT,
-	    "additional_vm_extensions": ["VM-EXTENSION-NAME"]
-	      }'
-  ```
+     "instances": INSTANCE-COUNT,
+     "additional_vm_extensions": ["VM-EXTENSION-NAME"]
+       }'</pre><p class="note warning"><strong>Warning:</strong> Do not use the resource config fields
+   for <code>nsx_lbs</code> and <code>nsx_security_groups</code>. These fields are only for NSX-V.
+   </p>
 
-  Where:
+    Where:
+      * `PRODUCT-GUID` is the GUID you recorded for the `cf` product.
+      * `JOB-GUID` is the GUID you recorded for the `router` job.
+      * `INSTANCE-TYPE` is the instance type for the job. For the default instance type, use `"automatic"`.
+      * `INSTANCE-COUNT` is the number of instances for the job. The default number for each job is visible in the Resource Config section of the Ops Manager UI.
+      * `VM-EXTENSION-NAME` is `web`. 
 
-  * `PRODUCT-GUID` is the GUID you recorded for the `cf` product.
 
-  * `JOB-GUID` is the GUID you recorded for the job.
 
-  * `INSTANCE-TYPE` is the instance type for the job. For the default instance type, use `"automatic"`.
-  
-  * `INSTANCE-COUNT` is the number of instances for the job. The default number for each job is visible in the Resource Config section of the Ops Manager UI.
-  
-  * `VM-EXTENSION-NAME` is the `name` of the VM extension. 
+1. Run the previous command again.
+   
+    Where:
+    - `JOB-GUID` is the GUID you recorded for the `tcp_router` job.
+    - `VM-EXTENSION-NAME` is `tcp`.
 
-  <p class="note warning"><strong>WARNING:</strong> Do not use the resource config fields
-  for <code>nsx_lbs</code> and <code>nsx_security_groups</code>. These fields are only for NSX-V.
-  </p>
+2. Run the previous command again.
+
+    Where:
+    - `JOB-GUID` is the GUID you recorded for the `diego_brain` job.
+    - `VM-EXTENSION-NAME` is `ssh`.
 
 ### <a id="apply-changes"></a> Apply Changes
 
 To apply changes, do the following:
 
-1. Navigate to `OPS-MAN-FQDN` in a browser and log in to the Ops Manager Installation Dashboard.
+1. Log in to the Ops Manager Installation Dashboard.
 
 1. Click **Review Pending Changes**, then **Apply Changes** to redeploy.

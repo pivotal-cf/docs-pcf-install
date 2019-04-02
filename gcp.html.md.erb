@@ -5,22 +5,19 @@ owner: Ops Manager
 
 <strong><%= modified_date %></strong>
 
-This guide describes how to install [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Google Cloud Platform (GCP). 
+This topic describes how to install [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Google Cloud Platform (GCP). 
 
 It includes resource requirements, prerequisites, instructions for installing PCF on GCP for both the Pivotal Application Service (PAS) and Pivotal Container Services (PKS) runtimes, and additional resources. 
 
 ## <a id="overview"></a> Overview
 
-You can install PCF on GCP with the PAS or PKS runtimes. To install PCF on GCP, ensure you meet the requirements and complete the prerequisites described in this topic.  
+You can install PCF on GCP with either the PAS or PKS runtime. To install PCF on GCP, ensure you meet the requirements and complete the prerequisites described in this topic.
 
 ## <a id="requirements"></a> Requirements
 
-This section lists the following resource requirements for installing PCF on GCP:
+This section lists the general PCF resource requirements and the resource requirements specific to GCP. 
 
-* General PCF resource requirements. See [General PCF Resource Requirements](#general-resource).
-* GCP-specific resource requirements. See [GCP-Specific Resource Requirements](#gcp-requirements).
-
-### <a id="general-resource"></a> General PCF Resource Requirements
+### <a id="general-resource"></a> PCF Resource Requirements
 
 This section lists PCF resource requirements for installing PCF on GCP. It includes general PCF resource requirements for both the PAS and PKS runtimes.
 
@@ -31,26 +28,55 @@ View one of the following, depending on your PCF runtime:
 
 #### <a id="pas"></a> PAS Resource Requirements
 
-<%= partial 'requirements' %>
+The following are general requirements for deploying and managing a PCF deployment with Ops Manager and Pivotal Application Service (PAS):
+
+* PAS requires sufficient IP allocation. The following lists the minumum required IP allocations:
+  * One static IP address for either HAProxy or one of your Gorouters
+  * One static IP address for each job in the Ops Manager tile. See the Ops Manager **Resource Config** pane for each tile for a full list. 
+  * One static IP address for each job listed below:
+      * Consul
+      * NATS
+      * File Storage 
+      * MySQL Proxy 
+      * MySQL Server
+      * Backup Restore Node
+      * HAProxy
+      * Router
+      * MySQL Monitor
+      * Diego Brain
+      * TCP Router
+  * One IP for each VM instance created by the service.
+  * An additional IP address for each compilation worker. Use the following formula to determine the total IPs required: `IPs needed = static IPs + VM instances + compilation workers`.
+  * Pivotal recommends that you allocate at least 36 dynamic IP addresses when deploying Ops Manager and PAS. BOSH requires additional dynamic IP addresses during installation to compile and deploy VMs, install PAS, and connect to services.
+* Pivotal recommends using a network without DHCP for deploying PAS VMs.
+  <p class="note"><strong>Note:</strong> If you have DHCP, refer to the <a href="./troubleshooting.html">Troubleshooting Guide</a> to avoid issues with your installation.</p> 
 
 #### <a id="pks"></a> PKS Resource Requirements
 
 For PKS-specific resource requirements, see [GCP Prerequisites and Resource Requirements](https://docs.pivotal.io/runtimes/pks/1-3/gcp-requirements.html).
 
-### <a id="gcp-requirements"></a> GCP-Specific Resource Requirements
+### <a id="gcp-resource"></a> GCP Resource Requirements
 
-The following are GCP resource requirements for installing PCF on GCP:
+* Your GCP project must have sufficient quota to deploy all the VMs needed for a PCF installation. For a list of suggested quotas, see [Recommended GCP Quotas](./gcp-quotas.html).
 
-* Your GCP project must have sufficient quota to deploy all the VMs needed for a PCF installation. For a list of suggested quotas, see [Recommended GCP Quotas](./gcp-quotas.html). You can request a quota increase on the [GCP Quotas page](https://console.cloud.google.com/iam-admin/quotas).
+* The following are the GCP account permissions required to set up a GCP environment for PCF:
+   * The following permissions are required to create firewalls, networks, load balancers, and other resources:
+     * **Compute Engine** > **Compute Instances Admin (beta)**
+     * **Compute Engine** > **Compute Network Admin**
+     * **Compute Engine** > **Compute Security Admin**
+   * To use Google Cloud Storage (GCS) for Cloud Controller file storage, the following permission is required to create buckets:
+     * **Storage** > **Storage Admin**
+   * To use Cloud DNS, the following permission is required to add and modify DNS entries:
+     * **Project** > **Editor**
 
-* Your GCP account must have sufficient VM instance limits or no instance limits. The number of VMs required depends on the number of tiles and availability zones you plan to deploy. The following VM guidelines apply to the PAS and Small Footprint PAS runtimes:
-  - **PAS**: At a minimum, a new GCP deployment requires the following `custom` VMs for PAS:
+* Installing PCF on GCP requires a minimum of the following VM instance limits in your GCP account. The number of VMs required depends on the number of tiles and availability zones you plan to deploy. The following VM guidelines apply to the PAS and Small Footprint PAS runtimes:
+
+  * **PAS**: At a minimum, a new GCP deployment requires the following `custom` VMs for PAS and Ops Manager:
 <table border='1' class='nice'>
   <tr>
-    <th rowspan=6>PAS and Ops Manager</th>
-    <th>VM Count</th>
-    <th>vCPU Count per VM</th>
-    <th>RAM (GB)</th>
+    <th width ="33%">VM Count</th>
+    <th width ="33%">vCPU Count per VM</th>
+    <th width ="33%">RAM (GB)</th>
   </tr><tr>
     <td>30</td>
     <td>1</td>
@@ -75,15 +101,15 @@ The following are GCP resource requirements for installing PCF on GCP:
 </table>
 <p class="note">If you are deploying a test or sandbox PCF that does not require high availability, then you can scale down the number of VM instances in your deployment. For more information, see <a href="../opsguide/scaling-ert-components.html"></a>.</p>
 
-  - **Small Footprint PAS**: To run Small Footprint PAS, a new GCP deployment requires:
+  * **Small Footprint PAS**: At a minimum, a new GCP deployment requires the following VMs to run Small Footprint PAS:
 <table id='small-footprint' border="1" class="nice">
   <tr>
-    <th></th>
-    <th>VM Type</th>
-    <th>VM Count</th>
-    <th>vCPU Count per VM</th>
-    <th>RAM (GB)</th>
-    <th>Notes</th>
+    <th width ="15%"></th>
+    <th width ="15%">VM Type</th>
+    <th width ="15%">VM Count</th>
+    <th width ="15%">vCPU Count per VM</th>
+    <th width ="15%">RAM (GB)</th>
+    <th width ="25%">Notes</th>
   </tr><tr>
     <th rowspan=6>Small Footprint PAS</th>
     <td>micro</td>
@@ -137,38 +163,51 @@ The following are GCP resource requirements for installing PCF on GCP:
   </tr>
 </table>
 
-* <a name="#env_account"></a> Your GCP account must have permissions to create resources within the selected GCP project. For recommendations on how to create and scope GCP accounts for PCF, see [IaaS Permissions Guidelines](./iaas-user-roles.html). The permissions required to set up a GCP environment for PCF include:
-   * Permissions to create firewalls, networks, load balancers, and other resources:
-     * **Compute Engine** > **Compute Instances Admin (beta)**
-     * **Compute Engine** > **Compute Network Admin**
-     * **Compute Engine** > **Compute Security Admin**
-   * If using Google Cloud Storage (GCS) for Cloud Controller file storage, permissions to create buckets:
-     * **Storage** > **Storage Admin**
-   * If you are using Cloud DNS, permissions to add and modify DNS entries:
-     * **Project** > **Editor**
-  <p class="note"><strong>Note:</strong> When you deploy PCF, the deployment processes run under a <a href="../om/gcp/prepare-env-manual.html#iam_account">separate service account</a> with the minimum permissions required to install Ops Manager and Pivotal Application Service (PAS).</p>
-
-* Administrative rights to a domain for your PCF installation. You need to be able to add wildcard records to this domain. You specify this registered domain when configuring the SSL certificate and Cloud Controller for your deployment. For more information see the [Providing a Certificate for your SSL Termination Point](../opsguide/security_config.html) topic.
-
 ## <a id="prerequisites"></a> Prerequisites
 
 To install PCF on GCP, you must do the following:
 
-* Install the [Google Cloud SDK](https://cloud.google.com/sdk/) on your machine and authenticate it to your GCP account.
+* Install the Google Cloud SDK on your machine and authenticate it to your GCP account. To download the Google Cloud SDK, see [Google Cloud SDK](https://cloud.google.com/sdk/).
+
+* Install the most recent version of the Cloud Foundry Command Line Interface (cf CLI). To download the cf CLI, see [Cloud Foundry Command Line Interface](https://github.com/cloudfoundry/cli#downloads) in GitHub.
 
 * Create an SSL certificate for your PCF domain.
+  <p class="note"><b>Note: </b>To deploy PCF to a production environment, you must obtain a certificate from a certificate authority. Pivotal recommends using a self-signed certificate generated by Ops Manager for development and testing purposes only.</p>
 
-  <p class="note"><b>Note: </b>This can be a self-signed certificate generated by Ops Manager, but Pivotal recommends using a self-signed certificate for development and testing purposes only. To deploy PCF to a production environment, you must obtain a certificate from a certificate authority.</p>
+* Assign administrative rights to a domain for PCF. You need to be able to add wildcard records to this domain. You specify this registered domain when configuring the SSL certificate and Cloud Controller for PCF. For more information see the [Providing a Certificate for your SSL Termination Point](../opsguide/security_config.html) topic.
+
+* Create a wildcard DNS record that points to your router or load balancer. Alternatively, you can use a service such as xip.io. For example, `203.0.113.0.xip.io`.
+  <p class="note"><b>Note: </b> With a wildcard DNS record, every hostname in your domain resolves to the IP address of your router or load balancer, and you do not need to configure an A record for each app hostname. For example, if you create a DNS record `*.example.com` pointing to your load balancer or router, every application deployed to the `example.com` domain resolves to the IP address of your router.</p>
+
+* Create at least one wildcard TLS certificate that matches the DNS record you configured.
+
+* Create one or more NTP servers, if the NTP servers are not already provided by your GCP project.
+
+* If necessary, request a quota increase for your GCP project. For GCP quota requirements, see [GCP Resource Requirements](#gcp-resource). To request an increase, see [Quotas](https://console.cloud.google.com/iam-admin/quotas) in the GCP console.
+
+* Increase or remove the VM instance limits in your GCP account. For VM instance requirements, see [GCP Resource Requirements](#gcp-resource).
+
+* <a name="#env_account"></a> Update your GCP account with the required permissions. For account permissions requirements, see [GCP Resource Requirements](#gcp-resource).
+
+* Configure sufficient IP allocation. For more information about IP allocation requirements, see [PAS Resource Requirements](#pas).
+
+* (Optional) Configure external storage. Pivotal recommends using external storage if possible. For more information about how file storage location affects platform performance and stability during upgrades, see [Configure File Storage](../upgrading/configuring.html#file-storage).
+
+* (Optional) Configure external databases. Pivotal recommends using external databases in production deployments for BOSH Director and PAS. An external database must be configured to use the UTC timezone.
+
+* (Optional) Configure external user stores. When you deploy PCF, you can select a SAML user store for Ops Manager or a SAML or LDAP user store for PAS, to integrate existing user accounts.
 
 ## <a id="install_pcf"></a> Install PCF on GCP
 
-This section explains how to install PCF on GCP manually and using Terraform. You can install PCF on GCP with the PAS or PKS runtimes. 
+This section provides instructions for installing PCF on GCP manually and installing PCF on GCP using Terraform.
 
 ### <a id="manual"></a> Install PCF on GCP Manually
 
-This section explains how to install PCF on GCP manually.
+This section explains how to install PCF on GCP manually. You can install PCF on GCP on either the PAS or PKS runtime.
 
-#### <a id="manual-pas"></a> Install Manually With PAS
+You can also install PCF on GCP using Terraform. For more information, see [Install PCF on GCP Using Terraform](#terraform).
+
+#### <a id="manual-pas"></a> Install Manually on PAS
 
 To install PCF on GCP manually with the PAS runtime, do the following:
 
@@ -196,11 +235,15 @@ To install PCF on GCP manually with the PKS runtime, do the following:
 
 1. Configure PKS. See [Installing PKS on GCP](https://docs.pivotal.io/runtimes/pks/installing-pks-gcp.html).
 
-### <a id="Terraform"></a> Install PCF on GCP Using Terraform
+### <a id="terraform"></a> Install PCF on GCP Using Terraform
+
+This section explains how to install PCF on GCP using Terraform. You can install PCF on GCP with either the PAS or PKS runtime.
+
+You can also install PCF on GCP manually. For more information, see [Install PCF on GCP Manually](#manual).
 
 #### <a id="terraform-pas"></a> Install with Terraform on PAS
 
-Complete the following procedures to install PCF on GCP:
+To install PCF on GCP using Terraform on the PAS runtime, do the following:
 
 1. [Deploying Ops Manager on GCP Using Terraform](../om/gcp/prepare-env-terraform.html)
 
@@ -208,11 +251,19 @@ Complete the following procedures to install PCF on GCP:
 
 1. [(Optional) Configuring a Shared VPC on GCP](./gcp-shared-vpc.html)
 
-1. [(Optional) Installing the PCF IPsec Add-On](http://docs.pivotal.io/addon-ipsec/installing.html)
-
 1. [Configuring PAS](./configure-pas.html)
 
 #### <a id="terraform-pas"></a> Install with Terraform on PKS
+
+To install PCF on GCP with Terraform on the PKS runtime, do the following:
+
+1. [Deploying Ops Manager on GCP Using Terraform](../om/gcp/prepare-env-terraform.html)
+
+1. [Configuring BOSH Director on GCP Using Terraform](../om/gcp/config-terraform.html)
+
+1. [(Optional) Configuring a Shared VPC on GCP](./gcp-shared-vpc.html)
+
+1. Configure PKS. See [Installing PKS on GCP](https://docs.pivotal.io/runtimes/pks/installing-pks-gcp.html).
 
 ## Additional Resources
 

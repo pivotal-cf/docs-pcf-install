@@ -33,7 +33,7 @@ View one of the following, depending on your PCF runtime:
 
 The following are general resource requirements for deploying and managing a PCF deployment with Ops Manager and PAS:
 
-* PAS requires sufficient IP allocation. The following lists the minumum required IP allocations:
+* PAS requires sufficient IP allocation. The following lists the minimum required IP allocations:
   * One static IP address for either HAProxy or one of your Gorouters
   * One static IP address for each job in the Ops Manager tile. See the Ops Manager **Resource Config** pane for each tile for a full list. 
   * One static IP address for each job listed below:
@@ -61,8 +61,6 @@ For PKS-specific resource requirements, see [GCP Prerequisites and Resource Requ
 ### <a id="gcp-requirements"></a> GCP Resource Requirements
 
 The following are GCP-specific resource requirements for installing PCF on GCP:
-
-* Your GCP project must have sufficient quota to deploy all the VMs needed for a PCF installation. For a list of suggested quotas, see [Recommended GCP Quotas](./gcp-quotas.html).
 
 * Installing PCF on GCP requires a minimum of the following VM instance limits in your GCP account. The number of VMs required depends on the number of tiles and availability zones you plan to deploy. The following VM guidelines apply to the PAS and Small Footprint PAS runtimes:
 
@@ -159,13 +157,13 @@ The following are GCP-specific resource requirements for installing PCF on GCP:
 </table>
   * **PKS**: See [GCP Prerequisites and Resource Requirements](https://docs.pivotal.io/runtimes/pks/gcp-requirements.html).
 
+* (PAS-only) Your GCP project must have sufficient quota to deploy all the VMs needed to install PCF with PAS. For a list of suggested quotas, see [Recommended GCP Quotas](./gcp-quotas.html).
+
 ## <a id="prerequisites"></a> Prerequisites
 
 To install PCF on GCP, you must do the following:
 
 * Install the Google Cloud SDK on your machine and authenticate it to your GCP account. To download the Google Cloud SDK, see [Google Cloud SDK](https://cloud.google.com/sdk/).
-
-* If necessary, request a quota increase for your GCP project. For GCP quota requirements, see [GCP Resource Requirements](#gcp-requirements). To request an increase, see [Quotas](https://console.cloud.google.com/iam-admin/quotas) in the GCP console.
 
 * Increase or remove the VM instance limits in your GCP account. For VM instance requirements, see [GCP Resource Requirements](#gcp-requirements).
 
@@ -184,26 +182,28 @@ To install PCF on GCP, you must do the following:
 
 * Assign administrative rights to a domain for PCF. You need to be able to add wildcard records to this domain.
 
-* Create a wildcard DNS record that points to your router or load balancer. Alternatively, you can use a service such as xip.io. For example, `203.0.113.0.xip.io`.
+* Create a wildcard DNS record that points to your router or load balancer. Alternatively, you can use a service such as xip.io. For example, `203.0.113.0.xip.io`. Then, create at least one wildcard TLS certificate that matches the DNS record you configured.
   <p class="note"><b>Note: </b> With a wildcard DNS record, every hostname in your domain resolves to the IP address of your router or load balancer. For example, if you create a DNS record `*.example.com` pointing to your router, every app deployed to the `example.com` domain resolves to the IP address of your router.</p>
-
-* Create at least one wildcard TLS certificate that matches the DNS record you configured.
 
 * Create one or more NTP servers, if the NTP servers are not already provided by your GCP project.
 
-* Install the most recent version of one of the following CLIs, depending on the desired runtime:
+* Install the most recent version of one of the following CLIs, depending on your PCF runtime:
   * **PAS**: The Cloud Foundry Command Line Interface (cf CLI). See [Cloud Foundry Command Line Interface](https://github.com/cloudfoundry/cli#downloads) in GitHub.
   * **PKS**: The PKS CLI. See [Installing the PKS CLI](https://docs.pivotal.io/runtimes/pks/installing-pks-cli.html).
 
-* (PAS-only) Configure sufficient IP allocation. For more information about IP allocation requirements, see [PAS Resource Requirements](#pas).
+* **(PAS-only)** Request a quota increase for your GCP project. For GCP quota requirements, see [GCP Resource Requirements](#gcp-requirements). To request an increase, see [Quotas](https://console.cloud.google.com/iam-admin/quotas) in the GCP console.
 
-* (Optional) (PAS-only) Configure external storage. Pivotal recommends using external storage if possible. For more information about how file storage location affects platform performance and stability during upgrades, see [Configure File Storage](../upgrading/configuring.html#file-storage).
+* **(PAS-only)** Configure sufficient IP allocation. For more information about IP allocation requirements, see [PAS Resource Requirements](#pas).
 
-* (Optional) (PAS and Ops Manager-only) Configure external databases. Pivotal recommends using external databases in production deployments for BOSH Director and PAS. An external database must be configured to use the UTC timezone.
+* **(Optional)** **(PAS-only)** Configure external storage. Pivotal recommends using external storage if possible. For more information about how file storage location affects platform performance and stability during upgrades, see [Configure File Storage](../upgrading/configuring.html#file-storage).
 
-* (Optional) (PAS and Ops Manager-only) Configure external user stores. When you deploy PCF, you can select a SAML user store for Ops Manager or a SAML or LDAP user store for PAS, to integrate existing user accounts.
+* **(Optional)** **(PAS and Ops Manager-only)** Configure external databases. Pivotal recommends using external databases in production deployments for BOSH Director and PAS. An external database must be configured to use the UTC timezone.
+
+* **(Optional)** **(PAS and Ops Manager-only)** Configure external user stores. When you deploy PCF, you can select a SAML user store for Ops Manager or a SAML or LDAP user store for PAS, to integrate existing user accounts.
 
 ## <a id="install_pcf"></a> Install PCF on GCP
+
+You can install PCF on GCP either manually or using Terraform.
 
 To install PCF on GCP, do one of the following:
 

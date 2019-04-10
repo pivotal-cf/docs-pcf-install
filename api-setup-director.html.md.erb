@@ -1,0 +1,51 @@
+---
+title: Configuring the BOSH Director with the Ops Manager API
+owner: Ops Manager
+---
+
+## <a id="overview"></a>Overview
+
+This topic describes how to configure the BOSH Director using the Ops Manager API. Advanced PCF operators and administrators can do a complete end-to-end setup of Ops Manager using the API. This procedure is not intended for beginner users of Ops Manager, PCF, or API-based procedures. 
+
+For information about setting up Ops Manager with the UI, see [Using Ops Manager](https://docs.pivotal.io/pivotalcf/2-5/customizing/ops-man.html).
+
+## <a id="prereqs"></a>Prerequisites
+
+Before you configure the BOSH Director with the Ops Manager API, you must have the following components downloaded or accessible on your local host:
+
+* A current version of Ops Manager downloaded from [Pivotal Network](https://network.pivotal.io).
+* An external SAML or LDAP client.
+* An IaaS provider configured for use with Ops Manager. For more information about configuring an IaaS, see [Planning Your PCF Deployment](./plan.html).
+
+## <a id="api-setup">
+
+<ol>
+1. Make the following HTTP request: `POST /api/v0/setup` 
+  * pass metadata w/ decryption passphrase, IdP settings, eula acceptance param, etc. etc. Do not need UAAC or similar authentication yet--will fail if you try to include it first time
+  1. 200 OK -- UAA client gets created, relaunches w/ your new metadata applied
+
+Ops Manager is up and users can log in w/ UAAC. If they have a pre-created client, they can target UAAC with the client name and password.
+
+IaaS + Director Config
+  PUT api/v0/staged/director/properties
+  All the commands are IaaS-agnostic except the IaaS configuration key. Missing required fields should cause an error.
+
+Create AZs -- OPTIONAL: In Azure, they won’t need this endpoint at all, because we set up AZs for them automatically.
+  POST api/v0/staged/director/availability_zones
+
+Create networking rules for the foundation -- Create networks, determine whether you’re enabling ICMP checks or not 
+  PUT api/v0/staged/director/networks
+
+AZs and Network assignment -- Assign a singleton availability zone and network where your BOSH Director is going to live
+  PUT api/v0/staged/director/network_and_az 
+
+Updating the Bosh Director’s Resource config
+  Grab the director’s guid - GET api/v0/staged/products
+  See a list of all jobs on the director - GET api/v0/staged/products/:bosh_guid/jobs
+  Updating a job’s resource config
+		PUT api/v0/staged/products/:bosh_guid/jobs/:job_guid/resource_config
+
+Optional: They could stop and deploy here!
+  POST /api/v0/installations 
+  This is the last step to Apply Changes/deploy any config change
+</ol>

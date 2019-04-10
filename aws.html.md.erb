@@ -9,16 +9,16 @@ This guide describes how to install [Pivotal Cloud Foundry](https://network.pivo
 
 ## <a id='overview'></a> Overview 
 
-You can install PCF on AWS with either the Pivotal Application Service (PAS) or Pivotal Container Service (PKS) runtime. There are resource requirements specific to each runtime. Ensure you meet the requirements for your runtime and the requirements specific to GCP before installing PCF on GCP.
+You can install PCF on AWS with either the Pivotal Application Service (PAS) or Pivotal Container Service (PKS) runtime. There are resource requirements specific to each runtime. Ensure you meet the requirements for your runtime and the requirements specific to AWS before installing PCF on AWS.
 
 ## <a id="requirements"></a> Requirements
 
-This section lists the following resource requirements for installing PCF on GCP:
+This section lists the following resource requirements for installing PCF on AWS:
 
 * General PCF resource requirements. See [PCF Resource Requirements](#general-requirements).
 * AWS-specific resource requirements. See [AWS Resource Requirements](#aws-requirements).
 
-This section lists PCF resource requirements for installing PCF on GCP. It includes general PCF resource requirements for both the PAS and PKS runtimes.
+This section lists PCF resource requirements for installing PCF on AWS. It includes general PCF resource requirements for both the PAS and PKS runtimes.
 
 View one of the following, depending on your PCF runtime:
 
@@ -29,22 +29,41 @@ View one of the following, depending on your PCF runtime:
 
 The following are general resource requirements for deploying and managing a PCF deployment with Ops Manager and PAS:
 
-<%= partial "requirements" %>
+The following are general resource requirements for deploying and managing a PCF deployment with Ops Manager and PAS:
+
+* PAS requires sufficient IP allocation. The following lists the minimum required IP allocations:
+  * One static IP address for either HAProxy or one of your Gorouters
+  * One static IP address for each job in the Ops Manager tile. See the Ops Manager **Resource Config** pane for each tile for a full list. 
+  * One static IP address for each job listed below:
+      * Consul
+      * NATS
+      * File Storage 
+      * MySQL Proxy 
+      * MySQL Server
+      * Backup Restore Node
+      * HAProxy
+      * Router
+      * MySQL Monitor
+      * Diego Brain
+      * TCP Router
+  * One IP for each VM instance created by the service.
+  * An additional IP address for each compilation worker. Use the following formula to determine the total IPs required: `IPs needed = static IPs + VM instances + compilation workers`.
+  * Pivotal recommends that you allocate at least 36 dynamic IP addresses when deploying Ops Manager and PAS. BOSH requires additional dynamic IP addresses during installation to compile and deploy VMs, install PAS, and connect to services.
+* Pivotal recommends using a network without DHCP for deploying PAS VMs.
+  <p class="note"><strong>Note:</strong> If you have DHCP, refer to the <a href="./troubleshooting.html">Troubleshooting Guide</a> to avoid issues with your installation.</p> 
 
 ### <a id='pks'></a> PKS Resource Requirements
 
-For PKS-specific resource requirements, see [GCP Prerequisites and Resource Requirements](https://docs.pivotal.io/runtimes/pks/gcp-requirements.html).
+For PKS-specific resource requirements, see [AWS Prerequisites and Resource Requirements](https://docs.pivotal.io/runtimes/pks/aws-requirements.html).
 
 ### <a id="aws-requirements"></a> AWS Resource Requirements
 
-The following are the minimum resource requirements for maintaining a high-availability (HA) [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) deployment with Ops Manager and Pivotal Application Service (PAS) on Amazon Web Services infrastructure:
+The following are AWS-specific resource requirements for installing PCF on AWS with an external database and external file storage:
 
-<p class="note"><strong>Note:</strong> These requirements assume you are using an external database and external file storage.</p>
-
-* 3 Elastic Load Balancers
+* 3 Elastic Load Balancers (ELBs)
 * 1 Relational Database Service. As a minimum, Pivotal recommends using a db.m3.xlarge instance with at least 100&nbsp;GB of allocated storage.
 * 5 S3 Buckets
-* EC2 instances (VMs):
+* Installing PCF on AWS requires a minimum of the following VM instance limits in your AWS account. The number of VMs required depends on the number of tiles and availability zones you plan to deploy. The following VM guidelines apply to the PAS, Small Footprint PAS, and PKS runtimes:
   - **PAS**: At a minimum, a new AWS deployment requires the following VMs for PAS:
 <table border="1" class="nice">
   <tr>
@@ -167,7 +186,8 @@ The following are the minimum resource requirements for maintaining a high-avail
     <td>Required</td>
   </tr>
 </table>
-By default, PAS deploys the number of VM instances required to run a highly available configuration of PCF. If you are deploying a test or sandbox PCF that does not require HA, you can scale down the number of instances in your deployment. For information about the number of instances required to run a minimal, non-HA PCF deployment, see [Scaling PAS](../opsguide/scaling-ert-components.html).
+<p class="note"><b>Note: </b>If you are deploying a test or sandbox PCF that does not require high availability, then you can scale down the number of VM instances in your deployment. For more information, see <a href="../opsguide/scaling-ert-components.html">Scaling PAS</a>.</p>
+
   - **Small Footprint PAS**: To run Small Footprint PAS, a new AWS deployment requires:  
 <table id='aws-requirements' border="1" class="nice">
   <tr>
@@ -241,10 +261,11 @@ By default, PAS deploys the number of VM instances required to run a highly avai
     <td>Required</td>
   </tr>
 </table>
+  - **PKS**: See [AWS Prerequisites and Resource Requirements](https://docs.pivotal.io/runtimes/pks/aws-requirements.html).
 
 ## <a id="prerequisites"></a> Prerequisites
 
-To install PCF on GCP, you must do the following:
+To install PCF on AWS, you must do the following:
 
 * Create an AWS account that can accommodate the minimum resource requirements for a PCF installation. For more information about the resoure requirements, see [Requirements](#requirements).
 
@@ -256,8 +277,7 @@ To install PCF on GCP, you must do the following:
 
 * Configure an AWS EC2 key pair to use with your PCF deployment. For more information, see [Creating an EC2 Key Pair](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-keypair.html) in the AWS documentation.
 
-* Register a wildcard domain for your PCF installation. You need this registered domain when configuring your SSL certificate and Cloud Controller. 
-For more information, see [SSL/TLS Certificates for Classic Load Balancers](http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/ssl-server-cert.html#create-cert) in the AWS documentation.
+* Register a wildcard domain for your PCF installation. For more information, see [SSL/TLS Certificates for Classic Load Balancers](http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/ssl-server-cert.html#create-cert) in the AWS documentation.
 
 * Create an SSL certificate for your PCF domain. For more information, see the [AWS documentation about SSL certificates](http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/ssl-server-cert.html).
   <p class="note"><b>Note: </b>To deploy PCF to a production environment, you must obtain a certificate from a certificate authority. Pivotal recommends using a self-signed certificate generated by Ops Manager for development and testing purposes only.</p> 

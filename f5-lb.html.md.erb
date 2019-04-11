@@ -20,6 +20,7 @@ For guidance on the above topics, see [F5's knowledge base](https://support.f5.c
 
 To use your F5 deployment as a load balancer, you must configure it to forward unencrypted HTTP following the steps below. This procedure assumes that you are running F5 v12.1.2 or v13.0.0.
 
+
 ## <a id='unencrypted-http'></a> Procedure
 
 This PAS configuration option forwards unencrypted traffic to the PAS Gorouter. It assumes an external load balancer is configured to forward unencrypted traffic.
@@ -42,7 +43,7 @@ This configuration terminates client SSL at the F5 and forward standard HTTP tra
 
 1. Go to **System**, then **File Management**, and click **SSL Certificate List**.
   1. Import your PAS certificate and name it `pcf-pas-cert`.
-  2. Import your PAS certificate key and name it `pcf-pas-key`.
+  1. Import your PAS certificate key and name it `pcf-pas-key`.
 
 1. Go to **Local Traffic** and click **Monitors**.
   1. Create a `gorouter` health monitor and give it the following parameters:
@@ -51,15 +52,11 @@ This configuration terminates client SSL at the F5 and forward standard HTTP tra
       * **Send String:** `GET /health HTTP/1.0\r\n`
       * **Alias Service Port:** `8080`
       * **Receive String:** `ok`
-  2. Create a `mysqlproxy` health monitor and give it the following parameters:
-       * **Name:** `mysqlproxy_mon`
-       * **Type:** `TCP`
-       * **Alias Service Port:** `1936`
-  3. Create a `sshproxy` health monitor and give it the following parameters:
+  1. Create a `sshproxy` health monitor and give it the following parameters:
        * **Name:** `diegobrain_mon`
        * **Type:** `TCP`
        * **Alias Service Port:** `2222`
-  4. Create a `tcprouter` health monitor and give it the following parameters:
+  1. Create a `tcprouter` health monitor and give it the following parameters:
        * **Name:** `tcprouter_mon`
        * **Type:** `HTTP`
        * **Send String:** `GET /health`
@@ -67,48 +64,37 @@ This configuration terminates client SSL at the F5 and forward standard HTTP tra
 
 1. Create all required nodes:
     1. Go to **Local Traffic**, then **Nodes**, and click **Node List**.
-    2. Create the desired number of `gorouter` nodes, one for each Gorouter in your PAS deployment, and give it the following parameters:
+    1. Create the desired number of `gorouter` nodes, one for each Gorouter in your PAS deployment, and give it the following parameters:
        * **Name:** `gorouter-#`
        * **Address:** `[IP-ADDRESS-OF-GOROUTER]`
        * **State:** `enabled`
        * **Health Monitors:** `Node Default`
-    3. Create the desired number of `mysqlproxy` nodes, one for each MySQL Proxy in your PAS deployment, and give it the following parameters:
-       * **Name:** `mysqlproxy-#`
-       * **Address:** `[IP-ADDRESS-OF-MYSQLPROXY]`
-       * **State:** `enabled`
-       * **Health Monitors:** `Node Default`
-    4. Create the desired number of `diegobrain` nodes, one for each Diego Brain in your PAS deployment, and give it the following parameters:
+    1. Create the desired number of `diegobrain` nodes, one for each Diego Brain in your PAS deployment, and give it the following parameters:
        * **Name:** `diegobrain-#`
        * **Address:** `[IP-ADDRESS-OF-DIEGOBRAIN]`
        * **State:** `enabled`
        * **Health Monitors:** `Node Default`
-    5. Create the desired number of `tcprouter` nodes, one for each TCP Router in your PAS deployment, and give it the following parameters:
+    1. Create the desired number of `tcprouter` nodes, one for each TCP Router in your PAS deployment, and give it the following parameters:
        * **Name:** `tcprouter-#`
        * **Address:** `[IP-ADDRESS-OF-TCPROUTER]`
        * **State:** `enabled`
        * **Health Monitors:** `Node Default`
 
-1. Create four member pools:
+1. Create three member pools:
     1. Go to **Local Traffic** and click **Pools**.
-    2. Create a `gorouter` pool and give it the following parameters:
+    1. Create a `gorouter` pool and give it the following parameters:
        * **Name:** `gorouter_pool`
        * **Health Monitors:** `gorouter_mon`
        * **Load Balancing Method:** `Least Connections`
        * Add all `gorouter-#` nodes.
          * **Service Port:** `80`
-    3. Create a `mysqlproxy` pool and give it the following parameters:
-       * **Name:** `mysqlproxy_pool`
-       * **Health Monitors:** `mysqlproxy_mon`
-       * **Load Balancing Method:** `Least Connections`
-       * Add all `mysqlproxy-#` nodes.
-         * **Service Port:** `3306`
-    4. Create a `diegobrain` pool and give it the following parameters:
+    1. Create a `diegobrain` pool and give it the following parameters:
        * **Name:** `diegobrain_pool`
        * **Health Monitors:** `diegobrain_mon`
        * **Load Balancing Method:** `Least Connections`
        * Add all `diegobrain-#` nodes.
          * **Service Port:** `2222`
-    5. Create a `tcprouter` pool and give it the following parameters:
+    1. Create a `tcprouter` pool and give it the following parameters:
        * **Name:** `tcprouter_pool`
        * **Health Monitors:** `tcprouter_mon`
        * **Load Balancing Method:** `Least Connections`
@@ -126,9 +112,9 @@ This configuration terminates client SSL at the F5 and forward standard HTTP tra
            - **Key:** `pcf-pas-key`
            <p class='note'><strong>Note:</strong> Your deployment may require additional root or intermediate certificates. You can select them here. Additionally, you can also enter passphrases for certificates.</p>
 
-1. Create five LTM virtual servers. Two are required, while three are optional.
+1. Create four LTM virtual servers. One is required, while three are optional.
     1. Go to **Local Traffic**, click **Virtual Servers**, and click **Virtual Server List**.
-    2. (Required) Create a virtual server for HTTPS access to Cloud Foundry API and applications and give it the following parameters:
+    1. (Required) Create a virtual server for HTTPS access to Cloud Foundry API and applications and give it the following parameters:
        * **Name:** `pcf-https`
        * **Type:** `Standard`
        * **Source Address:** `0.0.0.0/0`
@@ -146,7 +132,7 @@ This configuration terminates client SSL at the F5 and forward standard HTTP tra
        <p class='note'><strong>Note:</strong> This must be set in one-arm configurations.</p>
        * **Default Pool:** `gorouter_pool`
        * **iRules:** `cf-xforward-for` and `cf-xforward-proto-https`
-    3. (Optional) Create a virtual server for HTTP access to Cloud Foundry applications and give it the following parameters:
+    1. (Optional) Create a virtual server for HTTP access to Cloud Foundry applications and give it the following parameters:
        * **Name:** `pcf-http`
        * **Type:** `Standard`
        * **Source Address:** `0.0.0.0/0`
@@ -164,24 +150,7 @@ This configuration terminates client SSL at the F5 and forward standard HTTP tra
        <p class='note'><strong>Note:</strong> This must be set in one-arm configurations.</p>
        * **Default Pool:** `gorouter_pool`
        * **iRules:** `cf-xforward-for` and `cf-xforward-proto-http`
-    4. (Required) Create a virtual server for `mysqlproxy`. This virtual server increases internal MySQL availability. Give it the following parameters:
-       * **Name:** `pcf-mysqlproxy`
-       * **Type:** `Standard`
-       * **Source Address:** `0.0.0.0/0`
-       * **Destination Address/Mask:** `YOUR-INTERNAL-MYSQL-PAS-VIP`
-       <p class='note'><strong>Note:</strong> This VIP must be DNS-resolvable to the fully qualified domain name (FQDN) entered into your PAS configuration for MySQL Service Hostname.</p>
-       * **Service Port:** `3306`
-       * **State:** `Enabled`
-       * **Protocol:** `TCP`
-       * **Protocol Profile (Client):** `tcp_lan_optimized`
-       * **Protocol Profile (Server):** (Use Client Profile)
-       * **HTTP Profile:** `[NONE]`
-       * **SSL Profile:** `[NONE]`
-       * **VLAN and Tunnel Traffic:** `Enabled on YOUR-CONFIGURED-F5-VPN`
-       * **Source Address Translation:** `Auto Map`
-       <p class='note'><strong>Note:</strong> This must be set in one-arm configurations.</p>
-       * **Default Pool:** `mysqlproxy_pool`
-    5. (Optional) Create a virtual server for `sshproxy`. This virtual server allows developers to SSH into Diego containers. Give it the following parameters:
+    1. (Optional) Create a virtual server for `sshproxy`. This virtual server allows developers to SSH into Diego containers. Give it the following parameters:
        * **Name:** `pcf-sshproxy`
        * **Type:** `Standard`
        * **Source Address:** `0.0.0.0/0`
@@ -198,7 +167,7 @@ This configuration terminates client SSL at the F5 and forward standard HTTP tra
        * **Source Address Translation:** `Auto Map`
        <p class='note'><strong>Note:</strong> This must be set in one-arm configurations.</p>
        * **Default Pool:** `diegobrain_pool`
-    6. (Optional) Create a virtual server for `tcprouter`. This virtual server allows access to Cloud Foundry TCPapplications.  Give it the following parameters:
+    1. (Optional) Create a virtual server for `tcprouter`. This virtual server allows access to Cloud Foundry TCPapplications.  Give it the following parameters:
        * **Name:** `pcf-tcprouter`
        * **Type:** `Standard`
        * **Source Address:** `0.0.0.0/0`

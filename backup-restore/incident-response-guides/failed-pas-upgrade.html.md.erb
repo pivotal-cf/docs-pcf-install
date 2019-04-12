@@ -5,58 +5,70 @@ owner: Platform Recovery
 
 <strong><%= modified_date %></strong>
 
-This guide explains how to use `bbr` to restore OpsManager and Pivotal Application Service (PAS) back to a healthy state after a failed upgrade between PAS minor versions.  This is only possible if you have previously:
+This topic explains how to use `bbr` to restore OpsManager and Pivotal Application Service (PAS) back to a healthy state after a failed upgrade between PAS minor versions.
+
+<p class="note"><strong>Note:</strong> BBR can only restore across the same PCF minor versions.  The version of PAS, that the backup artifact was taken from, can be found as <tt>metadata/cf-VERSION.yml</tt> in the backup artifact.</p>
+
+## <a id="requirements"></a>Evaluating your deployment
+
+Restoring OpsManager and PAS to a healthy state after a failed upgrade between PAS minor versions is possible if your backups, BOSH Director, and PAS deployment meet certain conditions.
+
+### <a id="requirements"></a>Review your backup
+Before proceeding, you must review your backup to ensure that...
+
+Ensure that you have:
 
 + Backed up your deployments using:
 
 ```
-bbr deployment --deployment <DEPLOYMENT_NAME> backup
+bbr deployment --deployment <DEPLOYMENT\_NAME> backup
 ```
 
-+ Backed up you BOSH director using:
++ Backed up your BOSH director using:
 
 ```
 bbr director backup
 ```
 
-+ Exported your OpsManager settings
++ Exported your OpsManager settings.
 
-These commands produce artifacts of the form `<DEPLOYMENT_NAME>_<TIMESTAMP>/`,  `<DIRECTOR_IP>_<TIMESTAMP>/`, and `installation.zip` respectively.
+These commands produce artifacts of the form `<DEPLOYMENT\_NAME>\_<TIMESTAMP>/`,  `<DIRECTOR_IP>\_<TIMESTAMP>/`, and `installation.zip` respectively.
 
-## <a id="validating-environment-restore"></a>Validating your environment for restore
-Before a restore is attempted, you must clarify that the BOSH Director and PAS are healthy.
+### <a id="validating-environment-restore"></a>Validate your environment for restore
+Before you can attempt restore after a failed upgrade between PAS minor versions, you must confirm that your BOSH Director and PAS deployment are healthy.
 
-### BOSH Director
-To check that the BOSH Director is in a healthy state for a `bbr` restore to succeed you can [SSH](../../trouble-advanced.html#bosh-director-ssh) on and ensure that the all jobs are running by running the following:
+####<a id="bosh-director"></a> Ensure your BOSH Director is healthy
+To check the state of your BOSH Director:
 
-```
-monit summary
-```
+1. SSH into your BOSH Director. For more information, see [Log in to the BOSH Director VM with SSH](../../trouble-advanced html#bosh-director-ssh) in _Advanced Troubleshooting with the BOSH CLI_. 
+1. Confirm that all deployment job VMs are running by performing the following command:
 
-Monit should report back that all jobs are `running`
+	```
+	monit summary
+	```
 
-You must also ensure that the BOSH API is responsive. You can check that by running the following:
+1. Ensure that the BOSH API is responsive by running the following command:
 
-```
-bosh deployments
-```
+	```
+	bosh deployments
+	```
 
-If this command returns a list of deployments then the BOSH Director API is in a healthy and responsive state.
+	If this command returns a list of deployments, the BOSH Director API is in a healthy and responsive state.
+
+If your BOSH Director is unhealthy, see [Unhealthy BOSH Director](failed-pas-upgrade.html#unhealthy-bosh).
 
 
-### PAS
+####<a id="pas"></a> Ensure your PAS deployment is healthy
 
-To check that PAS is in a healthy state you can run the following:
+To check that PAS is in a healthy state, run the following BOSH CLI command:
 
 ```
 bosh -d <DEPLOYMENT_NAME> vms
 ```
 
-This should report back that all vms are `running`
+If your PAS deployment is healthy, the output confirms that the **State** of all your VMs are `running`.
 
 If your BOSH Director or PAS are not in a functional state, then contact [Pivotal Support](https://support.pivotal.io/) for guidance.
-
-<p class="note"><strong>Note:</strong> BBR can only restore across the same PCF minor versions.  The version of PAS, that the backup artifact was taken from, can be found as <tt>metadata/cf-VERSION.yml</tt> in the backup artifact.</p>
 
 ## <a id="performing-restore"></a>Performing the restore
 
@@ -64,7 +76,7 @@ If your BOSH Director or PAS are not in a functional state, then contact [Pivota
 If the BOSH Director is not in a healthy state, Pivotal recommends following our full [Restore Flow](../restore-pcf-bbr.html#restore-diagram) to regain your OpsManager, BOSH Director, and its deployments.
 
 ### <a id="healthy-bosh-unhealthy-pas"></a>Healthy BOSH Director and unhealthy PAS Deployment
-If your BOSH Director is healthy, you can restore your previous director state by folllowing [Step 8: Restore the BOSH Director](../restore-pcf-bbr.html#restore-bosh).
+If your BOSH Director is healthy, you can restore your previous director state by following [Step 8: Restore the BOSH Director](../restore-pcf-bbr.html#restore-bosh).
 
 Once your director is restored you can then restore your deployments by following [Step 13: Restore PAS](../restore-pcf-bbr.html#restore-ert).
 

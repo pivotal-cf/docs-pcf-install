@@ -23,8 +23,11 @@ Before you configure the BOSH Director with the Ops Manager API, you must have t
 To configure the BOSH Director with the Ops Manager API, do the following:
 
 <ol>
+
 <li>Access the Ops Manager API by following the procedure in <a href="./ops-man-api.html">Using the Ops Manager API</a>.</li>
-<li>Enter the following HTTP request to perform intial setup: <code>POST /api/v0/setup</code>. Include metadata in your request to specify configuration details for your deployment. For example, specify the deployment's decryption passphrase, EULA status, and proxy information, if applicable. An example request follows:
+
+<li>Enter the following HTTP request to perform intial setup: <code>POST /api/v0/setup</code>.<br/>
+Include metadata in your request to specify configuration details for your deployment. For example, specify the deployment's decryption passphrase, EULA status, and proxy information, if applicable. An example request follows:
 <p class="terminal">
 	curl "https://YOUR-OPS-MANAGER-URL.com/api/v0/setup" \<br/>
     -X POST \<br/>
@@ -42,30 +45,32 @@ To configure the BOSH Director with the Ops Manager API, do the following:
     "no_proxy": "127.0.0.1"<br/>
   } }'
 </p>
- 	<p class="note"><strong>Note</strong>: You do not need to specify UAA or other authentication details on a first-time deploy. If you do, the deployment will fail.</p>
+ 	<p class="note"><strong>Note</strong>: You do not need to specify UAA or other authentication details on a first-time deploy. Making the <code>setup</code> request automatically creates a UAA client when it completes successfully. If you specify a UAA client for a first-time deployment, the deployment will fail.</p>
 </li>
+
 <li>A <code>200 OK</code> response appears.</li>
+
 <li>After the successful response, a UAA client with the metadata you specified is created and launched. Ops Manager users can authenticate with UAAC, and if they have a pre-created client they can target UAAC with the client name and password. For more information on pre-created clients, see <a href="./opsman-users.html">Creating and Managing Ops Manager User and Client Accounts</a>.
+
 <li>Enter the following HTTP request to perform configure your IaaS and BOSH Director: <code>PUT api/v0/staged/director/properties</code>.<br/>
+There are many configuration parameters available to customize your BOSH Director. All the commands are IaaS-agnostic except the IaaS configuration key. Missing required fields should cause an error.<br/>
+For more information about configuring the BOSH Director, see <a href="http://docs.pivotal.io/pivotalcf/2-5/opsman-api/#fetching-director-iaas-and-security-properties-experimental">Fetching Director, IaaS, and Security Properties</a>.</li>
 
-All the commands are IaaS-agnostic except the IaaS configuration key. Missing required fields should cause an error. 
-<li>(Optional:The <code>create-azs</code> endpoint is optional for Azure-based deployments, because Azure Availability Zones (AZs) cannot be configured by the operator. 
+<li>Enter the following HTTP request to create Availability Zones (AZs) for your product: <code>POST api/v0/staged/director/availability_zones</code>.
+<p class="note"><strong>Note</strong>:(Optional) The <code>create-azs</code> endpoint is optional for Azure-based deployments, because you cannot manually configure Azure AZs.</p></li>
 
-  POST api/v0/staged/director/availability_zones
 
-Create networking rules for the foundation -- Create networks, determine whether you’re enabling ICMP checks or not 
-  PUT api/v0/staged/director/networks
+<li>Enter the following HTTP request to create networking rules for the deployment: <code>PUT api/v0/staged/director/networks</code>.<br/>  
+Specify whether or not to use ICMP checks by setting the <code>icmp_checks_enabled</code> parameter to <code>true</code> or <code>false</code>.</li>
 
-AZs and Network assignment -- Assign a singleton availability zone and network where your BOSH Director is going to live
-  PUT api/v0/staged/director/network_and_az 
+<li>Enter the following HTTP request to assign a singleton AZ and a network where your BOSH Director will be located: <code>PUT api/v0/staged/director/network_and_az</code>.</li>
 
-Updating the Bosh Director’s Resource config
+<li>Updating the Bosh Director’s Resource config
   Grab the director’s guid - GET api/v0/staged/products
   See a list of all jobs on the director - GET api/v0/staged/products/:bosh_guid/jobs
   Updating a job’s resource config
-		PUT api/v0/staged/products/:bosh_guid/jobs/:job_guid/resource_config
-
-Optional: They could stop and deploy here!
+		PUT api/v0/staged/products/:bosh_guid/jobs/:job_guid/resource_config</li>
+<li>Optional: They could stop and deploy here!
   POST /api/v0/installations 
-  This is the last step to Apply Changes/deploy any config change
+  This is the last step to Apply Changes/deploy any config change</li>
 </ol>

@@ -35,23 +35,24 @@ The above commands produce the artifacts `<DEPLOYMENT_NAME>_<TIMESTAMP>/`,  `<DI
 ### <a id="validating-environment-restore"></a>Validate your environment for restore
 Before you can attempt restore after a failed upgrade between PAS minor versions, you must confirm that your BOSH Director and PAS deployment are healthy.
 
-####<a id="bosh-director"></a> Ensure your BOSH Director is healthy
-To check the state of your BOSH Director:
+### BOSH Director
+To check that the BOSH Director is in a healthy state for a `bbr restore` to succeed you can [SSH](../../trouble-advanced.html#bosh-director-ssh) on and ensure that the all jobs are running by running the following:
 
 1. SSH into your BOSH Director. For more information, see [Log in to the BOSH Director VM with SSH](../../trouble-advanced html#bosh-director-ssh) in _Advanced Troubleshooting with the BOSH CLI_. 
-1. Confirm that all deployment job VMs are running by performing the following command:
+1. Confirm that all deployment job instances are running by performing the following command:
 
 	```
 	monit summary
 	```
+Monit should report back that all jobs are `running`.
 
 1. Ensure that the BOSH API is responsive by running the following command:
 
 	```
-	bosh deployments
+	bosh configs
 	```
 
-	If this command returns a list of deployments, the BOSH Director API is in a healthy and responsive state.
+    If this command runs successfully then the BOSH Director API is in a healthy and responsive state, and can be restored to by `bbr`.
 
 If your BOSH Director is unhealthy, see [Unhealthy BOSH Director](failed-pas-upgrade.html#unhealthy-bosh).
 
@@ -61,22 +62,19 @@ If your BOSH Director is unhealthy, see [Unhealthy BOSH Director](failed-pas-upg
 To confirm that PAS is in a healthy state, run the following command:
 
 ```
-bosh -d <DEPLOYMENT_NAME> vms
+bosh -d <PAS_DEPLOYMENT_NAME> instances
 ```
 
-If your PAS deployment is healthy, the output states that all of your VMs are in the `running` state.
+If your PAS deployment is healthy, the output states that all of your instances are in the `running` state, and can be restored to by `bbr`.
 
-If your BOSH Director or PAS is not in a functional state, contact [Pivotal Support](https://support.pivotal.io/) for guidance.
-
-## <a id="performing-restore"></a>Performing a restore
-
-### <a id="healthy-bosh-healthy-pas"></a>Healthy BOSH Director and healthy PAS Deployment
-
-If your BOSH Director is healthy, its data is intact, and all VMs in your deployment to restore are responsive, you can restore each of your deployments  by following the steps in [Step 13: Restore PAS](../restore-pcf-bbr.html#restore-ert).
+### Recovering to a healthy state
+If you have identified that either the BOSH Director or PAS are not in a healthy state, they will need to be recovered prior to performing a `bbr restore`. Please contact [Pivotal Support](https://support.pivotal.io/) for guidance.
 
 ## <a id="troubleshooting"></a>Troubleshooting
+<p class="note"><strong>Note:</strong> BBR can only restore across the same PCF minor versions.  The version of PAS, that the backup artifact was taken from, can be found as <tt>metadata/cf-VERSION.yml</tt> in the backup artifact.</p>
 
 ### <a id="unhealthy-bosh"></a>Fix unhealthy BOSH Director
+
 If the BOSH Director is not in a healthy state, Pivotal recommends following our full [Restore Flow](../restore-pcf-bbr.html#restore-diagram) to regain your OpsManager, BOSH Director, and its deployments.
 
 ### <a id="healthy-bosh-unhealthy-pas"></a>Healthy BOSH Director and unhealthy PAS Deployment
@@ -84,4 +82,6 @@ If your BOSH Director is healthy, you can restore your previous director state b
 
 Once your director is restored you can then restore your deployments by following [Step 13: Restore PAS](../restore-pcf-bbr.html#restore-ert).
 
+### <a id="healthy-bosh-healthy-pas"></a>Healthy BOSH Director and healthy PAS Deployment
+If your BOSH Director is healthy, its data is intact, and all instances in your PAS deployment are responsive, then you can restore to PAS by following the steps in [Step 13: Restore PAS](../restore-pcf-bbr.html#restore-ert).
   

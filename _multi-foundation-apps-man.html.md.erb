@@ -1,57 +1,78 @@
 This section describes how to configure **Apps Manager** to display information from other foundations in addition to the
-foundation it is installed on. For more information about the **Multi-Foundation** configuration settings, see 
-[Multi-Foundation Apps Manager](../opsguide/multi-foundation-apps-man.html)
+foundation it is installed on.
 
-Given foundation A (where you want to configure Multi-Foundation Apps Manager), and foundation B.
-
-Steps to make foundation A able to connect to foundation B:
+Given foundation A on which you want to configure Multi-Foundation Apps Manager, and
+foundation B that you want to manage from foundation A's Apps Manager, follow these steps to
+make foundation A able to connect to foundation B:
 
 1. Select **Apps Manager** in A. The following image shows the **Apps Manager** page.
 
-1. Find the section labeled "Multi-foundation Configuration (BETA)". 
-Enter a JSON describing the foundations you would like to connect to this foundation. 
-The following an example JSON for the Foundations JSON.
+1. Find the section labeled "Multi-foundation Configuration (BETA)".
+Enter a JSON object describing the foundations you would like to connect to this foundation,
+using data from those foundations' PAS configurations as shown in this example. Note that
+`metricsUrl` below is optional - set this if metrics is installed for a foundation.
 
-"B Name" is the configured foundation name.
-Note that `metricsUrl` below is optional - set this if metrics is installed for a foundation.
+    ```json
+    {
+      "B Foundation Name": {
+        "ccUrl": "https://api.b-foundation-system-domain.com",
+        "systemDomain": "b-foundation-system-domain.com",
+        "usageServiceUrl": "https://app-usage.b-foundation-system-domain.com",
+        "invitationsServiceUrl": "https://p-invitations.b-foundation-system-domain.com",
+        "logoutUrl": "https://login.b-foundation-system-domain.com/logout.do",
+        "metricsUrl": "https://metrics.b-foundation-system-domain.com",
+        "uaaUrl": "https://login.b-foundation-system-domain.com"
+      },
+      ...For foundations C, D, and E add other entries here that follow B's pattern.
+    }
+    ```
 
-```json
-{
-  "B Name": {
-    "ccUrl": "https://api.b-foundation-system-domain.com",
-    "systemDomain": "b-foundation-system-domain.com",
-    "usageServiceUrl": "https://app-usage.b-foundation-system-domain.com",
-    "invitationsServiceUrl": "https://p-invitations.b-foundation-system-domain.com",
-    "logoutUrl": "https://login.b-foundation-system-domain.com/logout.do",
-    "metricsUrl": "https://metrics.b-foundation-system-domain.com",
-    "uaaUrl": "https://login.b-foundation-system-domain.com"
-  },
-  ... // For foundations C, D, and E add other entries here that follow B's pattern.
-}
-```
+1. In B's UAA, the `apps_manager_js` client should have A's Apps Manager URL
+(https://apps.a-foundation-system-domain.com) as a valid redirect URI. This is necessary so
+that Apps Manager on Foundation A can redirect to B's UAA and back while
+logging in. For more information about UAA clients and configuring valid redirect URIs, see
+[Client.redirect-uri](../uaa/uaa-concepts.html#redirect-uri)
 
-1. In B's UAA, the `apps_manager_js` client should have A's Apps Manager URL (https://apps.a-foundation-system-domain.com) 
-as a valid redirect URI. This is necessary so that Apps Manager on Foundation A can redirect to B's UAA and back while 
-logging in. For more information about UAA clients and their redirect-uri, see [Client.redirect-uri](../uaa/uaa-concepts.html#redirect-uri)
+    To configure redirect URIs, use [the UAA CLI](https://github.com/cloudfoundry/cf-uaac):
+    1. Retrieve the UAA admin client credential for B as follows:
+        1. Go to the PAS tile in OpsManager on Foundation B
+        1. Go to the Credentials Tab
+        1. Find the Admin Client Credentials under the UAA grouping
+        1. Click on Link to Credentials
+        1. Record the password field in the JSON response (ADMIN_CLIENT_SECRET)
+    1. Retrieve a token for the UAA admin client
+        ```bash
+        uaac target uaa.b-foundation-system-domain.com
+        uaac token client get admin -s ADMIN_CLIENT_SECRET
+        ```
+    1. Retrieve the currently set redirect uris from B's UAA apps_manager_js client and record
+        the redirect-uris (PREVIOUS_REDIRECT_URIS)
+        ```bash
+        uaac client get apps_manager_js
+        ```
+    1. Update the apps_manager_js client with Foundation A's Apps Manager URL
+        ```bash
+        uaac client update apps_manager_js --redirect_uri \
+            'PREVIOUS_REDIRECT_URIS,https://apps.a-foundation-system-domain.com/**'
+        ```
 
-To configure this via [UAAC](https://github.com/cloudfoundry/cf-uaac):
-```
-uaac target uaa.b-foundation-system-domain.com
-uaac token client get admin -s ${admin client credentials in OpsManager}
-uaac client update apps_manager_js --redirect_uri '${previous redirect uris},https://apps.a-foundation-system-domain.com/**'
-```
+1. If B is configured to use a certificate for TLS termination that is not signed by a
+globally-trusted CA, you will need to add the root CA certificate that signed B's TLS
+certificate as trusted by A's BOSH Director. This allows Apps Manager on foundation A to
+validate the certificates used on B's endpoints (e.g. B's Cloud Controller). For more
+information about setting the trusted certificates in BOSH, see [Setting Trusted
+Certificates](../customizing/trusted-certificates.html)
 
-It is currently not possible to configure this via OpsManager.
+**Strongly encouraged:**
 
-1. If B is configured to use certificates that are not already trusted (e.g. signed by a globally-trusted CA),
-you will need to add the signing CA certificate(s) that signed B's certificates as trusted by A's BOSH Director.
-This allows Apps Manager on foundation A to validate the certificates used on B's endpoints (e.g. B's Cloud Controller).
-For more information about setting the trusted certificates in BOSH, see [Setting Trusted Certificates](../customizing/trusted-certificates.html)
+Configure UAA on both A and B to use the same external SAML identity provider (e.g. Okta). They
+must be configured with the same "Provider Name" on each foundation. This allows Apps Manager to
+automatically log in with your identity provider on each foundation so you don't have to enter a
+username/password for each one, each time you log into Apps Manager.
 
-**Strongly encouraged**
-1. Have UAA configured on both A and B to use the same external SAML identity provider (e.g. Okta). They must be configured
-with the same "Provider Name" on each foundation. This allows Apps Manager to automatically log in with your identity
-provider on each foundation so you don't have to enter a username/password for each one, each time you log in.
-For more information on UAA and identity providers, see [Identity Providers in UAA](../uaa/identity-providers.html)
-For more information on how to setup identity providers in UAA with OpsMan, see [Adding Existing SAML or LDAP Users to a PCF Deployment](../opsguide/external-user-management.html)
+For more information on UAA and identity providers, see [Identity Providers in
+UAA](../uaa/identity-providers.html)
+
+For more information on how to setup identity providers in UAA, see [Adding Existing SAML or
+LDAP Users to a PCF Deployment](../opsguide/external-user-management.html)
 

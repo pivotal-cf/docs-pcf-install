@@ -7,7 +7,7 @@ owner: Platform Recovery
 
 This topic explains how to use `bbr` to restore OpsManager and Pivotal Application Service (PAS) back to a healthy state after a failed upgrade between PAS minor versions.
 
-<p class="note"><strong>Note:</strong> BBR can only restore across the same PCF minor versions.  The version of PAS, that the backup artifact was taken from, can be found as <tt>metadata/cf-VERSION.yml</tt> in the backup artifact.</p>
+<p class="note"><strong>Note:</strong> BBR can only restore across the same PAS minor versions. The version of PAS, that the backup artifact was taken from, can be found as <tt>metadata/cf-VERSION.yml</tt> in the backup artifact.</p>
 
 ## <a id="requirements"></a>Evaluating your deployment
 
@@ -30,12 +30,12 @@ bbr director backup
 
 + Exported your OpsManager settings.
 
-The above commands produce the artifacts `<DEPLOYMENT_NAME>_<TIMESTAMP>/`,  `<DIRECTOR_IP>_<TIMESTAMP>/`, and `installation.zip` respectively.
+The above `bbr` commands produce the artifacts `<DEPLOYMENT_NAME>_<TIMESTAMP>/`,  `<DIRECTOR_IP>_<TIMESTAMP>/`, and `installation.zip` respectively.
 
 ### <a id="validating-environment-restore"></a>Validate your environment for restore
 Before you can attempt restore after a failed upgrade between PAS minor versions, you must confirm that your BOSH Director and PAS deployment are healthy.
 
-### BOSH Director
+#### <a id="bosh-director"></a>Confirm your BOSH Director is healthy
 To check that the BOSH Director is in a healthy state for a `bbr restore` to succeed you can [SSH](../../trouble-advanced.html#bosh-director-ssh) on and ensure that the all jobs are running by running the following:
 
 1. SSH into your BOSH Director. For more information, see [Log in to the BOSH Director VM with SSH](../../trouble-advanced html#bosh-director-ssh) in _Advanced Troubleshooting with the BOSH CLI_. 
@@ -57,7 +57,7 @@ Monit should report back that all jobs are `running`.
 If your BOSH Director is unhealthy, see [Unhealthy BOSH Director](failed-pas-upgrade.html#unhealthy-bosh).
 
 
-####<a id="pas"></a> Ensure your PAS deployment is healthy
+####<a id="pas"></a> Confirm your PAS deployment is healthy
 
 To confirm that PAS is in a healthy state, run the following command:
 
@@ -67,21 +67,21 @@ bosh -d <PAS_DEPLOYMENT_NAME> instances
 
 If your PAS deployment is healthy, the output states that all of your instances are in the `running` state, and can be restored to by `bbr`.
 
-### Recovering to a healthy state
-If you have identified that either the BOSH Director or PAS are not in a healthy state, they will need to be recovered prior to performing a `bbr restore`. Please contact [Pivotal Support](https://support.pivotal.io/) for guidance.
+If your PAS deployment is unhealthy, see [Restoring an unhealthy PAS Deployment](failed-pas-upgrade.html#unhealthy-pas).
 
-## <a id="troubleshooting"></a>Troubleshooting
-<p class="note"><strong>Note:</strong> BBR can only restore across the same PCF minor versions.  The version of PAS, that the backup artifact was taken from, can be found as <tt>metadata/cf-VERSION.yml</tt> in the backup artifact.</p>
+## <a id="restore"></a>Restore your deployment
+If your BOSH Director is healthy, its data is intact, and all instances in your PAS deployment are responsive, you can restore PAS.
+### <a id="healthy-bosh-healthy-pas"></a>Restoring PAS
+If your BOSH Director is healthy, you can restore across the same PAS minor version by following the documentation in [Step 13: Restore PAS](../restore-pcf-bbr.html#restore-ert).
 
-### <a id="unhealthy-bosh"></a>Fix unhealthy BOSH Director
+##<a id="recover"></a>Recover to a healthy state
+If you have identified that either the BOSH Director or PAS are not in a healthy state, they will need to be recovered prior to performing a `bbr restore`. Please contact [Pivotal Support](https://support.pivotal.io/) if you need guidance on the following subsections.
+
+###<a id="unhealthy-bosh"></a>Restoring an unhealthy BOSH Director
 
 If the BOSH Director is not in a healthy state, Pivotal recommends following our full [Restore Flow](../restore-pcf-bbr.html#restore-diagram) to regain your OpsManager, BOSH Director, and its deployments.
 
-### <a id="healthy-bosh-unhealthy-pas"></a>Healthy BOSH Director and unhealthy PAS Deployment
+###<a id="unhealthy-pas"></a>Restoring an unhealthy PAS Deployment
 If your BOSH Director is healthy, you can restore your previous director state by following [Step 8: Restore the BOSH Director](../restore-pcf-bbr.html#restore-bosh).
 
-Once your director is restored you can then restore your deployments by following [Step 13: Restore PAS](../restore-pcf-bbr.html#restore-ert).
-
-### <a id="healthy-bosh-healthy-pas"></a>Healthy BOSH Director and healthy PAS Deployment
-If your BOSH Director is healthy, its data is intact, and all instances in your PAS deployment are responsive, then you can restore to PAS by following the steps in [Step 13: Restore PAS](../restore-pcf-bbr.html#restore-ert).
-  
+Once your director is restored you can then restore your deployments by following [Step 13: Restore PAS](../restore-pcf-bbr.html#restore-ert).  

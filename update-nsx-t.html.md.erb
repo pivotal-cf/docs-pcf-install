@@ -53,8 +53,8 @@ To use the Ops Manager API, you must authenticate and retrieve a token from the 
 </pre>
 
 1. For each VM extension, use a `curl` command to stage it with the Ops Manager API, (where VM_EXTENSION_FILE_PATH is the path to the VM extension file, e.g. `/tmp/router_ext.json`):
-<pre class="terminal">
-curl "https://OPS-MAN-FQDN/api/v0/staged/vm_extensions' \
+<pre>
+curl "http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/vm_extensions" \
 -X POST \
 -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
 -H "Content-Type: application/json" \
@@ -62,9 +62,13 @@ curl "https://OPS-MAN-FQDN/api/v0/staged/vm_extensions' \
 </pre>
 
 1. Retrieve a list of staged products:
-	<pre class="terminal">
-	$ curl 'http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products' \
+	<pre>
+	curl 'http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products' \
 	-H "Authorization: Bearer UAA-ACCESS-TOKEN"
+		</pre>
+	Record the GUID of the `cf` product. In the following example output, the GUID is `cf-01222ab1111111aaa1a`.
+  
+	```json
 	[
 	   {
 	      "product\_version" : "1.10.6.0",
@@ -78,15 +82,18 @@ curl "https://OPS-MAN-FQDN/api/v0/staged/vm_extensions' \
 	      "installation\_name" : "cf-01222ab1111111aaa1a",
 	      "guid" : "cf-01222ab1111111aaa1a"
 	   }
-	]
-	</pre>
-	Record the GUID of the `cf` product. In the above example, the GUID is `cf-01222ab1111111aaa1a`.
+	   ]
+	  ```
 
 1. Retrieve a list of jobs for your product:
-	<pre class='terminal'>
-	$ curl 'http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs' \
+	<pre>
+	curl 'http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs' \
 	-H 'Authorization: Bearer UAA-ACCESS-TOKEN'
-	{
+	</pre>
+  Record the GUIDs of the jobs whose security groups you want to update. See the following example output:
+  
+    ```json
+    {
    "jobs" : [
       {
          "guid" : "router-9c37cf48ae7412f2afd1",
@@ -100,20 +107,18 @@ curl "https://OPS-MAN-FQDN/api/v0/staged/vm_extensions' \
          "name" : "diego\_brain",
          "guid" : "diego\_brain-b49b0b2aed247302c0e1"
       },
-      ...
-	</pre>
-  Record the GUIDs of the jobs whose security groups you want to update.
+    ```
 
 1. To update the load balancer server pool membership for your job, use the following command:
-		<pre class="terminal">
-		$ curl "http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs/JOB-GUID/resource\_config" \
-		    -X PUT \
-		    -H "Content-Type: application/json" \
-		    -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
-        -d '{"instance\_type": {"id": "INSTANCE-TYPE"},
-             "instances": INSTANCE-COUNT,
-             "additional_vm_extensions": ["VM-EXTENSION-NAME"]
-		        }'
+  <pre>	
+  curl "http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs/JOB-GUID/resource\_config" \
+      -X PUT
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
+      -d '{"instance\_type": {"id": "INSTANCE-TYPE"},
+          "instances": INSTANCE-COUNT,
+          "additional_vm_extensions": ["VM-EXTENSION-NAME"]
+      }'
 		</pre>
 		Replace the placeholder values as follows:
     * `INSTANCE-TYPE`: The instance type for the job. For the default instance type, use `"automatic"`.

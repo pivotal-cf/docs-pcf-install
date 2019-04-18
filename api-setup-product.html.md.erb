@@ -2,3 +2,35 @@
 title: Configuring a Product with the Ops Manager API
 owner: Ops Manager
 ---
+
+## <a id="overview"></a>Overview
+
+This topic describes how to configure product tiles for Ops Manager using the Ops Manager API. This procedure is not intended for beginner users of Ops Manager, PCF, or API-based procedures. 
+
+For information about setting up Ops Manager with the UI, see [Using Ops Manager](../customizing/ops-man.html).
+
+## <a id="prereqs"></a>Prerequisites
+
+Before you configure a product tile with the Ops Manager API, you must have completed the following prerequisites:
+
+* A BOSH Director configured and staged for deployment. To learn about configuring the BOSH Director with the API, see [Configuring the BOSH Director with the Ops Manager API](./api-setup-director.html).
+* A .pivotal file for the product you wish to configure. For more information about creating a .pivotal file, see [PCF Tile Developer Guide](https://docs.pivotal.io/tiledev/2-5/).
+
+## <a id="api-setup"></a> Configuring a Product with the API
+
+1. Upload or import the product into Ops Manager.
+  1. Enter the following HTTP request to upload the product: `POST api/v0/available_products`
+  1. Enter the following HTTP request to list the names of available products: `GET api/v0/available_products`
+  1. Find the product you uploaded by referencing its name and version from the list that displays.
+  1. Enter the following HTTP request to add the uploaded product to Ops Manager: `POST /api/v0/staged/products`.
+1. Confirm that the product is staged for deployment. Enter the following HTTP request to confirm the product exists in Ops Manager and display the product GUID: `GET api/v0/staged_products`.
+1. Enter the following HTTP request to assign availability zones (AZs) and networks to the product: `PUT /api/v0/staged/products/:PRODUCT-GUID/networks_and_azs`.
+1. Enter the following HTTP request to update the product's properties: `PUT /api/v0/staged/products/:PRODUCT-GUID/properties`.
+1. Enter the following HTTP request to configure syslog for the product: `PUT /api/v0/staged/products/:PRODUCT-GUID/syslog_configuration`.
+1. Update the product's resource configuration:
+ 1. Enter the following HTTP request to list all jobs on a product and display the GUID for each job: `GET api/v0/staged/products/:PRODUCT-GUID/jobs`.
+ 1. Enter the following HTTP request to update the resource config for a partiular job: `PUT api/v0/staged/products/:PRODUCT-GUID/jobs/:JOB-GUID/resource_config`.
+
+QUESTIONS:
+
+* Can we get code samples with parameters for some of these? 'Modify the resource config with this endpoint' feels really sparse--I want some details about what exactly they can do, or at least links to API docs with code samples for same.

@@ -1,41 +1,46 @@
 ---
-title: OpsManager and PAS Upgrade Failure
+title: Ops Manager and PAS Upgrade Failure
 owner: Platform Recovery
 ---
 
 <strong><%= modified_date %></strong>
 
-This topic explains how to use `bbr` to restore OpsManager and Pivotal Application Service (PAS) back to a healthy state after a failed upgrade between PAS minor versions.
+This topic explains how to use `bbr` to restore Ops Manager and Pivotal Application Service (PAS) back to a healthy state after a failed upgrade between PAS minor versions.
 
-<p class="note"><strong>Note:</strong> BBR can only restore across the same PAS minor versions. The version of PAS, that the backup artifact was taken from, can be found as <tt>metadata/cf-VERSION.yml</tt> in the backup artifact.</p>
+<p class="note"><strong>Note:</strong> BBR can only restore across the same PAS minor versions. See <code>metadata/cf-VERSION.yml</code> in the backup artifact to verify which version of PAS was used to create the backup artifact.</p>
 
-## <a id="requirements"></a>Evaluating your deployment
+## <a id="evaluate"></a>Evaluate Your Deployment
 
-Restoring OpsManager and PAS to a healthy state after a failed upgrade between PAS minor versions is possible if your backups, BOSH Director, and PAS deployment meet certain conditions.
+Restoring Ops Manager and PAS to a healthy state after a failed upgrade between PAS minor versions is possible if your backups, BOSH Director, and PAS deployment meet certain conditions.
 
-### <a id="requirements"></a>Review your backup
-Before attempting to perform a restore, ensure that you have:
+### <a id="review-backup"></a>Review Your Backup
+Before you perform a restore, you must do the following:
 
-+ Backed up your deployments using the following command:
+1. Run the following `bbr` commands:
+  + Back up your deployments using the following command:
 
-```
-bbr deployment --deployment <DEPLOYMENT_NAME> backup
-```
+        ```
+        bbr deployment --deployment DEPLOYMENT_NAME backup
+        ```
+  + Back up your BOSH director using the following command:
 
-+ Backed up your BOSH director using the following command:
+        ```
+        bbr director backup
+        ```
+        The above `bbr` commands produce the following artifacts:
 
-```
-bbr director backup
-```
+        + `DEPLOYMENT_NAME_TIMESTAMP/`
+        + `DIRECTOR_IP_TIMESTAMP/`
+        + `installation.zip`
 
-+ Exported your OpsManager settings.
+1. Export your Ops Manager settings.
 
-The above `bbr` commands produce the artifacts `<DEPLOYMENT_NAME>_<TIMESTAMP>/`,  `<DIRECTOR_IP>_<TIMESTAMP>/`, and `installation.zip` respectively.
+### <a id="validating-environment-restore"></a>Validate Your Environment for Restore
 
-### <a id="validating-environment-restore"></a>Validate your environment for restore
-Before you can attempt restore after a failed upgrade between PAS minor versions, you must confirm that your BOSH Director and PAS deployment are healthy.
+Before you can restore after a failed upgrade between PAS minor versions, you must confirm that your BOSH Director and PAS deployment are healthy.
 
-#### <a id="bosh-director"></a>Confirm your BOSH Director is healthy
+#### <a id="bosh-director"></a>Confirm Your BOSH Director is Healthy
+
 To check that the BOSH Director is in a healthy state for a `bbr restore` to succeed you can [SSH](../../trouble-advanced.html#bosh-director-ssh) on and ensure that the all jobs are running by running the following:
 
 1. SSH into your BOSH Director. For more information, see [Log in to the BOSH Director VM with SSH](../../trouble-advanced html#bosh-director-ssh) in _Advanced Troubleshooting with the BOSH CLI_. 

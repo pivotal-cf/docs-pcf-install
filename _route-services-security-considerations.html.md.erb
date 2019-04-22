@@ -1,0 +1,25 @@
+<h3>Route Service Internal Lookup Considerations</h3>
+
+If the **Bypass security checks for route service lookup** option is selected, traffic being sent to a route service will not make a trip back through the Load Balancer. This will reduce the performance penalty of internally hosted route services, but introduces the following security risk for traffic going to externally hosted route services. This vulnerability exists for both externally hosted route services and route services hosted on a separate foundation.
+
+In bypass mode, the router will skip the Load Balancer when it finds an existing route for the route service application. If your route service is hosted outside of the platform, and a space developer registers the route service domain as a private domain on the platform, they are able to map a route to their own application to intercept traffic intended for the route service.
+
+If all of your route services are hosted internally on the same foundation, you are not at risk for this vulnerability, however you would be at risk if externally hosted route services are later configured.
+
+When the option is unchecked, the Router will use DNS to make a new connection to the Load Balancer. The domain name for your internally hosted route services need to:
+Resolve to your Load Balancer
+Match the TLS Certificate provided by the Load Balancer. 
+These two steps can be verified by visiting the https URL of the route service directly and confirming that the application received the request via the `cf logs` output for the route service application.
+
+It is also required that the Certificate Authority for the TLS Certificate provided by the Load Balancer is trusted by the Router. Ensure that TLS Certificate from your Load Balancer is either signed by a well known CA, or the CA has been added to the **Certificate Authorities Trusted by Router and HAProxy** field of the Networking pane of the PAS and/or Isolation Segment tiles.
+
+It is strongly recommended that this option be unchecked unless your Load Balancer or Router requires Mutual TLS.
+
+
+<h4>Considerations for platforms using Mutual TLS</h4>
+
+If DNS resolves to a TLS-termination point (your Load Balancer or GoRouter) which is configured to require Client Certificates, then you should leave the **Bypass security checks for route service lookup** checkbox selected. When the option is unchecked, the Router will not be able to provide the necessary Client Certificates. This ability will be added in an upcoming patch release. It is recommended that you follow the mitigation steps below until that patch is available.
+
+<h4>Mitigation Steps</h4>
+
+It is possible to mitigate this issue by preemptively registering the route service domains as private domains in a protected Organization in the platform. This will prevent users from intercepting traffic for the externally hosted route service. This mitigation requires you to repeat this process for any new route service domains being added to the platform. Since route services can be added by any space developer, this may be difficult to manage.

@@ -5,30 +5,32 @@ Given foundation A on which you want to configure Multi-Foundation Apps Manager,
 foundation B that you want to manage from foundation A's Apps Manager, follow these steps to
 make foundation A able to connect to foundation B:
 
-1. Select **Apps Manager** in A. The following image shows the **Apps Manager** page.
-    ![This image depicts the Multi Foundation config section in the Apps Manager page.](images/multi-foundation-apps-man-configuration.png)
+To configure multi-foundation support in Apps Manager, do the following: 
 
-1. Find the section labeled "Multi-foundation Configuration (BETA)".
-Enter a JSON object describing the foundations you would like to connect to this foundation,
-using data from those foundations' PAS configurations as shown in this example. Note that
-`metricsUrl` below is optional - set this if metrics is installed for a foundation.
+1. Select **Apps Manager** in one of your foundations. The following image shows the **Apps Manager** page.
+    ![The Multi Foundation config section in the Apps Manager page has several fields](images/multi-foundation-apps-man-configuration.png)
+
+1. For **Multi-foundation Configuration (BETA)**, enter a JSON object describing the foundations to connect to this foundation. Use data from those foundations' PAS configurations. For example:
 
     ```json
     {
-      "B Foundation Name": {
-        "ccUrl": "https://api.b-foundation-system-domain.com",
-        "systemDomain": "b-foundation-system-domain.com",
-        "usageServiceUrl": "https://app-usage.b-foundation-system-domain.com",
-        "invitationsServiceUrl": "https://p-invitations.b-foundation-system-domain.com",
-        "logoutUrl": "https://login.b-foundation-system-domain.com/logout.do",
-        "metricsUrl": "https://metrics.b-foundation-system-domain.com",
-        "uaaUrl": "https://login.b-foundation-system-domain.com"
+      "FOUNDATION_NAME": {
+        "ccUrl": "https://api.FOUNDATION_SYSTEM_DOMAIN.com",
+        "systemDomain": "FOUNDATION_SYSTEM_DOMAIN.com",
+        "usageServiceUrl": "https://app-usage.FOUNDATION_SYSTEM_DOMAIN.com",
+        "invitationsServiceUrl": "https://p-invitations.FOUNDATION_SYSTEM_DOMAIN.com",
+        "logoutUrl": "https://login.FOUNDATION_SYSTEM_DOMAIN.com/logout.do",
+        "metricsUrl": "https://metrics.FOUNDATION_SYSTEM_DOMAIN.com",
+        "uaaUrl": "https://login.FOUNDATION_SYSTEM_DOMAIN.com"
       },
-      ...For foundations C, D, and E add other entries here that follow B's pattern.
     }
     ```
+    Where:
+    - `FOUNDATION_NAME` is the name of the foundation.
+    - `FOUNDATION_SYSTEM_DOMAIN` is the system domain of the foundation.
+    - `metricsUrl` is optional. Use this field if PCF Metrics is installed on the foundation.
 
-1. In B's UAA, the `apps_manager_js` client should have A's Apps Manager URL
+1. In UAA, the `apps_manager_js` client should have A's Apps Manager URL
 (https://apps.a-foundation-system-domain.com) as a valid redirect URI. This is necessary so
 that Apps Manager on Foundation A can redirect to B's UAA and back while
 logging in. For more information about UAA clients and configuring valid redirect URIs, see
@@ -64,12 +66,8 @@ validate the certificates used on B's endpoints (e.g. B's Cloud Controller). For
 information about setting the trusted certificates in BOSH, see [Setting Trusted
 Certificates](../customizing/trusted-certificates.html)
 
-**Strongly encouraged:**
-
-Configure UAA on both A and B to use the same external SAML identity provider (e.g. Okta). They
-must be configured with the same "Provider Name" on each foundation. This allows Apps Manager to
-automatically log in with your identity provider on each foundation so you don't have to enter a
-username/password for each one, each time you log into Apps Manager.
+1. (Optional) Pivotal recommends that you configure UAA on all foundations to use the same external SAML identity provider. This allows Apps Manager to
+automatically log in with your identity provider on each foundation. To configure all foundations to use the same SAML identity provider, ensure all foundations use the same value in the PAS tile **UAA** page for **Provider Name**. 
 
 For more information on UAA and identity providers, see [Identity Providers in
 UAA](../uaa/identity-providers.html)

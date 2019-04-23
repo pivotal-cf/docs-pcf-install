@@ -11,23 +11,23 @@ This topic explains how to use `bbr` to restore Ops Manager and Pivotal Applicat
 
 ## <a id="evaluate"></a>Evaluate Your Deployment
 
-Restoring Ops Manager and PAS to a healthy state after a failed upgrade between PAS minor versions is possible if your backups, BOSH Director, and PAS deployment meet certain conditions.
+You can restore Ops Manager and PAS to a healthy state after a failed upgrade between PAS minor versions if your backups, BOSH Director, and PAS deployment meet certain conditions.
 
 ### <a id="review-backup"></a>Review Your Backup
 Before you perform a restore, you must do the following:
 
 1. Run the following `bbr` commands:
-  + Back up your deployments using the following command:
+  + Back up your deployments by running the following command:
 
         ```
         bbr deployment --deployment DEPLOYMENT_NAME backup
         ```
-  + Back up your BOSH director using the following command:
+  + Back up your BOSH Director by running the following command:
 
         ```
         bbr director backup
         ```
-        The above `bbr` commands produce the following artifacts:
+        The above `bbr` commands produce the following backup artifacts:
 
         + `DEPLOYMENT_NAME_TIMESTAMP/`
         + `DIRECTOR_IP_TIMESTAMP/`
@@ -41,15 +41,17 @@ Before you can restore after a failed upgrade between PAS minor versions, you mu
 
 #### <a id="bosh-director"></a>Confirm Your BOSH Director is Healthy
 
-To check that the BOSH Director is in a healthy state for a `bbr restore` to succeed you can [SSH](../../trouble-advanced.html#bosh-director-ssh) on and ensure that the all jobs are running by running the following:
+To check that the BOSH Director is in a healthy state for a `bbr restore`, you can SSH to the Ops Manager VM and ensure that all jobs are running.
 
-1. SSH into your BOSH Director. For more information, see [Log in to the BOSH Director VM with SSH](../../trouble-advanced html#bosh-director-ssh) in _Advanced Troubleshooting with the BOSH CLI_. 
-1. Confirm that all deployment job instances are running by performing the following command:
+To make sure that all jobs are running, do the following:
+
+1. SSH into your BOSH Director. For more information, see [Log in to the BOSH Director VM with SSH](../../trouble-advanced.html#bosh-director-ssh) in _Advanced Troubleshooting with the BOSH CLI_.
+1. View all deployment job instances by running the following command:
 
 	```
 	monit summary
 	```
-Monit should report back that all jobs are `running`.
+Monit should report that all jobs are `running`.
 
 1. Ensure that the BOSH API is responsive by running the following command:
 
@@ -57,9 +59,9 @@ Monit should report back that all jobs are `running`.
 	bosh configs
 	```
 
-    If this command runs successfully then the BOSH Director API is in a healthy and responsive state, and can be restored to by `bbr`.
+    If this command runs successfully, then the BOSH Director API is in a healthy and responsive state, and can be restored by `bbr`.
 
-If your BOSH Director is unhealthy, see [Unhealthy BOSH Director](failed-pas-upgrade.html#unhealthy-bosh).
+If your BOSH Director is unhealthy, see [Unhealthy BOSH Director](#unhealthy-bosh) below.
 
 
 ####<a id="pas"></a> Confirm your PAS deployment is healthy

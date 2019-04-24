@@ -33,7 +33,7 @@ Before deploying PAS with NSX-T networking, you must have the following:
 
 The following diagram shows how to deploy an NSX-T machine to run PAS across multiple vSphere hardware clusters. NSX-T runs a Tier-0 (T0) router and multiple Tier-1 (T1) routers, each connecting to a network within Pivotal Cloud Foundry. Each vSphere hardware column cluster corresponds to an Availability Zone in PCF:
 
-![NSX &amp; PAS Overview](nsx-t/nsx-t-refarch.png)
+![NSX-T &amp; PAS Overview](nsx-t/nsx-t-refarch.png)
 
 When a developer pushes an app to a new Org for the first time, the NSX-T plugin triggers NSX-T to create a new T1 router and allocate an address range for the Org, on demand.
 
@@ -65,86 +65,84 @@ To set up NSX-T to integrate with PAS, complete the procedures in the following 
 To set up logical switches, do the following:
 
 1.  In vSphere, create logical network switches to correspond to the networks that PCF uses.
-  1. Log into the **NSX Manager Dashboard**.
-  1. Open the **Switching** tab.
+  1. Log into the **NSX-T Manager Dashboard**.
+  1. Open the **Advanced Networking & Security** tab at the top.
+  1. Open the **Switching** tab on the left.
   1. For each of these networks...
       - **Infrastructure** (BOSH and Ops Manager, defined in BOSH Director tile > **Assign AZs and Networks** pane)
       - **Deployment** (PAS, defined in PAS tile > **Assign AZs and Networks** pane)
       - **Services** and **Dynamic Services** (marketplace services and on-demand services, also defined in the PAS tile)
       - **Isolation Segment** (optional, defined in the Isolation Segment tile > **Assign AZs and Networks** pane)
 ...do the following:
-          1. Click **Add New Logical Switch**.
-          1. Enter a name for the logical switch (e.g. `infrastructure-ls`, `deployment-ls`).
-          1. Click **Save**.
-![NSX ](nsx-t/nsx-t-logical-switch.png)
+          1. Click **+ADD**.
+          1. Enter a name for the logical switch (e.g. `PAS-Infrastructure`, `PAS-Deployment`).
+          1. Click **ADD**.
+![NSX-T ](nsx-t/nsx-t-logical-switch.png)
 
 #### <a id='nsx-t-routers'></a>Set up Routers
 
 To set up routers, do the following:
 
-1. Create T0 network address translation (NAT) rules to facilitate communication between Ops Manager and the BOSH Director.
-  1. Create and configure a T0 router and router port for PCF.
-  1. In NSX Manager, select your T0 Router and navigate to **Services** > **NAT**.
+1. Create T0 network address translation (NAT) rules to communicate with Ops Manager
+  1. Open the **Advanced Networking & Security** tab at the top
+  1. Open the **Routers** tab on the left
+  1. Select your T0 router
+  1. Select the **Services** drop-down menu and choose **NAT**.
   1. Add a rule for destination NAT (DNAT) with:
-      - The externally-specified destination IP address of incoming requests
-      - The internal network address to translate the external address to
-![NSX ](nsx-t/nsx-t-dnat-rule.png)
-  1. Add a rule for source NAT (SNAT) with:
-      - The range of internal addresses that outgoing traffic may come from
-      - The external IP address to put in each outgoing packet header, indicating its source
-![NSX ](nsx-t/nsx-t-snat-rule.png)
+      - The externally-specified destination IP address of incoming requests. If your Ops Manager has a DNS entry (e.g. `opsmgr.example.com`), this would be its IP address.
+      - The internal network address of the Ops Manager
+![NSX-T ](nsx-t/nsx-t-dnat-rule.png)
+  1. Add the corresponding source NAT (SNAT) rule with:
+      - The externally-specified destination IP address
+      - The internal network address of the Ops Manager
+![NSX-T ](nsx-t/nsx-t-snat-rule.png)
+  1. Add a rule for source NAT (SNAT) for the infrastructure and deployment networks:
+      - The externally-specified destination IP address
+      - The internal network address in CIDR notation
+![NSX-T ](nsx-t/nsx-t-snat-net-rule.png)
 
 1. Create T1 Routers for PAS, to connect from the T0 router. For each PCF network, Infrastructure, Deployment, and so on, create a T1 router as follows:
-  1. In the NSX Manager UI, navigate to **Routing** > **Routers**
-  1. Click **Add** > **Tier-1 Router**.
+1. In the NSX-T Manager UI, navigate to **Advanced Networking & Security** > **Routing** > **Routers**
+  1. Click **+ADD** > **Tier-1 Router**.
   1. Configure the router. Include the Edge Cluster and Edge Cluster Members; they are required to enable the Load Balancer. The Infrastructure network router configuration might look like:
-![NSX ](nsx-t/nsx-t-t1-router.png)
+![NSX-T ](nsx-t/nsx-t-t1-router.png)
 
-1. Create T1 router ports for PAS. For each T1 router you created, add a **New Router Port** as follows, to to allow traffic in and out:
-  1. In the NSX Manager UI, select the T1 router.
-  1. In **Configuration** > **Router Ports**, add a new router port.
+1. Create T1 router downlink ports for PAS. For each T1 router you created, add a **New Router Port** as follows, to to allow traffic in and out:
+  1. In the NSX-T Manager UI, select the T1 router.
+  1. In **Configuration** > **Router Ports**, click **+ADD** to add a new router port.
   1. For **Logical Switch**, enter the name of the logical switch you defined for the network in **Add New Logical Switch**, above.
-![NSX ](nsx-t/nsx-t-router-port.png)
+  1. For **IP Address**, use the first IP of the appropriate subnet. In this example, we have set aside 192.168.1.0/24 for Infrastructure (Operations Manager and BOSH Director), and 192.168.2.0/24 for the Deployment, so we used 192.168.1.1 and 192.168.2.1 respectively.
+![NSX-T ](nsx-t/nsx-t-router-port.png)
 
 1. Advertise the routes of the T1 routers to the T0 router, so the T0 router can correctly route incoming requests based on their destination IP address:
   1. Select your T1 Router and navigate to **Routing** > **Route Advertisement**.
   1. Under **Edit Route Advertisement Configuration**, enable route advertisement by setting **Status** to **Enabled**.
-  1. Set **Advertise All NSX Connected Routes** to **Yes**.
-  1. If you are using NSX-T Load Balancers to route traffic, set **Advertise All LB VIP Routes** and **Advertise All LB SNAT IP Routes** to **Yes**.
-![NSX ](nsx-t/nsx-t-route-advertise.png)
+  1. Set **Advertise All Connected Routes** to **Yes**.
+  1. Set **Advertise All LB VIP Routes** to **Yes** (necessary if Load Balancing service is configured).
+![NSX-T ](nsx-t/nsx-t-route-advertise.png)
 
 1. Allocate an IP Block for PAS Orgs.
-  1. From NSX Manager, navigate to **DDI** > **IPAM** > **New IP block**.
-  1. Enter a description, such as `This is where IP addresses come from when a new Org is created in PAS.`
-  1. Enter a CIDR to allocate an address block large enough to accommodate all PAS apps.
-![NSX ](nsx-t/nsx-t-ip-block.png)
-  - Add a tag to the newly-created IP block.
-![NSX ](nsx-t/nsx-t-t0-router.png)
-
-1. Create a new switching profile with the following fields and tags:
-  - **Name**: `ncp-ha`
-  - **Type**: `Spoof Guard`
-  - **Tags**: Add a tag with **Scope** `ncp/ha`, **Tag** `True`
-  - **Tags**: Add a second tag with the **Scope** and **Tag** name of the T0 router tag you defined above.
-![NSX ](nsx-t/nsx-t-switching-profile.png)
+  1. From the NSX-T Manager, navigate to **Advanced Networking & Security** > **Networking** > **IPAM** and click **+ADD**.
+  1. Enter a name (e.g. `PAS-container-ip-block`). Later you will enter this IP Block name on the **VMware NSX-T** tile in the **NCP** section under **IP Blocks of Container Networks**.
+  1. Enter a description, such as `Subnets are allocated from this pool to each newly-created Org`
+  1. Enter a CIDR to allocate an address block large enough to accommodate all PAS apps. A `/14` CIDR is large enough for ~1,000 Orgs with ~250 apps each. If you're planning such a large foundation, pay heed to the [VMware NSX-T PAS limits](https://configmax.vmware.com/guest?vmwareproduct=VMware%20NSX-T&release=NSX-T%20Data%20Center%202.4.0&categories=31-0).
+![NSX-T ](nsx-t/nsx-t-ip-block.png)
 
 1. Create an external SNAT IP pool.
-  1. Navigate to **Inventory** > **Groups** > **IP Pools** > **New IP Pool**.
-  1. Enter a name and a description.
-![NSX ](nsx-t/nsx-t-edit-ips.png)
-  1. Add two tags to the SNAT IP pool.
-![NSX ](nsx-t/nsx-t-external-ip-tags.png)
+  1. Navigate to **Advanced Networking & Security** > **Inventory** > **Groups** > **IP Pools** and click **+ADD**.
+  1. Enter a name (e.g. `external-ip-pool`) and a description (e.g. `IP pool that provides 1 public IP for each Cloud Foundry Org`). Later you will enter this pool name on the **VMware NSX-T** tile in the **NCP** section under **IP Pools used to provide External (NAT) IP Addresses to Org Networks**.
+![NSX-T ](nsx-t/nsx-t-external-ip-pool.png)
 
 #### <a id='nsx-t-load-balancer'></a>Set up Load Balancer
 
 To set up a load balancer, do the following:
 
 1. Create Active Health Monitors (health checks) for use by the Virtual Server later on:
-  1. In the NSX Manager UI, navigate to **Networking** > **Load Balancing** > **Monitors** > **Active Health Monitors**
+  1. In the NSX-T Manager UI, navigate to **Advanced Networking & Security** > **Networking** > **Load Balancing** > **Monitors** > **Active Health Monitors**
   1. Create the health monitor for web load balancing:
-    1. Click **Add**
+    1. Click **+ADD**
     1. Fill out **Monitor Properties**:
-        - **Name**: `pcf-web-monitor`
+        - **Name**: `pas-web-monitor`
         - **Health Check Protocol**: `LbHttpMonitor`
         - **Monitoring Port**: 8080
     1. Click **Next**
@@ -154,9 +152,9 @@ To set up a load balancer, do the following:
         - **HTTP Response Code**: 200
     1. Click **Finish**
   1. Create the health monitor for TCP load balancing:
-    1. Click **Add**
+    1. Click **+ADD**
     1. Fill out **Monitor Properties**:
-        - **Name**: `pcf-tcp-monitor`
+        - **Name**: `pas-tcp-monitor`
         - **Health Check Protocol**: `LbHttpMonitor`
         - **Monitoring Port**: 80
     1. Click **Next**
@@ -165,19 +163,19 @@ To set up a load balancer, do the following:
         - **HTTP Request URL**: `/health`
         - **HTTP Response Code**: 200
   1. Create the health monitor for SSH load balancing:
-    1. Click **Add**
+    1. Click **+ADD**
     1. Fill out **Monitor Properties**:
-        - **Name**: `pcf-ssh-monitor`
+        - **Name**: `pas-ssh-monitor`
         - **Health Check Protocol**: `LbTcpMonitor`
         - **Monitoring Port**: 2222
     1. Click **Next** > **Finish**
 
 1. Create Server Pools (collections of VMs which handle traffic) for use by the Virtual Server later on:
-  1. In the NSX Manager UI, navigate to **Networking** > **Load Balancing** > **Server Pools**
+  1. In the NSX-T Manager UI, navigate to **Advanced Networking & Security** > **Networking** > **Load Balancing** > **Server Pools**
   1. Create the server pool for web load balancing:
-    1. Click **Add** to add a new pool
+    1. Click **+ADD** to add a new pool
     1. Fill out **General Properties**:
-        - **Name**: `pcf-web-pool`
+        - **Name**: `pas-web-pool`
     1. Click **Next**
     1. Fill out **SNAT Translation**:
         - **Translation Mode**: `Auto Map`
@@ -186,12 +184,12 @@ To set up a load balancer, do the following:
         - **Membership Type**: `Static`
     1. Click **Next**
     1. Fill out **Health Monitors**:
-        - **Active Health Monitor**: `pcf-web-monitor`
+        - **Active Health Monitor**: `pas-web-monitor`
     1. Click **Finish**
   1. Create the server pool for TCP load balancing:
-    1. Click **Add** to add new pool
+    1. Click **+ADD** to add new pool
     1. Fill out **General Properties**:
-        - **Name**: `pcf-tcp-pool`
+        - **Name**: `pas-tcp-pool`
     1. Click **Next**
     1. Fill out **SNAT Translation**:
         - **Translation Mode**: `Transparent`
@@ -200,12 +198,12 @@ To set up a load balancer, do the following:
         - **Membership Type**: `Static`
     1. Click **Next**
     1. Fill out **Health Monitors**:
-        - **Active Health Monitor**: `pcf-tcp-monitor`
+        - **Active Health Monitor**: `pas-tcp-monitor`
     1. Click **Finish**
   1. Create the server pool for ssh load balancing:
-    1. Click **Add** to add new pool
+    1. Click **+ADD** to add new pool
     1. Fill out **General Properties**:
-        - **Name**: `pcf-ssh-pool`
+        - **Name**: `pas-ssh-pool`
     1. Click **Next**
     1. Fill out **SNAT Translation**:
         - **Translation Mode**: `Transparent`
@@ -214,18 +212,18 @@ To set up a load balancer, do the following:
         - **Membership Type**: `Static`
     1. Click **Next**
     1. Fill out **Health Monitors**:
-        - **Active Health Monitor**: `pcf-ssh-monitor`
+        - **Active Health Monitor**: `pas-ssh-monitor`
     1. Click **Finish**
 
 1. Create Virtual Servers:
-  1. In the NSX Manager UI, navigate to **Networking** > **Load Balancing** > **Virtual Servers**
+  1. In the NSX-T Manager UI, navigate to **Advanced Networking & Security** > **Networking** > **Load Balancing** > **Virtual Servers**
   1. Create the Virtual Server which forwards unencrypted web (HTTP) traffic to the Foundation:
 <p class="note"><strong>Note:</strong> Foundations requiring end-to-end encryption should not
 enable the virtual server on port 80, or, if enabled, should configure it to redirect traffic
 to the encrypted port (443)</p>
-    1. Click **Add**
+    1. Click **+ADD**
     1. Fill out **General Properties**:
-        - **Name**: `pcf-web-vs`
+        - **Name**: `pas-web-vs`
         - **Application Type**: `Layer 4 (TCP)`
         - **Application Profile**: `nsx-default-lb-fast-tcp-profile`
     1. Click **Next**
@@ -233,12 +231,12 @@ to the encrypted port (443)</p>
         - **IP Address**: use the address of the DNS record of `*.system.YOUR-SYSTEM-DOMAIN.com`
         - **Port**: `80,443`
     1. Fill out **Server Pool and Rules**:
-        - **Default Server Pool**: `pcf-web-pool`
+        - **Default Server Pool**: `pas-web-pool`
     1. Click **Next** several times, then **Finish**
   1. Create the Virtual Server which forwards traffic to apps with custom ports to the Foundation:
-    1. Click **Add** to add a new Virtual Server
+    1. Click **+ADD** to add a new Virtual Server
     1. Fill out **General Properties**:
-        - **Name**: `pcf-tcp-vs`
+        - **Name**: `pas-tcp-vs`
         - **Application Type**: `Layer 4 (TCP)`
         - **Application Profile**: `nsx-default-lb-fast-tcp-profile`
     1. Click **Next**
@@ -248,12 +246,12 @@ to the encrypted port (443)</p>
           e.g. `1024-1123,5900`
     1. Click **Next**
     1. Fill out **Server Pool and Rules**:
-        - **Default Server Pool**: `pcf-tcp-pool`
+        - **Default Server Pool**: `pas-tcp-pool`
     1. Click **Next** > **Finish**
   1. Create the Virtual Server which forwards ssh traffic to the Foundation:
-    1. Click **Add** to add a new Virtual Server
+    1. Click **+ADD** to add a new Virtual Server
     1. Fill out **General Properties**:
-        - **Name**: `pcf-ssh-vs`
+        - **Name**: `pas-ssh-vs`
         - **Application Type**: `Layer 4 (TCP)`
         - **Application Profile**: `nsx-default-lb-fast-tcp-profile`
     1. Click **Next**
@@ -262,20 +260,20 @@ to the encrypted port (443)</p>
         - **Port**: `2222`
     1. Click **Next**
     1. Fill out **Server Pool and Rules**:
-        - **Default Server Pool**: `pcf-ssh-pool`
+        - **Default Server Pool**: `pas-ssh-pool`
     1. Click **Next** > **Finish**
 
 1. Create the Load Balancer:
-  1. In the NSX Manager UI, navigate to **Networking** > **Load Balancing** > **Load Balancers**
-    1. Click **Add**
+  1. In the NSX-T Manager UI, navigate to **Advanced Networking & Security** > **Networking** > **Load Balancing** > **Load Balancers**
+    1. Click **+ADD**
     1. Fill out the fields:
-        - **Name**: `pcf-lb`
+        - **Name**: `pas-lb`
         - **Load Balancer Size**: Choose `Small` unless you have a larger Foundation
     1. Click **OK**
-  1. Select `pcf-lb`
-  1. Click **Actions** > **Attach to a Virtual Server**, and then select `pcf-web-vs`.
-     Repeat this procedure for the Virtual Servers `pcf-tcp-vs` and `pcf-ssh-vs`.
-  1. Click **Action** > **Attach to a Logical Router**, and then select `deployment-t1`
+  1. Select `pas-lb`
+  1. Click **Actions** > **Attach to a Virtual Server**, and then select `pas-web-vs`.
+     Repeat this procedure for the Virtual Servers `pas-tcp-vs` and `pas-ssh-vs`.
+  1. Click **Action** > **Attach to a Logical Router**, and then select `T1-Router-PAS-Deployment`
 
 ### <a id='nsx-t-mode'></a> Enable NSX-T Mode in the BOSH Director
 
@@ -288,11 +286,11 @@ To enable NSX-T mode in the BOSH Director, do the following:
 
 1. Configure NSX networking by entering the following:
     * **NSX Mode**: Select **NSX-T**.
-    * **NSX Address**: Enter the address of the NSX Manager.
-    * **NSX Username**: Enter the username to connect to the NSX Manager.
+    * **NSX Address**: Enter the address of the NSX-T Manager.
+    * **NSX Username**: Enter the username to connect to the NSX-T Manager.
     * **NSX Password**: The password for the username specified above.
-    * **NSX CA Cert**: A CA certificate in PEM format that authenticates to the NSX server.
-    If the NSX Manager generated a self-signed certificate, you can retrieve the CA certificate using OpenSSL with the command `openssl s_client -host NSX-ADDRESS -port 443 -prexit -showcerts`.
+    * **NSX CA Cert**: A CA certificate in PEM format that authenticates to the NSX-T server.
+    If the NSX-T Manager generated a self-signed certificate, you can retrieve the CA certificate using OpenSSL with the command `openssl s_client -host NSX-ADDRESS -port 443 -prexit -showcerts`.
 
 ### <a id='external-net'></a> Configure PAS for External Container Networking
 
@@ -304,7 +302,7 @@ To configure PAS for external container networking, do the following:
 1. Configure PAS, following the directions in [Deploying PAS on vSphere](./config-er-vmware.html). When you configure **Networking**, select **External** under **Container Networking Interface Plugin**.<br>
 ![NSX ](nsx-t/nsx-t-pas-cni.png)
 
-1. Update the server pool membership for the NSX-T Load Balancers by following [Updating NSX-T Load Balancer Server Pool Membership](./update-nsx-t.html). Make sure to make a VM extension for each of the three server pools: `pcf-web-pool`, `pcf-tcp-pool`, and `pcf-ssh-pool`.
+1. Update the server pool membership for the NSX-T Load Balancers by following [Updating NSX-T Load Balancer Server Pool Membership](./update-nsx-t.html). Make sure to make a VM extension for each of the three server pools: `pas-web-pool`, `pas-tcp-pool`, and `pas-ssh-pool`.
 
 ### <a id='nsx-t-tile'></a> Install and Configure the NSX-T tile
 
@@ -314,23 +312,23 @@ To install and configure the NSX-T tile, do the following:
 ![Ops Manager Installation Dashboard with NSX-T tile](nsx-t/nsx-t-install-dash.png)
 
 1. Click the **VMware NSX-T** tile to open its **Settings** tab, and configure the **NSX Manager** pane as follows:
-  - **NSX Manager Address**:  NSX Manager host address or IP address
+  - **NSX Manager Address**:  NSX-T Manager host address or IP address
   - **Use Client Certificates or Username/Password**: Select **Basic Authentication with Username and Password** and enter **NSX Manager Admin Username** and **Admin Password** credentials in the fields underneath.
-  - **NSX Manager CA Cert**: Obtain this certificate from NSX Manager as follows:
-      1. `ssh` into NSX Manager using the admin account that you created when you deployed NSX Manager.
-      1. From the NSX Manager command line, run `get certificate api` to retrieve the certificate.
-![NSX-T tile config: NSX Manager](nsx-t/nsx-t-tile-config-mgr.png)
+  - **NSX Manager CA Cert**: Obtain this certificate from NSX-T Manager as follows:
+      1. `ssh` into NSX-T Manager using the admin account that you created when you deployed NSX-T Manager.
+      1. From the NSX-T Manager command line, run `get certificate api` to retrieve the certificate.
+![NSX-T tile config: NSX-T Manager](nsx-t/nsx-t-tile-config-mgr.png)
 
 1. Open and configure the **NCP** (NSX-T Container Plugin) pane as follows:
-  - **PAS Foundation Name**: The tag string you gave to the `t0 router` in NSX Manager, above.
-  - **Overlay Transport Zone**: A uniquely identifying string for the **Transport Zone** that you chose when you [created logical switches](#nsx-t-setup) for each network. This can be the name of the transport zone if no other zones in NSX share the same name, or else the UUID for the transport zone.
-  - **Tier-0 Router**: A uniquely identifying string for the T0 router. This can be the tag string that you gave the router in NSX Manager if no other T0 routers in NSX share the same name, or else the UUID for the router.
-  - **Subnet Prefix of Container Networks**: Subnet mask to set the address range size for apps in a single org. Defaults to `24`. This number must be higher than the mask for all PAS orgs in the NSX Manager **New IP Block** pane, to define a each Org's fraction of the total PAS address space.
+  - **PAS foundation Name**: If unsure, use `PAS`. If multiple foundations co-exist on the same NSX-T Manager, choose a unique string, e.g. `PAS-beta`. NCP creates artifacts (e.g. T1 routers) and prefixes their names with this string for easy identification.
+  - **Overlay Transport Zone**: A uniquely identifying string for the **Transport Zone** that you chose when you [created logical switches](#nsx-t-setup) for each network. This can be the name of the transport zone if no other zones in NSX-T share the same name, or else the UUID for the transport zone.
+  - **Tier-0 Router**: A uniquely identifying string for the T0 router. This can be the tag string that you gave the router in NSX-T Manager if no other T0 routers in NSX-T share the same name, or else the UUID for the router.
+  - **Subnet Prefix of Container Networks**: Subnet mask to set the address range size for apps in a single org. Defaults to `24`. This number must be higher than the mask for all PAS orgs in the NSX-T Manager **New IP Block** pane, to define a each Org's fraction of the total PAS address space.
   - **Enable SNAT for Container Network**: Enable this checkbox.
 ![NSX-T tile config: NCP](nsx-t/nsx-t-tile-config-ncp.png)
 
 1. In the **NSX Node Agent** pane, enable the **Enable Debug Level of Logging for NSX Node Agent** checkbox.
-![NSX-T tile config: NSX Node Agent](nsx-t/nsx-t-tile-config-agent.png)
+![NSX-T tile config: NSX-T Node Agent](nsx-t/nsx-t-tile-config-agent.png)
 
 1. Click **Save** and return to the **Installation Dashboard**.
 

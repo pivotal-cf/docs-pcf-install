@@ -3,25 +3,64 @@ title: Installing Pivotal Cloud Foundry on Azure
 owner: Ops Manager
 ---
 
-<strong><%= modified_date %></strong>
+This topic describes how to install Pivotal Cloud Foundry (PCF) on Microsoft Azure. 
 
-This guide describes how to install [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) on Azure.
+It includes resource requirements, prerequisites, instructions for installing PCF on Azure, and additional resources.
 
-To view production-level deployment options for PCF on Azure, see the [Reference Architecture for Pivotal Cloud Foundry on Azure](../refarch/azure/azure_ref_arch.html).
 
-## <a id="general"></a> General Requirements
+## <a id="overview"></a> Overview
 
-<%= partial 'requirements' %>
+You can install PCF on Azure, Azure Government Cloud, or Azure Germany. For more information about Azure regions, see [Azure regions](https://azure.microsoft.com/en-us/global-infrastructure/regions/) in the Microsoft Azure documentation.
 
-## <a id="azure"></a> Azure Requirements
+You can install PCF on Azure with the Pivotal Application Service (PAS) runtime. There are resource requirements specific to both PAS and Azure. Ensure you meet the requirements for PAS and the requirements specific to Azure before installing PCF on Azure. For more information, see [Requirements](#requirements).
 
-The following are the minimum resource requirements for deploying a PCF deployment with Ops Manager and Pivotal Application Service (PAS) on Azure:
 
-* VMs:
-  - **PAS**: At a minimum, a new Azure deployment requires the following VMs for PAS:
+## <a id="requirements"></a> Requirements
+
+This section lists the following resource requirements for installing PCF on Azure:
+
+* PAS resource requirements. See [PAS Resource Requirements](#pcf-requirements).
+* Azure-specific resource requirements. See [Azure Resource Requirements](#azure-requirements).
+
+
+### <a id="pcf-requirements"></a> PAS Resource Requirements
+
+The following are general resource requirements for deploying and managing a PCF deployment with Ops Manager and PAS:
+
+* PAS requires sufficient IP allocation. The following lists the minimum required IP allocations:
+  * One static IP address for either HAProxy or one of your Gorouters
+  * One static IP address for each job in the Ops Manager tile. See the Ops Manager **Resource Config** pane for each tile for a full list. 
+  * One static IP address for each job listed below:
+      * Consul
+      * NATS
+      * File Storage 
+      * MySQL Proxy 
+      * MySQL Server
+      * Backup Restore Node
+      * HAProxy
+      * Router
+      * MySQL Monitor
+      * Diego Brain
+      * TCP Router
+  * One IP for each VM instance created by the service.
+  * An additional IP address for each compilation worker. Use the following formula to determine the total IPs required: `IPs needed = static IPs + VM instances + compilation workers`.
+  * Pivotal recommends that you allocate at least 36 dynamic IP addresses when deploying Ops Manager and PAS. BOSH requires additional dynamic IP addresses during installation to compile and deploy VMs, install PAS, and connect to services.
+* Pivotal recommends using a network without DHCP for deploying PAS VMs.
+  <p class="note"><strong>Note:</strong> If you have DHCP, refer to the <a href="./troubleshooting.html">Troubleshooting Guide</a> to avoid issues with your installation.</p> 
+
+
+### <a id="azure-requirements"></a> Azure Resource Requirements
+
+The following are the minimum resource requirements for deploying a PCF deployment with Ops Manager and PAS on Azure:
+
+* An OS disk of 120&nbsp;GB for the Ops Manager VM.
+  <p class="note"><strong>Note:</strong> Ops Manager v1.11 requires a Director VM with at least 8&nbsp;GB memory.</p>
+
+* A minimum of the following VM instance limits in your Azure account. The number of VMs required depends on the number of tiles and availability zones you plan to deploy. The following VM guidelines apply to the PAS and Small Footprint PAS runtimes:
+
+  - **PAS**: A new Azure deployment requires the following VMs for PAS and Ops Manager:
 <table border='1' class='nice'>
   <tr>
-    <th rowspan=6>PAS and Ops Manager</th>
     <th>VM Type</th>
     <th>VM Count</th>
   </tr><tr>
@@ -41,12 +80,13 @@ The following are the minimum resource requirements for deploying a PCF deployme
     <td>1</td>
   </tr>
 </table>
-By default, PAS deploys the number of VM instances required to run a highly available configuration of PCF. If you are deploying a test or sandbox PCF that does not require HA, then you can scale down the number of instances in your deployment. For information about the number of instances required to run a minimal, non-HA PCF deployment, see [Scaling PAS](../opsguide/scaling-ert-components.html).
-  - **Small Footprint PAS**: To run Small Footprint PAS, an Azure deployment requires:
+<p class="note"><b>Note: </b>If you are deploying a test or sandbox PCF that does not require high availability, then you can scale down the number of VM instances in your deployment. For more information, see <a href="../opsguide/scaling-ert-components.html">Scaling PAS</a>.</p>
+
+  - **Small Footprint PAS**: A new Azure deployment requires the following VMs for Small Footprint PAS and Ops Manager:
 <table id='azure-requirements' border="1" class="nice">
   <tr>
   </tr></tr>
-    <th>Azure Requirements</th>
+    <th></th>
     <th>VM Type</th>
     <th>VM Count</th>
     <th>Notes</th>
@@ -78,65 +118,69 @@ By default, PAS deploys the number of VM instances required to run a highly avai
     <td></td>
   </tr>
 </table>
-  <p class="note"><strong>Note:</strong> Specific instance types are only supported in certain regions. See the <a href="https://azure.microsoft.com/en-us/regions/services/">Azure documentation</a> for a complete list. If you are deploying PCF in a region that does not support the above instance types, see the <a href="https://docs.pivotal.io/pivotalcf/2-2/opsman-api#overriding-defaults-with-custom-disk-types">Ops Manager API documentation</a> for instructions on how to override the default VM sizes. Changing the default VM sizes may increase the cost of your deployment. </p>
-
-* An OS disk of 120&nbsp;GB for the Ops Manager VM.
-  <p class="note"><strong>Note:</strong> Ops Manager v1.11 requires a Director VM with at least 8&nbsp;GB memory.</p>
-
-* To deploy PCF on Azure, you must have the Azure CLI v2.0. For instructions on how to install the
-Azure CLI for your operating system, see [Preparing to Deploy Ops Manager on Azure Manually](../om/azure/prepare-env-manual.html#install).
+  <p class="note"><strong>Note:</strong> Some VM instance types are only supported in certain Azure regions. For more information, see <a href="https://azure.microsoft.com/en-us/regions/services/">Products available by region</a> in the Azure documentation. To deploy PCF on an Azure region that does not support the above VM instance types, you must override the default VM sizes. For more information, see <a href="https://docs.pivotal.io/pivotalcf/2-2/opsman-api#overriding-defaults-with-custom-disk-types">Overriding defaults with custom disk types</a> in the Ops Manager API documentation. Changing the default VM sizes may increase the cost of your deployment. </p>
 
 
-## <a id="permissions"></a> Azure Permissions Guidelines
+## <a id="prerequisites"></a> Prerequisites
 
-Pivotal recommends following the principle of least privilege by scoping privileges to the most restrictive permissions possible for a given role. See [IaaS Permissions Guidelines](./iaas-user-roles.html) for recommendations on how to create and scope Azure accounts for PCF.
+Before installing PCF on Azure, you must do the following:
 
+* Install the Azure CLI v2.0. For instructions on how to install the Azure CLI for your operating system, see [Preparing to Deploy Ops Manager on Azure Manually](../om/azure/prepare-env-manual.html).
 
-## <a id="security"></a> Azure Security Documents
+* Configure sufficient IP allocation for PAS. For more information about IP allocation requirements, see [PAS Resource Requirements](#pas).
 
-* [Azure security documentation](https://docs.microsoft.com/en-us/azure/security/)<br />
-This site has documentation on Azure security tools. It provides a general guide to how to manage IaaS users and credentials.
+* Create an SSL certificate for your PCF domain.
+  <p class="note"><b>Note: </b>To deploy PCF to a production environment, you must obtain a certificate from a certificate authority. Pivotal recommends using a self-signed certificate generated by Ops Manager for development and testing purposes only.</p>
+
+* Assign administrative rights to a domain for PCF. You must be able to add wildcard records to this domain.
+
+* Create a wildcard DNS record that points to your router or load balancer. Alternatively, you can use a service such as xip.io. For example, `203.0.113.0.xip.io`. Then, create at least one wildcard TLS certificate that matches the DNS record you configured.
+  <p class="note"><b>Note: </b> With a wildcard DNS record, every hostname in your domain resolves to the IP address of your router or load balancer. For example, if you create a DNS record `*.example.com` pointing to your router, every app deployed to the `example.com` domain resolves to the IP address of your router.</p>
+
+* Create one or more NTP servers, if the NTP servers are not already provided by your Azure project.
+
+* Install the most recent version of the Cloud Foundry Command Line Interface (cf CLI). See [Cloud Foundry Command Line Interface](https://github.com/cloudfoundry/cli#downloads) in GitHub.
+
+* **(Optional)** Configure external storage. Pivotal recommends using external storage if possible. For more information about how file storage location affects platform performance and stability during upgrades, see [Configure File Storage](../upgrading/configuring.html#file-storage).
+
+* **(Optional)** Configure external databases. Pivotal recommends using external databases in production deployments for BOSH Director and PAS. An external database must be configured to use the UTC timezone.
+
+* **(Optional)**  Configure external user stores. When you deploy PCF, you can select a SAML user store for Ops Manager or a SAML or LDAP user store for PAS, to integrate existing user accounts.
 
 
 ## <a id='install'></a> Install PCF on Azure
 
-Complete the following procedures to install PCF on Azure:
+You can install PCF on Azure either manually or using Terraform. 
 
-1. [Preparing to Deploy Ops Manager on Azure Manually](../om/azure/prepare-env-manual.html)
+To install PCF on Azure, do one of the following:
 
-1. You can choose to deploy BOSH Director with Terraform or manually:
-  * [Deploying Ops Manager on Azure Using Terraform](../om/azure/prepare-env-terraform.html) (Recommended)
-  * [Deploying Ops Manager on Azure Manually](../om/azure/deploy-manual.html)
+* Install PCF on Azure manually. See [Installing PCF on Azure Manually](pcf-azure-manual-config.html).
 
-1. [Configuring BOSH Director on Azure Manually](../om/azure/config-manual.html)
-
-1. [Deploying PAS on Azure](azure-er-config.html)
+* Install PCF on Azure using Terraform. See [Installing PCF on Azure Using Terraform](azure-terraform.html).
 
 
 ## <a id='install-gov'></a> Install PCF on Azure Government Cloud
 
-To deploy PCF on Azure Government Cloud, see [Configuring BOSH Director on Azure Government Cloud](../om/azure/gov-cloud.html).
+To install PCF on Azure Government Cloud, see [Configuring BOSH Director on Azure Government Cloud](../om/azure/gov-cloud.html).
 
 
-## <a id='install-germany'></a> Install PCF in Azure Germany
+## <a id='install-germany'></a> Install PCF on Azure Germany
 
-To deploy PCF in Azure Germany, see [Configuring BOSH Director on Azure Germany](../om/azure/german-cloud.html).
-
-
-## <a id='troubleshoot'></a> Troubleshoot PCF on Azure
-
-To troubleshoot known issues when deploying PCF on Azure, see [Troubleshooting PCF on Azure](azure-troubleshooting.html).
+To install PCF in Azure Germany, see [Configuring BOSH Director on Azure Germany](../om/azure/german-cloud.html).
 
 
-## <a id='delete'></a> Delete PCF on Azure
+## <a id='resources'></a> Additional Resources
 
-You can use the Azure Portal console to remove all the components of a PCF on Azure installation.
+The following are additional resources related to installing PCF on GCP:
 
-* [Deleting a PCF on Azure Installation](deleting-azure-install.html)
+* For information about troubleshooting the PCF on Azure install process, see [Troubleshooting PCF on Azure](azure-troubleshooting.html).
 
+* For production-level deployment options for PCF on Azure, see [Reference Architecture for Pivotal Cloud Foundry on Azure](../refarch/azure/azure_ref_arch.html).
 
-## <a id='upgrade'></a> Upgrade PCF on Azure
+* For information about how to manage IaaS users and credentials in Azure, see [Azure security documentation](https://docs.microsoft.com/en-us/azure/security/).
 
-Upgrade your BOSH Director as part of the upgrade process documented in the [Upgrading Pivotal Cloud Foundry](upgrading-pcf.html) topic.
+* For recommendations on how to create and scope Azure accounts for PCF, see [IaaS Permissions Guidelines](./iaas-user-roles.html).
 
-To upgrade PCF on Azure, see [Upgrading BOSH Director on Azure](azure-om-upgrade.html).
+* For information about deleting a PCF on Azure installation, see [Deleting a PCF on Azure Installation](deleting-azure-install.html).
+
+* For information about upgrading PCF on Azure, see [Upgrading BOSH Director on Azure](azure-om-upgrade.html).

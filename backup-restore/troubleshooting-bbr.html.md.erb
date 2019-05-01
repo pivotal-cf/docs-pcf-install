@@ -40,7 +40,7 @@ Scale down to one instance and retry.
 
 If your MySQL Server cluster is already scaled down to one node, it may have taken longer than normal to restart the cluster. Follow the procedure below to manually verify and retry.
 
-1. List the VMs in your deployment:
+1. To list the VMs in your deployment:
 
     ```
     bosh -e BOSH-DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate \
@@ -54,21 +54,24 @@ If your MySQL Server cluster is already scaled down to one node, it may have tak
     * `DEPLOYMENT-NAME` is the deployment name. For how to retrieve the deployment name,
     see [Identify Your Deployment](./restore-pcf-bbr.html#identify-deployment).
 
-1. Select the `mysql` VM to SSH into.
+1. Locate the `mysql` VM.
 
-1. From the `mysql` VM, run the following to check that the MySQL job process is running: 
+1. SSH into the `mysql` VM.
+
+1. To check that the MySQL job process is running, perform one of the following from the `mysql` VM : 
+     * If you selected **Internal Databases - MySQL - Percona XtraDB Cluster** 
+    when you configured the PAS tile, run the following command:
 
     ```
-    ps aux | grep MYSQL-JOB
+    ps aux | grep galera-init
     ```
-    <br>
-    Where `MYSQL-JOB` is your MySQL job process name. Replace with one of the following:
-    <br><br>
-    - If you selected **Internal Databases - MySQL - Percona XtraDB Cluster** 
-    when you configured the PAS tile, replace `MYSQL-JOB` with `galera-init`.
-    - If you selected **Internal Databases - MySQL - MariaDB Galera Cluster** 
-    when you configured the PAS tile, replace `MYSQL-JOB` with `mariadb_ctrl`.
-  
+    * If you selected **Internal Databases - MySQL - MariaDB Galera Cluster** 
+    when you configured the PAS tile, run the following command:
+
+    ```
+    ps aux | grep mariadb_ctrl
+    ```
+
     For example:
     <pre class="terminal">
     $ ps aux | grep galera-init
@@ -94,6 +97,7 @@ For more information, see the <em>Deploying PAS</em> topic for your IaaS. For ex
     ```
 
 1. After a few minutes, run the following command:
+
     ```
     monit summary
     ```
@@ -138,9 +142,18 @@ The jumpbox and the VMs in the deployment are experiencing connection problems.
 
 Perform the following steps:
 
-1. Ensure your deployment is healthy by running `bosh vms`.
-1. Run `bbr deployment backup-cleanup` in order to clean up the data from the failed backup on the instances. 
-Otherwise, further BBR commands fail.
+1. To ensure your deployment is healthy, run the following command:
+
+    ```
+    bosh vms
+    ```
+1. To clean up the data from the failed backup on the instances, run the following command:
+
+    ```
+    bbr deployment backup-cleanup
+    ```
+    <p class="note"><strong>Note</strong>: This step must be performed, otherwise, further BBR commands fail.</p>
+
 1. Repeat the BBR operation.
 
 ### <a id="metadata-error"></a> Error Running Metadata Script

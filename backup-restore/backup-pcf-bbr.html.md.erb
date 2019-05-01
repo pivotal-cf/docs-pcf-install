@@ -88,9 +88,10 @@ restore with BBR.
     <th style="border-top-style: hidden; border-right-style: hidden; border-left-style: hidden; border-bottom-style: hidden; background-color: white;"></th>
     <th colspan="7" style="border-top-style: hidden; text-align: center; background-color: white; color: black; padding: 10px;">Ops Manager Version</th>
     <th style="border-top-style: hidden; border-right-style: hidden; border-left-style: hidden; border-bottom-style: hidden; background-color: white; "></th>
+  </tr>
   <tr>
     <th class="rotate" rowspan="10" style="width: 5%; border-left-style: hidden; background-color: white; color: black;"><div>Deployment Type</div></th>
-    <th style="background-color: #1b786e; color: white;"</th>
+    <th style="background-color: #1b786e; color: white;"></th>
     <th class="cell header" style="width: 12%; text-align: center;">1.11</th>
     <th class="cell header" style="width: 12%; text-align: center;">1.12</th>
     <th class="cell header" style="width: 12%; text-align: center;">2.0</th>
@@ -245,11 +246,20 @@ The following diagram shows a sample backup flow.
 
 You must have a jumpbox before you can install BBR to the jumpbox. A jumpbox is a separate,
 hardened server on your network that provides a controlled means of access to the VMs other
-computers on your network. Pivotal recommends using the Ops Manager VM as your jumpbox.
+computers on your network.  
 
-See the [jumpbox-deployment](https://github.com/cloudfoundry/jumpbox-deployment) GitHub repository for an example jumpbox deployment.
+Pivotal recommends using the Ops Manager VM as your jumpbox. If you use the Ops Manager VM as your jumpbox, 
+the path to the root Certificate Authority (CA) certificate is:
 
-Prepare your jumpbox for BBR by following the steps in [Setting Up Your Jumpbox for BBR](system-setup-bbr.html).
+```
+/var/tempest/workspaces/default/root_ca_certificate
+```
+
+You must have this path to run BBR commands.
+
+Prepare your jumpbox for BBR by following the steps in [Setting Up Your Jumpbox for BBR](system-setup-bbr.html). 
+See the [jumpbox-deployment](https://github.com/cloudfoundry/jumpbox-deployment) GitHub repository 
+for an example jumpbox deployment.
 
 <p class="note"><strong>Note:</strong> Pivotal recommends that you regularly update the BBR binary on your jumpbox to the latest version. See <a href="system-setup-bbr.html#scp">Transfer BBR Binary to Your Jumpbox</a> in <em>Setting Up Your Jumpbox for BBR</em> for more information.</p>
 
@@ -273,42 +283,73 @@ Perform the following steps to retrieve the IP address of your BOSH Director and
 
 ### <a id='check-director'></a> Step 4: Check Your BOSH Director
 
-Perform the following steps to check that your BOSH Director is reachable and can be backed up:
+Perform the following steps to confirm that your BOSH Director is reachable and can be backed up.  
 
 #### Retrieve BOSH Director Credentials
 
-1. Navigate to the Ops Manager Installation Dashboard.
+There are two ways to retrieve your BOSH Director credentials.
 
-1. Click the BOSH Director tile.
+* Ops Manager Installation Dashboard
+    1. Navigate to the Ops Manager Installation Dashboard.
+    1. Click the BOSH Director tile.
+    1. Click the **Credentials** tab.
+    1. Locate **Bbr Ssh Credentials** and click **Link to Credential** next to it.
+    1. Copy the value for `private_key_pem`. 
 
-1. Click the **Credentials** tab.
+* Ops Manager API
+    1. Retrieve the credentials using the Ops Manager API using the following command:  
 
-1. Locate **Bbr Ssh Credentials** and click **Link to Credential** next to it.
-<br><br>
-You can also retrieve the credentials using the Ops Manager API with a GET request to the following endpoint: `/api/v0/deployed/director/credentials/bbr_ssh_credentials`. For more information, see the [Using the Ops Manager API](../ops-man-api.html) topic.
+        ```
+        curl "https://OPS-MAN-FQDN/api/v0/deployed/director/credentials/bbr_ssh_credentials" \
+        -X GET \
+        -H "Authorization: Bearer UAA-ACCESS-TOKEN"
+        ```
+<br>
+        Where:  
+        * `OPS-MAN-FQDN` is the fully-qualified domain name (FQDN) for your Ops Manager deployment.  
+        * `UAA_ACCESS_TOKEN` is your UAA access token. For more information, see [Access the
+        API](../../customizing/ops-man-api.html#access-api).  
+<br>
+    2. Copy the value for `private_key_pem`.   
 
-1. Copy the value for `private_key_pem`.
+    For more information on using the Ops Manager API, see the [Using the Ops Manager API](../../customizing/ops-man-api.html) topic.
 
 #### Connect to Your Jumpbox
 
 You can establish a connection to your jumpbox in one of the following ways.
 
 * [Connect with SSH](#ssh)
-* [Connect with BOSH_ALL_PROXY](#bosh-all-proxy)
+* [Connect with BOSH&#95;ALL&#95;PROXY](#bosh-all-proxy)
+
+<p class="note"><strong>Note</strong>: These procedures require you have a jumpbox configured for SSH access. 
+If you do not have a jumpbox, please see <a href="https://bosh.io/docs/jumpbox/">Enabling SSH Access</a> and <a href="https://bosh.io/docs/cli-tunnel/">Tunneling</a> in the BOSH documentation.
+</p>
 
 For general information about the jumpbox, see [Setting Up Your Jumpbox for BBR](system-setup-bbr.html).
 
 <a id='ssh'></a> **Connect with SSH**
 
-SSH into your jumpbox.
+There are two options available to you to connect to your jumpbox with SSH.
 
-```
-ssh -i LOCAL-PATH-TO-JUMPBOX-PRIVATE-KEY JUMPBOX-USER@JUMPBOX-ADDRESS
-```
+* Log in to the Ops Manager VM:
+    1. If you are using the Ops Manager VM as your jumpbox, see the 
+    [Log in to the Ops Manager VM with SSH](../trouble-advanced.html#ssh) section of _Advanced Troubleshooting with the BOSH CLI_ 
+    for information on how to use SSH to connect to the Ops Manager VM. 
+* SSH via command line:
+    1. Run the following command to SSH into your jumpbox:
 
-If you connect to your jumpbox with SSH, you must run the BBR commands in the following sections from within your jumpbox.
+        ```
+        ssh -i LOCAL-PATH-TO-JUMPBOX-PRIVATE-KEY JUMPBOX-USER@JUMPBOX-ADDRESS
+        ```
+        Where:  
+        * `LOCAL-PATH-TO-JUMPBOX-PRIVATE-KEY`  is the local path to your private key file for the jumpbox host.
+        * `JUMPBOX-USER` is your jumpbox username.
+        * `JUMPBOX-ADDRESS` is the IP address of your jumpbox.
 
-<a id='bosh-all-proxy'></a> **Connect with BOSH_ALL_PROXY**
+<p class="note"><strong>Note</strong>: If you connect to your jumpbox with SSH, you must run the BBR commands in the following sections from within your jumpbox.
+</p>
+
+<a id='bosh-all-proxy'></a> **Connect with BOSH&#95;ALL&#95;PROXY**
 
 Set and use `BOSH_ALL_PROXY`. Using `BOSH_ALL_PROXY` opens an SSH tunnel with SOCKS5 to the jumpbox. 
 This tunnel enables you to forward requests to the BOSH Director through the jumpbox from your local machine.
@@ -318,22 +359,38 @@ Use one of the following methods to create the tunnel:
 * **Tunnel created by BOSH CLI**: To provide the BOSH CLI with the SSH credentials it needs to create the tunnel, run the following command:
 
     ```
-	 export BOSH_ALL_PROXY=ssh+socks5://jumpbox@jumpbox-ip:12345?private_key=jumpbox.key
+	 export BOSH_ALL_PROXY=ssh+socks5://JUMPBOX@JUMPBOX-IP:SOCKS-PORT?private_key=JUMPBOX-KEY-FILE
 	 ```
+
+    Where:
+    * `JUMPBOX` is the name of your jumpbox.
+    * `JUMPBOX-IP` is the IP address of the jumpbox.
+    * `SOCKS-PORT` is the local SOCKS port.
+    * `JUMPBOX-KEY-FILE` is the local SSH private key for accessing the jumpbox.
+
 
 * **Tunnel established separately**:
 
   1. To establish the tunnel and make it available on a local port, run the following command:
 
     ```
-    ssh -4 -D 12345 -fNC jumpbox@jumpbox-ip -i jumpbox.key
+    ssh -4 -D SOCKS-PORT -fNC JUMPBOX@JUMPBOX-IP -i JUMPBOX-KEY-FILE
     ```
-	
+
+    Where:
+    * `JUMPBOX` is the name of your jumpbox.
+    * `JUMPBOX-IP` is the IP address of the jumpbox.
+    * `SOCKS-PORT` is the local SOCKS port.
+    * `JUMPBOX-KEY-FILE` is the local SSH private key for accessing the jumpbox.
+
   1. To provide the BOSH CLI with access to the tunnel through use of the `BOSH_ALL_PROXY` environment variable, run the following command:
 
     ```
     export BOSH_ALL_PROXY=socks5://localhost:12345
     ```
+
+<p class="note"><strong>Note</strong>: Ensure the Socks port is not already in use by a different tunnel/process.
+</p>
 
 <p class="note"><strong>Note</strong>: Using <code>BOSH_ALL_PROXY</code> can result in longer
 backup and restore times due to network performance degradation. Because all operations must pass
@@ -342,25 +399,29 @@ through the proxy, moving backup artifacts can be significantly slower.
 
 #### Check Your BOSH Director
 
-1. Run the following command to reformat the key and save it to a file named `PRIVATE-KEY` in the current directory, pasting in the contents of your private key for `YOUR-PRIVATE-KEY`:
+1. Run the following command to reformat your private key and save it in the current directory to a file named `PRIVATE-KEY-FILE`:
   
     ```
-    printf -- "YOUR-PRIVATE-KEY" > PRIVATE-KEY
+    printf -- "YOUR-PRIVATE-KEY" > PRIVATE-KEY-FILE
     ```
+
+    Where:
+    * `YOUR-PRIVATE-KEY` is the text of your private key.
+    * `PRIVATE-KEY-FILE` is the path to the private key file you are creating.
 
 1. Run the BBR `pre-backup-check` command:
 	
     ```
   	bbr director \
-    --private-key-path PRIVATE-KEY \
+    --private-key-path PRIVATE-KEY-FILE \
     --username bbr \
     --host HOST \
     pre-backup-check
   	```
   	Where:
-  	* `PRIVATE-KEY` is the path to the private key file you created above.
+  	* `PRIVATE-KEY-FILE` is the path to the private key file you created above.
   	* `HOST` is the address of the BOSH Director. If the BOSH Director is public,
-    this is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, this is
+    `HOST` is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, `HOST` is
     the `BOSH-DIRECTOR-IP`, which you retrieved in the
     [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve) section of this topic.
     <p class='note'><strong>Note:</strong> Use the optional <code>--debug</code>
@@ -391,22 +452,33 @@ When BBR backs up PAS, it needs a Backup Restore node. This procedure confirms t
 
 ### <a id='identify-deployment'></a> Step 6: Identify Your Deployment
 
-After logging in to your BOSH Director, run the following command to identify the name of the BOSH deployment that contains PCF:
+The following procedure should be completed after logging in to your BOSH Director.  
 
-<pre class="terminal">
-$ bosh -e BOSH-DIRECTOR-IP --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
+1. To identify the name of the BOSH deployment that contains PCF, run the following command:
 
-Name                     Release(s)
-cf-example               push-apps-manager-release/661.1.24
-                         cf-backup-and-restore/0.0.1
-                         binary-buildpack/1.0.11
-                         capi/1.28.0
-                         cf-autoscaling/91
-                         cf-mysql/35
-                         ...
-</pre>
+    ```
+    bosh -e BOSH-DIRECTOR-IP --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
+    ```
+    Where:
+    * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in
+    [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve).
+    * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
+      (CA) certificate for the BOSH Director. 
 
-In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
+    <pre class="terminal">
+    $ bosh -e BOSH-DIRECTOR-IP --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
+
+    Name                     Release(s)
+    cf-example               push-apps-manager-release/661.1.24
+                             cf-backup-and-restore/0.0.1
+                             binary-buildpack/1.0.11
+                             capi/1.28.0
+                             cf-autoscaling/91
+                             cf-mysql/35
+                             ...
+    </pre>
+
+    In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
 
 ### <a id='check'></a> Step 7: Check Your Deployment
 
@@ -432,7 +504,7 @@ Perform the following steps to check that your BOSH Director is reachable and ha
     click **BOSH Director**, navigate to the **Credentials** tab, and click **Uaa Bbr Client Credentials**.
     You can also retrieve the credentials using the Ops Manager API with a GET
     request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`.
-    For more information, see [Using the Ops Manager API](../ops-man-api.html).
+    For more information, see [Using the Ops Manager API](../../customizing/ops-man-api.html).
     * `DEPLOYMENT-NAME` is the deployment name retrieved in 
     [Step 6: Identify Your Deployment](#identify-deployment).
     * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
@@ -494,15 +566,17 @@ username at the top right navigation.
 If you want to automate the back up process, you can use the Ops Manager API to
 export your installation settings.
 
-To export your installation settings using the Ops Manager API, run the following command:
+1. To export your installation settings using the Ops Manager API, run the following command:
 
-```
-curl OPSMAN-URL/api/v0/installation_asset_collection \
-  -H "Authorization: Bearer UAA-ACCESS-TOKEN" > installation.zip
-```
+    ```
+    curl https://OPS-MAN-FQDN/api/v0/installation_asset_collection \
+      -H "Authorization: Bearer UAA-ACCESS-TOKEN" > installation.zip
+    ```
 
-For instructions about authenticating and retrieving the `UAA-ACCESS-TOKEN`, see
-[Using the Ops Manager API](../ops-man-api.html).
+    Where:  
+    * `OPS-MAN-FQDN` is the fully-qualified domain name (FQDN) for your Ops Manager deployment.  
+    * `UAA_ACCESS_TOKEN` is your UAA access token. For more information, see [Access the
+    API](../../customizing/ops-man-api.html#access-api). 
 
 ### <a id='bbr-backup-director'></a> Step 9: Back Up Your BOSH Director
 
@@ -513,37 +587,43 @@ For instructions about authenticating and retrieving the `UAA-ACCESS-TOKEN`, see
   </ul>
 </div>
 
-Run the BBR `backup` command to back up your BOSH Director:
+1. Run the BBR `backup` command to back up your BOSH Director:
 
-```
-bbr director \
---private-key-path PRIVATE-KEY \
---username bbr \
---host HOST \
-backup
-```
+    ```
+    bbr director \
+    --private-key-path PRIVATE-KEY-FILE \
+    --username bbr \
+    --host HOST \
+    backup
+    ```
 
-Where:
-
-* `PRIVATE-KEY` is the path to the private key file you created in
-[Step 4: Check Your BOSH Director](#check-director).
-* `HOST` is the address of the BOSH Director:
-  * If the BOSH Director is public, this is a URL, such as `https://my-bosh.xxx.cf-app.com`.
-  * If the BOSH Director is not public, this is the `BOSH-DIRECTOR-IP` retrieved in
-[Step 3: Retrieve BOSH Director Address and Credentials](#retrieve).
+    Where:
+    * `PRIVATE-KEY-FILE` is the path to the private key file you created in
+    [Step 4: Check Your BOSH Director](#check-director).
+    * `HOST` is the address of the BOSH Director:
+      * If the BOSH Director is public, `HOST` is a URL, such as `https://my-bosh.xxx.cf-app.com`.
+      * If the BOSH Director is not public, `HOST` is the `BOSH-DIRECTOR-IP` retrieved in
+    [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve).
   
-<p class='note'><strong>Note:</strong> Use the optional <code>--debug</code> flag to enable debug logs. See the <a href="#logging">Logging</a> section of this topic for more information.</p>
+    <p class='note'><strong>Note:</strong> Use the optional <code>--debug</code> flag to enable debug logs. See the <a href="#logging">Logging</a> section of this topic for more information.</p>
 
-<br>
-If your backup terminates early or fails, clean up by running the `backup-cleanup` command:
+1. If your backup terminates early or fails, clean up by running the `backup-cleanup` command:
 
-```
-bbr director \
---private-key-path PRIVATE-KEY \
---username bbr \
---host HOST \
-backup-cleanup
-```
+    ```
+    bbr director \
+    --private-key-path PRIVATE-KEY-FILE \
+    --username bbr \
+    --host HOST \
+    backup-cleanup
+    ```
+
+    Where:
+    * `PRIVATE-KEY-FILE` is the path to the private key file you created in
+    [Step 4: Check Your BOSH Director](#check-director).
+    * `HOST` is the address of the BOSH Director:
+      * If the BOSH Director is public, `HOST` is a URL, such as `https://my-bosh.xxx.cf-app.com`.
+      * If the BOSH Director is not public, `HOST` is the `BOSH-DIRECTOR-IP` retrieved in
+      [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve).
 
 ### <a id='bbr-backup'></a> Step 10: Back Up Your PAS Deployment
 
@@ -576,7 +656,7 @@ Your blobstore backup might be slightly inconsistent with your PAS backup depend
     click **BOSH Director**, navigate to the **Credentials** tab, and click **Uaa Bbr Client Credentials**.
     You can also retrieve the credentials using the Ops Manager API with a GET
     request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`.
-    For more information, see [Using the Ops Manager API](../ops-man-api.html).
+    For more information, see [Using the Ops Manager API](../../customizing/ops-man-api.html).
     * `DEPLOYMENT-NAME` is the deployment name retrieved in 
     [Step 6: Identify Your Deployment](#identify-deployment).
     * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
@@ -589,7 +669,8 @@ Your blobstore backup might be slightly inconsistent with your PAS backup depend
 
 1. If the command succeeds, continue to [Step 11: Transfer Backup Artifacts](#transfer-artifacts).
 <br><br>
-If the command fails, do the following:
+If the command fails, do the following:  
+
   1. Run the BBR `backup-cleanup` command:
 
         ```
@@ -601,8 +682,27 @@ If the command fails, do the following:
         --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
         backup-cleanup
         ```
+        Where:
+        * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in
+        [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve).
+        * `BOSH-CLIENT`, `BOSH-PASSWORD` are the BOSH UAA credentials.
+        To retrieve these credentials, navigate to the Ops Manager Installation Dashboard, 
+        click **BOSH Director**, navigate to the **Credentials** tab, and click **Uaa Bbr Client Credentials**.
+        You can also retrieve the credentials using the Ops Manager API with a GET
+        request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`.
+        For more information, see [Using the Ops Manager API](../../customizing/ops-man-api.html).
+        * `DEPLOYMENT-NAME` is the deployment name retrieved in 
+        [Step 6: Identify Your Deployment](#identify-deployment).
+        * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
+          (CA) certificate for the BOSH Director. 
+        * Use the optional `--debug` flag to enable debug logs. For more information,
+        see [Logging](#logging) below.
+        * Use the optional `--with-manifest` flag to ensure that BBR downloads your 
+        current deployment manifest when backing up.
+        These manifests are included in the Ops Manager export, but are useful for reference.
+
   1. Run the BBR `backup` command again after checking the following:
-  <br><br>
+  <br>
       * All the parameters in the command are set.
       * The BOSH Director credentials are valid.
       * The specified deployment exists.
@@ -688,26 +788,52 @@ If you need to cancel a backup, perform the following steps:
 1. Enter `CTRL-C` to terminate the BBR process, then enter `yes` to confirm.
 
 1. Run the BBR `backup-cleanup` command.
-  * For a canceled director backup, run the following:
+    * For a canceled director backup, run the following:
 
-      ```
-    bbr director \
-    --private-key-path PRIVATE-KEY \
-    --username bbr \
-    --host HOST \
-    backup-cleanup
-      ```
-  * For a canceled deployment backup, run the following:
+        ```
+        bbr director \
+        --private-key-path PRIVATE-KEY-FILE \
+        --username bbr \
+        --host HOST \
+        backup-cleanup
+        ```
 
-      ```
-    bbr deployment \
-    --target BOSH-DIRECTOR-IP \
-    --username BOSH-CLIENT \
-    --password BOSH-PASSWORD \
-    --deployment DEPLOYMENT-NAME \
-    --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
-    backup-cleanup
-      ```
+        Where:
+        * `PRIVATE-KEY-FILE` is the path to the private key file you created in
+        [Step 4: Check Your BOSH Director](#check-director).
+        * `HOST` is the address of the BOSH Director:
+          * If the BOSH Director is public, `HOST` is a URL, such as `https://my-bosh.xxx.cf-app.com`.
+          * If the BOSH Director is not public, `HOST` is the `BOSH-DIRECTOR-IP` retrieved in
+          [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve).
+    * For a canceled deployment backup, run the following:
+
+        ```
+        bbr deployment \
+        --target BOSH-DIRECTOR-IP \
+        --username BOSH-CLIENT \
+        --password BOSH-PASSWORD \
+        --deployment DEPLOYMENT-NAME \
+        --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
+        backup-cleanup
+        ```
+        Where:
+        * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in
+        [Step 3: Retrieve BOSH Director Address and Credentials](#retrieve).
+        * `BOSH-CLIENT`, `BOSH-PASSWORD` are the BOSH UAA credentials.
+        To retrieve these credentials, navigate to the Ops Manager Installation Dashboard, 
+        click **BOSH Director**, navigate to the **Credentials** tab, and click **Uaa Bbr Client Credentials**.
+        You can also retrieve the credentials using the Ops Manager API with a GET
+        request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`.
+        For more information, see [Using the Ops Manager API](../../customizing/ops-man-api.html).
+        * `DEPLOYMENT-NAME` is the deployment name retrieved in 
+        [Step 6: Identify Your Deployment](#identify-deployment).
+        * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
+          (CA) certificate for the BOSH Director. 
+        * Use the optional `--debug` flag to enable debug logs. For more information,
+        see [Logging](#logging) below.
+        * Use the optional `--with-manifest` flag to ensure that BBR downloads your 
+        current deployment manifest when backing up.
+        These manifests are included in the Ops Manager export, but are useful for reference.
 
 ## <a id="gdpr"></a> European Union's General Data Protection Regulation (GDPR)
 

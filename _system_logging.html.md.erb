@@ -1,22 +1,35 @@
-If you forward logging messages to an external server, do the following:
+You can configure system logging in PAS to forward log messages from PAS component VMs to an external service.
 
-1. Select the **System Logging** section that is located within your PAS **Settings** tab. The following image shows the **System Logging** page.
+<p class="note"><b>Note:</b> The following instructions explain how to enable system logging for PAS component VMs. To forward logs from PCF tiles to an external service, you must also configure system logging in each tile you install on your foundation. See the documentation for the given tiles for information about configuring system logging.</p> 
+
+To configure system logging in PAS, do the following:
+
+1. In the PAS **Settings** tab, select the **System Logging** pane. The following image shows the **System Logging** pane.
   ![There is a heading at the top of the System Logging page that begins with the text, Optionally configure rsyslog. There are several fields on the System Logging page. The first three fields are Address, Port, and Transport Protocol. There is a Save button at the bottom of the page.](images/updated-system-logging.png)
-1. Enter the IP address of your syslog server in **Address**.
-1. Enter the port of your syslog server in **Port**. The default port for a syslog server is `514`.
-<p class="note"><strong>Note:</strong> The host must be reachable from the PAS network and accept UDP or TCP connections. Ensure your syslog server listens on external interfaces.</p>
-1. Select a **Transport Protocol** to use when forwarding logs.
-1. If you plan to use TLS encryption when sending logs to the remote server, select **Yes** when answering the **Encrypt syslog using TLS?** question.
-  1. In the **Permitted Peer** field, enter either the name or SHA1 fingerprint of the remote peer.
-  1. In the **TLS CA Certificate** field, enter the TLS CA Certificate for the remote server.
-1. The **Include container metrics in Syslog Drains** checkbox is checked by default. This enables the [CF Drain CLI plugin](https://github.com/cloudfoundry/cf-drain-cli) to set the app container to deliver container metrics to a syslog drain. Developers can then monitor the app container based on those metrics. If you would like to disable this feature, disable this checkbox.
-1. If you want to include security events in your log stream, select the **Enable Cloud Controller security event logging** checkbox. This logs all API requests, including the endpoint, user, source IP address, and request result, in the Common Event Format (CEF).
-1. If you want to transmit logs over TCP, select the **Use TCP for file forwarding local transport** checkbox. This prevents log truncation, but may cause performance issues.
-1. If you want to forward DEBUG syslog messages to an external service, disable the **Don't Forward Debug Logs** checkbox.
-This checkbox is enabled in PAS by default.
+
+1. For **Address**, enter the IP address of the syslog server.
+
+1. For **Port**, enter the port of the syslog server. The default port for a syslog server is `514`.
+<p class="note"><strong>Note:</strong> The host must be reachable from the PAS network and accept UDP or TCP connections. Ensure the syslog server listens on external interfaces.</p>
+
+1. For **Transport Protocol**, select a transport protocol for log forwarding.
+
+1. For **Encrypt syslog using TLS?**, select **Yes** to use TLS encryption when forwarding logs to a remote server.
+  1. For **Permitted Peer**, enter either the name or SHA1 fingerprint of the remote peer.
+  1. For **TLS CA Certificate**, enter the TLS CA certificate for the remote server.
+
+1. Disable the **Include container metrics in Syslog Drains** checkbox to prevent the [CF Drain CLI plugin](https://github.com/cloudfoundry/cf-drain-cli) from including app container metrics in syslog drains. This feature is enabled by default.
+
+1. Enable the **Enable Cloud Controller security event logging** checkbox to include security events in the log stream. This feature logs all API requests, including the endpoint, user, source IP address, and request result, in the Common Event Format (CEF).
+
+1. Enable the **Use TCP for file forwarding local transport** checkbox to transmit logs over TCP. This prevents log truncation, but may cause performance issues.
+
+1. Disable the **Don't Forward Debug Logs** checkbox to forward DEBUG syslog messages to an external service. This checkbox is enabled by default.
   <p class="note"><strong>Note:</strong> Some PAS components generate a high volume of DEBUG syslog messages.
-  Using the <strong>Don't Forward Debug Logs</strong> checkbox prevents them from being forwarded to external services. PAS still writes the messages to the local disk.</p>
-1. If you want to specify a custom syslog rule, enter it in the **Custom rsyslog Configuration** field in [RainerScript](http://www.rsyslog.com/doc/v8-stable/rainerscript/index.html) syntax. For more information about customizing syslog rules, see [Customizing Syslog Rules](./custom-syslog-rules.html).
+  Enabling the <strong>Don't Forward Debug Logs</strong> checkbox prevents PAS components from forwarding the DEBUG syslog messages to external services. However, PAS still writes the messages to the local disk.</p>
+
+1. For **Custom rsyslog Configuration**, enter a custom syslog rule. For more information about adding custom syslog rules, see [Customizing Syslog Rules](./custom-syslog-rules.html).
+
 1. Click **Save**.
 
 To configure Ops Manager for system logging, see the [Settings](./pcf-interface.html#settings) section in the _Using the Ops Manager Interface_ topic.

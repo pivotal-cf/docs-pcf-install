@@ -13,7 +13,7 @@ The procedures described in this topic prepare your environment for PCF, deploy 
 
 <p class="note warning"><strong>WARNING:</strong> Restoring PCF with BBR is a destructive operation. If the restore fails, the new environment may be left in an unusable state and require reprovisioning. Only perform the procedures in this topic for the purpose of disaster recovery, such as recreating PCF after a storage-area network (SAN) corruption.</p>
 
-<p class="note warning"><strong>WARNING:</strong> When validating your backup, the VMs and disks from the backed-up BOSH Director should not visible to the new BOSH Director. As a result, Pivotal recommends that you deploy the new BOSH Director to a different IaaS network and account than the VMs and disks of the backed up BOSH Director.</p>
+<p class="note warning"><strong>WARNING:</strong> When validating your backup, the VMs and disks from the backed-up BOSH Director should not be visible to the new BOSH Director. As a result, Pivotal recommends that you deploy the new BOSH Director to a different IaaS network and account than the VMs and disks of the backed up BOSH Director.</p>
 
 <p class="note warning"><strong>WARNING:</strong> For PCF v2.0, BBR only supports backup and restore of environments with zero or one CredHub instances.</p>
 
@@ -37,7 +37,7 @@ Consult the following restrictions for a backup artifact to be restorable:
     the BBR restore might succeed although the restored MySQL database is unusable.
 + **PCF version**: BBR can restore to the same version of PCF that was backed up. BBR does not support restoring to other major, minor, or patch releases.
 
-<p class="note"><strong>Note:</strong> A change in VM size or underlying hardware should not affect BBR's ability to restore data, as long as there is adequate storage space to restore the data.</p>
+<p class="note"><strong>Note:</strong> A change in VM size or underlying hardware will not affect BBR's ability to restore data, as long as there is adequate storage space to restore the data.</p>
 
 
 ## <a id="restore-diagram"></a> Restore Workflow
@@ -144,7 +144,7 @@ If you recreated IaaS resources such as networks and load balancers by following
 
 1. Click **Create Networks** and update the network names to reflect the network names for the new environment.
 
-1. If your BOSH Director had an external hostname, you should change it in **Director Config > Director Hostname** to ensure it does not conflict with the hostname of the backed up Director.
+1. If your BOSH Director had an external hostname, you must change it in **Director Config > Director Hostname** to ensure it does not conflict with the hostname of the backed up Director.
 
 1. Return to the Ops Manager Installation Dashboard and click the Pivotal Application Service (PAS) tile.
 
@@ -197,16 +197,19 @@ This section provides the steps you need to perform to restore your PCF backup w
 
 ### <a id='restore-bosh'></a> Step 8: Retrieve BOSH Director Credentials
 
-There are two ways to retrieve your BOSH Director credentials.
+There are two ways to retrieve your BOSH Director credentials:
 
-* Ops Manager Installation Dashboard
+* Ops Manager Installation Dashboard.  
+* Ops Manager API.
+
+1. To retrieve your BOSH Director credentials using the Ops Manager Installation Dashboard, perform the following steps:
     1. Navigate to the Ops Manager Installation Dashboard.
     1. Click the BOSH Director tile.
     1. Click the **Credentials** tab.
     1. Locate **Bbr Ssh Credentials** and click **Link to Credential** next to it.
     1. Copy the value for `private_key_pem`. 
 
-* Ops Manager API
+1. To retrieve your BOSH Director credentials using the Ops Manager API, perform the following steps:
     1. Retrieve the credentials using the Ops Manager API using the following command:  
 
         ```
@@ -268,8 +271,8 @@ see the [Log in to the Ops Manager VM with SSH](../trouble-advanced.html#ssh) se
     * Use the optional `--debug` flag if you want to enable debug logs.
     See the [Logging](backup-pcf-bbr.html#logging) section of the _Backing Up Pivotal Cloud Foundry with BBR_ topic for more information.
 
-1. If the command succeeds, continue to [Step 10: Identify Your Deployment](#identify-deployment).
-<br><br>
+1. After the command succeeds, continue to [Step 10: Identify Your Deployment](#identify-deployment).  
+<br>
 If the command fails, complete the following procedure:
   1. Run the BBR restore-cleanup command:
 
@@ -578,9 +581,9 @@ Disks from a previous deployment will prevent recreated deployments from working
 #### Use BOSH To Clean Up Disks
 1. To clean up disk references, run the following command:
 
-```
-bosh cloud-check
-```
+    ```
+    bosh cloud-check
+    ```
 
 #### Manually Clean Up Disks
 If `bosh cloud-check` does not clean up all disk references, you must manually delete the remaining disks.  

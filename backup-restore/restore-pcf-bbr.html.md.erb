@@ -3,8 +3,6 @@ title: Restoring PCF from Backup with BBR
 owner: RelEng
 ---
 
-
-
 This topic describes the procedure for restoring your critical backend Pivotal Cloud Foundry (PCF) components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments. To perform the procedures in this topic, you must have backed up PCF by following the steps in the [Backing Up Pivotal Cloud Foundry with BBR](backup-pcf-bbr.html) topic.
 
 To view the BBR release notes, see [BOSH Backup and Restore Release Notes](https://docs.cloudfoundry.org/bbr/bbr-rn.html).
@@ -100,7 +98,7 @@ If you recreate your IaaS resources, you must also add those resources to Ops Ma
 
         1. In the import panel, perform the following tasks:
           * Enter the **Decryption Passphrase** in use when you exported the installation settings from Ops Manager.
-          * Click **Choose File** and browse to the installation zip file that you exported in the <a href='./backup-pcf-bbr.html#export'>Step 7: Export Installation Settings</a> section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic.
+          * Click **Choose File** and browse to the installation zip file that you exported in the <a href='./backup-pcf-bbr.html#export'>Step 9: Export Installation Settings</a> section of the <em>Backing Up Pivotal Cloud Foundry with BBR</em> topic.
 
             <%= image_tag("../images/upgrading/decryption_passphrase.png") %>
 
@@ -181,45 +179,19 @@ Use the Ops Manager API or the checkbox on the Review Pending Changes page to de
 
 In the [Step 9: Back Up Your PAS Deployment](./backup-pcf-bbr.html#bbr-backup) section of the _Backing Up Pivotal Cloud Foundry with BBR_ topic, in the _After Taking the Backups_ section you moved the TAR and metadata files of the backup artifacts off your jumpbox to your preferred storage space. Now you must transfer those files back to your jumpbox.
 
-### <a id="retrieve"></a> Step 7: Retrieve BOSH Director Address and Credentials
-
-Perform the following steps to retrieve the IP address of your BOSH Director and the credentials for logging in from the BOSH Director tile:
-
-<%= partial 'bosh_target_director_bbr' %>
-
 ## <a id='restore'></a> Restore Your Backup
 
 This section provides the steps you need to perform to restore your PCF backup with BBR.
 
-### <a id='restore-bosh'></a> Step 8: Retrieve BOSH Director Credentials
+### <a id='retrieve-credentials'></a> Step 7: Retrieve BOSH Director Credentials
 
-There are two ways to retrieve your BOSH Director credentials:
+<%= partial 'bosh_retrieve_credentials' %>
 
-* Ops Manager Installation Dashboard.  
-* Ops Manager API.
+### <a id="retrieve"></a> Step 8: Retrieve BOSH Director Address
 
-1. To retrieve your BOSH Director credentials using the Ops Manager Installation Dashboard, perform the following steps:
-    1. Navigate to the Ops Manager Installation Dashboard.
-    1. Click the BOSH Director tile.
-    1. Click the **Credentials** tab.
-    1. Locate **Bbr Ssh Credentials** and click **Link to Credential** next to it.
-    1. Copy the value for `private_key_pem`. 
+Perform the following steps to retrieve the IP address of your BOSH Director from the BOSH Director tile:
 
-1. To retrieve your BOSH Director credentials using the Ops Manager API, perform the following steps:
-    1. Retrieve the credentials using the Ops Manager API using the following command:  
-
-        ```
-        curl "https://OPS-MAN-FQDN/api/v0/deployed/director/credentials/bbr_ssh_credentials" \
-        -X GET \
-        -H "Authorization: Bearer UAA-ACCESS-TOKEN"
-        ```
-        Where:  
-        * `OPS-MAN-FQDN` is the fully-qualified domain name (FQDN) for your Ops Manager deployment.
-        * `UAA-ACCESS-TOKEN` is your UAA access token. For more information, see [Access the
-        API](../../customizing/ops-man-api.html#access-api).
-    1. Copy the value for `private_key_pem`.   
-
-For more information on using the Ops Manager API, see the [Using the Ops Manager API](../../customizing/ops-man-api.html) topic.
+<%= partial 'bosh_target_director_bbr' %>
 
 ### <a id='restore-bosh'></a> Step 9: Restore the BOSH Director
 
@@ -231,16 +203,6 @@ For more information on using the Ops Manager API, see the [Using the Ops Manage
 </div>
 
 1. SSH into your jumpbox. If you are using the Ops Manager VM as your jumpbox, see the [Log in to the Ops Manager VM with SSH](../trouble-advanced.html#ssh) section of <em>Advanced Troubleshooting with the BOSH CLI</em> for procedures on how to use SSH to connect to the Ops Manager VM.
-
-1. Run the following command to reformat the key and save it to a file named `PRIVATE-KEY` in the current directory, copying in the contents of your private key for `YOUR-PRIVATE-KEY`:
-  
-    ```
-    printf -- "YOUR-PRIVATE-KEY" > PRIVATE-KEY-FILE
-    ```
-
-    Where:
-    * `YOUR-PRIVATE-KEY` is the text of your private key.
-    * `PRIVATE-KEY-FILE` is the path to the private key file you are creating.
 
 1. Ensure the BOSH Director backup artifact is in the folder you from which you will run BBR.
 
@@ -257,11 +219,11 @@ For more information on using the Ops Manager API, see the [Using the Ops Manage
     Where:
     <br>
     * `PATH-TO-DIRECTOR-BACKUP` is the path to the Director backup you want to restore.
-    * `PRIVATE-KEY-FILE`is the path to the private key file you created above.
+    * `PRIVATE-KEY-FILE`is the path to the private key file you created in [Step 7: Retrieve BOSH Director Credentials](#retrieve-credentials).
     * `HOST`is the address of the BOSH Director. 
       * If the BOSH Director is public, `HOST` is a URL, such as `https://my-bosh.xxx.cf-app.com`. 
       * If the BOSH Director is not public, `HOST` is the `BOSH-DIRECTOR-IP` retrieved 
-      in [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
+      in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
     * Use the optional `--debug` flag if you want to enable debug logs. 
     See the [Logging](backup-pcf-bbr.html#logging) section of the _Backing Up Pivotal Cloud Foundry with BBR_ topic for more information.
 
@@ -279,11 +241,11 @@ If the command fails, complete the following procedure:
     ```
     Where:
     <br>
-      * `PRIVATE-KEY-FILE`is the path to the private key file you created above.
+      * `PRIVATE-KEY-FILE`is the path to the private key file you created in [Step 7: Retrieve BOSH Credentials](#retrieve-credentials).
       * `HOST`is the address of the BOSH Director. 
           * If the BOSH Director is public, `HOST` is a URL, such as `https://my-bosh.xxx.cf-app.com`. 
           * If the BOSH Director is not public, `HOST` is the `BOSH-DIRECTOR-IP` retrieved 
-          in [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
+          in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
   1. Run the BBR restore command again after checking the following:
       * All the parameters in the command are set.
       * The BOSH Director credentials are valid.
@@ -304,7 +266,7 @@ If the command fails, complete the following procedure:
     Where:
     <br>
     * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in
-    [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
+    [Step 8: Retrieve BOSH Director Address](#retrieve-address).
     * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
     (CA) certificate for the BOSH Director, if the certificate is not verifiable
     by the local machine’s certificate chain.
@@ -341,7 +303,7 @@ If the command fails, complete the following procedure:
     Where:
     <br>
     * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in
-    [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
+    [Step 8: Retrieve BOSH Director Address](#retrieve-address).
     * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
     (CA) certificate for the BOSH Director, if the certificate is not verifiable
     by the local machine’s certificate chain.
@@ -376,7 +338,7 @@ Perform either the following procedures to determine which stemcell is used by P
         ```
 
         Where `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in
-        [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
+        [Step 8: Retrieve BOSH Director Address](#retrieve-address).
 <br><br>
         For example:
         <pre class="terminal">
@@ -405,7 +367,7 @@ For more information about stemcells in Ops Manager, see [Importing and Managing
     Where:
     <br>
     * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in
-    [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
+    [Step 8: Retrieve BOSH Director Address](#retrieve-address).
     * `DEPLOYMENT-NAME` is the deployment name retrieved in 
     [Step 10: Identify Your Deployment](#identify-deployment).
     * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
@@ -470,14 +432,9 @@ For example, if you are using Redis for PCF v1.14, see [Using BOSH Backup and Re
     Where:
     <br>
     * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in
-    [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
-    * `BOSH-CLIENT`, `BOSH-PASSWORD` are the BOSH UAA credentials.
-    To retrieve these credentials, navigate to the Ops Manager Installation Dashboard, 
-    click **BOSH Director**, navigate to the **Credentials** tab, and click **Uaa Bbr Client Credentials**.
-    You can also retrieve the credentials using the Ops Manager API with a GET
-    request to the following endpoint: `/api/v0/deployed/director/credentials/uaa_bbr_client_credentials`.
-    <br>
-    For more information, see [Using the Ops Manager API](../../customizing/ops-man-api.html).
+    [Step 8: Retrieve BOSH Director Address](#retrieve-address).
+    * `BOSH-CLIENT`, `BOSH-PASSWORD` are the **Uaa Bbr Client Credentials**, identity and password, that you retrieved in 
+    [Step 7: Retrieve BOSH Director Credentials](#retrieve-credentials).
     * `DEPLOYMENT-NAME` is the deployment name retrieved in 
     [Step 10: Identify Your Deployment](#identify-deployment).
     * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
@@ -529,7 +486,7 @@ If you have any deployments that were deployed manually with the BOSH Director r
     Where:
 <br>
     * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in
-    [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
+    [Step 8: Retrieve BOSH Director Address](#retrieve-address).
     * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
     (CA) certificate for the BOSH Director, if the certificate is not verifiable
     by the local machine’s certificate chain.
@@ -546,7 +503,7 @@ If you have any deployments that were deployed manually with the BOSH Director r
     Where:
 <br>
     * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in
-    [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
+    [Step 8: Retrieve BOSH Director Address](#retrieve-address).
     * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
     (CA) certificate for the BOSH Director, if the certificate is not verifiable
     by the local machine’s certificate chain.
@@ -564,7 +521,7 @@ If you have any deployments that were deployed manually with the BOSH Director r
     Where:
 <br>
     * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in
-    [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
+    [Step 8: Retrieve BOSH Director Address](#retrieve-address).
     * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
     (CA) certificate for the BOSH Director, if the certificate is not verifiable
     by the local machine’s certificate chain.
@@ -595,7 +552,7 @@ If `bosh cloud-check` does not clean up all disk references, you must manually d
 
 1. To delete the remaining disks, perform one of the following procedures:
     * Use the BOSH CLI to delete the disks by performing the following steps:
-      1. Target the redeployed BOSH Director using the BOSH CLI by performing the procedures in [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
+      1. Target the redeployed BOSH Director using the BOSH CLI by performing the procedures in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
       1. List the deployments by running the following command:
 
             ```
@@ -605,7 +562,7 @@ If `bosh cloud-check` does not clean up all disk references, you must manually d
             Where:
 <br>
             * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in
-            [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
+            [Step 8: Retrieve BOSH Director Address](#retrieve-address).
             * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
             (CA) certificate for the BOSH Director, if the certificate is not verifiable
             by the local machine’s certificate chain.
@@ -628,7 +585,7 @@ If `bosh cloud-check` does not clean up all disk references, you must manually d
             Where:
             <br>
             * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in
-            [Step 7: Retrieve BOSH Director Address and Credentials](#retrieve).
+            [Step 8: Retrieve BOSH Director Address](#retrieve-address).
             * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority 
             (CA) certificate for the BOSH Director, if the certificate is not verifiable
             by the local machine’s certificate chain.

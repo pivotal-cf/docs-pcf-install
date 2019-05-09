@@ -1,0 +1,124 @@
+---
+title: Configuring Route Service Lookup
+owner: Networking GA
+---
+
+
+This topic describes the options for configuring route service lookup in Pivotal Application Service (PAS). 
+
+<p class="note warning"><strong>WARNING</strong>: Pivotal recommends that you do not select the checkbox to <strong>Bypass security checks for route service lookup</strong> in PAS because of the security risk described in this document.</p>
+
+## <a id="overview"></a> Overview
+
+Developers can bind their app to a route service to preprocess requests before they reach an app. Examples use cases include authentication, rate limiting, and caching services. For more information, see [Route Services](../services/route-services.html). 
+
+You can configure the behavior of the router when it receives requests intended for an app that is bound to a route service. This configuration is available through the  the **Bypass security checks for route service lookup** field in the **Networking** pane of the PAS tile. 
+
+By default, this feature is not enabled, and Pivotal recommends that you do not enable it because of the security risk described in [Bypass Mode and External Route Service (Security Risk)](#bypass-external). However, you may need to enable it if you your load balancer requires mutual TLS from clients. 
+
+<p class="note"><strong>Note</strong>: The default setting is different for PAS installations that had route services enabled prior to upgrading to a patch release that includes this feature. In this case, the feature is enabled and Pivotal recommends disabling it.</p>
+
+To understand the routing behavior in different configurations, see the following:
+
+* [Default Lookup and Internal Route Service](#default-internal)
+* [Bypass Mode and Internal Route Service](#bypass-internal)
+* [Bypass Mode and External Route Service](#bypass-external)
+* [Default Lookup and External Route Service](#default-internal) 
+
+For instructions about configuring this behavior in PAS, see the following:
+
+* [Configuring PAS for Bypass Mode (Security Risk)](#enable)
+* [Configuring PAS for Default Lookup](#disable)
+
+### <a id="default-internal"></a> Default Lookup and Internal Route Service
+
+This section describes how the router handles app requests when the following is true:
+
+* The **Bypass security checks for route service lookup** field in PAS is not selected. 
+* The app is bound to a route service that is hosted on PAS. 
+
+In this case, when the router receives the request, it sends the traffic back to the load balancer to resolve DNS. The load balancer then sends the traffic back to the router. These multiple trips are known as _hairpinning_. 
+
+The following diagram illustrates the flow of the request and numbers the steps to indicate order of occurrence. 
+
+![](default-internal.png)
+
+### <a id="bypass-internal"></a> Bypass Mode and Internal Route Service
+
+This section describes how the router handles app requests when the following is true:
+
+* The **Bypass security checks for route service lookup** field in PAS is selected. 
+* The app is bound to a route service that is hosted on PAS
+
+In this case, when the router receives the request, it sends it directly to the route service. This assumes the router finds an existing route for the route service. 
+
+The following diagram illustrates the flow of the request.
+
+![](bypass-internal.png)
+
+### <a id="bypass-external"></a> Bypass Mode and External Route Service (Security Risk)
+
+This section describes how the router handles app requests when the following is true:
+
+* The **Bypass security checks for route service lookup** field in PAS is selected. 
+* The app is bound to a route service that is hosted outside of PAS. 
+
+In this case, when the router receives the request, it checks for an existing route and then sends the request directly to the route service. This introduces the ability for route service traffic to be intercepted. A developer can register the external route service domain as a private domain in PAS and map it to their own, malicious app. When the router receives a request for the original app bound to the external route service, it will find the domain internally and send the request to the malicious app.
+
+<p class="note"><strong>Note</strong>: This vulnerability exists for both externally hosted route services and route services hosted on a separate foundation. If all of your route services are hosted internally on the same foundation, you are not at risk for this vulnerability, however you would be at risk if externally hosted route services are later configured.</p> 
+
+The following diagram illustrates the flow of the request in the case that it is intercepted:
+
+![](bypass-external.png)
+
+### <a id="default-external"></a> Default Lookup and External Route Service
+
+This section describes how the router handles app requests when the following is true:
+
+* The **Bypass security checks for route service lookup** field in PAS is not selected. 
+* The app is bound to a route service that is hosted outside of PAS. 
+
+In this case, the router sends traffic directly to the external route service without checking for an existing route. 
+
+The following diagram illustrates the flow of the request.
+
+![](default-external.png)
+
+## <a id="enable"></a> Configuring PAS for Bypass Mode (Security Risk)
+
+Pivotal recommends that you do not configure PAS for bypass mode. However, you may need to do so if your load balancer requires mutual TLS from clients. If this is true and a route service is internal, the router does not have the necessary certificates from the client to communicate back with the load balancer for DNS lookup. Therefore you must configure bypass mode so the router can send the traffic directly to the route service. 
+
+To configure bypass mode, do the following:
+
+1. Select **Bypass security checks for route service lookup** in the **Networking** pane of the PAS tile. 
+
+1. Follow the steps in [Mitigate Security Risk](#mitigate-risk). 
+
+### <a id="mitigate-risk"></a> Mitigate Security Risk
+
+Configuring PAS for bypass mode introduces the security risk described in [Bypass Mode and External Route Service (Security Risk)](#bypass-external). 
+
+If you must configure bypass mode due the configuration of your load balancer, do the following. This prevents users from intercepting traffic for the externally hosted route service.
+
+1. Create an org for use by the PAS administrator. 
+
+1. Register all external route service domains as private domains in the org you created. 
+
+1. Monitor PAS for the addition of new external route services and ensure you follow the same process for those. 
+	<p class="note"><strong>Note</strong>: Since route services can be added by any space developer, this may be difficult to manage.</p>
+
+## <a id="disable"></a> Configuring PAS for Default Lookup
+
+To configure PAS for default lookup behavior, with bypass mode disabled, do the following:
+
+1. Ensure that **Bypass security checks for route service lookup** in the **Networking** pane of the PAS tile is not selected. 
+
+1. Communicate to developers of route services that the domain name for their internally hosted route services must to resolve to the load balancer. 
+
+1. If your load balancer or router terminates TLS, do the following:
+	1. Work with developers of route services to ensure their domain names match the TLS certificate provided by the load balancer or router. 
+	1. Ensure that the TLS certificate from your load balancer is either signed by a well known CA, or the CA has been added to the **Certificate Authorities Trusted by Router and HAProxy** field in the **Networking** pane of the PAS and Isolation Segment tiles. The CA for the TLS certificate provided by the load balancer must be trusted by the Router. 
+
+1. Work with route service developers to verify that their internal route service apps are reachable. You can do this by visiting the HTTPS URL of the route service directly and confirming that the app received the request with the <code>cf logs</code> output for the route service app.</p>
+
+

@@ -3,16 +3,37 @@ title: Upgrading BOSH Director on Azure
 owner: Ops Manager
 ---
 
-<strong><%= modified_date %></strong>
-
 This topic describes how to upgrade BOSH Director for Pivotal Cloud Foundry (PCF) on Azure.
 
-Follow the procedures below as part of the upgrade process documented in the [Upgrading Pivotal Cloud Foundry](upgrading-pcf.html) topic.
+Complete the tasks in this topic as part of the Ops Manager upgrade process. For more information, see [Upgrading Pivotal Cloud Foundry](upgrading-pcf.html#upgrade_ops).
 
-<p class="note"><strong>Note:</strong> The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p> 
+##<a id='overview'></a> Overview
+
+<%= partial 'om_upgrade_overview' %>
+
+<p class="note"><strong>Note:</strong> The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p>
+
+To create an Ops Manager VM instance, do the following:
+
+1. Export environment variables. See [Export Environment Variables](#env-vars). 
+
+1. Copy the Ops Manager image into your storage account. See [Copy the Ops Manager Image](#setup).
+
+1. Configure the Ops Manager IP Address. See [Configure Ops Manager IP Address](#config-ip).
+
+1. Create Ops Manager VM instance. See [Create Ops Manager VM Instance](#boot).
 
 
-## <a id='env-vars'></a> Step 1: Export Environment Variables
+##<a id='prerequisites'></a> Prerequisites
+
+<%= partial 'om_upgrade_prerequisite' %> 
+
+
+## <a id='env-vars'></a> Export Environment Variables
+
+Export the `connectionString` variable for your Azure account and assign it to a new environment variable. You use the `connectionString` environment variable when you copy the Ops Manager image in the following procedure.
+
+To export environment variables, do the following:
 
 1. Install the Azure CLI v2.0 by following the instructions for your operating system in the [Azure documentation](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli).
 
@@ -56,7 +77,11 @@ The command returns output similar to the following:
     </pre>
 
 
-## <a id='setup'></a> Step 2: Set Up Ops Manager
+## <a id='setup'></a> Copy the Ops Manager Image
+
+Copy the Ops Manager image into your storage account. You use the Ops Manager image to create the VM that hosts that the new version of Ops Manager.
+
+To copy the Ops Manager image into your storage account, do the following:
 
 1. Navigate to [Pivotal Network](https://network.pivotal.io/products/ops-manager) and download the release of **Pivotal Cloud Foundry Ops Manager for Azure** you want to upgrade to.
 
@@ -92,14 +117,18 @@ The command returns output similar to the following:
     When `status` reads `success`, continue to the next step.
 
 
-## <a id='config-ip'></a> Step 3: Configure IP Address
+## <a id='config-ip'></a> Configure Ops Manager IP Address
 
-You have two choices for the Ops Manager IP address. Choose one of the following:
+Remove the old Ops Manager VM and record the IP address for the Ops Manager network interface. You use this IP address when creating the new Ops Manager VM that hosts the upgraded version of Ops Manager. 
+
+To configure the Ops Manager IP address, do one of the following:
 
 * [Reuse the existing dynamic public IP address](#reuse-dynamic).
 * [Use a new dynamic public IP address](#new-ip).
 
 ### <a id='reuse-dynamic'></a> Reuse Existing Dynamic Public IP Address
+
+To reuse an existing dynamic public IP address, do the following:
 
 1. List your VMs and record the name of your Ops Manager VM:
     <pre class="terminal">$ az vm list</pre>
@@ -112,6 +141,8 @@ You have two choices for the Ops Manager IP address. Choose one of the following
     --resource-type Microsoft.Network/networkInterfaces</pre>
 
 ### <a id='new-ip'></a> Use a New Dynamic Public IP Address
+
+To use a new dynamic public IP address, do the following:
 
 1. Create a new public IP address named `ops-manager-ip-new`.
     <pre class="terminal">
@@ -160,9 +191,13 @@ You have two choices for the Ops Manager IP address. Choose one of the following
 1. Update your DNS record to point to your new public IP address of Ops Manager.
 
 
-## <a id='boot'></a> Step 4: Boot Ops Manager
+## <a id='boot'></a> Create Ops Manager VM Instance
 
-1. If you want to use the key pair from your previous Ops Manager, locate the path to the file on your local machine. If you want to create a new key pair, enter the following command:
+Create an Ops Manager VM instance to host the new version of Ops Manager. 
+
+To create an Ops Manager VM instance, do the following:
+
+1. To use the key pair from your previous Ops Manager, locate the path to the file on your local machine. To create a new key pair, enter the following command:
    <pre class="terminal">
    $ ssh-keygen -t rsa -f opsman -C ubuntu
    </pre>

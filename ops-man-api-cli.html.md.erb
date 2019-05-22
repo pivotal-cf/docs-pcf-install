@@ -1,5 +1,5 @@
 ---
-title: Ops Manager API, CLI, and Platform Automation
+title: Ops Manager API, CLI, and Platform Automation (Beta)
 owner: Ops Manager
 ---
 
@@ -7,162 +7,50 @@ This topic introduces three tools for running Ops Manager operations programmati
 
 * The [Ops Manager API](https://docs.pivotal.io/pivotalcf/opsman-api)
 * The [`om`](https://github.com/pivotal-cf/om) command-line interface (CLI)
-* [Platform Automation](http://docs.pivotal.io/platform-automation) tasks.
+* [Platform Automation](http://docs.pivotal.io/platform-automation) (Beta) tasks.
 
-## <a id='overview'></a> Overview
-
-The Ops Manager API, `om` CLI, and Platform Automation tasks control the Ops Manager VM at different levels of abstraction. Platform operators and [Tile developers](http://docs.pivotal.io/tiledev/index.html) use these tools as described below:
-
-* The Ops Manager API offers the most granular control of the Ops Manager VM, The API enables users to:
-  - Automate component-level testing of Pivotal Cloud Foundry (PCF) product tiles
-  - Manage Ops Manager user accounts
-  - Develop and debug product tiles
-  - Access product property values that are not exposed in a product tile GUI
-  - Otherwise work under the hood of the [Ops Manager interface](./pcf-interface.html), manually or programmatically
-
-* The Ops Manager CLI, `om`, calls the Ops Manager API to:
-  - Perform Ops Manager operations from the command line or scripts
-  - Manage credentials from the command line or scripts
-
-* Platform Automation tasks calls the `om` CLI to:
-  - Serve as building blocks for Continous Integration (CI) pipelines that automate installation and updating of PCF foundations
+These three tools control the Ops Manager VM at different levels of abstraction. Platform operators and [Tile developers](http://docs.pivotal.io/tiledev/index.html) use them as described below.
 
 ## <a id='api'></a> Ops Manager API
+
+The Ops Manager API offers the most granular control of the Ops Manager VM, The API enables users to do the following:
+
+- Automate component-level testing of Pivotal Cloud Foundry (PCF) product tiles
+- Manage Ops Manager user accounts
+- Develop and debug product tiles
+- Access product property values that are not exposed in a product tile GUI
+- Otherwise work under the hood of the [Ops Manager interface](./pcf-interface.html), programmatically or manually
+
+To get started using the Ops Manager API, see [Access the Ops Manager API](./ops-man-api.html#access) in the _Using the Ops Manager API_ topic.
+
+Find complete Ops Manager API documentation at either of the following:
 
 * https://docs.pivotal.io/pivotalcf/opsman-api
 * `https://YOUR-OPS-MANAGER-FQDN/docs`, adding `/docs` to the URL of your Ops Manager
 
+## <a id='om'></a> Ops Manager CLI (om)
 
-### <a id='reqs'></a> Requirements
+The Ops Manager CLI, `om`, calls the Ops Manager API to do the following:
 
-You must install the User Account and Authentication Command Line Interface (UAAC) to perform the procedures in this topic. To install the UAAC, run the following command from a terminal window:
-<pre class="terminal">$ gem install cf-uaac</pre>
+- Perform Ops Manager operations from the command line or scripts
+- Manage credentials from the command line or scripts
+- Generate configuration files from, and apply saved configurations to, staged product tiles.
 
+For `om` documentation, see the public `om` repository on GitHub:
+- [Installation and command list](https://github.com/pivotal-cf/om)
+- [Command Reference](https://github.com/pivotal-cf/om/blob/master/docs/README.md)
+- [Usage Example](https://github.com/pivotal-cf/om/blob/master/docs/EXAMPLE.md)
 
-### <a id='auth'></a> Step 1: Authenticate
+## <a id='platform-automation'></a> Platform Automation (Beta)
 
-To use the Ops Manager API, you must authenticate and retrieve a token from the Ops Manager User Account and Authentication (UAA) server. For more information about UAA, see the [User Account and Authentication (UAA) Server](../concepts/architecture/uaa.html) topic.
+Platform Automation tasks call the `om` CLI to do the following:
 
-Perform the procedures in the [Internal Authentication](#internal-auth) or [External Identity Provider](#external-idp) section below depending on which authentication system you configured for Ops Manager.
+- Serve as building blocks for Continous Integration (CI) pipelines that automate installation and updating of PCF foundations
+- Within pipelines, store and retrieve product configuration values from secrets vaults like CredHub and code repositories like GitHub.
 
-#### <a id='internal-auth'></a> Internal Authentication
+For complete documentation see the (Platform Automation documentation)[http://docs.pivotal.io/platform-automation/index.html].
 
-If you configured your Ops Manager for Internal Authentication, perform the following procedures specific to your IaaS:
-
-##### <a id='vsphere'></a> vSphere
-
-You need the credentials used to import the PCF .ova or .ovf file into your virtualization system.
-
-1. From a command line, run `ssh ubuntu@OPS-MANAGER-FQDN` to SSH into the Ops Manager VM. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager.
-
-1. When prompted, enter the password that you set during the .ova deployment
-into vCenter. For example:
-    <pre class='terminal'>
-    $ ssh ubuntu@my-opsmanager-fqdn.example.com
-    Password: ***********
-    </pre>
-
-1. Proceed to [Authenticate into Ops Manager](#opsman_login).
-
-##### <a id='aws'></a> AWS, Azure, and OpenStack
-
-1. Locate the Ops Manager FQDN on the AWS **EC2 instances** page, Azure **Virtual machines** page, or the OpenStack **Access & Security** page.
-
-1. Run `chmod 600 ops_mgr.pem` to change the permissions on the `.pem` file to be more restrictive:
-	<pre class="terminal">
-	$ chmod 600 ops_mgr.pem
-	</pre>
-
-1. Run `ssh -i ops_mgr.pem ubuntu@OPS-MANAGER-FQDN` to SSH into the Ops Manager VM. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager. For example:
-	<pre class="terminal">
-	$ ssh -i ops_mgr.pem ubuntu@my-opsmanager-fqdn.example.com
-	</pre>
-
-1. Proceed to [Authenticate into Ops Manager](#opsman_login).
-
-##### <a id='gcp'></a> GCP
-
-1. Confirm that you have installed the gcloud CLI. If you do not have the gcloud CLI, see [the Google Cloud Platform documentation](https://cloud.google.com/sdk/gcloud/#downloading_gcloud).
-
-1. Run `gcloud config set project MY-PROJECT` to configure your Google Cloud Platform project. For example:
-    <pre class="terminal">
-    $ gcloud config set project gcp
-    </pre>
-
-1. Run `gcloud auth login MY-GCP-ACCOUNT`. For example:
-    <pre class="terminal">
-    $ gcloud auth login user<span>@</span>example.com
-    </pre>
-
-1. Run `gcloud compute ssh MY-INSTANCE --zone MY-ZONE`. For example:
-    <pre class="terminal">
-    $ gcloud compute ssh om-pcf-1a --zone us-central1-b
-    </pre>
-
-1. Run `sudo su - ubuntu` to switch to the `ubuntu` user.
-
-1. Proceed to [Authenticate into Ops Manager](#opsman_login).
-
-##### <a id='opsman_login'></a> Authenticate Into Ops Manager
-
-1. After successfully SSHing into the Ops Manager VM, use the UAAC to target your Ops Manager UAA server:
-	<pre class="terminal">$ uaac target http<span>s:</span>//OPS-MAN-FQDN/uaa</pre>
-
-1. Retrieve your token to authenticate:
-	<pre class="terminal">$ uaac token owner get
-	Client ID: opsman
-	Client secret: [Leave Blank]
-	User name: OPS-MAN-USERNAME
-	Password: OPS-MAN-PASSWORD
-	</pre>
-	Replace `OPS-MAN-USERNAME` and `OPS-MAN-PASSWORD` with the credentials that you use to log in to the Ops Manager web interface.
-
-#### <a id='external-idp'></a> External Identity Provider
-
-If you configured your Ops Manager for an external Identity Provider with SAML or LDAP, do the following:
-
-1. From your local machine, target your Ops Manager UAA server:
-	<pre class="terminal">$ uaac target http<span>s:</span>//OPS-MAN-FQDN/uaa</pre>
-
-1. Retrieve your token to authenticate. When prompted for a passcode, retrieve it from `https://OPS-MAN-FQDN/uaa/passcode`.
-	<pre class="terminal">$ uaac token sso get
-	Client ID: opsman
-	Client secret: [Leave Blank]
-	Passcode: YOUR-PASSCODE
-	</pre>
-	If authentication is successful, the UAAC displays the following message: `Successfully fetched token via owner password grant.`
-
-
-### <a id='access-api'></a> Step 2: Access the API
-
-Ops Manager uses authorization tokens to allow access to the API. You must pass an access token to the API endpoint in a header that follows the format `Authorization: Bearer YOUR-ACCESS-TOKEN`.
-
-The following example procedure retrieves a list of deployed products. See the [Ops Manager API documentation](https://docs.pivotal.io/pivotalcf/2-4/opsman-api) for the full range of API endpoints.
-
-If you use Internal Authentication, you must perform the following procedures from the Ops Manager VM. If you use an External Identity Provider, you may perform the procedures from your local machine.
-
-1. List your tokens:
-	<pre class="terminal">
-	$ uaac contexts
-	</pre>
-	Locate the entry for your Ops Manager FQDN. Under `client_id: opsman`, record the value for `access_token`.
-
-1. Use the `GET /api/v0/deployed/products` endpoint to retrieve a list of deployed products, replacing `UAA-ACCESS-TOKEN` with the access token recorded in the previous step:
-	<pre class="terminal">
-	$ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products" \
-	    -X GET \
-	    -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
-	The request produces the following response:
-	<pre class="terminal">
-	[{"installation\_name":"p-bosh","guid":"p-bosh
-	-00000000000000000000","type":"p-
-	bosh","product\_version":"1.10.0.
-	0"},{"installation\_name":"cf-
-	00000000000000000000","guid":"cf-0000000000000
-	0000000","type":"cf","product\_version":"1.10.0"}]
-	</pre>
-
-### <a id='example-ops'></a> Example Operations
+## <a id='example-ops'></a> Operation Equivalency Examples
 
 The following table lists some common operations using the Ops Manager UI, Ops Manager API, `om` CLI, and Platform Automation tasks, as examples of how different Ops Manager interfaces relate to one another.
 
@@ -173,7 +61,7 @@ For complete lists of operations, consult the references in the [Overview](#over
     <th>UI Action</th>
     <th>API Command</th>
     <th><code>om</code> Command</th>
-    <th>Platform Automation Task</th>
+    <th>Platform Automation (Beta) Task</th>
   </tr><tr>
     <td>Manually configure the BOSH Director tile</td>
     <td>Multiple commands; see <a href="./api-setup-director.html">Configuring the BOSH Director with the Ops Manager API</a></td>

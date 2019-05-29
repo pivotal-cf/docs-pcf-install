@@ -3,22 +3,22 @@ title: Getting Started with Small Footprint PAS
 owner: RelEng
 ---
 
-This topic describes the Small Footprint Pivotal Application Services (PAS) tile for Pivotal Cloud Foundry (PCF). 
+This topic describes the Small Footprint Pivotal Application Services (PAS) tile for Pivotal Cloud Foundry (PCF).
 
-The Small Footprint PAS is a repackaging of the PAS components into a smaller deployment with fewer virtual machines (VMs). The <a href="#limits">Limitations</a> section describes the limitations that come with a smaller deployment. 
+The Small Footprint PAS is a repackaging of the PAS components into a smaller deployment with fewer virtual machines (VMs). The <a href="#limits">Limitations</a> section describes the limitations that come with a smaller deployment.
 
 ## <a id='compare'></a> Differentiate Small Footprint PAS and PAS
 
 A standard PAS deployment must have at least 14 VMs, but the Small Footprint PAS requires only four.
 
-The following image displays a comparison of the number of VMs deployed by PAS and Small Footprint PAS. 
+The following image displays a comparison of the number of VMs deployed by PAS and Small Footprint PAS.
 
-<%= image_tag("ert-vms-2.0.png", :class => "no-border", :alt => "VM comparison between PAS and Small Footprint PAS. PAS has 14 required VMs and 8 optional VMs. Small Footprint PAS, on the other hand, has 4 required VMs and 5 optional VMs")%>
+<%= image_tag("ert-vms-2.1.png", :class => "no-border", :alt => "VM comparison between PAS and Small Footprint PAS. PAS has 14 required VMs and 8 optional VMs. Small Footprint PAS, on the other hand, has 4 required VMs and 5 optional VMs")%>
 [//]: https://docs.google.com/drawings/d/19V1SY4BGW2T--c4Y8Jm26CkA8C-6jIHXl7gpEzYlTmY/edit?usp=sharing
 
 ### <a id='usecase'></a> Use Cases
 
-Use the Small Footprint PAS tile for smaller PCF deployments on which you intend to host 2500 or fewer apps, as described in the <a href="#limits">Limitations</a> section. If you want to use Small Footprint PAS in a production environment, ensure the _Limitations_ described below are not an issue in your use case. 
+Use the Small Footprint PAS tile for smaller PCF deployments on which you intend to host 2500 or fewer apps, as described in the <a href="#limits">Limitations</a> section. If you want to use Small Footprint PAS in a production environment, ensure the _Limitations_ described below are not an issue in your use case.
 
 <p class="note"><strong>Note</strong>: The Small Footprint PAS is compatible with PCF service tiles.</p>
 
@@ -26,8 +26,8 @@ The Small Footprint PAS tile is also ideal for the following use cases:
 
 * **Proof-of-concept installations**:
 	* Deploy PCF quickly and with a small footprint for evaluation or testing purposes.
-* **Sandbox installations**: 
-	* Use Small Footprint PAS as a PCF operator sandbox for tasks such as testing compatibility. 
+* **Sandbox installations**:
+	* Use Small Footprint PAS as a PCF operator sandbox for tasks such as testing compatibility.
 * **Service tile R&D**:
 	* Test a service tile against Small Footprint PAS instead of a standard PAS deployment to increase efficiency and reduce cost.
 
@@ -35,14 +35,14 @@ The Small Footprint PAS tile is also ideal for the following use cases:
 
 The Small Footprint PAS has the following limitations:
 
-* **Number of app instances**: 
+* **Number of app instances**:
 	* The tile is not designed to support large numbers of app instances. You cannot scale the number of [Compute VMs](#compute) beyond `10` instances in the **Resource Config** pane. The Small Footprint PAS is designed to support 2500 or fewer apps.
-* **Increasing platform capacity**: 
+* **Increasing platform capacity**:
 	* You cannot upgrade the Small Footprint PAS to the standard PAS tile. If you expect platform usage to increase beyond the capacity of the Small Footprint PAS, Pivotal recommends using the standard PAS tile.
 * **Management plane availability during tile upgrades**:
-	* You may not be able to perform management plane operations like deploying new apps and accessing APIs for brief periods during tile upgrades. The management plane is colocated on the [Control VM](#controlvm). 
+	* You may not be able to perform management plane operations like deploying new apps and accessing APIs for brief periods during tile upgrades. The management plane is colocated on the [Control VM](#controlvm).
 * **App availability during tile upgrades**:
-	* If you require availability during your upgrades, you must scale your **Compute VMs** to a highly available configuration. Ensure sufficient capacity exists to move app instances between Compute VM instances during the upgrade. 
+	* If you require availability during your upgrades, you must scale your **Compute VMs** to a highly available configuration. Ensure sufficient capacity exists to move app instances between Compute VM instances during the upgrade.
 
 
 ## <a id='arch'></a> Architecture
@@ -54,38 +54,38 @@ You can deploy the Small Footprint PAS tile with a minimum of four VMs, as shown
 <%= image_tag("srt-vms.png", :class => "no-border", :alt => "Small Footprint PAS has 4 required VMs and 5 optional VMs")%>
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/13ycJou77RzIb3DeLF1rUOdmEiokNj3_-VTkmILcr6dM/edit?usp=sharing
 
-To reduce the number of VMs required for Small Footprint PAS, the _Control_ and _Database_ VMs include colocated jobs that run on a single VM in PAS. See the next sections for details. 
+To reduce the number of VMs required for Small Footprint PAS, the _Control_ and _Database_ VMs include colocated jobs that run on a single VM in PAS. See the next sections for details.
 
-For more information about the components mentioned on this page, see the _Architecture_ section of the [Cloud Foundry Concepts](../concepts/index.html) guide. 
+For more information about the components mentioned on this page, see the _Architecture_ section of the [Cloud Foundry Concepts](../concepts/index.html) guide.
 
 ### <a id='controlvm'></a> Control VM
 
-The Control VM includes the PAS jobs that handle management plane operations, app lifecycles, logging, and user authorization and authentication. Additionally, all errands run on the Control VM, eliminating the need for a VM for each errand and significantly reducing the time it takes to run errands. 
+The Control VM includes the PAS jobs that handle management plane operations, app lifecycles, logging, and user authorization and authentication. Additionally, all errands run on the Control VM, eliminating the need for a VM for each errand and significantly reducing the time it takes to run errands.
 
-The following image shows all the jobs from PAS that are colocated on the Control VM in Small Footprint PAS. 
+The following image shows all the jobs from PAS that are colocated on the Control VM in Small Footprint PAS.
 
 <%= image_tag("control-vms-2.0.png", :class => "no-border", :alt => "Small Footprint PAS Condenses 11 PAS VMs onto 1 VM called Control")%>
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/17AZ5xT_K8O0cATDZARPtgTEDV2cy6OfEbZybv81gqAg/edit?usp=sharing
 
 ### <a id='dbvm'></a> Database VM
 
-The database VM includes the PAS jobs that handle internal storage and messaging. 
+The database VM includes the PAS jobs that handle internal storage and messaging.
 
 The following image shows all the jobs from PAS that are colocated on the Database VM in Small Footprint PAS.
- 
+
 <%= image_tag("db-vms.png", :class => "no-border", :alt => "Small Footprint PAS Condenses 4 PAS VMs onto 1 VM called Database")%>
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/12UkinQ58ejlq9AZQvwq6r7Ghtp4RnTopI_-gTGerpU4/edit?usp=sharing
 
 ### <a id='computevm'></a> Compute VM
 
-The _Compute_ VM is the same as the Diego Cell VM in PAS. 
+The _Compute_ VM is the same as the Diego Cell VM in PAS.
 
 <%= image_tag("compute-vms.png", :class => "no-border", :alt => "Small Footprint PAS calls the Diego Cell VM the Compute VM")%>
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/1xOx5V1TGLoCCgIXuixTM1K9PlSTypmwHdt4xbN81BNY/edit?usp=sharing
 
 ### <a id='othervms'></a> Other VMs (Unchanged)
 
-The following image shows the VMs performs the same functions in both versions of the PAS tile. 
+The following image shows the VMs performs the same functions in both versions of the PAS tile.
 
 <%= image_tag("unchanged-vms.png", :class => "no-border", :alt => "The Router, File Storage, HAProxy, Backup Restore Node, MySQL Monitor, and TCP Router VMs are the same in both PAS and small footprint PAS.")%>
 [//]: https://docs.google.com/a/pivotal.io/drawings/d/12vWg66BUjOsSK4qC9vMqNxO9Ea1kdzfM2cH4yEAEgsg/edit?usp=sharing
@@ -103,22 +103,22 @@ The following topics list the minimum resources needed to run Small Footprint PA
 
 ## <a id='install'></a> Installing Small Footprint PAS
 
-To install the Small Footprint PAS tile, follow the instructions for [Installing Pivotal Cloud Foundry](../installing/index.html) on your IaaS. 
+To install the Small Footprint PAS tile, follow the instructions for [Installing Pivotal Cloud Foundry](../installing/index.html) on your IaaS.
 
 Follow the same installation and configuration steps as for PAS, with the following differences:
 
-* **Selecting a product in Pivotal Network**: 
+* **Selecting a product in Pivotal Network**:
 	* When you navigate to the PAS tile on [Pivotal Network](https://network.pivotal.io/products/elastic-runtime), select the **Small Footprint** release.
 
-* **Configuring resources**: 
-	* The **Resource Config** pane in the Small Footprint PAS tile reflects the differences in VMs discussed in the _Architecture_ section of this topic. 
+* **Configuring resources**:
+	* The **Resource Config** pane in the Small Footprint PAS tile reflects the differences in VMs discussed in the _Architecture_ section of this topic.
 	* Small Footprint PAS does not default to a highly available configuration like PAS does. It defaults to a minimum configuration. To make Small Footprint PAS highly available, scale the VMs to the following instance counts:
 		* **Compute**: `3`
 		* **Control**: `2`
 		* **Database**: `3`
-		* **Router**: `3` 
+		* **Router**: `3`
 
-* **Configuring load balancers**: 
+* **Configuring load balancers**:
 	* If you are using an SSH load balancer, you must enter its name in the **Control VM** row of the **Resource Config** pane. There is no **Diego Brain** row in Small Footprint Runtime because the Diego Brain is colocated on the Control VM. You can still enter the appropriate load balancers in the **Router** and **TCP Router** rows as normal.
 
 
@@ -169,11 +169,11 @@ If you need to troubleshoot a job that runs on the Control or Database VMs, do t
 	$ bosh -e example-env -d example-deployment ssh control/12b1b027-7ffd-43ca-9dc9-7f4ff204d86a
 	</pre>
 
-1. Run `sudo su` to act as super user. 
+1. Run `sudo su` to act as super user.
 
-1. Use `monit` to list the processes running on the VM. 
+1. Use `monit` to list the processes running on the VM.
 	<pre>monit summary</pre>
-	See the following example output that lists the processes running on the Control VM. The processes listed reflect the colocation of jobs as outlined in the _Architecture_ section of this topic. 
+	See the following example output that lists the processes running on the Control VM. The processes listed reflect the colocation of jobs as outlined in the _Architecture_ section of this topic.
 	<pre class="terminal">
 	control/12b1b027-7ffd-43ca-9dc9-7f4ff204d86a:/var/vcap/bosh\_ssh/bosh\_f9d2446b18b445e# monit summary
 	The Monit daemon 5.2.5 uptime: 5d 21h 10m
@@ -206,10 +206,10 @@ If you need to troubleshoot a job that runs on the Control or Database VMs, do t
 	Process 'doppler'                   running
 	Process 'syslog\_drain\_binder'       running
 	System 'system\_localhost'           running
-	</pre> 
+	</pre>
 
-1. To access logs, navigate to `/vars/vcap/sys/log`: 
-	<pre>cd /var/vcap/sys/log</pre> 
+1. To access logs, navigate to `/vars/vcap/sys/log`:
+	<pre>cd /var/vcap/sys/log</pre>
 
 1. Run `ls` to list the log directories for each process. See the following example output from the Control VM:
 	<pre class="terminal">
@@ -219,7 +219,7 @@ If you need to troubleshoot a job that runs on the Control or Database VMs, do t
 	bbs          cloud\_controller\_worker  loggregator\_trafficcontroller  nsync                  silk-controller  syslog\_forwarder
 	cc\_uploader     metron\_agent                   policy-server          ssh\_proxy        tps
 	cfdot        doppler                  monit                          reverse\_log\_proxy      stager           uaa
-	</pre> 
+	</pre>
 
 1. Navigate to the directory of the process that you want to view logs for. For example, for the Cloud Controller process, run `cd cloud_controller_ng/`. From the directory of the process, you can list and view its logs. See the following example output:
 	<pre class="terminal">

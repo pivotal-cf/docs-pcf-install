@@ -8,17 +8,16 @@ and gives examples of how to use the API to perform some common Ops Manager oper
 
 ## <a id='overview'></a> Overview
 
-Platform operators use the Ops Manager API to automate deployments, retrieve and manage credentials, and otherwise work under the hood of the [Ops Manager interface](./pcf-interface.html).
+Platform operators use the Ops Manager API to automate deployments, retrieve and manage credentials, and otherwise work under the hood of the Ops Manager interface.
 
-[Tile developers](http://docs.pivotal.io/tiledev/index.html) use the Ops Manager API to test and debug Pivotal Cloud Foundry (PCF) product tiles.
+Tile Developers use the Ops Manager API to test and debug Pivotal Cloud Foundry (PCF) product tiles.
 
-For running Ops Manager operations from the command line or within shell scripts, the Ops Manager command-line interface (CLI) [`om`](./ops-man-api-cli.html#om) is usually a better tool than the Ops Manager API.
+For running Ops Manager operations from the command line or within shell scripts, the Ops Manager command-line interface (CLI) `om` is usually a better tool than the Ops Manager API.
 For developers who are writing deployment or test routines in programming languages, the command-line API procedures here show how you might test the routines line-by-line while building them.
 
-For the complete Ops Manager API documentation, see either of the following:
+For more information, see the [Ops Manager API](https://docs.pivotal.io/pivotalcf/opsman-api) documentation. Your Ops Manager serves a local copy of this documentation at `https://YOUR-OPS-MANAGER-FQDN/docs`.
 
-* https://docs.pivotal.io/pivotalcf/opsman-api
-* `https://YOUR-OPS-MANAGER-FQDN/docs`, where `OPS-MANAGER-FQDN` is the fully qualified domain name (URL) of your Ops Manager.
+For more information about `om`, see the [`om` repository](https://github.com/pivotal-cf/om).
 
 For an overview of the machine interfaces to Ops Manager, the Ops Manager API, `om`, and Platform Automation, see [Ops Manager API, CLI, and Platform Automation](./ops-man-api-cli.html).
 
@@ -30,8 +29,11 @@ For more information about UAA, see [User Account and Authentication (UAA) Serve
 
 ### <a id='uaa'></a>Install the UAAC
 
-If you haven't already, install the UAA Command Line Interface (UAAC) by runnning the following command from a terminal window:
-<pre class="terminal">$ gem install cf-uaac</pre>
+If you haven't already, install the UAA Command Line Interface (UAAC) by running the following command from a terminal window:
+
+```
+gem install cf-uaac
+```
 
 ### <a id='token'></a>Retrieve an Authorization Token
 
@@ -50,7 +52,7 @@ You need the credentials used to import the PCF .ova or .ovf file into your virt
 1. When prompted, enter the password that you set during the .ova deployment
 into vCenter. For example:
     <pre class='terminal'>
-    $ ssh ubuntu@my-opsmanager-fqdn.example.com
+    $ ssh ubuntu@my-opsmanager-fqdn<span>.</span>example.com
     Password: ***********
     </pre>
 
@@ -60,38 +62,72 @@ into vCenter. For example:
 
 1. Locate the Ops Manager FQDN on the AWS **EC2 instances** page, Azure **Virtual machines** page, or the OpenStack **Access & Security** page.
 
-1. Run `chmod 600 ops_mgr.pem` to change the permissions on the `.pem` file to be more restrictive:
-	<pre class="terminal">
-	$ chmod 600 ops_mgr.pem
-	</pre>
+1. Run `chmod 600` to change the permissions on the `.pem` file to be more restrictive:
 
-1. Run `ssh -i ops_mgr.pem ubuntu@OPS-MANAGER-FQDN` to SSH into the Ops Manager VM. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager. For example:
-	<pre class="terminal">
-	$ ssh -i ops_mgr.pem ubuntu@my-opsmanager-fqdn.example.com
-	</pre>
+    ```
+    chmod 600 OPS-MGR-PEM
+    ```
+    Where `OPS-MGR-PEM` is the public key from the keypair used when creating the Ops Manager VM.
+
+    For example:
+
+    <pre class="terminal">$ chmod 600 ops_mgr.pem</pre>
+
+1. Run `ssh -i OPS-MGR-PEM ubuntu@OPS-MANAGER-FQDN` to SSH into the Ops Manager VM:
+
+    ```
+    ssh -i ops_mgr.pem ubuntu@OPS-MANAGER-FQDN
+    ```
+    Where:
+    * `OPS-MGR-PEM` is the public key from the keypair used when creating the Ops Manager VM.
+    * `OPS-MANAGER-FQDN` is the fully qualified domain name of Ops Manager.
+
+    For example:
+
+    <pre class="terminal">$ ssh -i ops_mgr.pem ubuntu@my-opsmanager-fqdn.example.com</pre>
 
 1. Proceed to [Log in to Ops Manager](#opsman_login).
 
 #### <a id='gcp'></a> Internal UAA on GCP
 
-1. Confirm that you have installed the gcloud CLI. If you do not have the gcloud CLI, see [the Google Cloud Platform documentation](https://cloud.google.com/sdk/gcloud/#downloading_gcloud).
+1. Confirm that you have installed the gcloud CLI. If you do not have the gcloud CLI, see [the Google Cloud Platform documentation](https://cloud.google.com/sdk/gcloud/#downloading_gcloud):
 
-1. Run `gcloud config set project MY-PROJECT` to configure your Google Cloud Platform project. For example:
-    <pre class="terminal">
-    $ gcloud config set project gcp
-    </pre>
+1. To configure your Google Cloud Platform project, run the following command:
 
-1. Run `gcloud auth login MY-GCP-ACCOUNT`. For example:
-    <pre class="terminal">
-    $ gcloud auth login user<span>@</span>example.com
-    </pre>
+    ```
+    $ gcloud config set project MY-PROJECT
+    ```
+    Where `PROJECT` is the name of your GCP project.
 
-1. Run `gcloud compute ssh MY-INSTANCE --zone MY-ZONE`. For example:
-    <pre class="terminal">
-    $ gcloud compute ssh om-pcf-1a --zone us-central1-b
-    </pre>
+    For example:
 
-1. Run `sudo su - ubuntu` to switch to the `ubuntu` user.
+    <pre class="terminal">$ gcloud config set project gcp</pre>
+
+1. Run the following command:
+
+    ```
+    gcloud auth login MY-GCP-ACCOUNT
+    ```
+    Where `MY-GCP-ACCOUNT` is your GCP account ID.
+
+    For example:
+
+    <pre class="terminal">$ gcloud auth login user<span>@</span>example.com</pre>
+
+1. Run the following command:
+
+    ```
+    gcloud compute ssh MY-INSTANCE --zone MY-ZONE`
+    ```
+    Where:
+    * `MY-INSTANCE` is your Ops Manager VM instance.
+    * `MY-ZONE` is the zone where your Ops Manager VM is running.
+
+1. Switch to the `ubuntu` user by running the following command:
+
+    ```
+    sudo su - ubuntu
+    ```
 
 1. Proceed to [Log in to Ops Manager](#opsman_login).
 
@@ -105,6 +141,20 @@ To log in to the Ops Manager VM and retrieve your token, do the following:
 
 1. Use the UAAC to target your Ops Manager UAA server:
 	<pre class="terminal">$ uaac target http<span>s:</span>//OPS-MAN-FQDN/uaa</pre>
+
+1. TK by running the following command:
+
+    ```
+    tk PLACEHOLDERS
+    ```
+    Where `PK` is TK.
+    Where:
+    * `PH1` is TK.
+    * `PH2` is TK.
+
+    For example:
+
+    <pre class="terminal">$ TK</pre>
 
 1. Depending on whether your Ops Manager UAA is internal or external, run the following command:
   * **Internal**

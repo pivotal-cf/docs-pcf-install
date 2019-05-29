@@ -47,12 +47,25 @@ To retrieve your authorization token, perform the procedure below that correspon
 
 You need the credentials used to import the PCF .ova or .ovf file into your virtualization system.
 
-1. From a command line, run `ssh ubuntu@OPS-MANAGER-FQDN` to SSH into the Ops Manager VM. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager.
+1. SSH into the Ops Manager VM:
+
+    ```
+    ssh ubuntu@OPS-MANAGER-FQDN
+    ```
+
+    Where `OPS-MANAGER-FQDN` is the fully qualified domain name of Ops Manager.
+
+    For example:
+
+    <pre class='terminal'>
+    $ ssh ubuntu@my-opsmanager<span>.</span>example.com
+    Password: ***********
+    </pre>
 
 1. When prompted, enter the password that you set during the .ova deployment
 into vCenter. For example:
     <pre class='terminal'>
-    $ ssh ubuntu@my-opsmanager-fqdn<span>.</span>example.com
+    $ ssh ubuntu@my-opsmanager<span>.</span>example.com
     Password: ***********
     </pre>
 
@@ -80,11 +93,11 @@ into vCenter. For example:
     ```
     Where:
     * `OPS-MGR-PEM` is the public key from the keypair used when creating the Ops Manager VM.
-    * `OPS-MANAGER-FQDN` is the fully qualified domain name of Ops Manager.
+    * `OPS-MANAGER-FQDN` is the fully qualified domain name of your Ops Manager.
 
     For example:
 
-    <pre class="terminal">$ ssh -i ops_mgr.pem ubuntu@my-opsmanager-fqdn.example.com</pre>
+    <pre class="terminal">$ ssh -i ops_mgr.pem ubuntu@my-opsmanager.example.com</pre>
 
 1. Proceed to [Log in to Ops Manager](#opsman_login).
 
@@ -123,6 +136,10 @@ into vCenter. For example:
     * `MY-INSTANCE` is your Ops Manager VM instance.
     * `MY-ZONE` is the zone where your Ops Manager VM is running.
 
+    For example:
+
+    <pre class="terminal">$ gcloud compute ssh om-pcf-1a --zone us-central1-b</pre>
+
 1. Switch to the `ubuntu` user by running the following command:
 
     ```
@@ -140,38 +157,52 @@ If you configured your Ops Manager for an external Identity Provider with SAML o
 To log in to the Ops Manager VM and retrieve your token, do the following:
 
 1. Use the UAAC to target your Ops Manager UAA server:
-	<pre class="terminal">$ uaac target http<span>s:</span>//OPS-MAN-FQDN/uaa</pre>
-
-1. TK by running the following command:
 
     ```
-    tk PLACEHOLDERS
+    target https://OPS-MAN-FQDN/uaa
     ```
-    Where `PK` is TK.
-    Where:
-    * `PH1` is TK.
-    * `PH2` is TK.
+
+    Where `OPS-MANAGER-FQDN` is the fully qualified domain name of Ops Manager.
 
     For example:
 
-    <pre class="terminal">$ TK</pre>
+    <pre class="terminal">$ target https://my-opsmanager.example.com/uaa</pre>
 
-1. Depending on whether your Ops Manager UAA is internal or external, run the following command:
+1. Depending on whether your Ops Manager UAA is internal or external, run a command to retrieve your UAA token and respond to the authentication prompts as follows:
   * **Internal**
-  	<pre class="terminal">$ uaac token owner get
-  	Client ID: opsman
-  	Client secret: [Leave Blank]
-  	User name: OPS-MAN-USERNAME
-  	Password: OPS-MAN-PASSWORD
-  	</pre>
-  	Replace `OPS-MAN-USERNAME` and `OPS-MAN-PASSWORD` with the credentials that you use to log in to the Ops Manager web interface.
+
+    	```
+      uaac token owner get
+    	Client ID: opsman
+    	Client secret: [Leave Blank]
+    	User name: OPS-MAN-USERNAME
+    	Password: OPS-MAN-PASSWORD
+    	```
+      Where `OPS-MAN-USERNAME` and `OPS-MAN-PASSWORD` are the credentials that you use to log in to the Ops Manager web interface.  
+      For example:  
+      <pre class="terminal">
+        $ uaac token owner get
+        Client ID: opsman
+        Client secret: [Leave Blank]
+        User name: my-opsman-username
+        Password: my-opsman-password
+      </pre>
   * **External**
-  	<pre class="terminal">$ uaac token sso get
-  	Client ID: opsman
-  	Client secret: [Leave Blank]
-  	Passcode: YOUR-PASSCODE
-  	</pre>
-    When prompted for a passcode, retrieve it from `https://OPS-MAN-FQDN/uaa/passcode`.
+
+    	```
+      uaac token sso get
+    	Client ID: opsman
+    	Client secret: [Leave Blank]
+    	Passcode: OPS-MAN-PASSCODE
+    	```
+      Where `OPS-MAN-PASSCODE` is the value you retrieve from `https://OPS-MAN-FQDN/uaa/passcode`.  
+      For example:  
+      <pre class="terminal">
+        $ uaac token sso get
+        Client ID: opsman
+        Client secret: [Leave Blank]
+        Password: my-opsman-passcode
+      </pre>
 
 If authentication is successful, the UAAC displays the following message: `Successfully fetched token via owner password grant.`
 
@@ -186,26 +217,34 @@ If you are calling Ops Manager API commands from the command line, the machine t
 
 The following example procedure retrieves a list of deployed products. See the [Ops Manager API documentation](https://docs.pivotal.io/pivotalcf/opsman-api) for a full list of API endpoints.
 
-1. List your tokens:
-	<pre class="terminal">
-	$ uaac contexts
-	</pre>
-	Locate the entry for your Ops Manager FQDN. Under `client_id: opsman`, record the value for `access_token`.
+1. List your tokens by running the following command:
 
-1. Use the `GET /api/v0/deployed/products` endpoint to retrieve a list of deployed products, replacing `UAA-ACCESS-TOKEN` with the access token recorded in the previous step:
-	<pre class="terminal">
-	$ curl "http<span>s:</span>//OPS-MAN-FQDN/api/v0/deployed/products" \
-	    -X GET \
-	    -H "Authorization: Bearer UAA-ACCESS-TOKEN"</pre>
-	The request produces the following response:
-	<pre class="terminal">
-	[{"installation\_name":"p-bosh","guid":"p-bosh
-	-00000000000000000000","type":"p-
-	bosh","product\_version":"1.10.0.
-	0"},{"installation\_name":"cf-
-	00000000000000000000","guid":"cf-0000000000000
-	0000000","type":"cf","product\_version":"1.10.0"}]
-	</pre>
+    ```
+    uaac contexts
+    ```
+    In the command output, locate the entry for your Ops Manager FQDN. Under `client_id: opsman`, record the value for `access_token`.
+
+1. Use the `GET /api/v0/deployed/products` endpoint to retrieve a list of deployed products:
+
+    ```
+    curl "https://OPS-MAN-FQDN/api/v0/deployed/products" \
+  	    -X GET \
+  	    -H "Authorization: Bearer UAA-ACCESS-TOKEN
+    ```
+    Where `UAA-ACCESS-TOKEN` is the access token recorded in the previous step.
+
+    For example, the request produces the following response:
+  	<pre class="terminal">
+  	$ curl "http<span>s:</span>my-opsmanager.example.com/api/v0/deployed/products" \
+  	    -X GET \
+  	    -H "Authorization: Bearer my-access-token"
+  	[{"installation\_name":"p-bosh","guid":"p-bosh
+  	-00000000000000000000","type":"p-
+  	bosh","product\_version":"1.10.0.
+  	0"},{"installation\_name":"cf-
+  	00000000000000000000","guid":"cf-0000000000000
+  	0000000","type":"cf","product\_version":"1.10.0"}]
+  	</pre>
 
 ## <a id="configure-bosh"></a>Configure the BOSH Director
 
@@ -223,54 +262,76 @@ Pivotal recommends that beginning users configure the BOSH Director through the 
 
 To configure the BOSH Director with the Ops Manager API, do the following:
 
-<ol>
-<li>Access the Ops Manager API by following the procedure in <a href="#access">Access the Ops Manager API</a> procedure above.</li>
+1. Access the Ops Manager API by following the procedure in <a href="#access">Access the Ops Manager API</a> procedure above.</li>
 
-<li>Enter the following HTTP request to perform initial setup: <code>POST /api/v0/setup</code>.<br/>
-Include metadata in your request to specify configuration details for your deployment. For example, specify the deployment's decryption passphrase, EULA status, and proxy information, if applicable. An example request follows:
-<p class="terminal">$ curl "https://YOUR-OPS-MANAGER-URL.com/api/v0/setup" \<br/>
-    -X POST \<br/>
-    -H "Content-Type: application/json" \<br/>
-    -d '{ "setup": {<br/>
-    "decryption_passphrase": "EXAMPLE-PASSPHRASE",<br/>
-    "decryption_passphrase_confirmation":"EXAMPLE-PASSPHRASE",<br/>
-    "eula_accepted": "true",<br/>
-    "identity_provider": "internal",<br/>
-    "admin_user_name": "EXAMPLE-ADMIN-USERNAME",<br/>
-    "admin_password": "EXAMPLE-ADMIN-PASSWORD",<br/>
-    "admin_password_confirmation": "EXAMPLE-ADMIN-PASSWORD",<br/>
-    "http_proxy": "http://PROXY-NAME.YOUR-WEBSITE.com",<br/>
-    "https_proxy": "https://PROXY-NAME.YOUR-WEBSITE.com",<br/>
-    "no_proxy": "127.0.0.1"<br/>
-  } }'
-</p>
+1. To perform initial setup, enter a `POST` request to the Ops Man API `setup` endpoint, passing metadata to the `-d` flag:
+
+    ```
+    curl "https://YOUR-OPS-MANAGER-URL.com/api/v0/setup" \
+      -X POST \
+      -H "Content-Type: application/json" \
+      -d '{ "setup": {
+      "decryption_passphrase": "PASSPHRASE",
+      "decryption_passphrase_confirmation":"PASSPHRASE",
+      "eula_accepted": "EULA-STATUS",
+      "identity_provider": "IDP-LOCATION",
+      "admin_user_name": "ADMIN-USERNAME",
+      "admin_password": "ADMIN-PASSWORD",
+      "admin_password_confirmation": "ADMIN-PASSWORD",
+      "http_proxy": HTTP-PROXY,
+      "https_proxy": HTTPS-PROXY,
+      "no_proxy": "127.0.0.1"
+    ```
+    Where:
+    * `PASSPHRASE` is your deployment's decryption passphrase
+    * `EULA-STATUS` is your EULA status
+    * `IDP-LOCATION` is your identity provider location, `internal` or `external`
+    * `ADMIN-USERNAME`is your Ops Manager admin username
+    * `ADMIN-PASSWORD`is your Ops Manager admin password
+    * `HTTP-PROXY` is your HTTP proxy, if applicable
+    * `HTTPS-PROXY` is your HTTPS proxy, if applicable
+
+    For example:
+    <pre class="terminal">
+    $ curl "http<span>s:</span>//my-opsman.example.com/api/v0/setup" \
+      -X POST \
+      -H "Content-Type: application/json" \
+      -d '{ "setup": {
+      "decryption\_passphrase": "my-passphrase",
+      "decryption\_passphrase\_confirmation":"my-passphrase",
+      "eula\_accepted": "true",
+      "identity\_provider": "internal",
+      "admin\_user\_name": "my-username",
+      "admin\_password": "my-password",
+      "admin\_password\_confirmation": "my-password",
+      "http\_proxy": "htt<span>p:</span>//myproxy.example.com",
+      "https\_proxy": "http<span>s:</span>//myproxy.example.com",
+      "no\_proxy": "127.0.0.1"
+    } }'
+    </pre>
  	<p class="note"><strong>Note</strong>: You do not need to specify UAA or other authentication details on a first-time deploy. Making the <code>setup</code> request automatically creates a UAA client when it completes successfully. If you specify a UAA client for a first-time deployment, the deployment will fail.</p>
-</li>
 
-<li>A <code>200 OK</code> response appears.</li>
+1. A <code>200 OK</code> response appears.</li>
 
-<li>After the successful response, a UAA client with the metadata you specified is created and launched. Ops Manager users can authenticate with UAAC, and if they have a pre-created client they can target UAAC with the client name and password. For more information on pre-created clients, see <a href="./opsman-users.html">Creating and Managing Ops Manager User and Client Accounts</a>.
+1. After the successful response, a UAA client with the metadata you specified is created and launched. Ops Manager users can authenticate with UAAC, and if they have a pre-created client they can target UAAC with the client name and password. For more information on pre-created clients, see <a href="./opsman-users.html">Creating and Managing Ops Manager User and Client Accounts</a>.
 
-<li>Enter the following HTTP request to perform configure your IaaS and BOSH Director: <code>PUT api/v0/staged/director/properties</code>.<br/>
-There are many configuration parameters available to customize your BOSH Director. All the commands are IaaS-agnostic except the IaaS configuration key. Missing required fields should cause an error.<br/>
-For more information about configuring the BOSH Director, see <a href="http://docs.pivotal.io/pivotalcf/2-5/opsman-api/#fetching-director-iaas-and-security-properties-experimental">Fetching Director, IaaS, and Security Properties</a>.</li>
+1. Send an HTTP `PUT` request to the `api/v0/staged/director/properties` endpoint to configure your IaaS and BOSH Director.  
+There are many configuration parameters available to customize your BOSH Director. All the commands are IaaS-agnostic except the IaaS configuration key. Missing required fields should cause an error.  
+For more information about configuring the BOSH Director, see <a href="http://docs.pivotal.io/pivotalcf/2-5/opsman-api/#fetching-director-iaas-and-security-properties-experimental">Fetching Director, IaaS, and Security Properties</a>.
 
-<li>Enter the following HTTP request to create Availability Zones (AZs) for your product: <code>POST api/v0/staged/director/availability_zones</code>.
-<p class="note"><strong>Note</strong>: The <code>create-azs</code> endpoint is optional for Azure-based deployments, because you cannot manually configure Azure AZs.</p></li>
+1. Send an HTTP `POST` request to the `api/v0/staged/director/availability_zones` endpoint to create Availability Zones (AZs) for your product.
+<p class="note"><strong>Note</strong>: The <code>create-azs</code> endpoint is optional for Azure-based deployments, because you cannot manually configure Azure AZs.</p>
 
-<li>Enter the following HTTP request to create networking rules for the deployment: <code>PUT api/v0/staged/director/networks</code>.<br/>
-Specify whether or not to use ICMP checks by setting the <code>icmp_checks_enabled</code> parameter to <code>true</code> or <code>false</code>.</li>
+1. Send an HTTP `PUT` request to the `api/v0/staged/director/networks` endpoint to create networking rules for the deployment.
+Specify whether or not to use ICMP checks by setting the `icmp_checks_enabled` parameter to `true` or `false`.
 
-<li>Enter the following HTTP request to assign a singleton AZ and a network where your BOSH Director will be located: <code>PUT api/v0/staged/director/network_and_az</code>.</li>
+1. Send an HTTP `PUT` request to the `api/v0/staged/director/network_and_az` endpoint to assign a singleton AZ and a network where your BOSH Director will be located.
 
-<li>You must update the BOSH Director's resource configuration settings before deploying BOSH. To update the resource config, do the following:
-<ol>
-	<li>Use the following HTTP request to find your Director's GUID: <code>GET api/v0/staged/products</code>.</li>
-	<li>Use the following HTTP request to list all jobs on the Director: <code>GET api/v0/staged/products/:BOSH-DIRECTOR-GUID/jobs</code>.</li>
-	<li>Use the following HTTP request to update the resource config of each job on the BOSH Director: <code>PUT api/v0/staged/products/:BOSH-DIRECTOR-GUID/jobs/:JOB-GUID/resource_config</code>.</li>
-</ol>
-</li>
-</ol>
+1. You must update the BOSH Director's resource configuration settings before deploying BOSH. To update the resource config, do the following:
+
+  1. Send a `GET` request to `api/v0/staged/products` to find your Director's GUID.
+	1. Use the following HTTP request to list all jobs on the Director: `GET api/v0/staged/products/:BOSH-DIRECTOR-GUID/jobs`.
+	1. Use the following HTTP request to update the resource config of each job on the BOSH Director: `PUT api/v0/staged/products/:BOSH-DIRECTOR-GUID/jobs/:JOB-GUID/resource_config`.
 
 ## <a id="configure-product"></a>Configure a Product
 
@@ -281,17 +342,25 @@ This method is intended for advanced PCF operators and administrators, to show h
 To upload, stage, and configure a product tile with the Ops Manager API, do the following:
 
 1. Upload or import the product into Ops Manager.
-  1. Enter the following HTTP request to upload the product: `POST api/v0/available_products`
-  1. Enter the following HTTP request to list the names of available products: `GET api/v0/available_products`
-  1. Find the product you uploaded by referencing its name and version from the list that displays.
-  1. Enter the following HTTP request to add the uploaded product to Ops Manager: `POST /api/v0/staged/products`.
-1. Confirm that the product is staged for deployment. Enter the following HTTP request to confirm the product exists in Ops Manager and display the product GUID: `GET api/v0/staged_products`.
-1. Enter the following HTTP request to assign availability zones (AZs) and networks to the product: `PUT /api/v0/staged/products/:PRODUCT-GUID/networks_and_azs`.
-1. Enter the following HTTP request to update the product's properties: `PUT /api/v0/staged/products/:PRODUCT-GUID/properties`.
-1. Enter the following HTTP request to configure syslog for the product: `PUT /api/v0/staged/products/:PRODUCT-GUID/syslog_configuration`.
-1. Update the product's resource configuration:
- 1. Enter the following HTTP request to list all jobs on a product and display the GUID for each job: `GET api/v0/staged/products/:PRODUCT-GUID/jobs`.
- 1. Enter the following HTTP request to update the resource config for a partiular job: `PUT api/v0/staged/products/:PRODUCT-GUID/jobs/:JOB-GUID/resource_config`.
+  1. Send an HTTP `POST` request to the `api/v0/available_products` endpoint to upload the product.
+  1. Send an HTTP `GET` request to the `api/v0/available_products` endpoint to list the names of available products.
+  1. In the output list from `available_products`, find the product you uploaded by referencing its name and version.
+  1. Send an HTTP `POST` request to the `/api/v0/staged/products` endpoint to add the uploaded product to Ops Manager.
+1. Send an HTTP `GET` request to the `api/v0/staged_products` endpoint to confirm that the product is staged for deployment in Ops Manager and display the product GUID.
+1. Send an HTTP `PUT` request to the `PUT /api/v0/staged/products/:PRODUCT-GUID/networks_and_azs` to assign availability zones (AZs) and networks to the product.
+    Where `PRODUCT-GUID` is the product GUID.
+1. Send an HTTP `PUT` request to the `/api/v0/staged/products/:PRODUCT-GUID/properties` endpoint to update the product's properties.
+    Where `PRODUCT-GUID` is the product GUID.
+1. Send an HTTP `PUT` request to the `/api/v0/staged/products/:PRODUCT-GUID/syslog_configuration` endpoint to configure syslog for the product.
+    Where `PRODUCT-GUID` is the product GUID.
+1. Update the product's resource configuration by doing the following:
+   1. Send an HTTP `GET` request to the `api/v0/staged/products/:PRODUCT-GUID/jobs` endpoint to list all jobs on a product and display the GUID for each job.
+      Where `PRODUCT-GUID` is the product GUID.
+   1. Send an HTTP `PUT` request to the `api/v0/staged/products/:PRODUCT-GUID/jobs/:JOB-GUID/resource_config` endpoint to update the resource config for a particular job.
+      Where:
+      * `PRODUCT-GUID` is the product GUID.
+      * `JOB-GUID` is the job GUID.
+
 
 ## <a id="upgrade-opsman"></a>Upgrade Ops Manager
 
@@ -301,7 +370,7 @@ This method is intended for advanced PCF operators and administrators, to show h
 
 ### <a id="prereqs"></a>Prerequisites
 
-You must meet the following prerequisites to safely upgrade Ops Manager with the API.
+Before you upgrade Ops Manager with the Ops Manager API, you must have the following:
 
  * Two versions of Ops Manager: an existing deployment and a new deployment of a later version. The new deployment cannot be configured in any way.
  * DNS information for the existing deployment of Ops Manager
@@ -310,8 +379,8 @@ You must meet the following prerequisites to safely upgrade Ops Manager with the
 
 Follow this procedure to upgrade your Ops Manager:
 
-1. Export your existing installation data: `GET /api/v0/installation_asset_collection`.
-1. Import your installation data to the new deployment: `POST /api/v0/installation_asset_collection`.
-1. Trigger a new installation process: `POST /api/v0/installations`.
+1. Send an HTTP `GET` request to the `/api/v0/installation_asset_collection` endpoint of your old Ops Manager to export your existing installation data.
+1. Send an HTTP `POST` request to the `/api/v0/installation_asset_collection` endpoint of your new Ops Manager to import your installation data to the new deployment.
+1. Send an HTTP `POST` request to the `/api/v0/installations` endpoint of your new Ops Manager to trigger a new installation process.
 1. Test the new deployment.
 1. (Optional) Delete the old deployment.

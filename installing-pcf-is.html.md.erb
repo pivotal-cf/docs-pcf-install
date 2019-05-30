@@ -6,7 +6,7 @@ deployment: IST
 
 
 
-This topic describes how to install the PCF Isolation Segment tile, which allows operators to isolate deployment workloads into dedicated resource pools called _isolation segments_. 
+This topic describes how to install the PCF Isolation Segment tile, which allows operators to isolate deployment workloads into dedicated resource pools called _isolation segments_.
 
 Installing the tile installs a single isolation segment. However, you can install multiple isolation segments using the Replicator tool documented in [Step 4](#copy).
 
@@ -16,7 +16,7 @@ For more information about how isolation segments work, see [Isolation Segments]
 
 ##<a id='routing'></a> Step 1: (Optional) Configure Routing
 
-By default, the Pivotal Application Service (PAS) Router handles traffic for your isolation segment. However, you can deploy a dedicated router for your isolation segment instead. For information about configuring and managing routing for isolation segments, see the [Routing for Isolation Segments](../adminguide/routing-is.html) topic. 
+By default, the Pivotal Application Service (PAS) Router handles traffic for your isolation segment. However, you can deploy a dedicated router for your isolation segment instead. For information about configuring and managing routing for isolation segments, see the [Routing for Isolation Segments](../adminguide/routing-is.html) topic.
 
 To deploy a dedicated router, perform the following steps:
 
@@ -40,17 +40,17 @@ Perform the following steps to install the PCF Isolation Segment tile:
 
 Click the orange **PCF Isolation Segment** tile to start the configuration process.<br>
 
-<%= image_tag('isolation-segment/pcf-isolation-segment.png') %> 
+<%= image_tag('isolation-segment/pcf-isolation-segment.png') %>
 
 ### <a id='az_networks'></a> Assign AZs and Networks
 
-Perform the following steps to configure the PCF Isolation Segment tile: 
+Perform the following steps to configure the PCF Isolation Segment tile:
 
 1. Click **Assign AZs and Networks**.
 
 	<%= image_tag('isolation-segment/az-network.png') %>
 
-1. Select an availability zone for your singleton jobs, and one or more availability zones to balance other jobs in. 
+1. Select an availability zone for your singleton jobs, and one or more availability zones to balance other jobs in.
 
 1. Select a network. This network does not need to be the same network where you deployed PAS. For most deployments, operators should create  unique networks in which to deploy the Isolation Segment tile. These networks should maintain network reach-ability with the Diego components so that the cells can reach the Diego Brain and Diego Database VMs.
 
@@ -62,7 +62,7 @@ Perform the following steps to configure the PCF Isolation Segment tile:
 
 ### <a id='application_containers'></a> Application Containers
 
-Perform the following steps to configure the PCF Isolation Segment tile: 
+Perform the following steps to configure the PCF Isolation Segment tile:
 
 1. Click **Application Containers**.
 
@@ -74,6 +74,8 @@ Perform the following steps to configure the PCF Isolation Segment tile:
 
 1. Select your preference for **Docker Images Disk-Cleanup Scheduling on Cell VMs**. If you choose **Clean up disk-space once usage fills disk**, enter a **Reserved amount of disk space for other jobs** in megabytes. For more information about the configuration options and how to configure a reserved amount, see [Configuring Docker Images Disk-Cleanup Scheduling](../opsguide/config-cell-cleanup.html).
 
+1. The **Enable Containerd Delegation** checkbox governs whether or not Garden delegates container create and destroy operations to the [containerd](https://containerd.io) tool. By default, this option is enabled and Garden uses containerd. Disable this option by disabling the checkbox.
+
 1. Under **Enabling NFSv3 volume services**, select **Enable** or **Disable**. NFS volume services allow application developers to bind existing NFS volumes to their applications for shared file access. For more information, see the [Enabling NFS Volume Services](../opsguide/enable-vol-services.html) topic.
   <p class="note"><strong>Note</strong>: In a clean install, NFSv3 volume services are enabled by default. In an upgrade, NFSv3 volume services match the setting of the previous deployment.</p>
     <%= image_tag('er-config-app-vol-svc.png') %>
@@ -83,14 +85,14 @@ Perform the following steps to configure the PCF Isolation Segment tile:
   * For **LDAP Service Account Password**, enter the password for the service account.
   * For **LDAP Server Host**, enter the hostname or IP address of the LDAP server.
   * For **LDAP Server Port**, enter the LDAP server port number. If you do not specify a port number, Ops Manager uses 389.
-  * For **LDAP User Search Base**, enter the location in the LDAP directory tree from which any LDAP User search begins. The typical LDAP Search Base matches your domain name. <br>For example, a domain named `cloud.example.com` typically uses the following LDAP User Search Base: `ou=Users,dc=example,dc=com`. 
+  * For **LDAP User Search Base**, enter the location in the LDAP directory tree from which any LDAP User search begins. The typical LDAP Search Base matches your domain name. <br>For example, a domain named `cloud.example.com` typically uses the following LDAP User Search Base: `ou=Users,dc=example,dc=com`.
   * For **LDAP Server CA Cert**, you can optionally enter a certificate if your LDAP server supports TLS and you want to enable TLS connections from the NFS driver to your LDAP server. Paste in the root certificate from your CA certificate or your self-signed certificate.
 
 1. To enable Gorouter to verify app identity using TLS, select the **Router uses TLS to verify application identity** checkbox. Verifying app identity using TLS improves resiliency and consistency for app routes. For more information about Gorouter route consistency modes, see [Preventing Misrouting](../concepts/http-routing.html#consistency) in _HTTP Routing_.
   <p class='note'><strong>Note:</strong> This feature does not work if the <b>Disable SSL certificate verification for this environment</b> checkbox is selected.</p>
 
 1. Click **Save**.
- 
+
 ### <a id='syslog'></a> System Logging
 
 1. In the **System Logging** menu, select an option underneath **Do you want to configure syslog for system components?**. **No** is selected by default. This setting only affects Diego cell, router, and HAProxy components within the isolation segment, not shared PAS system components.
@@ -101,7 +103,7 @@ Perform the following steps to configure the PCF Isolation Segment tile:
 
 1. Enter the address of your external syslog aggregation service in the **Address** field. The address can be a hostname or IP address.
 
-1. Enter a port number in the **Port** field. 
+1. Enter a port number in the **Port** field.
 
 1. Select a protocol from the **Transport Protocol** menu. This is the protocol the system uses to transmit logs to syslog.
 
@@ -131,17 +133,17 @@ Metrics](https://github.com/cloudfoundry/loggregator-agent-release#vm-metrics) i
 
 ### <a id='resources'></a> Configure Router Resources
 
-1. Select **Resource Config**. 
+1. Select **Resource Config**.
   <%= image_tag('isolation-segment/resource-config.png') %>
-1. If you are using a dedicated router for your isolation segment, follow the instructions below. 
+1. If you are using a dedicated router for your isolation segment, follow the instructions below.
   <p class="note"><strong>Note</strong>: The configuration settings available in <strong>Resource Config</strong> vary depending on your IaaS.</p>
-  * **If you have the Load Balancers column in your Resource Config**:    
+  * **If you have the Load Balancers column in your Resource Config**:
       * Enter the wildcard DNS entry attached to your load balancer into the **Router** row under **Load Balancers**.
   * **If you do not have the Load Balancers column in your Resource Config**:
       * Navigate to the **Networking** section of the **PCF Isolation Segment** tile.
       * Specify **Router IPs**.
       * Attach the IP addresses to your load balancer manually.
-1. If you are not using HAProxy for this isolation segment, set the number of **Instances** to `0`. 
+1. If you are not using HAProxy for this isolation segment, set the number of **Instances** to `0`.
 
 ### <a id='after_config'></a> After Tile Configuration
 
@@ -180,4 +182,4 @@ If you want to create multiple isolation segments, perform the following steps t
 
 ### <a id='upgrading-replicas'></a> Upgrading Replicated Tiles
 
-For information about upgrading replicated Isolation Segment tiles, see [Upgrading Replicated Tiles](./upgrading-products.html#replica-tiles). 
+For information about upgrading replicated Isolation Segment tiles, see [Upgrading Replicated Tiles](./upgrading-products.html#replica-tiles).

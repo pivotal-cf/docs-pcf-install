@@ -8,18 +8,20 @@ and gives examples of how to use the API to perform some common Ops Manager oper
 
 ## <a id='overview'></a> Overview
 
-Platform operators use the Ops Manager API to automate deployments, retrieve and manage credentials, and otherwise work under the hood of the Ops Manager interface.
+The Ops Manager API controls the Ops Manager VM directly, bypassing the Ops Manager UI.
 
+Platform operators use the Ops Manager API to automate deployments, retrieve and manage credentials, and otherwise work with Ops Manager.
 Tile Developers use the Ops Manager API to test and debug Pivotal Cloud Foundry (PCF) product tiles.
 
-For running Ops Manager operations from the command line or within shell scripts, the Ops Manager command-line interface (CLI) `om` is usually a better tool than the Ops Manager API.
-For developers who are writing deployment or test routines in programming languages, the command-line API procedures here show how you might test the routines line-by-line while building them.
+For more information about the Ops Manager API, see the [Ops Manager API](https://docs.pivotal.io/pivotalcf/opsman-api) documentation. Your Ops Manager serves a local copy of this documentation at `https://YOUR-OPS-MANAGER-FQDN/docs`.
 
-For more information, see the [Ops Manager API](https://docs.pivotal.io/pivotalcf/opsman-api) documentation. Your Ops Manager serves a local copy of this documentation at `https://YOUR-OPS-MANAGER-FQDN/docs`.
+### <a id='related'></a> Related Tools
+
+For running Ops Manager operations from the command line or within shell scripts, the Ops Manager command-line interface (CLI) `om` is usually a better tool than the Ops Manager API.
 
 For more information about `om`, see the [`om` repository](https://github.com/pivotal-cf/om).
 
-For an overview of the machine interfaces to Ops Manager, the Ops Manager API, `om`, and Platform Automation, see [Ops Manager API, CLI, and Platform Automation](./ops-man-api-cli.html).
+For an overview of the Ops Manager API and the tools based on it, see [Using Ops Manager Programmatically and from the Command Line](./ops-man-api-cli.html).
 
 ## <a id='access'></a> Access the Ops Manager API
 
@@ -178,8 +180,8 @@ To log in to the Ops Manager VM and retrieve your token, do the following:
     	User name: OPS-MAN-USERNAME
     	Password: OPS-MAN-PASSWORD
     	```
-      Where `OPS-MAN-USERNAME` and `OPS-MAN-PASSWORD` are the credentials that you use to log in to the Ops Manager web interface.  
-      For example:  
+      Where `OPS-MAN-USERNAME` and `OPS-MAN-PASSWORD` are the credentials that you use to log in to the Ops Manager web interface.
+      For example:
       <pre class="terminal">
         $ uaac token owner get
         Client ID: opsman
@@ -195,8 +197,8 @@ To log in to the Ops Manager VM and retrieve your token, do the following:
     	Client secret: [Leave Blank]
     	Passcode: OPS-MAN-PASSCODE
     	```
-      Where `OPS-MAN-PASSCODE` is the value you retrieve from `https://OPS-MAN-FQDN/uaa/passcode`.  
-      For example:  
+      Where `OPS-MAN-PASSCODE` is the value you retrieve from `https://OPS-MAN-FQDN/uaa/passcode`.
+      For example:
       <pre class="terminal">
         $ uaac token sso get
         Client ID: opsman
@@ -215,7 +217,9 @@ If you are calling Ops Manager API commands from the command line, the machine t
   * **Internal**: You must run Ops Manager API commands from the Ops Manager VM.
   * **External**: You may run commands from your local machine.
 
-The following example procedure retrieves a list of deployed products. See the [Ops Manager API documentation](https://docs.pivotal.io/pivotalcf/opsman-api) for a full list of API endpoints.
+#### <a id='test-command'></a>API Access Test
+
+The following procedure tests whether you can access the Ops Manager API from the command line by retrieving a list of deployed products:
 
 1. List your tokens by running the following command:
 
@@ -233,7 +237,7 @@ The following example procedure retrieves a list of deployed products. See the [
     ```
     Where `UAA-ACCESS-TOKEN` is the access token recorded in the previous step.
 
-    For example, the request produces the following response:
+    The command output should look like the following:
   	<pre class="terminal">
   	$ curl "http<span>s:</span>my-opsmanager.example.com/api/v0/deployed/products" \
   	    -X GET \
@@ -246,11 +250,17 @@ The following example procedure retrieves a list of deployed products. See the [
   	0000000","type":"cf","product\_version":"1.10.0"}]
   	</pre>
 
-## <a id="configure-bosh"></a>Configure the BOSH Director
+## <a id="api-procedures"></a>Example Ops Manager API Procedures
+
+The following procedures illustrate how to test API calls from the command line. If you are a developer writing deployment or test routines in programming languages, these procedures show how you might test the routines line-by-line while building them.
+
+The Ops Manager command-line interface (CLI) [`om`](./ops-man-api-cli.html#om) is usually a better tool than the Ops Manager API for running Ops Manager operations directly from the command-line or within shell scripts.
+
+These methods are intended for advanced PCF operators and administrators.
+
+### <a id="configure-bosh"></a>Configure the BOSH Director
 
 The following procedure configures the BOSH Director for your IaaS using the Ops Manager API.
-
-This method is intended for advanced PCF operators and administrators, to show how to test API calls from the command line. For running Ops Manager operations from the command-line for immediate use, or within shell scripts, the Ops Manager command-line interface (CLI) [`om`](./ops-man-api-cli.html#om) is usually a better tool than the Ops Manager API.
 
 Pivotal recommends that beginning users configure the BOSH Director through the Ops Manager UI, which provides context and explanations for each option. For information about configuring the BOSH Director tile in the Ops Manager UI, see one of the following:
 
@@ -315,8 +325,8 @@ To configure the BOSH Director with the Ops Manager API, do the following:
 
 1. After the successful response, a UAA client with the metadata you specified is created and launched. Ops Manager users can authenticate with UAAC, and if they have a pre-created client they can target UAAC with the client name and password. For more information on pre-created clients, see <a href="./opsman-users.html">Creating and Managing Ops Manager User and Client Accounts</a>.
 
-1. Send an HTTP `PUT` request to the `api/v0/staged/director/properties` endpoint to configure your IaaS and BOSH Director.  
-There are many configuration parameters available to customize your BOSH Director. All the commands are IaaS-agnostic except the IaaS configuration key. Missing required fields should cause an error.  
+1. Send an HTTP `PUT` request to the `api/v0/staged/director/properties` endpoint to configure your IaaS and BOSH Director.
+There are many configuration parameters available to customize your BOSH Director. All the commands are IaaS-agnostic except the IaaS configuration key. Missing required fields should cause an error.
 For more information about configuring the BOSH Director, see <a href="http://docs.pivotal.io/pivotalcf/2-5/opsman-api/#fetching-director-iaas-and-security-properties-experimental">Fetching Director, IaaS, and Security Properties</a>.
 
 1. Send an HTTP `POST` request to the `api/v0/staged/director/availability_zones` endpoint to create Availability Zones (AZs) for your product.
@@ -333,13 +343,9 @@ Specify whether or not to use ICMP checks by setting the `icmp_checks_enabled` p
 	1. Use the following HTTP request to list all jobs on the Director: `GET api/v0/staged/products/:BOSH-DIRECTOR-GUID/jobs`.
 	1. Use the following HTTP request to update the resource config of each job on the BOSH Director: `PUT api/v0/staged/products/:BOSH-DIRECTOR-GUID/jobs/:JOB-GUID/resource_config`.
 
-## <a id="configure-product"></a>Configure a Product
+### <a id="configure-product"></a>Configure a Product
 
-The following procedure uploads, stages, and configures a product tile using the Ops Manager API.
-
-This method is intended for advanced PCF operators and administrators, to show how to test API calls from the command line. For running Ops Manager operations from the command-line for immediate use, or within shell scripts, the Ops Manager command-line interface (CLI) [`om`](./ops-man-api-cli.html#om) is usually a better tool than the Ops Manager API.
-
-To upload, stage, and configure a product tile with the Ops Manager API, do the following:
+The following procedure uploads, stages, and configures a product tile using the Ops Manager API:
 
 1. Upload or import the product into Ops Manager.
   1. Send an HTTP `POST` request to the `api/v0/available_products` endpoint to upload the product.
@@ -361,21 +367,18 @@ To upload, stage, and configure a product tile with the Ops Manager API, do the 
       * `PRODUCT-GUID` is the product GUID.
       * `JOB-GUID` is the job GUID.
 
+### <a id="upgrade-opsman"></a>Upgrade Ops Manager
 
-## <a id="upgrade-opsman"></a>Upgrade Ops Manager
+The following procedure upgrades Ops Manager using the Ops Manager API:
 
-The following procedure upgrades Ops Manager using the Ops Manager API.
-
-This method is intended for advanced PCF operators and administrators, to show how to test API calls from the command line. For running Ops Manager operations from the command-line for immediate use, or within shell scripts, the Ops Manager command-line interface (CLI) [`om`](./ops-man-api-cli.html#om) is usually a better tool than the Ops Manager API.
-
-### <a id="prereqs"></a>Prerequisites
+#### <a id="prereqs"></a>Prerequisites
 
 Before you upgrade Ops Manager with the Ops Manager API, you must have the following:
 
  * Two versions of Ops Manager: an existing deployment and a new deployment of a later version. The new deployment cannot be configured in any way.
  * DNS information for the existing deployment of Ops Manager
 
-### <a id="upgrade"></a>Procedure
+#### <a id="upgrade"></a>Procedure
 
 Follow this procedure to upgrade your Ops Manager:
 

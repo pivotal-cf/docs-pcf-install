@@ -100,10 +100,10 @@ Before beginning this procedure, ensure that you have successfully completed the
 
 1. Select **CredHub**.
 1. Select the location of your CredHub database. PAS includes this CredHub database for services to store their service instance credentials.
-    + If you select **PAS database (configured on the Databases pane)**:
+    + **PAS database (configured on the Databases pane)**: If you select this option,
       CredHub uses the same database as other PAS components, whether the database is internal or external.
-      <p class="note"><strong>Note</strong>: If you deployed PCF on GCP, you must select **PAS database (configured on the Databases pane)**. For more information, see <a href="https://docs.pivotal.io/pivotalcf/2-4/pcf-release-notes/runtime-rn.html#external-credhub">CredHub Database Cannot be External on GCP</a>.
-    + If you select **Other external database**, enter the following:
+      <p class="note"><strong>Note</strong>: If you deploy PAS on GCP, you must select **PAS database (configured on the Databases pane)**. For more information, see <a href="https://docs.pivotal.io/pivotalcf/2-4/pcf-release-notes/runtime-rn.html#external-credhub">CredHub Database Cannot be External on GCP</a>.
+    + **Other external database**: If you select this option, enter the following:
         <table class="nice">
           <tr>
             <th>Field</th>
@@ -111,26 +111,26 @@ Before beginning this procedure, ensure that you have successfully completed the
           </tr>
           <tr>
             <td><strong>Hostname</strong></td>
-            <td>This is the IP address of your database server.</td>
+            <td>Enter the IP address of your database server.</td>
           </tr>
           <tr>
             <td><strong>TCP Port</strong></td>
-            <td>This is the port of your database server, such as <code>3306</code>.</td>
+            <td>Enter the port of your database server, such as <code>3306</code>.</td>
           </tr>
           <tr>
             <td><strong>Username</strong></td>
-            <td>This is a unique username that can access your CredHub database on the database server.</td>
+            <td>Enter a unique username that can access your CredHub database on the database server.</td>
           </tr>
           <tr>
           <td><strong>Password</strong></td>
-          <td>This is the password for the provided username.</td>
+          <td>Enter the password for the provided username.</td>
           </tr>
           <tr>
             <td><strong>Database CA Certificate</strong></td>
             <td>This certificate is used when encrypting traffic to and from the database.</td>
           </tr>
         </table>
-      <div class="note"><strong>Note</strong>: If you deployed PCF using Terraform on AWS, enter the following values from your Terraform output:
+      <div class="note"><strong>Note</strong>: If you deploy PAS on AWS using Terraform, you can locate the following values in your Terraform output:
           <ul>
             <li><strong>Hostname</strong>: <code>rds\_address</code></li>
             <li><strong>TCP Port</strong>: <code>rds\_port</code></li>
@@ -162,7 +162,7 @@ Before beginning this procedure, ensure that you have successfully completed the
         <td><strong>Primary</strong></td>
         <td>This checkbox is used for marking the key you specified above as the primary encryption key. You must mark one key as **Primary**. Do not mark more than one key as <strong>Primary</strong>.</td>
       </tr>
-    </table>
+    </table><br><br>
     + If you plan to use a hardware security module (HSM) as your encryption provider, configure the following values:
       <table class= "nice">
         <tr>
@@ -185,18 +185,52 @@ Before beginning this procedure, ensure that you have successfully completed the
           <td><strong>Primary</strong></td>
           <td>This checkbox is used for marking the key you specified above as the primary encryption key. You must mark one key as **Primary**. Do not mark more than one key as <strong>Primary</strong>.</td>
         </tr>
-      </table>
+      </table>  
   <p class="note"><strong>Note:</strong> For information about using additional keys for key rotation, see the <a href="../opsguide/credential-rotation.html">Rotating Runtime CredHub Encryption Keys</a> topic.</p>
 
-1. To configure CredHub to use an HSM, complete the following fields:
-  * **HSM Provider Partition**. This is the name of the HSM provider partition.
-  * **HSM Provider Partition Password**. This password is used to access the HSM provider partition.
-  * **HSM Provider Client Certificate**. This is the client certificate for the HSM. For more information, see [Create and Register HSM Clients](hsm-config.html#create-register-hsm) in the _Preparing CredHub HSMs for Configuration_ topic.
+1. (Optional) To configure CredHub to use an HSM, complete the following fields:
+  <table class="nice">
+    <tr>
+      <th>Field</th>
+      <th>Instructions</th>
+    </tr>
+    <tr>
+      <td><strong>HSM Provider Partition</strong></td>
+      <td> Enter the name of the HSM provider partition.</td>
+    </tr>
+    <tr>
+      <td><strong>HSM Provider Partition Password</strong></td>
+      <td>Enter a password to use to access the HSM provider partition.</td>
+    </tr>
+    <tr>
+      <td><strong>HSM Provider Client Certificate</strong></td>
+      <td>Enter the client certificate for the HSM. For more information, see <a href="hsm-config.html#create-register-hsm">Create and Register HSM Clients</a> in the <em>Preparing CredHub HSMs for Configuration</em> topic.</td>
+    </tr>
+  </table>
   * In the **HSM Provider Servers** section, click **Add** to add an HSM server. You can add multiple HSM servers. For each HSM server, complete the following fields:
-      * **Host Address**. This is the host name or IP address of the HSM server.
-      * **Port**. This is the port of the HSM server. If you do not know your port address, enter `1792`.
-      * **Partition Serial Number**. This is the serial number of the HSM partition.
-      * **HSM Certificate**. This is the certificate for the HSM server. The HSM presents this certificate to CredHub to establish a two-way TLS connection.
+  <table>
+    <tr>
+      <th>Field</th>
+      <th>Instructions</th>
+    </tr>
+    <tr>
+      <td><strong>Host Address</strong></td>
+      <td>Enter the hostname or IP address of the HSM server.</td>
+    </tr>
+    <tr>
+      <td><strong>Port</strong></td>
+      <td>Enter the port of the HSM server. If you do not know your port address, enter <code>1792</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>Partition Serial Number</strong></td>
+      <td>Enter the serial number of the HSM partition.</td>
+    </tr>
+    <tr>
+      <td><strong>HSM Certificate</strong></td>
+      <td>Enter the certificate for the HSM server. The HSM presents this certificate to CredHub to establish a two-way TLS connection.</td>
+    </tr>
+  </table>
+
 1. If your deployment uses any PCF services that support storing service instance credentials in CredHub and you want to enable this feature, select the **Secure Service Instance Credentials** checkbox.
 1. Click **Save**.
 1. Select the **Resource Config** pane.

@@ -3,9 +3,9 @@ title: Configuring PAS
 owner: PAS Releng
 ---
 
-This topic describes how to configure Pivotal Application Service (PAS) as part of deploying Pivotal Cloud Foundry (PCF). 
+This topic describes how to configure Pivotal Application Service (PAS) as part of deploying Pivotal Cloud Foundry (PCF).
 
-Before beginning this procedure, ensure that you have successfully completed the steps to prepare your environment for PCF and install and configure the BOSH Director. 
+Before beginning this procedure, ensure that you have successfully completed the steps to prepare your environment for PCF and install and configure the BOSH Director.
 
 <p class="note"><strong>Note:</strong> If you plan to <a href="http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the PAS Runtime tile.</p>
 
@@ -29,7 +29,7 @@ Before beginning this procedure, ensure that you have successfully completed the
 
 <p class="note"><strong>Note</strong>: For Azure environments, this configuration pane is <strong>Assign Networks</strong> and does not include AZ configuration.</p>
 
-1. Select **Assign AZ and Networks**. 
+1. Select **Assign AZ and Networks**.
 
 1. Select the first Availability Zone under **Place singleton jobs**. Ops Manager runs any job with a single instance in this Availability Zone.
 
@@ -47,7 +47,7 @@ Before beginning this procedure, ensure that you have successfully completed the
 
 	![There is a heading at the top of the Domains page that begins with the text, Application Service hosts applications. There are two fields on the Domains page: System Domain and Apps Domain. There is a Save button at the bottom of the page](images/domains.png)
 
-1. Enter the system and application domains. The **System Domain** defines your target when you push apps to PAS. For example, `system.example.com`. The **Apps Domain** defines where PAS should serve your apps. For example, `apps.example.com`. For additional guidance based on your installation method, see the following table: 
+1. Enter the system and application domains. The **System Domain** defines your target when you push apps to PAS. For example, `system.example.com`. The **Apps Domain** defines where PAS should serve your apps. For example, `apps.example.com`. For additional guidance based on your installation method, see the following table:
 	<table>
 		<tr>
 			<th>Installation Method</th>
@@ -66,39 +66,146 @@ Before beginning this procedure, ensure that you have successfully completed the
 
 1. Click **Save**.
 
-## <a id='networking'></a> Configure Networking 
+## <a id='networking'></a> Configure Networking
 
 <div><%= partial 'networking-master' %></div>
 
-## <a id='networking-service-mesh'></a> Configure Networking - Service Mesh (Beta) 
+## <a id='networking-service-mesh'></a> Configure Networking - Service Mesh (Beta)
 
 <%= partial 'networking-service-mesh' %>
 
-## <a id='application-containers-config'></a> Configure Application Containers 
+## <a id='application-containers-config'></a> Configure Application Containers
 
 <%= partial 'application_container_config' %>
 
-## <a id='appdevctrl-config'></a> Configure Application Developer Controls 
+## <a id='appdevctrl-config'></a> Configure Application Developer Controls
 
 <%= partial 'application_developer_controls' %>
 
-## <a id='app-security'></a> Configure Application Security Groups 
+## <a id='app-security'></a> Configure Application Security Groups
 
 <%= partial 'application_security_group' %>
 
-## <a id='auth-config'></a> Configure Authentication and Enterprise SSO 
+## <a id='auth-config'></a> Configure Authentication and Enterprise SSO
 
 <%= partial 'authsso_config' %>
 
-## <a id='uaa'></a> Configure UAA 
+## <a id='uaa'></a> Configure UAA
 
 <%= partial 'uaa' %>
 
-## <a id='credhub'></a> Configure CredHub 
+## <a id='credhub'></a> Configure CredHub
 
-<%= partial 'credhub' %>
+<p class="note"><strong>Note:</strong> Enabling CredHub is not required. However, you cannot leave the fields under <strong>Encryption Keys</strong> blank. If you do not intend to use CredHub, enter any text in the <strong>Name</strong> and <strong>Key</strong> fields as placeholder values.</p>
 
-## <a id='sys-db'></a> Configure System Databases 
+1. Select **CredHub**.
+1. Select the location of your CredHub database. PAS includes this CredHub database for services to store their service instance credentials.
+    + If you select **PAS database (configured on the Databases pane)**:
+      CredHub uses the same database as other PAS components, whether the database is internal or external.
+      <p class="note"><strong>Note</strong>: If you deployed PCF on GCP, you must select **PAS database (configured on the Databases pane)**. For more information, see <a href="https://docs.pivotal.io/pivotalcf/2-4/pcf-release-notes/runtime-rn.html#external-credhub">CredHub Database Cannot be External on GCP</a>.
+    + If you select **Other external database**, enter the following:
+        <table class="nice">
+          <tr>
+            <th>Field</th>
+            <th>Instructions</th>
+          </tr>
+          <tr>
+            <td><strong>Hostname</strong></td>
+            <td>This is the IP address of your database server.</td>
+          </tr>
+          <tr>
+            <td><strong>TCP Port</strong></td>
+            <td>This is the port of your database server, such as <code>3306</code>.</td>
+          </tr>
+          <tr>
+            <td><strong>Username</strong></td>
+            <td>This is a unique username that can access your CredHub database on the database server.</td>
+          </tr>
+          <tr>
+          <td><strong>Password</strong></td>
+          <td>This is the password for the provided username.</td>
+          </tr>
+          <tr>
+            <td><strong>Database CA Certificate</strong></td>
+            <td>This certificate is used when encrypting traffic to and from the database.</td>
+          </tr>
+        </table>
+      <div class="note"><strong>Note</strong>: If you deployed PCF using Terraform on AWS, enter the following values from your Terraform output:
+          <ul>
+            <li><strong>Hostname</strong>: <code>rds\_address</code></li>
+            <li><strong>TCP Port</strong>: <code>rds\_port</code></li>
+            <li><strong>Username</strong>: <code>rds\_username</code></li>
+            <li><strong>Password</strong>: <code>rds\_password</code></li>
+          </ul>
+      </div>
+
+1. Under **Encryption Keys**, specify one or more keys to use for encrypting and decrypting the values stored in the CredHub database.
+  + If you plan to use internal encryption, configure the following values:
+    <table class= "nice">
+      <tr>
+        <th>Field</th>
+        <th>Instructions</th>
+      </tr>
+      <tr>
+        <td><strong>Name</strong></td>
+        <td>Enter any key name.</td>
+      </tr>
+      <tr>
+        <td><strong>Provider</strong></td>
+        <td>Select <strong>Internal</strong>.</td>
+      </tr>
+      <tr>
+        <td><strong>Key</strong></td>
+        <td>Enter a randomly generated value that is at least 20 characters long. This key is used for encrypting all data.</td>
+      </tr>
+      <tr>
+        <td><strong>Primary</strong></td>
+        <td>This checkbox is used for marking the key you specified above as the primary encryption key. You must mark one key as **Primary**. Do not mark more than one key as <strong>Primary</strong>.</td>
+      </tr>
+    </table>
+    + If you plan to use a hardware security module (HSM) as your encryption provider, configure the following values:
+      <table class= "nice">
+        <tr>
+          <th>Field</th>
+          <th>Instructions</th>
+        </tr>
+        <tr>
+          <td><strong>Name</strong></td>
+          <td>Enter a key name that already exists on your HSM or a new key name. For each new key name, CredHub generates a key in <strong>HSM Provider Partition</strong> that you configure below.</td>
+        </tr>
+        <tr>
+          <td><strong>Provider</strong></td>
+          <td>Select <strong>HSM</strong>.</td>
+        </tr>
+        <tr>
+          <td><strong>Key</strong></td>
+          <td>Enter a placeholder value under <strong>Key</strong>. CredHub does not use this key for encryption. However, you cannot leave the <strong>Key</strong> field blank.</td>
+        </tr>
+        <tr>
+          <td><strong>Primary</strong></td>
+          <td>This checkbox is used for marking the key you specified above as the primary encryption key. You must mark one key as **Primary**. Do not mark more than one key as <strong>Primary</strong>.</td>
+        </tr>
+      </table>
+  <p class="note"><strong>Note:</strong> For information about using additional keys for key rotation, see the <a href="../opsguide/credential-rotation.html">Rotating Runtime CredHub Encryption Keys</a> topic.</p>
+
+1. To configure CredHub to use an HSM, complete the following fields:
+  * **HSM Provider Partition**. This is the name of the HSM provider partition.
+  * **HSM Provider Partition Password**. This password is used to access the HSM provider partition.
+  * **HSM Provider Client Certificate**. This is the client certificate for the HSM. For more information, see [Create and Register HSM Clients](hsm-config.html#create-register-hsm) in the _Preparing CredHub HSMs for Configuration_ topic.
+  * In the **HSM Provider Servers** section, click **Add** to add an HSM server. You can add multiple HSM servers. For each HSM server, complete the following fields:
+      * **Host Address**. This is the host name or IP address of the HSM server.
+      * **Port**. This is the port of the HSM server. If you do not know your port address, enter `1792`.
+      * **Partition Serial Number**. This is the serial number of the HSM partition.
+      * **HSM Certificate**. This is the certificate for the HSM server. The HSM presents this certificate to CredHub to establish a two-way TLS connection.
+1. If your deployment uses any PCF services that support storing service instance credentials in CredHub and you want to enable this feature, select the **Secure Service Instance Credentials** checkbox.
+1. Click **Save**.
+1. Select the **Resource Config** pane.
+1. Under the **Job** column of the **CredHub** row, ensure that the number of instances is set to `2`. This is the minimum instance count required for high availability.
+1. Click **Save**.
+
+For more information about using CredHub for securing service instance credentials, see [Securing Service Instance Credentials with Runtime CredHub](../opsguide/secure-si-creds.html).
+
+## <a id='sys-db'></a> Configure System Databases
 
 You can configure PAS to use an internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by PAS.
 
@@ -120,55 +227,55 @@ Then proceed to [Configure Internal MySQL](#internal-mysql) to configure high av
 
 <%= partial 'ert_database_external' %>
 
-## <a id='internal-mysql'></a> (Optional) Configure Internal MySQL 
+## <a id='internal-mysql'></a> (Optional) Configure Internal MySQL
 
 <%= partial 'mysql_proxy_config' %>
 
-## <a id='file-storage'></a> Configure File Storage 
+## <a id='file-storage'></a> Configure File Storage
 
 <%= partial 'max_droplets_packages_config' %>
 
-## <a id='sys-logging'></a> (Optional) Configure System Logging 
+## <a id='sys-logging'></a> (Optional) Configure System Logging
 
 <%= partial '_system_logging' %>
 
-## <a id='customize-apps-man'></a> (Optional) Configure Custom Branding and Apps Manager 
+## <a id='customize-apps-man'></a> (Optional) Configure Custom Branding and Apps Manager
 
-<%= partial 'custombranding' %> 
+<%= partial 'custombranding' %>
 
-## <a id='smtp'></a> (Optional) Configure Email Notifications 
+## <a id='smtp'></a> (Optional) Configure Email Notifications
 
 <%= partial 'email-notifs' %>
 
-## <a id='config-autoscaler'></a> (Optional) Configure App Autoscaler 
+## <a id='config-autoscaler'></a> (Optional) Configure App Autoscaler
 
 <%= partial 'app-autoscaler' %>
 
-## <a id='config-cc'></a> Configure Cloud Controller 
+## <a id='config-cc'></a> Configure Cloud Controller
 
 <%= partial 'cloud-controller' %>
 
-## <a id='config-smoke-test'></a> Configure Smoke Tests 
+## <a id='config-smoke-test'></a> Configure Smoke Tests
 
 <%= partial 'smoketests' %>
 
-## <a id='advanced'></a> (Optional) Configure  Advanced Features 
+## <a id='advanced'></a> (Optional) Configure  Advanced Features
 
 <%= partial 'advanced-features' %>
 
-## <a id='metric-registrar'></a> (Optional) Configure  Metric Registrar 
+## <a id='metric-registrar'></a> (Optional) Configure  Metric Registrar
 
 <%= partial 'metric-registrar' %>
 
-## <a id='errands'></a> Configure Errands 
+## <a id='errands'></a> Configure Errands
 
 <%= partial 'errands' %>
 
-## <a id='resources'></a> Configure Resources 
+## <a id='resources'></a> Configure Resources
 
 ### <a name='lb'></a> Configure Load Balancing
 
-In the Resource Config pane, you must associate load balancers with the VMs in your deployment to enable traffic. See [Configure Load Balancing for PAS](configure-lb.html). 
+In the Resource Config pane, you must associate load balancers with the VMs in your deployment to enable traffic. See [Configure Load Balancing for PAS](configure-lb.html).
 
 <p class="note"><strong>Note</strong>: This step does not apply to vSphere deployments.</p>
 
@@ -176,11 +283,11 @@ In the Resource Config pane, you must associate load balancers with the VMs in y
 
 <%= partial 'disable_resources' %>
 
-## <a id='stemcell'></a> Download Stemcell 
+## <a id='stemcell'></a> Download Stemcell
 
 <%= partial "download-stemcell" %>
 
-## <a id='complete'></a> Complete the PAS Installation 
+## <a id='complete'></a> Complete the PAS Installation
 
 1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
 

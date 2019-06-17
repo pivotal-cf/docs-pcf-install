@@ -5,6 +5,7 @@ owner: Releng
 
 This topic describes how to configure load balancing for Pivotal Application Service (PAS) by entering the names of your load balancers in the **Resource Config** pane of the PAS tile. This procedure varies by IaaS an installation method. See the section below that corresponds to your use case.
 
+
 ## <a id="aws"></a> AWS
 
 To configure the Gorouter or HAProxy to AWS Elastic Load Balancers, do the following:
@@ -29,22 +30,82 @@ To configure the Gorouter or HAProxy to AWS Elastic Load Balancers, do the follo
 
 1. In the **Load Balancers** field of the **TCP Router** row, enter the name of your TCP load balancer if you enabled TCP routing: `pcf-tcp-elb`.
 
+
 ## <a id="aws-terraform"></a> AWS Terraform
 
-To configure the Gorouter or HAProxy to AWS Network Load Balancers, do the following:
+1. Create a file called `vm_extensions_config.yml` with the following content, depending on which release you are using:
 
-1. In the PAS tile, click **Resource Config**.
+  * **Pivotal Application Service (PAS)**:
 
-1. Enter the name of your SSH load balancer depending on which release you are using.
-  * **Pivotal Application Service (PAS)**: In the **Load Balancers** field of the **Diego Brain** row, enter the values of `ssh_target_groups` from the Terraform output, prefixed with "alb:": `alb:pcf-ssh-tg`.
-  * **Small Footprint Runtime**: In the **Load Balancers** field of the **Control** row, enter the values of `ssh_target_groups` from the Terraform output, prefixed with "alb:": `alb:pcf-ssh-tg`.
+      ```
+    ---
+    product-name: cf
+    resource-config:
+      diego_brain:
+        elb_names:
+        - alb:SSH_TARGET_GROUP_1
+        - alb:SSH_TARGET_GROUP_2
+        additional_vm_extensions:
+        - ssh-lb-security-groups
+      router:
+        elb_names:
+        - alb:WEB_TARGET_GROUPS_1
+        - alb:WEB_TARGET_GROUPS_2
+        additional_vm_extensions:
+        - web-lb-security-groups
+      tcp_router:
+        elb_names:
+        - alb:TCP_TARGET_GROUP_1
+        - alb:TCP_TARGET_GROUP_2
+        additional_vm_extensions:
+        - tcp-lb-security-groups
+      ```
 
-1. In the **Load Balancers** field of the **Router** row, enter all values of `web_target_groups` from the Terraform output, prefixed with "alb:": `alb:pcf-web-tg-80,alb:pcf-web-tg-443`.
-    <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, then put the name of the load balancers in the **Load Balancers** field of the **HAProxy** row instead of the **Router** row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
+  * **Small Footprint Runtime**:
 
-1. In the **Load Balancers** field of the **TCP Router** row, enter all values of `tcp_target_groups` from the Terraform output, prefixed with "alb:": `alb:default-tg-1024,alb:default-tg-1024`.
+      ```
+    ---
+    product-name: cf
+    resource-config:
+      control:
+        elb_names:
+        - alb:SSH_TARGET_GROUP_1
+        - alb:SSH_TARGET_GROUP_2
+        additional_vm_extensions:
+        - ssh-lb-security-groups
+      router:
+        elb_names:
+        - alb:WEB_TARGET_GROUPS_1
+        - alb:WEB_TARGET_GROUPS_2
+        additional_vm_extensions:
+        - web-lb-security-groups
+      tcp_router:
+        elb_names:
+        - alb:TCP_TARGET_GROUP_1
+        - alb:TCP_TARGET_GROUP_2
+        additional_vm_extensions:
+        - tcp-lb-security-groups
+      ```
 
-1. Click **Save**.
+Replace `SSH_TARGET_GROUP_X` with your SSH target group(s), `WEB_TARGET_GROUPS_X` with your web target groups, and `TCP_TARGET_GROUP_X` with your TCP target groups. If you used `terraform` these values can be retrieved with the following commands:
+
+```sh
+terraform output ssh_target_groups
+terraform output web_target_groups
+terraform output tcp_target_groups
+```
+
+1. Apply the VM extension configuration
+
+```sh
+om -k \
+  -t "https://pcf.YOUR.ROOT.DOMAIN" \
+  -u "USERNAME" \
+  -p "PASSWORD" \
+  configure-product \
+  -c vm_extensions_config.yml
+```
+
 
 ## <a id="azure"></a> Azure
 
@@ -69,6 +130,7 @@ To configure the Gorouter to Azure Load Balancers, do the following:
 1. Scale the number of instances as appropriate for your deployment.
 <p class="note"><strong>Note:</strong> For a high availability deployment of PCF on Azure, Pivotal recommends scaling the number of each PAS job to a minimum of three (3) instances. Using three or more instances for each job creates a sufficient number of availability sets and fault domains for your deployment. For more information, see <a href="../refarch/azure/azure_ref_arch.html">Reference Architecture for Pivotal Cloud Foundry on Azure</a>.</p>
 
+
 ## <a id="azure-terraform"></a> Azure Terraform
 
 To configure the Gorouter to Azure Load Balancers, do the following:
@@ -86,6 +148,7 @@ To configure the Gorouter to Azure Load Balancers, do the following:
 
 1. Scale the number of instances as appropriate for your deployment.
   <p class="note"><strong>Note:</strong> For a high availability deployment of PCF on Azure, Pivotal recommends scaling the number of each PAS job to a minimum of three (3) instances. Using three or more instances for each job creates a sufficient number of availability sets and fault domains for your deployment. For more information, see <a href="../refarch/azure/azure_ref_arch.html">Reference Architecture for Pivotal Cloud Foundry on Azure</a>.</p>
+
 
 ## <a id="gcp"></a> GCP
 
@@ -124,6 +187,7 @@ To Configure Gorouter to GCP Load Balancers, do the following:
 
 1. Click **Save**.
 
+
 ## <a id="gcp-terraform"></a> GCP Terraform
 
 To Configure Gorouter to GCP Load Balancers, do the following:
@@ -144,6 +208,7 @@ To Configure Gorouter to GCP Load Balancers, do the following:
    <p class="note"><strong>Note:</strong> If you want to provision a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses, deselect the <strong>Internet Connected</strong> checkboxes. For more information about using NAT in GCP, see the <a href="https://cloud.google.com/compute/docs/networking">GCP documentation</a>.</p>
 
 1. Click **Save**.
+
 
 ## <a id="openstack"></a> Openstack
 

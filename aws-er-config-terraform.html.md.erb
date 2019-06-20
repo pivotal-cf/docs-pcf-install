@@ -244,21 +244,118 @@ For additional factors to consider when selecting file storage, see the [Conside
 
 <%= partial 'errands' %>
 
-## <a id='config-elb'></a> Step 23: Configure Router (or HAProxy) to Elastic Load Balancer
+## <a id='config-elb'></a> Step 23: Register Router or HAProxy to Elastic Load Balancer
+
+According to the patch version of PAS you are using, the Terraform config may deploy either **Network Load Balancers** or **Classic Load Balancers**. The entries in your Terraform output indicate which you have:
+
+* Entries with the suffix `target_group` mean Network Load Balancers are deployed. This is the case for the most recent releases.
+* Entries with the suffix `elb_name` mean Classic Load Balancers are deployed. This was the case for previous releases.
+
+The type of load balancer affects the configuration you need to do for each Load Balancer:
+
+* **Network Load Balancer**: Register the VMs to the target group and security group using the `om` CLI.
+* **Classic Load Balancer**: Register VMs to the Load Balancer directly. The value in the Ops Manager config is the load balancer name.
+
+### <a id='classic-lb'></a> Classic Load Balancers
+
+To register the router or HAProxy to Classic load balancers, do the following:
 
 1. In the PAS tile, click **Resource Config**.
   <%= image_tag("images/resource_config.png") %>
 
-1. Enter the name of your SSH load balancer depending on which release you are using. 
-  * **Pivotal Application Service (PAS)**: In the **Load Balancers** field of the **Diego Brain** row, enter the value of `ssh_elb_name` from the Terraform output.
-  * **Small Footprint Runtime**: In the **Load Balancers** field of the **Control** row, enter the value of `ssh_elb_name` from the Terraform output.
+1. To get the name of the SSH load balancer, record the value of `ssh_elb_name` from the Terraform output.
+
+1. Do one of the following, depending on the PAS release:
+  * **Pivotal Application Service (PAS)**: In the **Load Balancers** field of the **Diego Brain** row, enter the value you recorded in the previous step.
+  * **Small Footprint Runtime**: In the **Load Balancers** field of the **Control** row, enter the value you recorded in the previous step.
+
+1. To get the name of the load balancer, record the value of `web_elb_name`.
 
 1. In the **Load Balancers** field of the **Router** row, enter the value of `web_elb_name` from the Terraform output.
     <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, then put the name of the load balancers in the **Load Balancers** field of the **HAProxy** row instead of the **Router** row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
 
-1. In the **Load Balancers** field of the **TCP Router** row, enter the value of `tcp_elb_name` from the Terraform output.
+
+1. In the **Load Balancers** field of the **TCP Router** row, enter the value of `tcp_elb_name`.
+
 
 1. Click **Save**.
+
+### <a id='network-lb'></a> Network Load Balancers
+
+To register the router or HAProxy to Network load balancers, do the following
+
+1. Create a file named `vm_extensions_config.yml` with the following content, depending on which release you are using:
+  * **Pivotal Application Service (PAS)**:
+
+      ```
+    ---
+    product-name: cf
+    resource-config:
+      diego_brain:
+        elb_names:
+        - alb:SSH_TARGET_GROUP_1
+        - alb:SSH_TARGET_GROUP_2
+        additional_vm_extensions:
+        - ssh-lb-security-groups
+      router:
+        elb_names:
+        - alb:WEB_TARGET_GROUPS_1
+        - alb:WEB_TARGET_GROUPS_2
+        additional_vm_extensions:
+        - web-lb-security-groups
+      tcp_router:
+        elb_names:
+        - alb:TCP_TARGET_GROUP_1
+        - alb:TCP_TARGET_GROUP_2
+        additional_vm_extensions:
+        - tcp-lb-security-groups
+      ```
+  * **Small Footprint Runtime**:
+
+      ```
+    ---
+    product-name: cf
+    resource-config:
+      control:
+        elb_names:
+        - alb:SSH_TARGET_GROUP_1
+        - alb:SSH_TARGET_GROUP_2
+        additional_vm_extensions:
+        - ssh-lb-security-groups
+      router:
+        elb_names:
+        - alb:WEB_TARGET_GROUPS_1
+        - alb:WEB_TARGET_GROUPS_2
+        additional_vm_extensions:
+        - web-lb-security-groups
+      tcp_router:
+        elb_names:
+        - alb:TCP_TARGET_GROUP_1
+        - alb:TCP_TARGET_GROUP_2
+        additional_vm_extensions:
+        - tcp-lb-security-groups
+      ```
+
+1. Replace values in the file as follows;
+    * `SSH_TARGET_GROUP_X`: Enter your SSH target groups. You can find these values by running `terraform output ssh_target_groups`. 
+    * `WEB_TARGET_GROUPS_X`: Enter your web target groups. You can find these values by running `terraform output web_target_groups`. 
+    * `TCP_TARGET_GROUP_X`: Enter your TCP target groups. You can find these values by running `terraform output tcp_target_groups`. 
+
+1. Apply the VM extension configuration using the `om` CLI. For more information about `om`, see [pivotal-cf/om](https://github.com/pivotal-cf/om) in GitHub. 
+
+    ```
+    om -k \
+      -t "YOUR-OPS-MANAGER-FQDN" \
+      -u "USERNAME" \
+      -p "PASSWORD" \
+      configure-product \
+      -c vm_extensions_config.yml
+    ```
+    Where:
+    * `YOUR-OPS-MANAGER-FQDN` is the URL at which you access your Ops Manager instance. This corresponds to `ops_manager_dns` in the Terraform output. 
+    * `USERNAME` is the user name you entered when configuring internal authentication. 
+    * `PASSWORD` is the password you entered when configuring internal authentication. 
+      <p class="note"><strong>Note</strong>: If you did not configure internal authentication, you must modify this command to use a client ID and secret instead of user name and password. See [Authentication](https://github.com/pivotal-cf/om/tree/master/docs#authentication) in the <code>om</code> repository.</p>
 
 ## <a id='disable-resources'></a> Step 24: (Optional) Scale Down and Disable Resources
 

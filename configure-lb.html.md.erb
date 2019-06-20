@@ -33,8 +33,9 @@ To configure the Gorouter or HAProxy to AWS Elastic Load Balancers, do the follo
 
 ## <a id="aws-terraform"></a> AWS Terraform
 
-1. Create a file called `vm_extensions_config.yml` with the following content, depending on which release you are using:
+If you are installing PAS on AWS using Terraform, do the following to set up load balancing:
 
+1. Create a file named `vm_extensions_config.yml` with the following content, depending on which release you are using:
   * **Pivotal Application Service (PAS)**:
 
       ```
@@ -60,7 +61,6 @@ To configure the Gorouter or HAProxy to AWS Elastic Load Balancers, do the follo
         additional_vm_extensions:
         - tcp-lb-security-groups
       ```
-
   * **Small Footprint Runtime**:
 
       ```
@@ -87,24 +87,27 @@ To configure the Gorouter or HAProxy to AWS Elastic Load Balancers, do the follo
         - tcp-lb-security-groups
       ```
 
-Replace `SSH_TARGET_GROUP_X` with your SSH target group(s), `WEB_TARGET_GROUPS_X` with your web target groups, and `TCP_TARGET_GROUP_X` with your TCP target groups. If you used `terraform` these values can be retrieved with the following commands:
+1. Replace values in the file as follows;
+    * `SSH_TARGET_GROUP_X`: Enter your SSH target groups. You can find these values by running `terraform output ssh_target_groups`. 
+    * `WEB_TARGET_GROUPS_X`: Enter your web target groups. You can find these values by running `terraform output web_target_groups`. 
+    * `TCP_TARGET_GROUP_X`: Enter your TCP target groups. You can find these values by running `terraform output tcp_target_groups`. 
 
-```sh
-terraform output ssh_target_groups
-terraform output web_target_groups
-terraform output tcp_target_groups
-```
+1. Apply the VM extension configuration using the `om` CLI. For more information about `om`, see [pivotal-cf/om](https://github.com/pivotal-cf/om) in GitHub. 
 
-1. Apply the VM extension configuration
+    ```
+    om -k \
+      -t "YOUR-OPS-MANAGER-FQDN" \
+      -u "USERNAME" \
+      -p "PASSWORD" \
+      configure-product \
+      -c vm_extensions_config.yml
+    ```
+    Where:
+    * `YOUR-OPS-MANAGER-FQDN` is the URL at which you access your Ops Manager instance. This corresponds to `ops_manager_dns` in the Terraform output. 
+    * `USERNAME` is the user name you entered when configuring internal authentication. 
+    * `PASSWORD` is the password you entered when configuring internal authentication. 
+      <p class="note"><strong>Note</strong>: If you did not configure internal authentication, you must modify this command to use a client ID and secret instead of user name and password. See [Authentication](https://github.com/pivotal-cf/om/tree/master/docs#authentication) in the <code>om</code> repository.</p>
 
-```sh
-om -k \
-  -t "https://pcf.YOUR.ROOT.DOMAIN" \
-  -u "USERNAME" \
-  -p "PASSWORD" \
-  configure-product \
-  -c vm_extensions_config.yml
-```
 
 
 ## <a id="azure"></a> Azure

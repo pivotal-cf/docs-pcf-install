@@ -311,28 +311,17 @@ There are two options available to you to connect to your jumpbox with SSH:
 
 Set and use `BOSH_ALL_PROXY`. Using `BOSH_ALL_PROXY` opens an SSH tunnel with SOCKS5 to the jumpbox.
 This tunnel enables you to forward requests to the BOSH Director through the jumpbox from your local machine.
+When the environment variable `BOSH_ALL_PROXY` is set, the BBR cli will always utilise its value to forward
+requests to the BOSH Director.
 
 Use one of the following methods to create the tunnel:
-
-* **Tunnel created by BOSH CLI**: To provide the BOSH CLI with the SSH credentials it needs to create the tunnel, run the following command:
-
-    ```
-	 export BOSH_ALL_PROXY=ssh+socks5://JUMPBOX@JUMPBOX-IP:SOCKS-PORT?private_key=JUMPBOX-KEY-FILE
-	 ```
-
-    Where:
-    * `JUMPBOX` is the name of your jumpbox.
-    * `JUMPBOX-IP` is the IP address of the jumpbox.
-    * `SOCKS-PORT` is the local SOCKS port.
-    * `JUMPBOX-KEY-FILE` is the local SSH private key for accessing the jumpbox.
-
 
 * **Tunnel established separately**:
 
   1. To establish the tunnel and make it available on a local port, run the following command:
 
     ```
-    ssh -4 -D SOCKS-PORT -fNC JUMPBOX@JUMPBOX-IP -i JUMPBOX-KEY-FILE
+    ssh -4 -D SOCKS-PORT -fNC JUMPBOX@JUMPBOX-IP -i JUMPBOX-KEY-FILE -o ServerAliveInterval=60
     ```
 
     Where:
@@ -344,8 +333,22 @@ Use one of the following methods to create the tunnel:
   1. To provide the BOSH CLI with access to the tunnel through use of the `BOSH_ALL_PROXY` environment variable, run the following command:
 
     ```
-    export BOSH_ALL_PROXY=socks5://localhost:SOCKS-PORT
+    export BOSH_ALL_PROXY=socks5://localhost:12345
     ```
+
+* **Tunnel created by BOSH CLI**: To provide the BOSH CLI with the SSH credentials it needs to create the
+tunnel, run the following command:
+
+    ```
+    export BOSH_ALL_PROXY=ssh+socks5://JUMPBOX@JUMPBOX-IP:SOCKS-PORT?private_key=JUMPBOX-KEY-FILE
+    ```
+
+    Where:
+    * `JUMPBOX` is the name of your jumpbox.
+    * `JUMPBOX-IP` is the IP address of the jumpbox.
+    * `SOCKS-PORT` is the local SOCKS port.
+    * `JUMPBOX-KEY-FILE` is the local SSH private key for accessing the jumpbox.
+
 
 <p class="note"><strong>Note</strong>: Ensure the SOCKS port is not already in use by a different tunnel/process.
 </p>
@@ -354,6 +357,12 @@ Use one of the following methods to create the tunnel:
 backup and restore times due to network performance degradation. Because all operations must pass
 through the proxy, moving backup artifacts can be significantly slower.
 </p>
+
+<div class="note warning"><strong>Warning:</strong>
+Prior to version <a href="https://github.com/cloudfoundry-incubator/bosh-backup-and-restore/releases/tag/v1.5.1">v1.5.1</a>
+of the BBR cli, the tunnel created by the BOSH cli did not include the necessary <code>ServerAliveInterval</code> flag.
+This may result in your SSH connection timing out when transferring large artifacts.
+</div>
 
 #### Check Your BOSH Director
 

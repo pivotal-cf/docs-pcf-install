@@ -152,11 +152,22 @@ To log in to the Ops Manager VM with SSH in vSphere, do the following:
 1. When prompted, enter the public SSH key. 
 
 
-## <a id='log-in'></a> Log in to the BOSH Director VM
+## <a id='log-in'></a>Authenticate with the BOSH Director VM
 
-Follow the steps below to log in to the BOSH Director VM.
+There are two approaches to authenticate with BOSH.
+1. ssh to an ops manager vm and export environment variables
+2. create a BOSH director alias and login with UAA, SAML
 
-### <a id='bosh-alias'></a> Create a Local BOSH Director Alias
+### <a id='ops-man-export-bosh-envs'></a>Approach 1) Set the BOSH environment variables on the Ops Manager VM
+If you have access to the Ops Manager VM, ssh to the Ops Manager VM.
+
+1. Retrieve the Bosh Commandline Credentials from the **BOSH Director > Credentials** tab.
+1. Export all the environment variables. Be sure to add "export" before the environment variables. For example:
+    <pre class="terminal">$ export BOSH_CLIENT=ops_manager BOSH_CLIENT_SECRET=some secret BOSH_CA_CERT=/var/tempest/workspaces/default/root_ca_certificate BOSH_ENVIRONMENT=10.0.0.5 bosh</pre>
+1. Verify that bosh access works.
+    <pre class="terminal">$ bosh deployments</pre>
+
+### <a id='bosh-alias'></a>Approach 2) Create a Local BOSH Director Alias
 
 1. Run the following command to create a local alias for the BOSH Director using the BOSH CLI: `bosh alias-env MY-ENV -e DIRECTOR-IP-ADDRESS --ca-cert /var/tempest/workspaces/default/root_ca_certificate`
 
@@ -170,7 +181,7 @@ For example:
   * [Internal User Store Login through UAA](#uaa-bosh): Log in to the BOSH Director VM using BOSH.
   * [External User Store Login through SAML](#saml-bosh): Use an external user store to log in to the BOSH Director VM.
 
-### <a id='uaa-bosh'></a> Log in to the BOSH Director VM with UAA
+#### <a id='uaa-bosh'></a>Log in to the BOSH Director VM with UAA
 
 1. Retrieve the Director password from the **BOSH Director > Credentials** tab. Alternatively, launch a browser and visit `https://OPS-MANAGER-FQDN/api/v0/deployed/director/credentials/director_credentials` to obtain the password. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager.
 
@@ -178,7 +189,7 @@ For example:
     <pre class='terminal'>$ bosh -e gcp log-in</pre>
     Follow the BOSH CLI prompts and enter the BOSH Director credentials to log in to the BOSH Director VM.
 
-### <a id='saml-bosh'></a> Log in to the BOSH Director VM with SAML
+#### <a id='saml-bosh'></a>Log in to the BOSH Director VM with SAML
 
 1. Log in to your identity provider and use the following information to configure SAML Service Provider Properties:
   * **Service Provider Entity ID**: `bosh-uaa`
@@ -206,7 +217,7 @@ For example:
     <pre class='terminal'>Logged in as admin@example.org
     </pre>
 
-## <a id='bosh-director-ssh'></a> Log in to the BOSH Director VM with SSH
+## <a id='bosh-director-ssh'></a> SSH into the BOSH Director VM
 
 Do the following steps to log in to the BOSH Director VM with SSH:
 

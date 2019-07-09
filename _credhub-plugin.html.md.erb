@@ -1,16 +1,51 @@
 ## <a id='build-tile'></a> Build and Install a Tile
 
-In order to use the KMS plugin with the CredHub deployed with Ops Manager or Pivotal Application Service (PAS), you must wrap your BOSH release in a tile and install it on the Ops Manager Installation Dashboard.
+To use the KMS plugin with CredHub deployed with Ops Manager or Pivotal Application Service (PAS),
+you must wrap your BOSH release in a tile and install it on the Ops Manager Installation Dashboard.
 
 [Here](https://github.com/pivotal/sample-credhub-kms-plugin-tile) is a sample plugin.
 
 Perform the following steps:
 
-1. Perform the procedures in steps 1-3 of [How to Use](https://docs.pivotal.io/tiledev/tile-generator.html#how-to) in the <em>Tile Generator</em> topic of the PCF Tile Developer Guide to install the Tile Generator and initialize your tile repository.
+1. Install the Tile Generator by doing one of the following:
+    * Download the Tile Generator binary for your platform from [cf-platform-eng/tile-generator](https://github.com/cf-platform-eng/tile-generator/releases/latest) in GitHub, then run the following commands to make it executable and available:
 
-1. The `tile init` command generates a `tile.yml` file. This file defines the configuration for your tile.
+        ```
+        chmod +x TILE-BINARY
+        mv TILE-BINARY /usr/local/bin/tile
+        ```
+        Where:
+        `TILE-BINARY` is the name of the tile binary file.
+        For example:
+        <pre class="terminal">
+        $ chmod +x tile_darwin-64bit
+        $ mv tile_darwin-64bit /usr/local/bin/tile
+        </pre>
+    * Use Python 2 and [Virtualenv](https://virtualenv.pypa.io/en/stable/). Pivotal recommends
+that you use Virtualenv environment to avoid conflicts with other Python packages. A virtualenv is
+a directory containing dependencies for a project. When a virtual environment is active, packages
+install into the virtualenv instead of the system-wide Python installation.
 <br><br>
-	Use the following example `tile.yml` as a starting point. This file defines a tile named `Sample CredHub KMS Plugin` that enables the operator to configure the socket endpoint for the plugin to listen to CredHub on. 
+To use this method, run the following commands: 
+
+        ```
+        virtualenv -p python2 tile-generator-env
+        source tile-generator-env/bin/activate
+        pip install tile-generator
+        ```
+        This puts the `tile` and `pcf` commands in your `PATH` when the virtualenv is active.
+        To deactivate the virtualenv, run the command `deactivate`.
+
+        To upgrade Tile Generator, run `pip install tile-generator --upgrade` with the virtualenv
+        activated.
+
+1. Install the [BOSH CLI](https://bosh.io/docs/cli-v2.html).
+
+1. From within the root directory of the project for which you want to create a tile, run
+`tile init` to initialize the directory as a tile repository. The `tile init` command generates a `tile.yml` file. This file defines the configuration for
+your tile.
+
+1. Modify the `tile.yml` as needed. At a minimum, you must enter the path to the BOSH release of the KMS plugin on your local machine in `packages: path`. The following sample `tile.yml` file defines a tile named `Sample CredHub KMS Plugin` that enables the operator to configure the socket endpoint where the plugin listen for CredHub.
 
 	```yaml
 	---
@@ -51,18 +86,9 @@ Perform the following steps:
 	        - name: credhub
 	          release: credhub
 	```
+   For general information about writing the `tile.yml` file, see [Define your Tile in tile.yml](https://docs.pivotal.io/tiledev/tile-generator.html#define). For information about how to enable operators to use the tile to configure arbitrary properties in the manifest, see [Custom Forms and Properties](https://docs.pivotal.io/tiledev/tile-generator.html#custom-forms).
 
-1. Modify the `tile.yml` as needed. At minimum, enter the path to the BOSH release of the KMS plugin on your local machine in `packages: path`.
-<br><br>
-For general information about writing the `tile.yml` file, see [Define your Tile in tile.yml](https://docs.pivotal.io/tiledev/tile-generator.html#define). For information about how to enable operators to use the tile to configure arbitrary properties in the manifest, see [Custom Forms and Properties](https://docs.pivotal.io/tiledev/tile-generator.html#custom-forms).
-
-1. Build the tile by running the following command in the same directory as the `tile.yml` file:
-
-	```
-	tile build
-	```
-	<br>
-	The tile generator wraps the BOSH release of the KMS plugin into a tile, and places the tile file in the `product` subdirectory.
+1. In the directory that contains the `tile.yml` file, run `tile build` to build the tile. The tile generator wraps the BOSH release of the KMS plugin into a tile, then places the tile file in the `product` subdirectory.
 
 1. Navigate to Ops Manager, log in, and add the tile to the Ops Manager Installation Dashboard. For more information, see [Adding and Deleting Products](https://docs.pivotal.io/pivotalcf/customizing/add-delete.html). 
 

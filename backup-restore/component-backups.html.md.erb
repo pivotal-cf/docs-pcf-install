@@ -3,18 +3,18 @@ title: PAS Component Availability During Backup
 owner: Component Teams
 ---
 
-This topic describes the operational impact of backing up Pivotal Application Service (PAS) components with BBR. To ensure correctness of backups, each component that requires backup has its own set of scripts. The sections in this topic describe the availability of each component during backup of its database. 
+This topic describes the operational impact of backing up Pivotal Application Service (PAS) components with BBR. To ensure correctness of backups, each component that requires backup has its own set of scripts. The sections in this topic describe the availability of each component during backup of its database.
 
 ## <a id="cloud-controller"></a> Cloud Controller
 
 The Cloud Controller is unavailable during backup. Apps and Services continue to run as normal, but you cannot perform operations that require the [Cloud Controller API](http://v3-apidocs.cloudfoundry.org/version/3.34.0/index.html). This includes the following:
 
 * Pushing new apps or creating new services
-* Modifying existing apps or services 
+* Modifying existing apps or services
 * Using the clients of the Cloud Controller API, such as the following:
 	* The Cloud Foundry Command Line Interface (cf CLI)
 	* Apps Manager and its integrations
-	* The [Java client](https://docs.cloudfoundry.org/devguide/capi/client-libraries.html) used by Spring apps
+	* The [Java client](https://github.com/cloudfoundry/cf-java-client) used by Spring apps
 
 The backup process for the Cloud Controller is as follows:
 
@@ -41,7 +41,7 @@ The backup process for the Cloud Controller is as follows:
 
 UAA remains available in read-only mode during backup. This means that you cannot perform write operations for clients, users, groups, identity providers, or zone configuration. However, you can continue performing read operations, such as generating, validating, and revoking tokens. Additionally, UAA continues to authenticate users and authorize requests for users and clients.
 
-The read-only behavior during backup applies to all of the following ways of accessing UAA: the UAA API, the UAA CLI, cf CLI, login screens, and services such as the Single Sign-On Service tile. 
+The read-only behavior during backup applies to all of the following ways of accessing UAA: the UAA API, the UAA CLI, cf CLI, login screens, and services such as the Single Sign-On Service tile.
 
 The backup process for UAA is as follows:
 
@@ -66,18 +66,18 @@ The backup process for UAA is as follows:
 
 ## <a id="routing-api"></a> Routing API
 
-The [Routing API](https://github.com/cloudfoundry-incubator/routing-api/blob/master/docs/api_docs.md) remains available during backup. However, you cannot perform write operations using the Routing API because the routing database is locked. All read operations offered by the Routing API remain available.    
+The [Routing API](https://github.com/cloudfoundry-incubator/routing-api/blob/master/docs/api_docs.md) remains available during backup. However, you cannot perform write operations using the Routing API because the routing database is locked. All read operations offered by the Routing API remain available.
 
-The BBR SDK backup script for the Routing API backs up its database, which contains router groups, routes, and internal implementation information. 
+The BBR SDK backup script for the Routing API backs up its database, which contains router groups, routes, and internal implementation information.
 
 
 ## <a id="usage-service"></a> Usage Service
 
-The Usage Service is unavailable during backup. You cannot access the API as described in [Monitoring App, Task, and Service Instance Usage](../../opsguide/accounting-report.html). Additionally,  you cannot view usage and accounting reports as described in [Monitoring Instance Usage with Apps Manager](../../opsguide/accounting-report-apps-man.html).
+The Usage service is unavailable during backup. You cannot access the API as described in [Monitoring App, Task, and Service Instance Usage](../../opsguide/accounting-report.html). Additionally, you cannot view usage and accounting reports as described in [Monitoring Instance Usage with Apps Manager](../../opsguide/accounting-report-apps-man.html).
 
-The backup process for Usage Service is as follows:
+The backup process for Usage service is as follows:
 
-<p class="note"><strong>Note</strong>: The Usage Service runs as a set of Cloud Foundry apps in the <code>system</code> org.</p>
+<p class="note"><strong>Note</strong>: The Usage service runs as a set of Cloud Foundry apps in the <code>system</code> org.</p>
 
 <table>
 	<tr>
@@ -86,21 +86,21 @@ The backup process for Usage Service is as follows:
 	</tr>
 	<tr>
 		<td>1: Pre-backup lock</td>
-		<td>The Usage Service apps in the <code>system</code> org stop. This lock occurs before the Cloud Controller and UAA components lock. </td>
+		<td>The Usage service apps in the <code>system</code> org stop. This lock occurs before the Cloud Controller and UAA components lock. </td>
 	</tr>
 	<tr>
 		<td>2: Backup</td>
-		<td>The BBR SDK backup script runs to backup the Usage Service database.</td>
+		<td>The BBR SDK backup script runs to backup the Usage service database.</td>
 	</tr>
 	<tr>
 		<td>3: Post-backup unlock</td>
-		<td>The Usage Service apps in the <code>system</code> org start again. This unlock occurs after the Cloud Controller and UAA components unlock.</td>
+		<td>The Usage service apps in the <code>system</code> org start again. This unlock occurs after the Cloud Controller and UAA components unlock.</td>
 	</tr>
 </table>
 
 ## <a id="app-autoscaler"></a> App Autoscaler
 
-The [App Autoscaler service](../../appsman-services/autoscaler/using-autoscaler.html) is unavailable during backup. You cannot access the UI or API. For any apps configured to use the App Autoscaler, the service does not scale these apps during backup. 
+The [App Autoscaler service](../../appsman-services/autoscaler/using-autoscaler.html) is unavailable during backup. You cannot access the UI or API. For any apps configured to use the App Autoscaler, the service does not scale these apps during backup.
 
 The backup process for App Autoscaler is as follows:
 
@@ -127,7 +127,7 @@ The backup process for App Autoscaler is as follows:
 
 ## <a id="nfs-volume-services"></a> NFS Volume Service
 
-The NFS service broker backup scripts rely on the locking of the Cloud Controller to stop traffic to its service. This is because the Cloud Controller is responsible for invoking the NFS service broker. 
+The NFS service broker backup scripts rely on the locking of the Cloud Controller to stop traffic to its service. This is because the Cloud Controller is responsible for invoking the NFS service broker.
 
 When the Cloud Controller locks during backup, you cannot create or delete new instances or bindings of a volume service. However, apps already bound to a volume service continue to operate normally during backups.
 
@@ -143,6 +143,4 @@ The Network Policy Server is unavailable during backup. While existing policies 
 
 ## <a id="credhub"></a> CredHub
 
-Runtime CredHub is unavailable during backup. If the service instance credentials for an app are stored in CredHub, the app cannot fetch those credentials during backup.  In some cases, apps may not start if they cannot fetch credentials for a service instance binding. 
-
-
+Runtime CredHub is unavailable during backup. If the binding credentials for an app are stored in CredHub, the app cannot fetch those credentials during backup. In some cases, apps might not start if they cannot fetch credentials for a service instance binding.

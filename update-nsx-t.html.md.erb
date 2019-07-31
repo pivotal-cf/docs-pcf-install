@@ -53,43 +53,46 @@ To use the Ops Manager API, you must authenticate and retrieve a token from the 
 </pre>
 
 1. For each VM extension, use a `curl` command to stage it with the Ops Manager API, (where VM_EXTENSION_FILE_PATH is the path to the VM extension file, e.g. `/tmp/router_ext.json`):
-<pre>
-curl "http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/vm_extensions" \
--X POST \
--H "Authorization: Bearer UAA-ACCESS-TOKEN" \
--H "Content-Type: application/json" \
--d "@VM_EXTENSION_FILE_PATH"
-</pre>
+
+    ```
+   curl "https://OPS-MAN-FQDN/api/v0/staged/vm_extensions" \
+   -X POST \
+   -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
+   -H "Content-Type: application/json" \
+   -d "@VM_EXTENSION_FILE_PATH"
+    ```
 
 1. Retrieve a list of staged products:
-	<pre>
-	curl 'http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products' \
-	-H "Authorization: Bearer UAA-ACCESS-TOKEN"
-		</pre>
+	
+    ```
+curl 'https://OPS-MAN-FQDN/api/v0/staged/products' \
+-H "Authorization: Bearer UAA-ACCESS-TOKEN"
+   ```
 	Record the GUID of the `cf` product. In the following example output, the GUID is `cf-01222ab1111111aaa1a`.
   
-	```json
+	 ```json
 	[
 	   {
-	      "product\_version" : "1.10.6.0",
+	      "product_version" : "1.10.6.0",
 	      "guid" : "p-bosh-dee11e111e1111ee1e1a",
-	      "installation\_name" : "p-bosh",
+	      "installation_name" : "p-bosh",
 	      "type" : "p-bosh"
 	   },
 	   {
 	      "type" : "cf",
-	      "product\_version" : "1.10.8-build.7",
-	      "installation\_name" : "cf-01222ab1111111aaa1a",
+	      "product_version" : "1.10.8-build.7",
+	      "installation_name" : "cf-01222ab1111111aaa1a",
 	      "guid" : "cf-01222ab1111111aaa1a"
 	   }
 	   ]
-	  ```
+	 ```
 
 1. Retrieve a list of jobs for your product:
-	<pre>
-	curl 'http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs' \
+
+    ```
+	curl 'https://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs' \
 	-H 'Authorization: Bearer UAA-ACCESS-TOKEN'
-	</pre>
+    ```
   Record the GUIDs of the jobs whose security groups you want to update. See the following example output:
   
     ```json
@@ -100,27 +103,29 @@ curl "http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/vm_extensions" \
          "name" : "router"
       },
       {
-         "name" : "tcp\_router",
-         "guid" : "tcp\_router-6af18efdd18d198edee9"
+         "name" : "tcp_router",
+         "guid" : "tcp_router-6af18efdd18d198edee9"
       },
       {
-         "name" : "diego\_brain",
-         "guid" : "diego\_brain-b49b0b2aed247302c0e1"
+         "name" : "diego_brain",
+         "guid" : "diego_brain-b49b0b2aed247302c0e1"
       },
     ```
 
 1. To update the load balancer server pool membership for your job, use the following command:
-  <pre>	
-  curl "http<span>s</span>://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs/JOB-GUID/resource\_config" \
+  
+    ```
+    curl "https://OPS-MAN-FQDN/api/v0/staged/products/PRODUCT-GUID/jobs/JOB-GUID/resource_config" \
       -X PUT
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer UAA-ACCESS-TOKEN" \
-      -d '{"instance\_type": {"id": "INSTANCE-TYPE"},
+      -d '{"instance_type": {"id": "INSTANCE-TYPE"},
           "instances": INSTANCE-COUNT,
           "additional_vm_extensions": ["VM-EXTENSION-NAME"]
       }'
-		</pre>
-		Replace the placeholder values as follows:
+     ```
+		
+    Replace the placeholder values as follows:
     * `INSTANCE-TYPE`: The instance type for the job. For the default instance type, use `"automatic"`.
     * `INSTANCE-COUNT`: The number of instances for the job. The default number for each job is visible in the Resource Config section of the Ops Manager UI.
     * `VM-EXTENSION-NAME`: The `name` field of the VM Extension JSON config file written in step 1. In our example above, the name would be `http_https_lb`.

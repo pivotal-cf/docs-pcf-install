@@ -1,4 +1,4 @@
-Under **Configure support for the X-Forwarded-Client-Cert header**, configure PCF handles `x-forwarded-client-cert` (XFCC) HTTP headers based on where TLS is terminated for the first time in your deployment.
+Under **TLS termination point**, configure how PCF handles `x-forwarded-client-cert` (XFCC) HTTP headers based on where TLS is terminated for the first time in your deployment.
 <br/>
 <br/> 
 The following table indicates which option to choose based on your deployment configuration.
@@ -9,40 +9,35 @@ The following table indicates which option to choose based on your deployment co
   <th>Additional Notes</th>
 </tr> 
 <tr>
-  <td><ul><li>The Load Balancer is terminating TLS, and 
-  <li>Load balancer is configured to put the client certificate from a mutual authentication TLS handshake into the X-Forwarded-Client-Cert HTTP header
+  <td><ul><li>The load balancer is terminating TLS, and 
+  <li>The load balancer is configured to put the client certificate from a mutual authentication TLS handshake into the X-Forwarded-Client-Cert HTTP header
   </li>
   </ul>
   </td>
-   <td>TLS terminated for the first time at infrastructure load balancer (default).
-  </td>
-  <td>Both HAProxy and the Gorouter forward the XFCC header when included in the request. 
-   </td>
+  <td>Infrastructure load balancer</td>
+  <td>Both HAProxy and the Gorouter forward the XFCC header when included in the request.</td>
 </tr>
 <tr>
-  <td><ul><li>The Load Balancer is configured to pass through the TLS handshake via TCP to the instances of HAProxy, and 
+  <td><ul><li>The load balancer is configured to pass through the TLS handshake through TCP to the instances of HAProxy, and 
   <li>HAProxy instance count is > 0
   </li>
   </ul>
   </td>
-  <td>TLS terminated for the first time at HAProxy.</td>
+  <td>HAProxy</td>
   <td>HAProxy sets the XFCC header with the client certificate received in the TLS handshake. The Gorouter forwards the header.
-   <p class="note breaking"><strong>Breaking Change</strong>: In the <b>Router behavior for Client Certificates</b> field, you cannot select the <b>Router does not request client certificates</b> option.</p></td>
+   <p class="note breaking"><strong>Breaking Change:</strong> In the <strong>Router behavior for client certificate validation</strong> field, you cannot select the <strong>Router does not request client certificates</strong> option.</p></td>
 </tr>
 <tr>
-  <td><ul><li>The Load Balancer is configured to pass through the TLS handshake via TCP to instances of the Gorouter
+  <td><ul><li>The load balancer is configured to pass through the TLS handshake through TCP to instances of the Gorouter
   </li>
   </ul>
     <p> </p>
   </td>
-   <td>TLS terminated for the first time at the Gorouter.
-  </td>
-  <td>
-    The Gorouter strips the XFCC header if it is included in the request and forwards the client certificate received in the TLS handshake in a new XFCC header. <br/><br/>
-    If you have deployed instances of HAProxy, app traffic bypasses those instances in this configuration. If you have also configured your load balancer to route requests for ssh directly to the Diego Brain, consider reducing HAProxy instances to 0.
-     <p class="note breaking"><strong>Breaking Change</strong>: In the <b>Router behavior for Client Certificates</b> field, you cannot select the <b>Router does not request client certificates</b> option.</p>
-  </td>
+   <td>Router</td>
+  <td>The Gorouter strips the XFCC header if it is included in the request and forwards the client certificate received in the TLS handshake in a new XFCC header. <br/><br/>
+  If you have deployed instances of HAProxy, app traffic bypasses those instances in this configuration. If you have also configured your load balancer to route requests for ssh directly to the Diego Brain, consider reducing HAProxy instances to 0.
+    <p class="note breaking"><strong>Breaking Change:</strong> In the <strong>Router behavior for client certificate validation</strong> field, you cannot select the <strong>Router does not request client certificates</strong> option.</p></td>
 </tr>
 </table>
 <br/>
-For a description of the behavior of each configuration option, see <a href="../concepts/http-routing.html#forward-client-cert">Forward Client Certificate to Applications</a>.
+For a description of the behavior of each configuration option, see <a href="../concepts/http-routing.html#forward-client-cert">Forward Client Certificate to Apps</a>.

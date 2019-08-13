@@ -1,31 +1,35 @@
+In the **Internal MySQL** pane, you configure the internal MySQL clusters for PAS. Only configure this section if you selected **Internal databases - MySQL - Percona XtraDB Cluster** in the Databases pane.
+
 <p class="note"><strong>Note:</strong> You only need to configure this section if you have selected one of the <strong>Internal Databases - MySQL</strong> options in the <strong>Databases</strong> section.</p>
 
 1. Select **Internal MySQL**.
 
-1. In the **Replication canary time period** field, leave the default of 30 seconds or modify the value based on the needs of your deployment. Lower numbers cause the canary to run more frequently, which means that the canary reacts more quickly to replication failure but adds load to the database.
+1. In the **Replication canary time period** field, specify how frequently the canary checks for replication failure. Leave the default of 30 seconds or modify the value based on the needs of your deployment. Lower numbers cause the canary to run more frequently, which means that the canary reacts more quickly to replication failure but adds load to the database.
 
-1. In the **Replication canary read delay** field, leave the default of 20 seconds or modify the value based on the needs of your deployment. This field configures how long the canary waits, in seconds, before verifying that data is replicating across each MySQL node. Clusters under heavy load can experience a small replication lag as write-sets are committed across the nodes.
+1. In the **Replication canary read delay** field, specify how long the canary waits, in seconds, before verifying that data is replicating across each MySQL node. Leave the default of 20 seconds or modify the value based on the needs of your deployment.  Clusters under heavy load can experience a small replication lag as write-sets are committed across the nodes.
 
-1. (**Required**): In the **E-mail address** field, enter the email address where the MySQL service sends alerts when the cluster experiences a replication issue or when a node is not allowed to auto-rejoin the cluster. 
+1. In the **Email address** field, enter the email address where the MySQL service sends alerts when the cluster experiences a replication issue or when a node is not allowed to auto-rejoin the cluster. 
 
-1. To prohibit the creation of command line history files on the MySQL nodes, disable the **Allow Command History** checkbox.
+1. The **Allow command history** checkbox is enabled by default. To prohibit the creation of command line history files on the MySQL nodes, disable this checkbox.
 
-1. To allow the admin and roadmin to connect from any remote host, enable the **Allow Remote Admin Access** checkbox. When the checkbox is disabled, admins must `bosh ssh` into each MySQL VM to connect as the MySQL super user.
-	<p class="note"><strong>Note:</strong> Network configuration and Application Security Groups restrictions may still limit a client’s ability to establish a connection with the databases.</p>
+1. To allow admin and read-only admin users to connect from any remote host, enable the **Allow remote admin access** checkbox. When the checkbox is disabled, admins must `bosh ssh` into each MySQL VM to connect as the MySQL super user.
+	<p class="note"><strong>Note:</strong> Network configuration and ASG restrictions may still limit a client's ability to establish a connection with the databases.</p>
 
-1. For **Cluster Probe Timeout**, enter the maximum amount of time, in seconds, that a new node will search for existing cluster nodes. If left blank, the default value is 10 seconds.
+1. In the **Cluster probe timeout** field, enter the maximum amount of time, in seconds, that a new node will search for existing cluster nodes. If left blank, the default value is 10 seconds.
 
-1. For **Max Connections**, enter the maximum number of connections allowed to the database.
-If left blank, the default value is 1500.
+1. In the **Maximum connections** field, enter the maximum number of connections allowed to the database. If left blank, the default value is 1500.
 
-1. If you want to log audit events for internal MySQL, select **Enable server activity logging** under **Server Activity Logging**.
-	1. For the **Event types** field, you can enter the events you want the MySQL service to log. By default, this field includes `connect` and `query`, which tracks who connects to the system and what queries are processed.
+1. To log audit events for internal MySQL, select **Enable server activity logging** under **Server activity logging**.
+	* In the **Event types** field, you can enter the events you want the MySQL service to log. By default, this field includes `connect` and `query`, which tracks who connects to the system and what queries are processed.
+	<p class='note'><strong>Note:</strong> For more information about which events the Percona MySQL server can log, see <a href="https://www.percona.com/doc/percona-server/5.7/management/audit_log_plugin.html">Audit Log Plugin</a> in the Percona documentation.</p>
 
-1. Enter values for the following fields:	
-	* **Load Balancer Healthy Threshold**: Specifies the amount of time, in seconds, to wait until declaring the MySQL Proxy instance started. This allows an external load balancer time to register the instance as healthy.	
-	* **Load Balancer Unhealthy Threshold**: Specifies the amount of time, in seconds, that the MySQL Proxy continues to accept connections before shutting down. During this period, the Healthcheck reports as unhealthy to cause load balancers to fail over to other proxies. You must enter a value greater than or equal to the maximum time it takes your load balancer to consider a proxy instance unhealthy, given repeated failed healthchecks.
+1. In the **Load balancer healthy threshold** field, enter the amount of time, in seconds, to wait until reporting that the MySQL Proxy instance has started. This allows an external load balancer time to register the instance as healthy.	
 
-1. If you want to enable the MySQL interruptor feature, select the checkbox to **Prevent node auto re-join**. This feature stops all writes to the MySQL database if it notices an inconsistency in the dataset between the nodes. For more information, see the [Interruptor](http://docs.pivotal.io/p-mysql/1-10/troubleshooting.html#interruptor) section in the MySQL for PCF documentation. 
+1. In the **Load balancer unhealthy threshold** field, enter the amount of time, in seconds, that the MySQL Proxy continues to accept connections before shutting down. During this period, the healthcheck reports the MySQL Proxy instance as unhealthy to cause load balancers to fail over to other proxies. You must enter a value greater than or equal to the maximum time it takes your load balancer to consider a proxy instance unhealthy, given repeated failed healthchecks.
+
+1. MySQL Proxy can expose an additional port, 3336, that points to a node in the cluster that is not receiving traffic from PAS components. To enable this node to receive traffic from PAS components, enable the **Enable inactive MySQL port** checkbox. If the cluster is a single node, it points to the same node as the regular MySQL port, 3306.
+
+1. To enable the MySQL interruptor feature, enable the **Prevent node auto re-join** checkbox. This feature stops all writes to the MySQL database if it notices an inconsistency in the dataset between the nodes. For more information, see the [Interruptor](http://docs.pivotal.io/p-mysql/1-10/troubleshooting.html#interruptor) section in the MySQL for PCF documentation. 
 
 1. Click **Save**.
 

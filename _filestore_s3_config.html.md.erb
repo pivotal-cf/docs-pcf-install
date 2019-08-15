@@ -1,18 +1,16 @@
 To use an external S3-compatible filestore for PAS file storage:
 
-1. Select the **External S3-compatible filestore** option and complete the following fields:
-    * Enter the `https://` **URL endpoint** for your region.
-          <br />
-          For example, in the **us-west-2** region, enter `https://s3-us-west-2.amazonaws.com/`.
+1. Select **External S3-compatible filestore** and complete the following fields:
+    * Enter the `https://` **URL endpoint** for your region. For example, `https://s3-us-west-2.amazonaws.com/`.
     * If you use an AWS instance profile to manage role information for your filestore, enable the **S3 AWS with instance profile** checkbox. For more information, see [AWS Identity and Access Management](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) in the AWS documentation.
+    <br />
     <%= image_tag("images/external-s3-filestore-instance-profile.png") %>
     * Alternatively, enter the **Access key** and **Secret key** of the `pcf-user` you created when configuring AWS for PCF. If you enable the **S3 AWS with instance profile** checkbox and also enter an **Access key** and **Secret key**, the instance profile will overrule the access key and secret key.
     * From the **S3 signature version** dropdown, select **V4 signature**. For more information about S3 signatures, see [Signing AWS API Requests](https://docs.aws.amazon.com/general/latest/gr/signing_aws_api_requests.html) in the AWS documentation.
-    * For **Region**, enter the region in which your S3 buckets are located. `us-west-2` is an example of an acceptable value for this field. 
+    * For **Region**, enter the region in which your S3 buckets are located. For example, `us-west-2`.
     * Select **Server-side encryption** to encrypt the contents of your S3 filestore. This option is only available for AWS S3.
     * (Optional) If you selected **Server-side encryption**, you can also specify a **KMS key ID**. PAS uses the KMS key to encrypt files uploaded to the blobstore. If you do not provide a KMS Key ID, PAS uses the default AWS key. For more information, see [Protecting Data Using Server-Side Encryption with AWS KMS–Managed Keys (SSE-KMS)](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html).
     * Enter names for your S3 buckets:
-
         <table border="1" class="nice" >
           <tr>
             <th>Ops Manager Field</th>
@@ -45,6 +43,31 @@ To use an external S3-compatible filestore for PAS file storage:
       - For unversioned S3 buckets, disable the **Use versioning for backup and restore** checkbox, and enter a backup bucket name for each active bucket. The backup bucket name must be different from the name of the active bucket it backs up.
         <%= image_tag("images/backup-buckets.png") %>
       For more information about setting up external S3 blobstores, see <a href="https://docs.cloudfoundry.org/bbr/external-blobstores.html#enable-s3-versioning">Backup and Restore with External Blobstores</a> in the Cloud Foundry documentation.
+    * Enter the name of the region in which your backup S3 buckets are located. For example, `us-west-2`. These are the buckets used to back up and restore the contents of your S3 filestore.
+    * (Optional) Enter names for your backup S3 buckets:
+        <table border="1" class="nice" >
+          <tr>
+            <th>Ops Manager Field</th>
+            <th>Value</th>
+            <th>Description</th>
+          </tr>
+          <tr>
+            <td><strong>Backup buildpacks bucket name</strong></td>
+            <td><code>buildpacks-backup-bucket</code><br></td>
+            <td>This S3 bucket is used to back up and restore your buildpacks bucket. This bucket name must be different from the buckets you named above.</td>
+          </tr>
+          <tr>
+            <td><strong>Backup droplets bucket name</strong></td>
+            <td><code>droplets-backup-bucket</code></td>
+            <td>This S3 bucket is used to back up and restore your droplets bucket. Pivotal recommends that you use a unique bucket name for droplet backups, but you can also use the same name as above.</td>
+          </tr>
+          <tr>
+            <td><strong>Backup packages bucket name</strong></td>
+            <td><code>packages-backup-bucket</code></td>
+            <td>This S3 bucket is used to back up and restore your packages bucket. Pivotal recommends that you use a unique bucket name for package backups, but you can also use the same name as above.</td>
+          </tr>
+        </table>
+
 
 1. Click **Save**.
 

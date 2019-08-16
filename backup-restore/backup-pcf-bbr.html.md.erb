@@ -20,11 +20,11 @@ backup. Only the API functionality is affected, such as when pushing apps or usi
     <li><strong>Security:</strong> Backup artifacts can contain secrets. Secure backup artifacts by using encryption or other means.</li>
     <li><strong>Compatibility:</strong> A BBR backup can only be restored to environments matching its source environment.
       To ensure that a restore environment is compatible with a backup see <a href="#restore-compatibility">Compatibility of Restore</a>.</li>
-    <li><strong>Failed Restore:</strong> Restore is a destructive operation. BBR is designed to restore PCF after a disaster.
+    <li><strong>Failed Restore:</strong> Restore is a destructive operation. BBR is designed to restore <%= vars.product_name  %> after a disaster.
       If a restore fails, the environment might be left in an unusable state and require re-provisioning. For more information,
       see <a href="restore-pcf-bbr.html">Restoring Pivotal Cloud Foundry from Backup with BBR</a>.</li>
     <li><strong>Service Data:</strong> BBR does not back up any service data.</li>
-    <li><strong>API Outage:</strong> The Cloud Controller API does not send or receive calls during PCF restoration.</li>
+    <li><strong>API Outage:</strong> The Cloud Controller API does not send or receive calls during <%= vars.product_name  %> restoration.</li>
   </ul>
 </div>
 
@@ -33,7 +33,7 @@ backup. Only the API functionality is affected, such as when pushing apps or usi
 Pivotal recommends the following:
 
 * Follow the full procedure documented in this topic when creating a backup. This ensures that you always have a consistent backup of Ops Manager and PAS to restore from.
-* Back up frequently, especially before making any changes to your PCF deployment, such as the configuration of any tiles in Ops Manager.
+* Back up frequently, especially before making any changes to your <%= vars.product_name  %> deployment, such as the configuration of any tiles in Ops Manager.
 
 ## <a id='supported'></a> Supported Components
 
@@ -74,11 +74,11 @@ of _Configuring Cloud Foundry for BOSH Backup and Restore_ in the Cloud Foundry 
 * An internal blobstore or an external versioned S3 blobstore.
 
 <p class="note"><strong>Note</strong>: BBR support for backing up and restoring external databases and
-  blobstores varies across PCF versions. For more information, see
-  <a href="#version-compatibility">External Storage Support Across PCF Versions</a> below.
+  blobstores varies across <%= vars.product_name  %> versions. For more information, see
+  <a href="#version-compatibility">External Storage Support Across <%= vars.product_name  %> Versions</a> below.
 </p>
 
-## <a id="version-compatibility"></a> External Storage Support Across PCF Versions
+## <a id="version-compatibility"></a> External Storage Support Across <%= vars.product_name  %> Versions
 
 The following table shows what types of external databases and blobstores you can back up and
 restore with BBR.
@@ -198,15 +198,15 @@ following guidelines to perform a backup successfully:
   </tr>
   <tr>
     <td>You configured a supported database and an unsupported external blobstore in PAS.</td>
-    <td>Follow the PCF backup process and copy the external blobstore by using the IaaS-specific tool.</td>
+    <td>Follow the <%= vars.product_name  %> backup process and copy the external blobstore by using the IaaS-specific tool.</td>
   </tr>
   <tr>
     <td>You configured an unsupported external database and a supported blobstore in PAS.</td>
-    <td>Follow the PCF backup process and copy the external database by using the IaaS-specific tool.</td>
+    <td>Follow the <%= vars.product_name  %> backup process and copy the external database by using the IaaS-specific tool.</td>
   </tr>
   <tr>
     <td>You configured both an unsupported external database and an unsupported external blobstore in PAS.</td>
-    <td>Follow the PCF backup process but skip the <a href="#bbr-backup">Back Up Your PAS Deployment</a> section below. Copy the external database and blobstore by using the IaaS-specific tool.</td>
+    <td>Follow the <%= vars.product_name  %> backup process but skip the <a href="#bbr-backup">Back Up Your PAS Deployment</a> section below. Copy the external database and blobstore by using the IaaS-specific tool.</td>
   </tr>
 </table>
 
@@ -235,7 +235,7 @@ Scripts in the same stage are all triggered together. For instance, BBR triggers
 before any backup scripts. Scripts within a stage can be triggered in any order.
 
 The backup artifacts are drained to the jumpbox, where the operator can transfer them to storage and use them
-to restore PCF.
+to restore <%= vars.product_name  %>.
 
 The following diagram shows a sample backup flow.
 
@@ -260,7 +260,7 @@ You must have this path to run BBR commands.
 
 As an alternative to using the Ops Manager VM as your jumpbox, you can do the following:
 
-* Use Concourse to back up a PCF installation using BBR. For more information, see the [BBR PCF Pipeline Tasks](https://github.com/pivotal-cf/bbr-pcf-pipeline-tasks) GitHub repository.
+* Use Concourse to back up a <%= vars.product_name  %> installation using BBR. For more information, see the [BBR <%= vars.product_name  %> Pipeline Tasks](https://github.com/pivotal-cf/bbr-pcf-pipeline-tasks) GitHub repository.
 * Configure a custom jumpbox. For more information, see [Configuring a custom jumpbox for BBR](https://community.pivotal.io/s/article/Configuring-a-Custom-Jumpbox-for-BBR) in the Pivotal Support knowledge base.
 
 ### <a id='encrypt-key'></a> Step 2: Record the Cloud Controller Database Encryption Credentials
@@ -446,7 +446,7 @@ deployed.
 
 1. Log in to your BOSH Director.
 
-1. To identify the name of the BOSH deployment that contains PCF, run the following command:
+1. To identify the name of the BOSH deployment that contains <%= vars.product_name  %>, run the following command:
 
     ```
     bosh -e BOSH-DIRECTOR-IP --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
@@ -470,7 +470,7 @@ deployed.
                              ...
     </pre>
 
-    In the above example, the name of the BOSH deployment that contains PCF is `cf-example`.
+    In the above example, the name of the BOSH deployment that contains <%= vars.product_name  %> is `cf-example`.
 
 ### <a id='check'></a> Step 8: Check Your Deployment
 
@@ -706,7 +706,7 @@ After creating your backup successfully, perform the following steps:
 
 ### <a id='validate-backup'></a> Step 13: (Optional) Validate Your Backup
 
-After backing up PCF, consider validating your backup by restoring it and checking the apps.
+After backing up <%= vars.product_name  %>, consider validating your backup by restoring it and checking the apps.
 BBR is designed for disaster recovery and BBR backups are only compatible
 with environments matching their source environment's configuration.
 
@@ -714,7 +714,7 @@ with environments matching their source environment's configuration.
   <ul>
     <li><strong>The VMs and disks from the backed-up BOSH Director must not be visible to the new BOSH Director</strong> when validating your backup.
     As a result, Pivotal recommends that you deploy the new BOSH Director to a different IaaS network and account than the VMs and disks of the backed-up BOSH Director.</li>
-    <li><strong>Data services outside of PCF might produce unexpected side effects during restoration.</strong>
+    <li><strong>Data services outside of <%= vars.product_name  %> might produce unexpected side effects during restoration.</strong>
     Restored apps and services might attempt to connect to data services when you restore to a new environment. For example,
 consider an app that processes mail queues and connects to an external database. When you validate your backup in a test environment,
 the app might start processing the queue, and this work might be lost.</li>
@@ -729,7 +729,7 @@ To spin up a second environment and test the backup, perform the following steps
 
 1. Create a new Ops Manager VM in a different network to the original.
 Ensure that the Ops Manager VM has enough persistent disk to accommodate the files exported in the previous step.
-Consult the topic for [deploying PCF on your IaaS](../deploy-bosh-om.html#contents).
+Consult the topic for [deploying <%= vars.product_name  %> on your IaaS](../deploy-bosh-om.html#contents).
 
 1. Ensure that the restore environment is compatible with the backup. For more information, see [Compatibility of Restore](./restore-pcf-bbr.html#compatibility).
 
@@ -738,8 +738,8 @@ Consult the topic for [deploying PCF on your IaaS](../deploy-bosh-om.html#conten
 #### <a id='ert-validate'></a> Validate Your PAS Backup Only
 
 For a sandbox or other non-production environment, you can optionally perform an _in-place_ restore of PAS only.
-In this case, you restore the PAS backup to the same PCF environment that the backup was created from.
-Follow the procedures in [Restoring PCF from Backup with BBR](restore-pcf-bbr.html#restore-ert).
+In this case, you restore the PAS backup to the same <%= vars.product_name  %> environment that the backup was created from.
+Follow the procedures in [Restoring <%= vars.product_name  %> from Backup with BBR](restore-pcf-bbr.html#restore-ert).
 
 ## <a id='logging'></a> Logging
 

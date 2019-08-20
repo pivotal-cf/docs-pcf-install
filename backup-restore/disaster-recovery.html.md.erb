@@ -1,14 +1,14 @@
 ---
-title: Disaster Recovery in Pivotal Cloud Foundry
+title: Disaster Recovery in <%= vars.product_name_full %>
 owner: BBR
 ---
 
 This document provides an overview of the options and considerations for disaster recovery in <%= vars.first_product_name  %>.
 
-Operators have a range of approaches for ensuring they can recover Pivotal Cloud Foundry, apps, and data in case of a disaster. The approaches fall into the following two categories:
+Operators have a range of approaches for ensuring they can recover <%= vars.product_name_full %>, apps, and data in case of a disaster. The approaches fall into the following two categories:
 
-* Using data from a backup to restore the data in the <%= vars.product_name  %> Deployment. See [Back up and Restore Using BOSH Backup and Restore (BBR)](#bbr) for more information.
-* Re-creating the data in <%= vars.product_name  %> by automating the creation of state in <%= vars.product_name  %>. See [Disaster Recovery by Recreating the Deployment](#recreation) for more information.
+* Using data from a backup to restore the data in the <%= vars.product_name %> Deployment. See [Back up and Restore Using BOSH Backup and Restore (BBR)](#bbr) for more information.
+* Re-creating the data in <%= vars.product_name %> by automating the creation of state in <%= vars.product_name %>. See [Disaster Recovery by Recreating the Deployment](#recreation) for more information.
 
 ## <a id="bbr"></a>Back up and Restore using BOSH Backup and Restore (BBR)
 
@@ -16,34 +16,34 @@ Operators have a range of approaches for ensuring they can recover Pivotal Cloud
 
 BOSH Backup and Restore (BBR) is a CLI for orchestrating backing up and restoring BOSH deployments and BOSH Directors. BBR triggers the backup or restore process on the deployment or Director, and transfers the backup artifact to and from the deployment or Director.
 
-Use BOSH Backup and Restore to reliably create backups of core <%= vars.product_name  %> components and their data. These core components include CredHub, UAA, BOSH Director, and <%= vars.product_short %>.
+Use BOSH Backup and Restore to reliably create backups of core <%= vars.product_name %> components and their data. These core components include CredHub, UAA, BOSH Director, and <%= vars.product_short %>.
 
 Each component includes its own backup scripts. This decentralized structure helps keep scripts synchronized with the components. At the same time, _locking_ features ensure data integrity and consistent, distributed backups across your deployment.
 
 For more information about the BBR framework, see [BOSH Backup and Restore](https://docs.cloudfoundry.org/bbr/index.html) in the open source Cloud Foundry documentation.
 
-### <a id="bbr-backup"></a>Backing up <%= vars.product_name  %>
+### <a id="bbr-backup"></a>Backing up <%= vars.product_name %>
 
-Backing up <%= vars.product_name  %> requires backing up the following components:
+Backing up <%= vars.product_name %> requires backing up the following components:
 
 * Ops Manager settings
 * BOSH Director, including CredHub and UAA
 * <%= vars.product_full %>
 * Data services
 
-For more information, see [Backing up Pivotal Cloud Foundry with BBR](./backup-pcf-bbr.html). With these backup artifacts, operators can re-create <%= vars.product_name  %> exactly as it was when the backup was taken.
+For more information, see [Backing up <%= vars.product_name_full %> with BBR](./backup-pcf-bbr.html). With these backup artifacts, operators can re-create <%= vars.product_name %> exactly as it was when the backup was taken.
 
-### <a id="bbr-restore"></a> Restoring <%= vars.product_name  %>
+### <a id="bbr-restore"></a> Restoring <%= vars.product_name %>
 
-The restore process involves creating a new <%= vars.product_name  %> deployment starting with the Ops Manager VM. For more information, see [Restoring Pivotal Cloud Foundry from Backup with BBR](./restore-pcf-bbr.html).
+The restore process involves creating a new <%= vars.product_name %> deployment starting with the Ops Manager VM. For more information, see [Restoring <%= vars.product_name_full %> from Backup with BBR](./restore-pcf-bbr.html).
 
 The time required to restore the data is proportionate to the size of the data because the restore process includes copying data. For example, restoring a 1&nbsp;TB blobstore takes one thousand times as long as restoring a 1&nbsp;GB blobstore.
 
 ### <a id="benefits"></a> Benefits
 
-Unlike other backup solutions, using BBR to back up <%= vars.product_name  %> enables the following:
+Unlike other backup solutions, using BBR to back up <%= vars.product_name %> enables the following:
 
-* **Completeness**: BBR supports backing up BOSH, including releases, CredHub, UAA, and service instances created with an on-demand service broker. With <%= vars.product_name  %> v1.12, Ops Manager export no longer includes releases.
+* **Completeness**: BBR supports backing up BOSH, including releases, CredHub, UAA, and service instances created with an on-demand service broker. With <%= vars.product_name %> v1.12, Ops Manager export no longer includes releases.
 * **Consistency**: BBR provides referential integrity between the database and the blobstore because a lock is held while both the database and blobstore are backed up.
 * **Correctness**: Using the BBR restore flow addresses C2C and routing issues that can occur during restore.
 
@@ -56,7 +56,7 @@ In a consistent backup, the blobs in the blobstore match the blobs in the Cloud 
 ### <a id="backup-timings"></a> Backup Timings
 The first three phases of the backup are lock, backup, and unlock. During this time, the API is unavailable. The drain and checksum phase starts after the backup scripts finish. BBR downloads the backup artifacts from the instances to the BBR VM, and performs a checksum to ensure the artifacts are not corrupt. The size of the blobstore significantly influences backup time.
 
-The table below gives an indication of the downtime that you can expect. Actual downtime varies based on hardware and <%= vars.product_name  %> configuration. These example timings were recorded with Pivotal Application Service (PAS) deployed on Google Cloud Platform (GCP) with all components scaled to one and only one app pushed.
+The table below gives an indication of the downtime that you can expect. Actual downtime varies based on hardware and <%= vars.product_name %> configuration. These example timings were recorded with Pivotal Application Service (PAS) deployed on Google Cloud Platform (GCP) with all components scaled to one and only one app pushed.
 
 <table>
   <tr>
@@ -107,28 +107,28 @@ Blobstores can be very large. To minimize downtime, BBR only takes blob metadata
 of these services should use the automatic backups feature of each tile, available
 within Ops Manager.
 
-  * MySQL for <%= vars.product_name  %>
-  * Pivotal Cloud Cache for <%= vars.product_name  %>
-  * RabbitMQ for <%= vars.product_name  %>
-  * Redis for <%= vars.product_name  %>
+  * MySQL for <%= vars.product_name %>
+  * Pivotal Cloud Cache for <%= vars.product_name %>
+  * RabbitMQ for <%= vars.product_name %>
+  * Redis for <%= vars.product_name %>
 
 * **External blobstores and databases**. BBR support for backing up and restoring external
-databases and blobstores varies across <%= vars.product_name  %> versions. For more information, see
+databases and blobstores varies across <%= vars.product_name %> versions. For more information, see
 [Supported Components](backup-pcf-bbr.html#supported) and
-[External Storage Support Across <%= vars.product_name  %> Versions](backup-pcf-bbr.html#version-compatibility)
-in _Backing up Pivotal Cloud Foundry with BBR_.
+[External Storage Support Across <%= vars.product_name %> Versions](backup-pcf-bbr.html#version-compatibility)
+in _Backing up <%= vars.product_name_full %> with BBR_.
 
 ### <a id="best-practices"></a> Best Practices
 
 #### <a id="backup-frequency"></a> Frequency of Backups
 
-Pivotal recommends that you take backups in proportion to the rate of change of the data in <%= vars.product_name  %> to minimize the number of changes lost if a restore is required. We suggest starting with backing up every 24 hours. If app developers make frequent changes, you should increase the frequency of backups.
+Pivotal recommends that you take backups in proportion to the rate of change of the data in <%= vars.product_name %> to minimize the number of changes lost if a restore is required. We suggest starting with backing up every 24 hours. If app developers make frequent changes, you should increase the frequency of backups.
 
 #### <a id="artifact-retention"></a> Retention of Backup Artifacts
 
-Operators should retain backup artifacts based on the timeframe they need to be able to restore to. For example, if backups are taken every 24 hours and <%= vars.product_name  %> must be able to be restored to three days prior, three sets of backup artifacts should be retained.
+Operators should retain backup artifacts based on the timeframe they need to be able to restore to. For example, if backups are taken every 24 hours and <%= vars.product_name %> must be able to be restored to three days prior, three sets of backup artifacts should be retained.
 
-Artifacts should be stored in two data centers other than the <%= vars.product_name  %> data center.
+Artifacts should be stored in two data centers other than the <%= vars.product_name %> data center.
 When deciding the restore timeframe, you should take other factors such as compliance and audit-ability into account.
 
 #### <a id="security"></a>Security
@@ -137,9 +137,9 @@ Pivotal recommends that you encrypt artifacts and store them securely.
 
 ## <a id="recreation"></a> Disaster Recovery by Re-creating the Deployment
 
-An alternative strategy for recovering <%= vars.product_name  %> after a disaster is to have automation in place so that all the data can be re-created. This requires that every modification to <%= vars.product_name  %> settings and state is automated, typically through the use of a pipeline.
+An alternative strategy for recovering <%= vars.product_name %> after a disaster is to have automation in place so that all the data can be re-created. This requires that every modification to <%= vars.product_name %> settings and state is automated, typically through the use of a pipeline.
 
-Recovery steps include creating a new <%= vars.product_name  %>, re-creating orgs, spaces, users, services, service bindings and other state, and re-pushing apps.
+Recovery steps include creating a new <%= vars.product_name %>, re-creating orgs, spaces, users, services, service bindings and other state, and re-pushing apps.
 
 For more information about this approach, see the Cloud Foundry Summit presentation [Multi-DC Cloud Foundry: What, Why and How?](https://www.youtube.com/watch?v=t61r8THmtsc).
 
@@ -147,11 +147,11 @@ For more information about this approach, see the Cloud Foundry Summit presentat
 
 ### <a id="active-active"></a>  Active-Active
 
-To prevent app downtime, some Pivotal customers run active-active, where they run two or more identical <%= vars.product_name  %> deployments in different data centers. If one <%= vars.product_name  %> deployment becomes unavailable, traffic is seamlessly routed to the other deployment. To achieve identical deployments, all operations to <%= vars.product_name  %> are automated so they can be applied to both <%= vars.product_name  %> deployments in parallel.
+To prevent app downtime, some Pivotal customers run active-active, where they run two or more identical <%= vars.product_name %> deployments in different data centers. If one <%= vars.product_name %> deployment becomes unavailable, traffic is seamlessly routed to the other deployment. To achieve identical deployments, all operations to <%= vars.product_name %> are automated so they can be applied to both <%= vars.product_name %> deployments in parallel.
 
-Because all operations have been automated, the automation approach to disaster recovery is a viable option for active-active. Disaster recovery requires re-creating <%= vars.product_name  %>, then running all the automation to re-create state.
+Because all operations have been automated, the automation approach to disaster recovery is a viable option for active-active. Disaster recovery requires re-creating <%= vars.product_name %>, then running all the automation to re-create state.
 
-This option requires discipline to automate all changes to <%= vars.product_name  %>. Some of the operations that need to be automated are the following:
+This option requires discipline to automate all changes to <%= vars.product_name %>. Some of the operations that need to be automated are the following:
 
 * App push, restage, scale
 * Org, space, and user create, read, update, and delete (CRUD)
@@ -163,7 +163,7 @@ This option requires discipline to automate all changes to <%= vars.product_name
 
 Human-initiated changes always make their way into the system. These changes can include quotas being raised, new settings being enabled, and incident responses. For this reason, Pivotal recommends taking backups even when using an automated disaster recovery strategy.
 
-#### <a id="bbr-aa-comparison"></a> Using BBR Backup and Restore versus Recreating a Failed <%= vars.product_name  %> Deployment in Active-Active
+#### <a id="bbr-aa-comparison"></a> Using BBR Backup and Restore versus Recreating a Failed <%= vars.product_name %> Deployment in Active-Active
 
 <table>
 <tr>
@@ -175,19 +175,19 @@ Disaster Recovery
 <th>
 </th>
 <th>
-Restore the <%= vars.product_name  %> Data
+Restore the <%= vars.product_name %> Data
 </th>
 <th>
-Re-create the <%= vars.product_name  %> Data
+Re-create the <%= vars.product_name %> Data
 </th>
 </tr>
 <tr>
 <th>Preconditions</th>
 <td>
-IaaS prepared for <%= vars.product_name  %> install
+IaaS prepared for <%= vars.product_name %> install
 </td>
 <td>
-IaaS prepared for <%= vars.product_name  %> install
+IaaS prepared for <%= vars.product_name %> install
 </td>
 </tr>
 <tr>
@@ -196,14 +196,14 @@ Steps
 </th>
 <td>
 <ol>
-<li>Re-create <%= vars.product_name  %></li>
+<li>Re-create <%= vars.product_name %></li>
 <li>Restore </li>
-<li>Apply changes to make restored <%= vars.product_name  %> match the other active <%= vars.product_name  %></li>
+<li>Apply changes to make restored <%= vars.product_name %> match the other active <%= vars.product_name %></li>
 </ol>
 </td>
 <td>
 <ol>
-<li>Re-create <%= vars.product_name  %></li>
+<li>Re-create <%= vars.product_name %></li>
 <li>Trigger automation to re-create orgs, spaces, etc.</li>
 <li>Notify app developers to re-push apps, re-create service instances and bindings</li>
 </ol>
@@ -219,10 +219,10 @@ RTO (Recovery Time Objective)
 Platform
 </th>
 <td>
-Time to re-create <%= vars.product_name  %>
+Time to re-create <%= vars.product_name %>
 </td>
 <td>
-Time to re-create <%= vars.product_name  %>
+Time to re-create <%= vars.product_name %>
 </td>
 </tr>
 <tr>
@@ -267,16 +267,16 @@ Current time
 
 ### <a id="active-passive"></a>  Active-Passive
 
-Instead of having a true active-active deployment across all layers, some Pivotal customers prefer to install a <%= vars.product_name  %> or <%= vars.product_short %> deployment on a backup site. The backup site resides on-premises, in a co-location facility, or the public cloud. The backup site includes an operational deployment, with only the most critical apps ready to accept traffic should a failure occur in the primary data center. Disaster recovery in this scenario involves the following:
+Instead of having a true active-active deployment across all layers, some Pivotal customers prefer to install a <%= vars.product_name %> or <%= vars.product_short %> deployment on a backup site. The backup site resides on-premises, in a co-location facility, or the public cloud. The backup site includes an operational deployment, with only the most critical apps ready to accept traffic should a failure occur in the primary data center. Disaster recovery in this scenario involves the following:
 
-1. Switching traffic to the passive <%= vars.product_name  %>, making it active.
-1. Recovering the formerly-active <%= vars.product_name  %>. Operators can choose to do this through automation, if that option is available, or by using BBR and the restore process.
+1. Switching traffic to the passive <%= vars.product_name %>, making it active.
+1. Recovering the formerly-active <%= vars.product_name %>. Operators can choose to do this through automation, if that option is available, or by using BBR and the restore process.
 
-The RTO and RPO for re-creating the active <%= vars.product_name  %> are the same as outlined in the table above.
+The RTO and RPO for re-creating the active <%= vars.product_name %> are the same as outlined in the table above.
 
 ## <a id="reducing-rto"></a> Reducing RTO
 
-Both the restore and re-create data disaster recovery options require standing up a new <%= vars.product_name  %>, which can take hours. If you require shorter RTO, several options involving a pre-created standby hardware and <%= vars.product_name  %> are available:
+Both the restore and re-create data disaster recovery options require standing up a new <%= vars.product_name %>, which can take hours. If you require shorter RTO, several options involving a pre-created standby hardware and <%= vars.product_name %> are available:
 
 <table>
 <tbody>
@@ -285,7 +285,7 @@ Both the restore and re-create data disaster recovery options require standing u
 <p><strong>Active-cold</strong></p>
 </th>
 <td>
-<p>Public cloud environment ready for <%= vars.product_name  %> installation, no <%= vars.product_name  %> installed. This saves both IaaS costs and <%= vars.product_name  %> instance costs. For on-on-premise installations, this requires hardware on standby, ready to install on, which might not be a realistic option.</p>
+<p>Public cloud environment ready for <%= vars.product_name %> installation, no <%= vars.product_name %> installed. This saves both IaaS costs and <%= vars.product_name %> instance costs. For on-on-premise installations, this requires hardware on standby, ready to install on, which might not be a realistic option.</p>
 </td>
 </tr>
 <tr>
@@ -293,7 +293,7 @@ Both the restore and re-create data disaster recovery options require standing u
 <p><strong>Active-warm</strong></p>
 </th>
 <td>
-<p><%= vars.product_name  %> installed on standby hardware and kept up to date, VMs scaled down to zero (spin them up each time there is a platform update), no apps installed, no orgs or spaces defined.</p>
+<p><%= vars.product_name %> installed on standby hardware and kept up to date, VMs scaled down to zero (spin them up each time there is a platform update), no apps installed, no orgs or spaces defined.</p>
 </td>
 </tr>
 <tr>
@@ -301,7 +301,7 @@ Both the restore and re-create data disaster recovery options require standing u
 <p><strong>Active-inflate platform</strong></p>
 </th>
 <td>
-<p>Bare minimum <%= vars.product_name  %> installation, either with no apps, or a small number of each app in a stopped state. On recovery, push a small number of apps or start current apps, while simultaneously triggering automation to scale the platform to the primary node size, or a smaller version if large percentages of loss are acceptable. This mode allows you to start sending some traffic immediately, while not paying for a full non-primary platform. This method requires data seeded, but it is usually acceptable to complete data sync while platform is scaling up.</p>
+<p>Bare minimum <%= vars.product_name %> installation, either with no apps, or a small number of each app in a stopped state. On recovery, push a small number of apps or start current apps, while simultaneously triggering automation to scale the platform to the primary node size, or a smaller version if large percentages of loss are acceptable. This mode allows you to start sending some traffic immediately, while not paying for a full non-primary platform. This method requires data seeded, but it is usually acceptable to complete data sync while platform is scaling up.</p>
 </td>
 </tr>
 <tr>
@@ -315,11 +315,11 @@ Both the restore and re-create data disaster recovery options require standing u
 </tbody>
 </table>
 
-There is a trade-off between cost and RTO: the less the replacement <%= vars.product_name  %> needs to be deployed and scaled, the faster the restore.
+There is a trade-off between cost and RTO: the less the replacement <%= vars.product_name %> needs to be deployed and scaled, the faster the restore.
 
 ## <a id="automating-backups"></a> Automating Backups
 
-BBR generates the backup artifacts required for <%= vars.product_name  %>, but does not handle scheduling, artifact management, or encryption. The BBR team has created a [starter Concourse pipeline](https://github.com/pivotal-cf/bbr-pcf-pipeline-tasks) to automate backups with BBR.
+BBR generates the backup artifacts required for <%= vars.product_name %>, but does not handle scheduling, artifact management, or encryption. The BBR team has created a [starter Concourse pipeline](https://github.com/pivotal-cf/bbr-pcf-pipeline-tasks) to automate backups with BBR.
 
 Also, Stark & Wayne's Shield can be used as a front-end management tool using the BBR plugin.
 
@@ -327,4 +327,4 @@ Also, Stark & Wayne's Shield can be used as a front-end management tool using th
 
 To ensure that backup artifacts are valid, the BBR tool creates checksums of the generated backup artifacts, and ensures that the checksums match the artifacts on the jumpbox.
 
-However, the only way to be sure that the backup artifact can be used to successfully re-create <%= vars.product_name  %> is to test it in the restore process. This is a cumbersome, dangerous process so should be done with care. For instructions, see [Step 11: (Optional) Validate Your Backup](./backup-pcf-bbr.html#validate-backup) in the Backing Up Pivotal Cloud Foundry with BBR topic.
+However, the only way to be sure that the backup artifact can be used to successfully re-create <%= vars.product_name %> is to test it in the restore process. This is a cumbersome, dangerous process so should be done with care. For instructions, see [Step 11: (Optional) Validate Your Backup](./backup-pcf-bbr.html#validate-backup) in the Backing Up <%= vars.product_name_full %> with BBR topic.

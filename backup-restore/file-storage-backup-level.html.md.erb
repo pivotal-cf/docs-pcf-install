@@ -1,0 +1,41 @@
+---
+title: File Storage Backup Level
+owner: RelEng
+---
+
+In previous versions of PAS you were restricted to only being able to backup the entire blobstore. Now you have the option to configure what is backed in [File Storage](../configure-pas.html#file-storage) settings:
+
+* **Complete file storage backup**
+* **Exclude droplets from file storage backup**
+* **Exclude droplets and packages from file storage backup**
+
+The backing up of the blobstore is the biggest contributor to backup artifact sizes and the time taken to backup. With these new options you can trade off backup size and time for a longer RTO (Recovery time objective).
+
+<table border="1" class="nice" >
+  <tr>
+    <th>Name</th>
+    <th>Portion of blobstore</th>
+  </tr>
+  <tr>
+    <td><strong>Buildpacks</strong></td>
+    <td>0-5%</td>
+  </tr>
+  <tr>
+    <td><strong>Packages</strong></td>
+    <td>15-25%</td>
+  </tr>
+  <tr>
+    <td><strong>Droplets</strong></td>
+    <td>70-80%</td>
+  </tr>
+</table>
+
+
+### Complete file storage backup
+This has been the default behaviour in all previous verisons of PAS. Droplets, packages and buildpacks will all be backed up. When your restore from a backup that contains the complete blobstore all of the applications will automatically come back into a "running" state. This is because PAS has been restored with the droplets and can automatically reschedule the apps without any manual intervention.
+
+### Exclude droplets from file storage backup
+If you choose to exclude droplets from file storage backup it will result in a smaller and faster backup, but with the trade off that when you run a restore all of the applications in the environment will not be in a `STOPPED` state. This is because the foundation does not have any droplets corresponding to the apps, but it does have the packages. In order to get the app running again you will have to manually run a `cf restage` against each app, this will instruct PAS recompile the droplet using the packages and deploy the new droplet. Having to manually run a `cf restage` against every app and recompile all of the apps will have a significant effect on the RTO.
+
+### Exclude droplets and packages from file storage backup
+If you choose to exclude droplets and packages from file storage backup it will result in even smaller and faster backups than the alternative two option, but with an even greater RTO. After restoring all of the applications will be in a `STOPPED` state. This is because the foundation does not have the any droplets or packages corresponding to the apps. This means that in order for the applications be running again you will have to run a `cf push` for each app, this will upload the apps packages, compile a new droplet and deploy the new droplet. This has the same RTO as the `Exclude droplets from file storage backup` but with the added step of having to reupload all of the packages for every app.

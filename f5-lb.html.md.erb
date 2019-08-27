@@ -42,8 +42,8 @@ This configuration terminates client SSL at the F5 and forward standard HTTP tra
        **Definition:** `when HTTP_REQUEST { HTTP::header insert X-Forwarded-Proto "http" }`
 
 1. Go to **System**, then **File Management**, and click **SSL Certificate List**.
-  1. Import your PAS certificate and name it `pcf-pas-cert`.
-  1. Import your PAS certificate key and name it `pcf-pas-key`.
+  1. Import your PAS certificate and name it `<%= vars.product_name_lc %>-pas-cert`.
+  1. Import your PAS certificate key and name it `<%= vars.product_name_lc %>-pas-key`.
 
 1. Go to **Local Traffic** and click **Monitors**.
   1. Create a `gorouter` health monitor and give it the following parameters:
@@ -104,18 +104,18 @@ This configuration terminates client SSL at the F5 and forward standard HTTP tra
 1. Create an SSL client profile.
     1. Go to Local **Traffic**, then **Profiles**, then **SSL**, and click **Client**.
     2. Create an SSL client profile and give it the following parameters:
-       * **Name:** `pcf-ssl-client-certs-profile`
+       * **Name:** `<%= vars.product_name_lc %>-ssl-client-certs-profile`
        * **Parent Profile:** `clientssl`
        * **Custom:** `[TRUE]`
        * Add a certificate key chain.
-           - **Certificate:** `pcf-pas-cert`
-           - **Key:** `pcf-pas-key`
+           - **Certificate:** `<%= vars.product_name_lc %>-pas-cert`
+           - **Key:** `<%= vars.product_name_lc %>-pas-key`
            <p class='note'><strong>Note:</strong> Your deployment may require additional root or intermediate certificates. You can select them here. Additionally, you can also enter passphrases for certificates.</p>
 
 1. Create four LTM virtual servers. One is required, while three are optional.
     1. Go to **Local Traffic**, click **Virtual Servers**, and click **Virtual Server List**.
     1. (Required) Create a virtual server for HTTPS access to Cloud Foundry API and applications and give it the following parameters:
-       * **Name:** `pcf-https`
+       * **Name:** `<%= vars.product_name_lc %>-https`
        * **Type:** `Standard`
        * **Source Address:** `0.0.0.0/0`
        * **Destination Address/Mask:** `YOUR-PCF-VIP`
@@ -126,14 +126,14 @@ This configuration terminates client SSL at the F5 and forward standard HTTP tra
        * **Protocol Profile (Client):** `tcp_lan_optimized`
        * **Protocol Profile (Server):** (Use Client Profile)
        * **HTTP Profile:** `http`
-       * **SSL Profile:** `pcf-ssl-client-certs-profile`
+       * **SSL Profile:** `<%= vars.product_name_lc %>-ssl-client-certs-profile`
        * **VLAN and Tunnel Traffic:** `Enabled on YOUR-CONFIGURED-F5-VPN`
        * **Source Address Translation:** `Auto Map`
        <p class='note'><strong>Note:</strong> This must be set in one-arm configurations.</p>
        * **Default Pool:** `gorouter_pool`
        * **iRules:** `cf-xforward-for` and `cf-xforward-proto-https`
     1. (Optional) Create a virtual server for HTTP access to Cloud Foundry applications and give it the following parameters:
-       * **Name:** `pcf-http`
+       * **Name:** `<%= vars.product_name_lc %>-http`
        * **Type:** `Standard`
        * **Source Address:** `0.0.0.0/0`
        * **Destination Address/Mask:** `YOUR-PCF-VIP`
@@ -151,7 +151,7 @@ This configuration terminates client SSL at the F5 and forward standard HTTP tra
        * **Default Pool:** `gorouter_pool`
        * **iRules:** `cf-xforward-for` and `cf-xforward-proto-http`
     1. (Optional) Create a virtual server for `sshproxy`. This virtual server allows developers to SSH into Diego containers. Give it the following parameters:
-       * **Name:** `pcf-sshproxy`
+       * **Name:** `<%= vars.product_name_lc %>-sshproxy`
        * **Type:** `Standard`
        * **Source Address:** `0.0.0.0/0`
        * **Destination Address/Mask:** `YOUR-SSH-PROXY-VIP`
@@ -168,7 +168,7 @@ This configuration terminates client SSL at the F5 and forward standard HTTP tra
        <p class='note'><strong>Note:</strong> This must be set in one-arm configurations.</p>
        * **Default Pool:** `diegobrain_pool`
     1. (Optional) Create a virtual server for `tcprouter`. This virtual server allows access to Cloud Foundry TCPapplications.  Give it the following parameters:
-       * **Name:** `pcf-tcprouter`
+       * **Name:** `<%= vars.product_name_lc %>-tcprouter`
        * **Type:** `Standard`
        * **Source Address:** `0.0.0.0/0`
        * **Destination Address/Mask:** `[YOUR-TCP-ROUTER-VIP]`

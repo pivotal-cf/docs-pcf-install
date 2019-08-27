@@ -11,24 +11,24 @@ This topic describes how to configure load balancing for Pivotal Application Ser
 To configure the Gorouter or HAProxy to AWS Elastic Load Balancers, do the following:
 
 1. Record the names of your ELBs. If you followed the procedures in the [Installing <%= vars.product_name %> on AWS Manually](../om/aws/prepare-env-manual.html) topic, you created the following:
-  * `pcf-ssh-elb`: A SSH load balancer. This is a Classic Load Balancer. 
-  * `pcf-tcp-elb`: A TCP load balancer. This is a Classic Load Balancer. 
-  * `pcf-web-elb`: A web load balancer. This is an Application Load Balancer. 
-    * `pcf-web-elb-target-group`: a target group for the web load balancer
+  * `<%= vars.product_name_lc %>-ssh-elb`: A SSH load balancer. This is a Classic Load Balancer. 
+  * `<%= vars.product_name_lc %>-tcp-elb`: A TCP load balancer. This is a Classic Load Balancer. 
+  * `<%= vars.product_name_lc %>-web-elb`: A web load balancer. This is an Application Load Balancer. 
+    * `<%= vars.product_name_lc %>-web-elb-target-group`: a target group for the web load balancer
 
 1. In the PAS tile, click **Resource Config**.
   <%= image_tag("images/resource_config.png") %>
 
 1. Enter the name of your SSH load balancer depending on which release you are using.
-  * **PAS**: In the **Load Balancers** field of the **Diego Brain** row, enter the name of your SSH load balancer: `pcf-ssh-elb`.
-  * **Small Footprint Runtime**: In the **Load Balancers** field of the **Control** row, enter the name of your SSH load balancer: `pcf-ssh-elb`.
+  * **PAS**: In the **Load Balancers** field of the **Diego Brain** row, enter the name of your SSH load balancer: `<%= vars.product_name_lc %>-ssh-elb`.
+  * **Small Footprint Runtime**: In the **Load Balancers** field of the **Control** row, enter the name of your SSH load balancer: `<%= vars.product_name_lc %>-ssh-elb`.
 
 1. In the **Load Balancers** field of the **Router** row, enter the value determined by the type of load balancer you are using:
-  * **Application Load Balancer**: Enter the name of the target group of your web load balancer, prefixed with `alb:`: `alb:pcf-web-elb-target-group`. The prefix indicates to Ops Manager that you entered the name of a target group, and is required for AWS Application Load Balancers or Network Load Balancers.  
-  * **Clasic Load Balancer**: Enter the name of the load balancer: `pcf-web-elb`.  
+  * **Application Load Balancer**: Enter the name of the target group of your web load balancer, prefixed with `alb:`: `alb:<%= vars.product_name_lc %>-web-elb-target-group`. The prefix indicates to Ops Manager that you entered the name of a target group, and is required for AWS Application Load Balancers or Network Load Balancers.  
+  * **Classic Load Balancer**: Enter the name of the load balancer: `<%= vars.product_name_lc %>-web-elb`.  
   <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, then put the name of the load balancers in the **Load Balancers** field of the **HAProxy** row instead of the **Router** row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
 
-1. In the **Load Balancers** field of the **TCP Router** row, enter the name of your TCP load balancer if you enabled TCP routing: `pcf-tcp-elb`.
+1. In the **Load Balancers** field of the **TCP Router** row, enter the name of your TCP load balancer if you enabled TCP routing: `<%= vars.product_name_lc %>-tcp-elb`.
 
 
 ## <a id="aws-terraform"></a> AWS Terraform
@@ -165,7 +165,7 @@ To Configure Gorouter to GCP Load Balancers, do the following:
 
 1. Record the name of your SSH load balancer and your TCP WebSockets load balancer, `MY-PCF-wss-logs` and `MY-PCF-ssh-proxy`.
 
-1. Click your HTTP(S) load balancer, `MY-PCF-global-pcf`.
+1. Click your HTTP(S) load balancer, `MY-PCF-global-<%= vars.product_name_lc %>`.
     <%= image_tag('gcp/pcf-router.png') %>
 
 1. Under **Backend services**, record the name of the backend service of the HTTP(S) load balancer, `MY-PCF-http-lb-backend`.
@@ -179,7 +179,7 @@ To Configure Gorouter to GCP Load Balancers, do the following:
     <p class="note"><strong>Note:</strong> Do not add a space between key/value pairs in the <code>LOAD BALANCER</code> field or it will fail.</p>
     <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, then enter the above load balancer values in the <code>LOAD BALANCERS</code> field of the <strong>HAProxy</strong> row instead of the <strong>Router</strong> row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
 
-1. If you have enabled TCP routing in the <a href="#tcp-routing-enable">Networking</a> pane and set up the <a href="../om/gcp/prepare-env-manual.html#tcp_websockets_lb">TCP Load Balancer in GCP</a>, add the name of your TCP load balancer, prepended with <code>tcp:</code>, to the <strong>LOAD BALANCERS</strong> column of the <strong>TCP Router</strong> row. For example, <code>tcp:pcf-tcp-router</code>.
+1. If you have enabled TCP routing in the <a href="#tcp-routing-enable">Networking</a> pane and set up the <a href="../om/gcp/prepare-env-manual.html#tcp_websockets_lb">TCP Load Balancer in GCP</a>, add the name of your TCP load balancer, prepended with <code>tcp:</code>, to the <strong>LOAD BALANCERS</strong> column of the <strong>TCP Router</strong> row. For example, <code>tcp:<%= vars.product_name_lc %>-tcp-router</code>.
 
 1. Enter the name of you SSH load balancer depending on which release you are using.
   * **PAS**: Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the name of your SSH load balancer prepended with `tcp:`. For example, `tcp:MY-PCF-ssh-proxy`.
@@ -197,11 +197,11 @@ To Configure Gorouter to GCP Load Balancers, do the following:
 
 1. Click **Resource Config**.
 
-1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-delimited list consisting of the values of `ws_router_pool` and `http_lb_backend_name` from your Terraform output. For example, `tcp:pcf-cf-ws,http:pcf-httpslb`. These are the names of the TCP WebSockets and HTTP(S) load balancers for your deployment.
+1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-delimited list consisting of the values of `ws_router_pool` and `http_lb_backend_name` from your Terraform output. For example, `tcp:<%= vars.product_name_lc %>-cf-ws,http:<%= vars.product_name_lc %>-httpslb`. These are the names of the TCP WebSockets and HTTP(S) load balancers for your deployment.
     <p class="note"><strong>Note:</strong> Do not add a space between key/value pairs in the <code>LOAD BALANCER</code> field or it will fail.</p>
     <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, then enter the above load balancer values in the <code>LOAD BALANCERS</code> field of the <strong>HAProxy</strong> row instead of the <strong>Router</strong> row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
 
-1. If you have enabled TCP routing in the [Networking](#tcp-routing-enable) pane, add the value of `tcp_router_pool` from your Terraform output, prepended with `tcp:`, to the **LOAD BALANCERS** column of the **TCP Router** row. For example, `tcp:pcf-cf-tcp`.
+1. If you have enabled TCP routing in the [Networking](#tcp-routing-enable) pane, add the value of `tcp_router_pool` from your Terraform output, prepended with `tcp:`, to the **LOAD BALANCERS** column of the **TCP Router** row. For example, `tcp:<%= vars.product_name_lc %>-cf-tcp`.
 
 1. Enter the name of your SSH load balancer depending on which release you are using.
   * **PAS**: Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the value of `ssh_router_pool` from your Terraform output, prepended with `tcp:`. For example, `tcp:MY-PCF-ssh-proxy`.

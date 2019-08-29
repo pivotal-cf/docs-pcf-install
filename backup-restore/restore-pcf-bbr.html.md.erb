@@ -411,6 +411,7 @@ For example, if you are using Redis for <%= vars.product_name %> v1.14, see [Usi
   <ul>
     <li>The BBR PAS restore command can take at least 15 minutes to complete.</li>
     <li>Pivotal recommends that you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</li>
+    <li>If the PAS file storage has been configured to selectively backup the blobstore, you may need to follow additional steps in order to restore your applications.</li>
   </ul>
 </div>
 
@@ -450,8 +451,32 @@ For example, if you are using Redis for <%= vars.product_name %> v1.14, see [Usi
 
 1. Click **Apply Changes** to deploy.
 
+### <a id='restore-apps'></a> Step 15: (Optional) Restore Applications
 
-### <a id='odb'></a> Step 15: (Optional) Restore On-Demand Service Instances
+This step is only required for a PAS file storage that has been configured to exclude droplets or to exclude droplets and packages.
+To understand the risks and trade offs of excluding droplets and packages, see [File Storage Backup Level](./backup-restore/file-storage-backup-level.html).
+
+#### <a id='restore-apps-droplets'></a> File Storage Excluding Droplets
+
+If you have applications in your PAS foundation, perform the following steps to return them to a running state:
+
+1. For each app, run:
+
+```
+cf restage APP_NAME
+```
+
+#### <a id='restore-apps-droplets-packages'></a> File Storage Excluding Droplets and Packages
+
+If you have applications in your PAS foundation, perform the following steps to return them to a running state:
+
+1. For each app, run:
+
+```
+cf push APP_NAME [OPTIONAL-FLAGS]
+```
+
+### <a id='odb'></a> Step 16: (Optional) Restore On-Demand Service Instances
 
 If you have on-demand service instances provisioned by an on-demand service broker, perform the following steps to restore them after successfully restoring PAS:
 
@@ -472,7 +497,7 @@ If you have on-demand service instances provisioned by an on-demand service brok
 1. Any app on PAS bound to an on-demand service instance might need to be restarted to start consuming the restored on-demand service instances.
 
 
-### <a id='non-tiles'></a> Step 16: (Optional) Restore Non-Tile Deployments
+### <a id='non-tiles'></a> Step 17: (Optional) Restore Non-Tile Deployments
 
 If you have any deployments that were deployed manually with the BOSH Director rather than through an Ops Manager tile, perform the following steps to restore the VMs.
 
@@ -534,7 +559,7 @@ The process state for all VMs should show as `running`.
 
 This section provides the steps you need to perform after restoring your <%= vars.product_name %> backup with BBR.
 
-### <a id='removing-disks'></a> Step 17: Remove Unused Disks
+### <a id='removing-disks'></a> Step 18: Remove Unused Disks
 
 <p class="note warning"><strong>Warning:</strong> This is a very destructive operation.</p>
 

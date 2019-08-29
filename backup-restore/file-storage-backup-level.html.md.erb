@@ -1,0 +1,75 @@
+---
+title: File Storage Backup Level
+owner: RelEng
+---
+
+As of PAS 2.7, operators can now configure their PAS file storage backups to exclude droplets or to exclude both droplets and packages. Operators can configure their PAS file storage in the following ways:
+
+* **Complete file storage backup**
+* **Exclude droplets from file storage backup**
+* **Exclude droplets and packages from file storage backup**
+
+To configure the PAS blobstore to exclude droplets or to exclude droplets and packages see [How to Configure PAS - File Storage](../configure-pas.html#file-storage).
+
+## <a id='file-storage-motivation'></a> Motivations for File Storage Configurations
+
+When considering configuration for your use case, the two main factors are backup artifact size and Recovery Time Objective (RTO). A smaller backup artifact would enable operators to take more frequent backups without incurring a significant amount of storage space or application downtime.
+
+A complete file storage backup results in the largest backup artifact size but results in the least amount of RTO. Whereas excluding droplets requires a restaging of all apps running in the PAS foundation and excluding droplets and packages requires every app to be pushed again.
+
+### <a id='blobstore-selective-backups-table'></a> Example Blobstore Proportions
+<table border="1" class="nice">
+  <tr>
+    <th>Name</th>
+    <th>Portion of blobstore</th>
+  </tr>
+  <tr>
+    <td><strong>Buildpacks</strong></td>
+    <td>0-5%</td>
+  </tr>
+  <tr>
+    <td><strong>Packages</strong></td>
+    <td>15-25%</td>
+  </tr>
+  <tr>
+    <td><strong>Droplets</strong></td>
+    <td>70-80%</td>
+  </tr>
+</table>
+
+## <a id='complete-file-storage'></a> Complete File Storage Backup
+
+The default behaviour in versions of PAS previous to 2.7 was to backup all blobs including droplets, packages and buildpacks. When restoring from a backup that contains the complete blobstore, applications will automatically come back into a "running" state. This is because PAS has been restored with the expected droplets and can automatically reschedule the apps without any manual intervention.
+
+## <a id='exclude-droplets-file-storage'></a> Exclude Droplets from File Storage Backup
+
+Excluding droplets from file storage backups will result in a smaller and faster backup but applications will be in a "stopped" state when restored. This is because the foundation does not have any droplets corresponding to the apps, but it does have the packages.
+
+In order to restore appplications, run the following command:
+
+```
+cf restage APP_NAME
+```
+
+This instructs PAS to recompile the droplet using the packages and deploy a new droplet. Having to manually run a `cf restage` against every app and recompile all of the apps will have a significant effect on the RTO.
+
+## <a id='exclude-droplets-packages-file-storage'></a> Exclude Droplets and Packages from File Storage Backup
+
+Excluding droplets and packages from file storage backup will result in even smaller and faster backups than the alternative two options but with an even greater RTO. Applications will be in a "stopped" state when restored because the foundation does not have  the droplets or packages corresponding to the apps.
+
+In order to restore appplications, run the following command:
+
+```
+cf push APP_NAME
+```
+
+This uploads the application packages, compiles and deploys a new droplet. This has the same RTO as the `Exclude droplets from file storage backup` but with the added step of having to reupload all of the packages for every app.
+
+## <a id='additional-considerations'></a> Additional Considerations
+
+In addition to considering backup size and RTO, consider the dependencies of applications in the PAS foundation.
+
+- Do certain applications require service instances to be running before being started?
+- Do certain applications have a dependency on start order?
+
+Because of these considerations, it may introduce complexity to the restore plan and increase RTO.

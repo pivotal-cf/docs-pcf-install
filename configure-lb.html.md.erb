@@ -231,7 +231,7 @@ The PAS Tile > **Resource Config** pane lets you configure vSphere NSX-T or NSX-
 
 1. Click **Resource Config**.
 
-    <%= image_tag("images/resource-config-vsphere-pas.png") %>
+    ![Along the left side, a vertical menu shows "Resource Config" selected. The rest of the image shows part of the Resource Config pane, which is organized as a grid. Column headings, not visible in this crop, are JOB, INSTANCES, VM TYPE, and PERSISTENT DISK TYPE.  A row at top lists values "Diego Brain," "Automatic: 1" in a dropdown, "Automatic: small(cpu: 1...)" in a dropdown, and "None." The row below lists "Router" as the JOB, values as above for the other fields, and is expanded via a down-arrow to show two more sets of fields: "NSX-T CONFIGURATION" with fields under for "NS Groups," "VIF Type," and "Logical Load Balancer;" and "NSX-V CONFIGURATION" with fields under for "Security Groups: and "Edge Load Balancers."](images/resource-config-vsphere-pas.png)
 
 1. For each PAS job that you want to load-balance, click the down-arrow to reveal its configuration fields. The external-facing job instance groups in PAS are:
   - **Diego Brain** in PAS, or **Control** in Small Footprint PAS, for SSH traffic
@@ -239,7 +239,12 @@ The PAS Tile > **Resource Config** pane lets you configure vSphere NSX-T or NSX-
   - **TCP Router** for TCP traffic
 
 1. Enter a load balancer configuration for each job:
-  - **NSX-T** > **Logical Load Balancer**: Enter a JSON-formatted structure defining a list of `server_pools` as pairs of `name` and `port` definitions.
-  - **NSX-V** > **Edge Load Balancers**: Enter a JSON-formatted structure listing edge LBs, each defined by `edge_name`, `pool_name`, `security_group`, `port`, and `monitor_port` definitions.
+  - **NSX-T**:
+      1. In the vSphere NSX Manager > **Advanced Networks & Security** > **Groups** pane, define an NSGroup to include VMs running each load-balanced job, such as `pas-ssh-group`, `pas-tcp-group`, and `pas-web-group`.
+      1. In the **NS Groups** field in **Resource Config**, enter a comma-separated list of the NSGroups you defined.
+      1. In the **Logical Load Balancer**: Enter a JSON-formatted structure defining a list of `server_pools` as pairs of `name` and `port` definitions.
+  - **NSX-V**:
+      1. **Security Groups**: Enter a comma-separated list of Security Groups defined in NSX-V to include each load-balanced job, such as `pas-ssh-group`, `pas-tcp-group`, and `pas-web-group`.
+      1. **Edge Load Balancers**: Enter a JSON-formatted structure listing edge LBs, each defined by `edge_name`, `pool_name`, `security_group`, `port`, and `monitor_port` definitions.
 
 1. Click **Save**.

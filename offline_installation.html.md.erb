@@ -1,11 +1,11 @@
 ---
-title: Installing PCF in Airgapped Environments
+title: Installing PCF in Air-Gapped Environments
 owner: Ops Manager
 ---
 
 <strong><%= modified_date %></strong>
 
-This topic provides an overview of the components and resources needed to install PCF in airgapped environments, including the typical corresponding automation resources. It also describes one example solution that has been used in the past. 
+This topic provides an overview of the components and resources needed to install PCF in air-gapped environments, including the typical corresponding automation resources. It also describes one example solution that has been used in the past. 
 
 ##<a id="offline-components"></a> Offline Components
 
@@ -52,7 +52,7 @@ The following table provides more detail about resources and the component you m
 
 ##<a id="architectural-patterns"></a> Architectural Patterns
 
-The following sections describe three architectural patterns for running PCF in airgapped environments. The pattern you use depends on how your environment is set up. 
+The following sections describe three architectural patterns for running PCF in air-gapped environments. The pattern you use depends on how your environment is set up. 
 
 ###<a id="pattern-one"></a> Pattern One: Artifact Store with Internet Access
 
@@ -149,7 +149,7 @@ Some of the challenges in this pattern include the following:
 * Any automation that calls to the Internet will fail if it does not have the corporate certificate in its trust store.
 * Concourse tasks that do not use resources do not receive updated BOSH root certificates. This means you must configure tasks to ignore TLS errors or update the root certificates as part of the tasks.
 
-##<a id="airgap"></a> Example Installation in Airgapped Environment
+##<a id="airgap"></a> Example Installation in Air-Gapped Environment
 
 In this example solution, an operator uses [Concourse](https://concourse-ci.org/) as the [control plane architecture](../refarch/control.html) and specialized [PCF Pipelines](https://github.com/pivotal-cf/pcf-pipelines) to deploy PCF to computer networks physically isolated from the Internet. 
 
@@ -159,20 +159,20 @@ The following diagram presents a high-level overview of this solution:
 
 <%= image_tag("offline-env-diagram.png") %>
 
-This implementation runs in two environments, one airgapped and one Internet-connected. Each environment has its own Concourse server and pipeline. The airgapped environment bootstraps from an internal S3 repository populated by contents moved over as `tar` files from the Internet-connected environment.
+This implementation runs in two environments, one air-gapped and one Internet-connected. Each environment has its own Concourse server and pipeline. The air-gapped environment bootstraps from an internal S3 repository populated by contents moved over as `tar` files from the Internet-connected environment.
 
 ###<a id="requirements"></a> Requirements
 
 This solution requires the following:
 
 * Internet-connected environment with access to DockerHub and PivNet.
-* Concourse v3.3.3 or later, installed in both the Internet-connected and airgapped environments.
-* A path from the Internet-connected environment to the airgapped environment. All artifacts, such as release files, Docker images and scripts, must be downloaded and packaged within an Internet-connected network, then transferred to the airgapped environment.
-* An offline S3-compatible blobstore. The airgapped Concourse pipeline retrieves artifacts from a Concourse [S3 Resource](https://github.com/concourse/s3-resource). There are many S3-compatible blobstores that you can use within airgapped environments, such as [Minio](https://minio.io/) and [Dell EMC Elastic Cloud Storage](https://www.dellemc.com/en-us/storage/ecs/index.htm).
+* Concourse v3.3.3 or later, installed in both the Internet-connected and air-gapped environments.
+* A path from the Internet-connected environment to the air-gapped environment. All artifacts, such as release files, Docker images and scripts, must be downloaded and packaged within an Internet-connected network, then transferred to the air-gapped environment.
+* An offline S3-compatible blobstore. The air-gapped Concourse pipeline retrieves artifacts from a Concourse [S3 Resource](https://github.com/concourse/s3-resource). There are many S3-compatible blobstores that you can use within air-gapped environments, such as [Minio](https://minio.io/) and [Dell EMC Elastic Cloud Storage](https://www.dellemc.com/en-us/storage/ecs/index.htm).
 
 ###<a id="bootstrap"></a> Bootstrap the Pipelines
 
-As illustrated in the diagram below, two pipelines help bootstrap the offline environment, `create-offline-pinned-pipelines` and `unpack-pcf-pipelines-combined`. These pipelines are meant to facilitate physical transfer of artifacts to the airgapped environment.
+As illustrated in the diagram below, two pipelines help bootstrap the offline environment, `create-offline-pinned-pipelines` and `unpack-pcf-pipelines-combined`. These pipelines are meant to facilitate physical transfer of artifacts to the air-gapped environment.
 
 <%= image_tag('offline-full-diagram.png') %>
 
@@ -191,7 +191,7 @@ The `create-offline-pinned-pipelines` does the following:
 * Pulls all required resources (images, products and pipelines) from their locations on the Internet and package them.
 * Transforms `pcf-pipelines` to consume the resources from S3-compatible blobstore.
 * Creates an encrypted tarball with all resources, and a shasum manifest for each resource.
-* Puts the tarball to a location within S3 storage for it to be transferred to the airgapped environment.
+* Puts the tarball to a location within S3 storage for it to be transferred to the air-gapped environment.
 
 To download this pipeline, see [create-offline-pinned-pipelines](https://github.com/pivotal-cf/pcf-pipelines/tree/master/create-offline-pinned-pipelines).
 
@@ -206,7 +206,7 @@ The `unpack-pcf-pipelines-combined` does the following:
 
 * Downloads, decrypts, and extracts the GPG-encrypted tarball into its components after it has been transferred to the `pcf-pipelines-combined/` path in the S3-compatible store.
 * Verifies the `shasum` manifest of the tarball contents.
-* Puts the tarball parts into their appropriate locations within the airgapped S3 storage for use by the pipelines.
+* Puts the tarball parts into their appropriate locations within the air-gapped S3 storage for use by the pipelines.
 
 To download this pipeline, see [unpack-pcf-pipelines-combined](https://github.com/pivotal-cf/pcf-pipelines/tree/master/unpack-pcf-pipelines-combined).
 
@@ -215,11 +215,11 @@ The following screenshot shows how this pipeline appears in the Concourse dashbo
 <%= image_tag('unpack-pcf-pipelines-combined.png') %>
 [View a larger version of this diagram](images/unpack-pcf-pipelines-combined.png).
 
-From this point, the `pcf-pipelines` folder in the configured S3 bucket in the airgapped environment contains the pcf-pipelines tarball that can then be used to set a pipeline on an airgapped Concourse, in the same fashion as a standard `pcf-pipelines` setup.
+From this point, the `pcf-pipelines` folder in the configured S3 bucket in the air-gapped environment contains the pcf-pipelines tarball that can then be used to set a pipeline on an air-gapped Concourse, in the same fashion as a standard `pcf-pipelines` setup.
 
 ###<a id="bootstrapping"></a> Bootstrapping Requirements
 
-For the `unpack-pcf-pipelines-combined` to work, there must be a single manual transfer of the `czero-cflinuxfs2` tarball to the `czero-cflinuxfs2` folder within the airgapped environment's S3 storage. Only after that is done can the `unpack-pcf-pipelines-combined` pipeline be set and un-paused.
+For the `unpack-pcf-pipelines-combined` to work, there must be a single manual transfer of the `czero-cflinuxfs2` tarball to the `czero-cflinuxfs2` folder within the air-gapped environment's S3 storage. Only after that is done can the `unpack-pcf-pipelines-combined` pipeline be set and un-paused.
 
 ## <a id="install_china"></a> Install in the China Region
 

@@ -16,10 +16,10 @@ owner: Ops Manager
 		         }
 </style>
 
-This topic describes how to modify your Ops Manager installation by decrypting and editing the YAML files that Ops Manager uses to store configuration data. 
-Operators can use these procedures to view and change values that they cannot access through the Ops Manager web interface. They can also modify the product templates that Ops Manager uses to create forms and obtain user input. 
+This topic describes how to modify your Ops Manager installation by decrypting and editing the YAML files that Ops Manager uses to store configuration data.
+Operators can use these procedures to view and change values that they cannot access through the Ops Manager web interface. They can also modify the product templates that Ops Manager uses to create forms and obtain user input.
 
-Operators may want to modify the Ops Manager installation and product template files for a number of reasons, including the following:
+Operators might want to modify the Ops Manager installation and product template files for a number of reasons, including the following:
 
 * To change the User Account and Authentication (UAA) admin password of their deployment
 * To retrieve key values
@@ -29,13 +29,13 @@ Operators may want to modify the Ops Manager installation and product template f
 
 ##<a id='understand-files'></a> Understand Installation and Product Template Files ##
 
-During the installation process, Ops Manager combines information from the installation and product template files to generate the manifests that define your deployment. 
+During the installation process, Ops Manager combines information from the installation and product template files to generate the manifests that define your deployment.
 
 * **Installation files**: PCF stores user-entered data and automatically generated values for Ops Manager in installation YAML files on the Ops Manager virtual machine (VM). PCF encrypts and stores these files in the directory `/var/tempest/workspaces/default`. You must decrypt the files to view their contents, edit them as necessary, then re-encrypt them.
 
 * **Product templates**: Ops Manager uses product templates to create forms and obtain user input. The `job_types` and `property_blueprint` key-value pairs in a product template determine how the `jobs` and `properties` sections display in the installation file. Ops Manager stores product templates as YAML files in the directory `/var/tempest/workspaces/default/metadata` on the Ops Manager VM. These files are not encrypted, so you can edit them without decrypting. User input does not alter these files.
 
-<p class="note"><strong>Note</strong>: Upgrading Ops Manager may eliminate your changes to the installation and product template files.</p>
+<p class="note"><strong>Note</strong>: Upgrading Ops Manager might eliminate your changes to the installation and product template files.</p>
 
 ##<a id='installation'></a> Modify the Installation Files
 
@@ -48,7 +48,7 @@ Perform the following steps to locate, decrypt, and edit the Ops Manager install
     </pre>
 1. Run the following command to decrypt the installation YAML file and make a temporary copy of the decrypted file. When prompted for a passphrase, enter the decryption passphrase you created when you launched Ops Manager for the first time:
     <pre class="terminal">
-    $ sudo -u tempest-web ./decrypt /var/tempest/workspaces/default/installation.yml /tmp/installation.yml
+    $ sudo -u tempest-web SECRET_KEY_BASE="s" ./decrypt /var/tempest/workspaces/default/installation.yml /tmp/installation.yml
     </pre>
 1. Open `/tmp/installation.yml` to view or edit values.
 1. If you plan to make changes, make a backup of the original installation YAML file:
@@ -57,7 +57,7 @@ Perform the following steps to locate, decrypt, and edit the Ops Manager install
     </pre>
 1. If you have made changes to your copy of the installation YAML file, you must encrypt it and overwrite the original with it:
     <pre class="terminal">
-    $ sudo -u tempest-web RAILS_ENV=production /home/tempest-web/tempest/web/scripts/encrypt /tmp/installation.yml /var/tempest/workspaces/default/installation.yml
+    $ sudo -u tempest-web SECRET_KEY_BASE="s" RAILS_ENV=production /home/tempest-web/tempest/web/scripts/encrypt /tmp/installation.yml /var/tempest/workspaces/default/installation.yml
     </pre>
     When prompted, enter a passphrase.
 1. Delete the temporary copy of the decrypted file:
@@ -66,7 +66,7 @@ Perform the following steps to locate, decrypt, and edit the Ops Manager install
     </pre>
 1. Repeat steps 2 through 7 for `/tmp/actual-installation.yml`. Each step you see `installation.yml`, replace with `actual-installation.yml`. For example, for step 3 you run:
     <pre class="terminal">
-    $ sudo -u tempest-web ./decrypt /var/tempest/workspaces/default/actual-installation.yml /tmp/actual-installation.yml
+    $ sudo -u tempest-web SECRET_KEY_BASE="s" ./decrypt /var/tempest/workspaces/default/actual-installation.yml /tmp/actual-installation.yml
     </pre>
 1. Restart the Ops Manager web interface:
     <pre class="terminal">

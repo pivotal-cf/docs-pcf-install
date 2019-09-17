@@ -67,11 +67,7 @@ In the App Containers pane, you enable microservice frameworks, private Docker r
 
 1. Click **App Containers**.
 
-1. Choose the method the Gorouter uses to verify app identity under **Router app identity verification**. To enable the Gorouter to verify app identity using TLS, click **Router uses TLS to verify app identity**. To enable the Gorouter and your apps to verify each other's identity using TLS, click **Router and apps use mutual TLS to verify each other's identity**.
-  <p class='note'><strong>Note:</strong> Mutual TLS (mTLS) app identity verification does not work for Windows containers.</p>
-  Verifying app identity using TLS or mutual TLS enables encryption between router and app containers and guards against misrouting during control plane failures. For more information about Gorouter route consistency modes, see the [Preventing Misrouting](../concepts/http-routing.html#consistency) section in the _HTTP Routing_ topic.
-  <p class='note'><strong>Note:</strong> To support mutual TLS app identity verification, you need v2.3 or later of both PAS and <%= vars.product_name %> Isolation Segment (IST). The Gorouter and Diego Cell components in <%= vars.product_name %> v2.2 and earlier do not support mTLS handshakes.</p>
-  <p class='note'><strong>Note:</strong> This feature does not work if the <strong>Disable SSL certificate verification for this environment</strong> checkbox is enabled in the <strong>Networking</strong> pane.</p>
+1. <%= partial "/pcf/core/#{vars.current_major_version.sub('.', '-')}/router_app_identity_verification" %>
 
 1. (Optional) You can configure PAS to run app instances in Docker containers by provided a comma-separated list of their IP address ranges in the **Private Docker insecure registry allow list** field. For more information, see [Using Docker Registries](../opsguide/docker-registry.html).
 
@@ -101,7 +97,7 @@ In the **System Logging** pane, you can configure system logging in PAS to forwa
 
 1. Select **System Logging**.
 
-1. Select an option under **Configure syslog for system components?**. **No** is selected by default. This setting only affects Diego Cell, router, and HAProxy components within the isolation segment, not shared PAS system components.
+1. Select an option under **Configure syslog for system components?**. **No** is selected by default. This setting only affects Diego Cell, Gorouter, and HAProxy components within the isolation segment. This setting does not affect shared PAS system components.
 
 1. If you want to use syslog, select **Yes**.
 
@@ -111,7 +107,7 @@ In the **System Logging** pane, you can configure system logging in PAS to forwa
 
 1. Select a protocol from the **Transport protocol** menu. This is the protocol the system uses to transmit logs to syslog.
 
-1. (Optional) Enable the **Enable TLS** checkbox if you want to transmit logs over TLS.
+1. (Optional) Select the **Enable TLS** checkbox if you want to transmit logs over TLS.
 
 1. Enter a **Permitted peer**.
 
@@ -119,12 +115,12 @@ In the **System Logging** pane, you can configure system logging in PAS to forwa
 
 1. (Optional) Enable the **Use TCP for file forwarding local transport** checkbox to transmit logs over TCP. This prevents log truncation, but may cause performance issues.
 
-1. (Optional) The **Do not forward debug logs** checkbox is enabled by default. To forward DEBUG syslog messages to an external service, disable the checkbox.
-  <p class="note"><strong>Note:</strong> Some <%= vars.product_name %> Isolation Segment components generate a high volume of DEBUG syslog messages.Enabling the <strong>Do not forward debug logs</strong> checkbox prevents PAS components from forwarding the DEBUG syslog messages to external services. However, <%= vars.product_name %> Isolation Segment still writes the messages to the local disk.</p>
+1. (Optional) The **Do not forward debug logs** checkbox is enabled by default. To forward `DEBUG` syslog messages to an external service, disable the checkbox.
+  <p class="note"><strong>Note:</strong> Some <%= vars.product_name %> Isolation Segment components generate a high volume of <code>DEBUG</code> syslog messages.Enabling the <strong>Do not forward debug logs</strong> checkbox prevents PAS components from forwarding the <code>DEBUG</code> syslog messages to external services. However, <%= vars.product_name %> Isolation Segment still writes the messages to the local disk.</p>
 
 1. (Optional) To specify a custom syslog rule, enter it in the **Custom rsyslog configuration** field in [RainerScript](http://www.rsyslog.com/doc/v8-stable/rainerscript/index.html) syntax. For more information about customizing syslog rules, see [Customizing Syslog Rules](./custom-syslog-rules.html).
 
-1. Enable the **Enable system metrics** checkbox to emit system-level metrics about all VMs in the deployment. For a list of the VM metrics that the System Metric Agent emits, see [VM Metrics](https://github.com/cloudfoundry/loggregator-agent-release#vm-metrics) in GitHub. When you enable this, ensure that you open port 9100 for the isolation segment. For more information, see the [Configure Firewall Rules](../adminguide/routing-is.html#config-firewall) section of the _Routing for Isolation Segments_ topic.
+1. Select the **Enable system metrics** checkbox to emit system-level metrics about all VMs in the deployment. For a list of the VM metrics that the System Metric Agent emits, see [VM Metrics](https://github.com/cloudfoundry/loggregator-agent-release#vm-metrics) in GitHub. When you enable this checkbox, ensure that you open port `9100` for the isolation segment. For more information, see the [Configure Firewall Rules](../adminguide/routing-is.html#config-firewall) section of the _Routing for Isolation Segments_ topic.
 
 1. Click **Save.**
 

@@ -5,49 +5,70 @@ owner: PAS Releng
 
 This topic describes how to configure Pivotal Application Service (PAS) as part of deploying Pivotal Cloud Foundry (PCF).
 
-Before beginning this procedure, ensure that you have successfully completed the steps to prepare your environment for PCF and install and configure the BOSH Director.
 
-<p class="note"><strong>Note:</strong> If you plan to <a href="http://docs.pivotal.io/addon-ipsec/installing.html">install the PCF IPsec add-on</a>, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Ops Manager, and before installing the PAS Runtime tile.</p>
+## <a id='prereqs'></a> Prerequisites
+
+Before beginning this procedure, you must:
+
+* Ensure that you have successfully completed the steps to prepare your environment for <%= vars.product_name %> and install and configure the BOSH Director. For more information, see the [Ops Manager configuration topic for your IaaS](../om/).
+
+* If you plan to install the <%= vars.product_name %> IPsec add-on, you must do so before installing any other tiles. Pivotal recommends installing IPsec immediately after Pivotal Ops Manager and before installing the PAS Runtime tile. For more information, see [Installing the IPsec Add-On for PCF](http://docs.pivotal.io/addon-ipsec/installing.html).
 
 
-## <a id='om-add'></a> Add PAS to Ops Manager
+## <a id='om-add'></a> Add PAS to Ops 
+
+Before you can configure PAS, you must add the PAS tile to your Ops Manager Installation Dashboard.
+
+To add the PAS tile to your Ops Manager Installation Dashboard:
 
 1. If you have not already downloaded PAS, log in to [Pivotal Network](https://network.pivotal.io/products/pivotal-cf), and click PAS.
 
-1. From the **Releases** drop-down, select the release to install and choose one of the following:
+1. From the **Releases** dropdown, select the release to install and choose one of the following:
   1. Click PAS to download the PAS `.pivotal` file.
-  1. Click **PCF Small Footprint Runtime** to download the Small Footprint Runtime `.pivotal` file. For more information, see [Getting Started with Small Footprint Runtime](./small-footprint.html).
+  1. Click **PCF Small Footprint Runtime** to download the Small Footprint Runtime `.pivotal` file. For more information, see [Getting Started with Small Footprint PAS](./small-footprint.html).
 
-1. Navigate to the Pivotal Cloud Foundry Operations Manager Installation Dashboard.
+1. Navigate to the Pivotal Cloud Foundry Ops Manager Installation Dashboard.
 
-1. Click **Import a Product** to add your tile to Ops Manager. For more information, refer to the [Adding and Deleting Products](./add-delete.html) topic.
+1. Click **Import a Product** to add your tile to Ops Manager. For more information, see [Adding and Deleting Products](./add-delete.html).
 
 1. Click the **Pivotal Application Service** tile in the Installation Dashboard.
 
 
 ## <a id='assign-azs-networks'></a> Assign AZs and Networks
 
-<p class="note"><strong>Note</strong>: For Azure environments, this configuration pane is <strong>Assign Networks</strong> and does not include AZ configuration.</p>
+<p class="note"><strong>Note:</strong> For Azure environments, this configuration pane is <strong>Assign Networks</strong> and does not include AZ configuration.</p>
+
+In the **Assign AZ and Networks** pane, you assign jobs to your Availability Zones (AZs) and networks.
+
+To configure the **Assign AZ and Networks** pane:
 
 1. Select **Assign AZ and Networks**.
 
-1. Select the first Availability Zone under **Place singleton jobs**. Ops Manager runs any job with a single instance in this Availability Zone.
+1. Select the first AZ under **Place singleton jobs**. Ops Manager runs any job with a single instance in this AZ.
 
-1. Select all Availability Zones under **Balance other jobs**. Ops Manager balances instances of jobs with more than one instance across the Availability Zones that you specify.
-    <p class="note"><strong>Note:</strong> For production deployments, Pivotal recommends at least three Availability Zones for a highly available installation.</p>
+1. Select all AZs under **Balance other jobs**. Ops Manager balances instances of jobs with more than one instance across the AZs that you specify.
+    <p class="note"><strong>Note:</strong> For production deployments, Pivotal recommends at least three AZs for a highly available installation.</p>
 
 1. From the **Network** dropdown, choose the runtime network that you created when configuring the BOSH Director tile.
 
 1. Click **Save**.
 
 
-## <a id='domains'></a> Configure Domains
+## <a id='domains'></a> Configure Domains 
+
+In the **Domains** pane, you configure a wildcard DNS record for both the apps domain and system domain.
+
+To configure the **Domains** pane:
 
 1. Select **Domains**. The following image shows the **Domains** page.
 
-	![There is a heading at the top of the Domains page that begins with the text, Application Service hosts applications. There are two fields on the Domains page: System Domain and Apps Domain. There is a Save button at the bottom of the page](images/domains.png)
+	![There is a heading at the top of the Domains page that begins with the text 'Application Service hosts applications ...' There are two fields on the Domains page: System Domain and Apps Domain. There is a Save button at the bottom of the page](images/domains.png)
 
-1. Enter the system and application domains. The **System Domain** defines your target when you push apps to PAS. For example, `system.example.com`. The **Apps Domain** defines where PAS should serve your apps. For example, `apps.example.com`. For additional guidance based on your installation method, see the following table:
+1. Enter the name of your system domain in the **System Domain** field. For example, `system.example.com`. The system domain defines your target when you push apps to PAS, such as your load balancer or HAProxy. PAS assigns system components such as UAA and Apps Manager to subdomains under this domain.
+
+1. Enter the name of your apps domain in the **Apps Domain** field. For example, `apps.example.com`. The apps domain is the default domain that apps use for their hostnames. PAS hosts each app at subdomains under this domain. You can use the Cloud Foundry command line interface (cf CLI) to add or delete subdomains assigned to individual apps.
+
+For additional guidance based on your installation method, see the following table:
 	<table>
 		<tr>
 			<th>Installation Method</th>
@@ -98,166 +119,85 @@ Before beginning this procedure, ensure that you have successfully completed the
 
 <p class="note"><strong>Note:</strong> Enabling CredHub is not required. However, you cannot leave the fields under <strong>Encryption Keys</strong> blank. If you do not intend to use CredHub, enter any text in the <strong>Name</strong> and <strong>Key</strong> fields as placeholder values.</p>
 
+To configure the **CredHub** pane:
+
 1. Select **CredHub**.
+
 1. Select the location of your CredHub database. PAS includes this CredHub database for services to store their service instance credentials.
-    + **PAS database (configured on the Databases pane)**: If you select this option,
+    * **PAS database (configured on the Databases pane)**: If you select this option,
       CredHub uses the same database as other PAS components, whether the database is internal or external.
-      <p class="note"><strong>Note</strong>: If you deploy PAS on GCP, you must select **PAS database (configured on the Databases pane)**. For more information, see <a href="https://docs.pivotal.io/pivotalcf/2-4/pcf-release-notes/runtime-rn.html#external-credhub">CredHub Database Cannot be External on GCP</a>.
-    + **Other external database**: If you select this option, enter the following:
-        <table class="nice">
-          <tr>
-            <th>Field</th>
-            <th>Instructions</th>
-          </tr>
-          <tr>
-            <td><strong>Hostname</strong></td>
-            <td>Enter the IP address of your database server.</td>
-          </tr>
-          <tr>
-            <td><strong>TCP Port</strong></td>
-            <td>Enter the port of your database server, such as <code>3306</code>.</td>
-          </tr>
-          <tr>
-            <td><strong>Username</strong></td>
-            <td>Enter a unique username that can access your CredHub database on the database server.</td>
-          </tr>
-          <tr>
-          <td><strong>Password</strong></td>
-          <td>Enter the password for the provided username.</td>
-          </tr>
-          <tr>
-            <td><strong>Database CA Certificate</strong></td>
-            <td>This certificate is used when encrypting traffic to and from the database.</td>
-          </tr>
-        </table>
-      <div class="note"><strong>Note</strong>: If you deploy PAS on AWS using Terraform, you can locate the following values in your Terraform output:
-          <ul>
-            <li><strong>Hostname</strong>: <code>rds\_address</code></li>
-            <li><strong>TCP Port</strong>: <code>rds\_port</code></li>
-            <li><strong>Username</strong>: <code>rds\_username</code></li>
-            <li><strong>Password</strong>: <code>rds\_password</code></li>
-          </ul>
-      </div>
+      <p class="note"><strong>Note:</strong> If you deploy PAS on GCP, you must select **PAS database (configured on the Databases pane)**. For more information, see <a href="https://docs.pivotal.io/pivotalcf/2-4/pcf-release-notes/runtime-rn.html#external-credhub">CredHub Database Cannot be External on GCP</a> in the <em>Pivotal Application Service v2.4 Release Notes</em>.</p>
+    * **Other external database**: If you select this option, configure the following fields:
+        * **Hostname:** Enter the IP address of your database server.
+        * **TCP Port:** Enter the port of your database server, such as `3306`.
+        * **Username:** Enter a unique username that can access your CredHub database on the database server.
+        * **Password:** Enter the password for the provided username.
+        * **Database CA Certificate:** This certificate is used when encrypting traffic to and from the database.
+        <div class="note"><strong>Note:</strong> If you deploy PAS on AWS using Terraform, you can locate the following values in your Terraform output:
+            <ul>
+              <li><strong>Hostname</strong>: <code>rds\_address</code></li>
+              <li><strong>TCP Port</strong>: <code>rds\_port</code></li>
+              <li><strong>Username</strong>: <code>rds\_username</code></li>
+              <li><strong>Password</strong>: <code>rds\_password</code></li>
+            </ul>
+        </div>
 
 1. Under **Encryption Keys**, specify one or more keys to use for encrypting and decrypting the values stored in the CredHub database.
-  + If you plan to use internal encryption, configure the following values:
-    <table class= "nice">
-      <tr>
-        <th>Field</th>
-        <th>Instructions</th>
-      </tr>
-      <tr>
-        <td><strong>Name</strong></td>
-        <td>Enter any key name.</td>
-      </tr>
-      <tr>
-        <td><strong>Provider</strong></td>
-        <td>Select <strong>Internal</strong>.</td>
-      </tr>
-      <tr>
-        <td><strong>Key</strong></td>
-        <td>Enter a randomly generated value that is at least 20 characters long. This key is used for encrypting all data.</td>
-      </tr>
-      <tr>
-        <td><strong>Primary</strong></td>
-        <td>This checkbox is used for marking the key you specified above as the primary encryption key. You must mark one key as **Primary**. Do not mark more than one key as <strong>Primary</strong>.</td>
-      </tr>
-    </table><br><br>
-    + If you plan to use a hardware security module (HSM) as your encryption provider, configure the following values:
-      <table class= "nice">
+    * If you plan to use internal encryption, configure the following field:
+        * **Name:** Enter any key name.
+        * **Provider:** Select **Internal**.
+        * **Key:** Enter a randomly generated value that is at least 20 characters long. This key is used for encrypting all data.
+        * **Primary:** This checkbox marks the key you specified above as the primary encryption key. You must mark one key as primary. Do not mark more than one key as primary.
+    * If you plan to use a hardware security module (HSM) as your encryption provider, configure the following fields:
+        * **Name:** Enter a key name that already exists on your HSM or a new key name. For each new key name, CredHub generates a key in **HSM Provider Partition** that you configure below.
+        * **Provider:** Select **HSM**.
+        * **Key:** Enter a placeholder value under **Key**. CredHub does not use this key for encryption. However, you cannot leave the **Key** field blank.
         <tr>
-          <th>Field</th>
-          <th>Instructions</th>
-        </tr>
-        <tr>
-          <td><strong>Name</strong></td>
-          <td>Enter a key name that already exists on your HSM or a new key name. For each new key name, CredHub generates a key in <strong>HSM Provider Partition</strong> that you configure below.</td>
-        </tr>
-        <tr>
-          <td><strong>Provider</strong></td>
-          <td>Select <strong>HSM</strong>.</td>
-        </tr>
-        <tr>
-          <td><strong>Key</strong></td>
-          <td>Enter a placeholder value under <strong>Key</strong>. CredHub does not use this key for encryption. However, you cannot leave the <strong>Key</strong> field blank.</td>
-        </tr>
-        <tr>
-          <td><strong>Primary</strong></td>
-          <td>This checkbox is used for marking the key you specified above as the primary encryption key. You must mark one key as **Primary**. Do not mark more than one key as <strong>Primary</strong>.</td>
-        </tr>
-      </table>  
-  <p class="note"><strong>Note:</strong> For information about using additional keys for key rotation, see the <a href="../opsguide/credential-rotation.html">Rotating Runtime CredHub Encryption Keys</a> topic.</p>
+        * **Primary:** This checkbox is used for marking the key you specified above as the primary encryption key. You must mark one key as primary. Do not mark more than one key as primary.
+  <p class="note"><strong>Note:</strong> For information about using additional keys for key rotation, see <a href="../opsguide/credential-rotation.html">Rotating Runtime CredHub Encryption Keys</a>.</p>
 
-1. (Optional) To configure CredHub to use an HSM, complete the following fields:
-  <table class="nice">
-    <tr>
-      <th>Field</th>
-      <th>Instructions</th>
-    </tr>
-    <tr>
-      <td><strong>HSM Provider Partition</strong></td>
-      <td> Enter the name of the HSM provider partition.</td>
-    </tr>
-    <tr>
-      <td><strong>HSM Provider Partition Password</strong></td>
-      <td>Enter a password to use to access the HSM provider partition.</td>
-    </tr>
-    <tr>
-      <td><strong>HSM Provider Client Certificate</strong></td>
-      <td>Enter the client certificate for the HSM. For more information, see <a href="hsm-config.html#create-register-hsm">Create and Register HSM Clients</a> in the <em>Preparing CredHub HSMs for Configuration</em> topic.</td>
-    </tr>
-  </table>
-  * In the **HSM Provider Servers** section, click **Add** to add an HSM server. You can add multiple HSM servers. For each HSM server, complete the following fields:
-  <table>
-    <tr>
-      <th>Field</th>
-      <th>Instructions</th>
-    </tr>
-    <tr>
-      <td><strong>Host Address</strong></td>
-      <td>Enter the hostname or IP address of the HSM server.</td>
-    </tr>
-    <tr>
-      <td><strong>Port</strong></td>
-      <td>Enter the port of the HSM server. If you do not know your port address, enter <code>1792</code>.</td>
-    </tr>
-    <tr>
-      <td><strong>Partition Serial Number</strong></td>
-      <td>Enter the serial number of the HSM partition.</td>
-    </tr>
-    <tr>
-      <td><strong>HSM Certificate</strong></td>
-      <td>Enter the certificate for the HSM server. The HSM presents this certificate to CredHub to establish a two-way TLS connection.</td>
-    </tr>
-  </table>
+1. (Optional) To configure CredHub to use an HSM, configure the following fields:
+    * **HSM Provider Partition:** Enter the name of the HSM provider partition.
+    * **HSM Provider Partition Password:** Enter a password to use to access the HSM provider partition.
+    * **HSM provider client certificate:** Enter the client certificate for the HSM. For more information, see the [Create and Register HSM Clients](sm-config.html#create-register-hsm) section in the _Preparing CredHub HSMs for Configuration_ topic.
+    * In the **HSM Provider Servers** section, click **Add** to add an HSM server. You can add multiple HSM servers. For each HSM server, complete the following fields:
+        * **Host Address:** Enter the hostname or IP address of the HSM server.
+        * **Port:** Enter the port of the HSM server. If you do not know your port address, enter `1792`.
+        * **Partition Serial Number:** Enter the serial number of the HSM partition.
+        * **HSM Certificate:** Enter the certificate for the HSM server. The HSM presents this certificate to CredHub to establish a two-way TLS connection.
 
-1. If your deployment uses any PCF services that support storing service instance credentials in CredHub and you want to enable this feature, select the **Secure Service Instance Credentials** checkbox.
+1. If your deployment uses any PCF services that support storing service instance credentials in CredHub and you want to enable this feature, enable the **Secure Service Instance Credentials** checkbox.
+
 1. Click **Save**.
-1. Select the **Resource Config** pane.
+
+1. Go to the **Resource Config** pane.
+
 1. Under the **Job** column of the **CredHub** row, ensure that the number of instances is set to `2`. This is the minimum instance count required for high availability.
+
 1. Click **Save**.
 
 For more information about using CredHub for securing service instance credentials, see [Securing Service Instance Credentials with Runtime CredHub](../opsguide/secure-si-creds.html).
 
+
 ## <a id='sys-db'></a> Configure System Databases
 
-You can configure PAS to use an internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by PAS.
+In the **Databases** pane, you can configure PAS to use an internal MySQL database provided with PCF, or you can configure an external database provider for the databases required by PAS.
 
-<p class="note"><strong>Note:</strong> If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data first before changing the configuration. See <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a> for additional upgrade information.</p>
+<p class="note"><strong>Note:</strong> If you are performing an upgrade, do not modify your existing internal database configuration or you may lose data. You must migrate your existing data first before changing the configuration. For more information, see <a href="upgrading-pcf.html">Upgrading Pivotal Cloud Foundry</a>.</p>
 
 ### <a id='internal-db'></a> Internal Database Configuration
 
-<p class="note"><strong>Note:</strong> For Runtime CredHub to work on GCP installations, you must use internal MySQL. See <a href="https://docs.pivotal.io/pivotalcf/2-4/pcf-release-notes/runtime-rn.html#external-credhub">CredHub Database Cannot be External on GCP</a>.</p>
+<p class="note"><strong>Note:</strong> For Runtime CredHub to work on GCP installations, you must use internal MySQL. For more information, see <a href="https://docs.pivotal.io/pivotalcf/2-4/pcf-release-notes/runtime-rn.html#external-credhub">CredHub Database Cannot Be External on GCP</a> in the <em>Pivotal Application Service v2.4 Release Notes</em>.</p>
 
 <p class="note"><strong>Note:</strong> For GCP installations, Pivotal recommends selecting <strong>External</strong> and using Google Cloud SQL. Only use internal MySQL for non-production or test installations on GCP.</p>
 
 <%= partial 'ert_database_internal' %>
 
-Then proceed to [Configure Internal MySQL](#internal-mysql) to configure high availability for your internal MySQL databases.
+To configure high availability for your internal MySQL databases, see [Configure Internal MySQL](#internal-mysql).
 
 ### <a id='create-dbs'></a> External System Database Configuration
 
-<p class="note"><strong>Note:</strong> If you use external MySQL, you cannot use Runtime CredHub. See <a href="https://docs.pivotal.io/pivotalcf/2-4/pcf-release-notes/runtime-rn.html#external-credhub">CredHub Database Cannot be External on GCP</a>.</p>
+<p class="note"><strong>Note:</strong> If you use external MySQL, you cannot use Runtime CredHub. For more information, see <a href="https://docs.pivotal.io/pivotalcf/2-4/pcf-release-notes/runtime-rn.html#external-credhub">CredHub Database Cannot Be External on GCP</a> in the <em>Pivotal Application Service v2.4 Release Notes</em>.</p>
 
 <%= partial 'ert_database_external' %>
 
@@ -297,7 +237,7 @@ Then proceed to [Configure Internal MySQL](#internal-mysql) to configure high av
 
 <%= partial 'advanced-features' %>
 
-## <a id='metric-registrar'></a> (Optional) Configure  Metric Registrar
+## <a id='metric-registrar'></a> (Optional) Configure Metric Registrar
 
 <%= partial 'metric-registrar' %>
 
@@ -309,9 +249,9 @@ Then proceed to [Configure Internal MySQL](#internal-mysql) to configure high av
 
 ### <a name='lb'></a> Configure Load Balancing
 
-In the Resource Config pane, you must associate load balancers with the VMs in your deployment to enable traffic. See [Configure Load Balancing for PAS](configure-lb.html).
+In the **Resource Config** pane, you must associate load balancers with the VMs in your deployment to enable traffic. For more information, see [Configure Load Balancing for PAS](configure-lb.html).
 
-<p class="note"><strong>Note</strong>: This step does not apply to vSphere deployments.</p>
+<p class="note"><strong>Note:</strong> This step does not apply to vSphere deployments.</p>
 
 ### <a name='scale-down'></a> (Optional) Scale Down and Disable Resources
 
@@ -323,9 +263,10 @@ In the Resource Config pane, you must associate load balancers with the VMs in y
 
 ## <a id='complete'></a> Complete the PAS Installation
 
+To complete your installation of PAS:
+
 1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
 
-1. Click **Review Pending Changes**, then **Apply Changes**.
-    The install process generally requires a minimum of 90 minutes to complete. The following image shows the Changes Applied window that displays when the installation process successfully completes.
+1. Click **Review Pending Changes**, then **Apply Changes**. The install process generally requires a minimum of 90 minutes to complete. The following image shows the Changes Applied window that displays when the installation process successfully completes.
 
-    ![There is a heading at the top of the window that says, Changes Applied. Below the heading, there is text that begins with, Ops Manager Director was successfully installed. Below the text, there is a Close button and a button to return to the Installation Dashboard.](images/cloudform/ops-manager-complete.png)
+    ![At the top of the pop-up window is a teal checkmark and the words 'Changes Applied'. In the upper-right corner is a gray circle with a white X in the middle. Below 'Changes Applied' is the text 'Ops Manager Director was successfully installed.' Below this text is the italicized text 'We recommend that you export a backup of this installation from the actions menu.' Below this text are two buttons, a gray rectangular button labeled 'Close' and a blue rectangular button labeled 'Return to Installation Dashboard'.](images/cloudform/ops-manager-complete.png)

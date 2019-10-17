@@ -1,3 +1,7 @@
+In the **Networking** pane, you configure security and routing services for your IaaS.
+
+To configure the **Networking** pane:
+
 1. For **Router IPs** **HAProxy IPs**, see the following guidance:
 	* For **AWS**, **Azure**, and **GCP**, leave these fields blank. You do not need to complete these fields when deploying PCF on these infrastructures.
 	* For **OpenStack** and **vSphere** the values you enter in the **Router IPs** and **HAProxy IPs** fields depend on whether you are using HAProxy in your deployment. Use the table below to determine how to complete these fields.
@@ -13,7 +17,7 @@
 	        <td>
 	        	<ol>
 	        		<li>Choose IP addresses from the subnet you configured in Ops Manager.</li>
-	        		<li>Enter these IP addresses in the <strong>Router IPs</strong> field. You should specify more than one IP address for high availability.</li>
+	        		<li>Enter these IP addresses in the <strong>Router IPs</strong> field. You should specify more than one IP address for high availability. The IP addresses must be within your subnet CIDR block.</li>
 	        		<li>Configure your load balancer to forward requests for the domains that you have configured for your deployment to these IP addresses.</li>
 	        	</ol>
 	        </td>
@@ -25,7 +29,7 @@
 	        <td>
 	        	<ol>
 	        		<li>Choose IP addresses from the subnet you configured in Ops Manager.</li>
-	        		<li>Enter these IP addresses in the <strong>HAProxy IPs</strong> field. You should specify more than one IP address for high availability. </li>
+	        		<li>Enter these IP addresses in the <strong>HAProxy IPs</strong> field. You should specify more than one IP address for high availability.</li>
 	        		<li>Configure your load balancer to forward requests for the domains you have configured for your deployment to these IP addresses.</li>
 	        	</ol>
 	      </tr>
@@ -34,8 +38,8 @@
 1. For **SSH Proxy IPs** and **TCP Router IPs**, see the following guidance:
 	* For **AWS**, **Azure**, and **GCP**, leave these fields blank. You do not need to complete these fields when deploying PCF on these infrastructures.
 	* For **OpenStack** and **vSphere**:
-		* (Optional) In **SSH Proxy IPs**, add the IP address for your Diego Brain, which will accept requests to SSH into application containers on port `2222`.
-		* (Optional) In **TCP Router IPs**, add the IP address(es) you would like assigned to the TCP Routers. You enable this feature at the bottom of this screen.
+		* (Optional) In **SSH Proxy IPs**, add the IP address for your Diego Brain, which accepts requests to SSH into app containers on port 2222.
+		* (Optional) In **TCP Router IPs**, add the IP address(es) you want to assign to the TCP Routers. You enable this feature at the bottom of this screen.
   			<p class='note'><strong>Note:</strong> If you have mutual TLS app identity verification enabled, app containers accept incoming communication only from the Gorouter. This disables TCP routing.</p>
 
 1. <%= partial 'haproxy_router_cert_config' %>
@@ -46,8 +50,7 @@
 1. <%= partial 'haproxy_client_cert_validation' %>
 1. <%= partial 'gorouter_client_cert_validation' %>
 1. <%= partial 'tls_cipher_suites_router' %>
-	 <p class='note'><strong>Note:</strong> AWS Classic Load Balancers do not support PCF's default cipher suites. See <a href="../adminguide/securing-traffic.html#default">TLS Cipher Suite Support by AWS Load Balancers</a>
-     for information about configuring your AWS load balancers and Gorouter.</p>
+	 <p class='note'><strong>Note:</strong> AWS Classic Load Balancers do not support PCF's default cipher suites. For more information about configuring your AWS load balancers and Gorouter, see the <a href="../adminguide/securing-traffic.html#aws_elbs">TLS Cipher Suite Support by AWS Load Balancers</a> section of the <em>Securing Traffic into Cloud Foundry</em> topic.</a></p>
 1. <%= partial 'tls_cipher_suites_haproxy' %>  
 1. <%= partial 'haproxy_router_tls_forward' %>
 1. <%= partial 'haproxy_hsts_config_cloudform' %>
@@ -56,10 +59,7 @@
 1. <%= partial 'insecure_cookies' %> 
 1. <%= partial 'zipkin_enable' %>
 1. <%= partial 'enable_router_local_logs' %>
-1. By default, the PAS routers handle traffic for applications deployed to an isolation segment created by the PCF Isolation Segment tile. To configure the PAS routers to reject requests for applications within isolation segments, select the **Routers reject requests for Isolation Segments** checkbox.
-  Do not enable this option without deploying routers for each isolation segment. See the following topics for more information:
-  * [Installing PCF Isolation Segment](../customizing/installing-pcf-is.html)
-  * [Sharding Routers for Isolation Segments](../adminguide/routing-is.html#sharding-routers-isolation-segment).
+1. By default, PAS routers handle traffic for apps deployed to an isolation segment created by the PCF Isolation Segment tile. To configure PAS routers to reject requests for apps within isolation segments, enable the **Routers reject requests for Isolation Segments** checkbox. Do not enable this option without deploying routers for each isolation segment. For more information, see [Installing <%= vars.product_name %> Isolation Segment](../customizing/installing-pcf-is.html) and the [Sharding Routers for Isolation Segments](../adminguide/routing-is.html#sharding-routers-isolation-segment) section of the _Routing for Isolation Segments_ topic.
 1. <%= partial 'enable-proxy-support' %>
 1. <%= partial 'route_services' %>
 1. <%= partial 'max_connections_backend' %>
@@ -71,13 +71,12 @@
 1. <%= partial 'http_headers_to_log' %>
 1. <%= partial 'haproxy_request_max_buffer' %>
 1. <%= partial 'protected_domains' %>
-1. The **Loggregator Port** defaults to `443` if left blank. For AWS environments that are not using an Application Load Balancer, enter `4443`. 
+1. The **Loggregator Port** defaults to 443 if left blank. For AWS environments that are not using an Application Load Balancer, enter `4443`. 
 1. For **Container Network Interface Plugin**, select one of the following:
   * **Silk**: This option is the default Container Network Interface (CNI) for PAS.
   * **External**: Select this if you are deploying the [VMware NSX-T Container Plug-in for PCF](https://network.pivotal.io/products/vmware-nsx-t).
       - If you select **External**, follow the instructions in [Deploying PAS with NSX-T Networking](vsphere-nsx-t.html) in addition to the PAS configuration instructions in this topic.
 <p class='note warning'><strong>Warning:</strong> The NSX-T integration only works for fresh installs of PCF. If your PAS is already deployed and running with Silk as its CNI, you cannot change the CNI plugin to NSX-T.</p>
-	
 
 1. If you selected **Silk** in the previous step, review the following fields:
     <ol>
@@ -94,16 +93,19 @@
 1. <%= partial 'networking_database_timeout' %>
 
 1. <%= partial 'tcp_routing_enable' %><a id='tcp-routing-enable'></a>
-	* For GCP, you also need to specify the name of a GCP TCP load balancer in the **LOAD BALANCER** column of TCP Router job of the **Resource Config** screen. You configure this later on in PAS. See the [Configure Resources](#resources) section of this topic.</p>
-	* For AWS, you also need to specify the name of a TCP ELB in the **LOAD BALANCER** column of TCP Router job of the `Resource Config` screen. You configure this later on in PAS. For more information, see the [Configure Resources](#resources) section of this topic.
-	* For Azure, you also need to specify the name of Azure load balancer in the LOAD BALANCER column of TCP Router job of the **Resource Config** screen. You configure this later on in PAS. See the [Configure Resources](#resources) section of this topic.
-	* For OpenStack and vSphere: Return to the top of the **Networking** screen. In **TCP Router IPs** field, make sure you have entered IP addresses within your subnet CIDR block. These will be the same IP addresses you configured your load balancer with in [Pre-Deployment Steps](../adminguide/enabling-tcp-routing.html), unless you configured DNS to resolve the TCP domain name directly to an IP you've chosen for the TCP router. 
+	* For GCP, you also need to specify the name of a GCP TCP load balancer in the **LOAD BALANCER** column of TCP Router job of the **Resource Config** screen. You configure this later on in PAS. For more information, see [Configure Resources](#resources).
+	* For AWS, you also need to specify the name of a TCP ELB in the **LOAD BALANCER** column of TCP Router job of the `Resource Config` screen. You configure this later on in PAS. For more information, see [Configure Resources](#resources).
+	* For Azure, you also need to specify the name of Azure load balancer in the LOAD BALANCER column of TCP Router job of the **Resource Config** screen. You configure this later on in PAS. For more information, see [Configure Resources](#resources).
+	* For OpenStack and vSphere:
+		1. Return to the top of the **Networking** pane.
+		1. In the **TCP router IPs** field, ensure that you have entered IP addresses that are within your subnet CIDR block. These are the same IP addresses you configured your load balancer with in the [Pre-Deployment Steps](../adminguide/enabling-tcp-routing.html#pre-deploy) section of the _Enabling TCP Routing_ topic, unless you configured DNS to resolve the TCP domain name directly to an IP you have chosen for the TCP router.
+		<br/>
+		For more information, see [Configuring TCP Routing in PAS](../opsguide/tcp-routing-ert-config.html).
 
 1. <%= partial 'tcp_routing_disable' %>
 
 1. <%= partial 'dynamic-egress' %>
 
-1. (Optional) For additional security, enter headers that you want the router to remove from app responses in **Remove Specified HTTP Response Headers**. 
+1. (Optional) For additional security, enter headers that you want the Gorouter to remove from app responses in **Remove Specified HTTP Response Headers**. 
 
 1. Click **Save**.
-

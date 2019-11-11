@@ -3,20 +3,20 @@ title: Restoring Pivotal Platform from Backup with BBR
 owner: RelEng
 ---
 
-<% current_page.data.title = "Restoring " + vars.product_name + " from Backup with BBR" %>
+<% current_page.data.title = "Restoring " + vars.platform_name + " from Backup with BBR" %>
 
-This topic describes the procedure for restoring your critical back end <%= vars.product_name  %> components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments.
+This topic describes the procedure for restoring your critical back end <%= vars.platform_name  %> components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments.
 
 For BBR release notes, see [BOSH Backup and Restore Release Notes](https://docs.cloudfoundry.org/bbr/bbr-rn.html) in the Cloud Foundry documentation.
 
 
 ## <a id='overview'></a> Overview
 
-To perform the procedures in this topic, you must have backed up <%= vars.product_name %> by following the steps in [Backing Up <%= vars.product_name %> with BBR](backup-pcf-bbr.html).
+To perform the procedures in this topic, you must have backed up <%= vars.platform_name %> by following the steps in [Backing Up <%= vars.platform_name %> with BBR](backup-pcf-bbr.html).
 
-The procedures described in this topic prepare your environment for <%= vars.product_name %>, deploy Ops Manager, import your installation settings, and use BBR to restore your <%= vars.product_name %> components.
+The procedures described in this topic prepare your environment for <%= vars.platform_name %>, deploy Ops Manager, import your installation settings, and use BBR to restore your <%= vars.platform_name %> components.
 
-<p class="note warning"><strong>Warning:</strong> Restoring <%= vars.product_name %> with BBR is a destructive operation. If the restore fails, the new environment could be left in an unusable state and require re-provisioning. Only perform the procedures in this topic for the purpose of disaster recovery, such as re-creating <%= vars.product_name %> after a storage-area network (SAN) corruption.</p>
+<p class="note warning"><strong>Warning:</strong> Restoring <%= vars.platform_name %> with BBR is a destructive operation. If the restore fails, the new environment could be left in an unusable state and require re-provisioning. Only perform the procedures in this topic for the purpose of disaster recovery, such as re-creating <%= vars.platform_name %> after a storage-area network (SAN) corruption.</p>
 
 <p class="note warning"><strong>Warning:</strong> When validating your backup, the VMs and disks from the backed-up BOSH Director should not be visible to the new BOSH Director. As a result, Pivotal recommends that you deploy the new BOSH Director to a different IaaS network and account than the VMs and disks of the backed up BOSH Director.</p>
 
@@ -39,14 +39,14 @@ For a backup artifact to be restorable, the following restrictions apply:
 
 * **Limited validation**: BBR puts the backed-up data into the corresponding instance groups and jobs in the restored environment, but cannot validate the restore beyond that. For example, if the MySQL encryption key is different in the restore environment, the BBR restore might succeed, but the restored MySQL database is unusable.
 
-* **<%= vars.product_name %> version**: BBR can restore to the same version of <%= vars.product_name %> that was backed up. BBR does not support restoring to other major, minor, or patch releases.
+* **<%= vars.platform_name %> version**: BBR can restore to the same version of <%= vars.platform_name %> that was backed up. BBR does not support restoring to other major, minor, or patch releases.
 
 <p class="note"><strong>Note:</strong> A change in VM size or underlying hardware does not affect BBR's ability to restore data, as long as there is adequate storage space to restore the data.</p>
 
 
 ## <a id="restore-diagram"></a> Restore Workflow
 
-The diagram below shows the flow of the <%= vars.product_name %> restore process in a series of steps performed by the <%= vars.product_name %> operator. The following steps are covered in more detail throughout this topic. Click the diagram to see the full-size image.
+The diagram below shows the flow of the <%= vars.platform_name %> restore process in a series of steps performed by the <%= vars.platform_name %> operator. The following steps are covered in more detail throughout this topic. Click the diagram to see the full-size image.
 
 <a href="images/pcf-restore.png"><%= image_tag("pcf-restore.png", :alt => "Flow chart shows the platform Operator through a series of steps interacting with the BOSH CLI, Ops Manager VM, Director VM, and the PAS tile. Details on these steps are described below.") %></a>
 
@@ -69,15 +69,15 @@ The diagram below shows the flow of the <%= vars.product_name %> restore process
 
 ## <a id='prepare-restore'></a> Prepare to Restore
 
-This section describes the procedure you must perform before restoring your <%= vars.product_name %> backup with BBR.
+This section describes the procedure you must perform before restoring your <%= vars.platform_name %> backup with BBR.
 
 ### <a id='prepare-env'></a> Step 1: (Optional) Prepare Your Environment
 
 In the event of a disaster, you can lose not only your VMs and disks, but your IaaS resources as well, such as networks and load balancers.
 
-If you need to re-create your IaaS resources, prepare your environment for <%= vars.product_name %> by following the instructions specific to your IaaS in [Installing <%= vars.product_name %>](../../installing/index.html).
+If you need to re-create your IaaS resources, prepare your environment for <%= vars.platform_name %> by following the instructions specific to your IaaS in [Installing <%= vars.platform_name %>](../../installing/index.html).
 
-<p class="note"><strong>Note:</strong> The instructions for installing <%= vars.product_name %> on Amazon Web Services (AWS) and OpenStack combine the procedures for preparing your environment and deploying Ops Manager into a single topic. The instructions for the other supported IaaSes split these procedures into two separate topics.</p>
+<p class="note"><strong>Note:</strong> The instructions for installing <%= vars.platform_name %> on Amazon Web Services (AWS) and OpenStack combine the procedures for preparing your environment and deploying Ops Manager into a single topic. The instructions for the other supported IaaSes split these procedures into two separate topics.</p>
 
 If you re-create your IaaS resources, you must also add those resources to Ops Manager by performing the procedures in [Step 3: (Optional) Configure Ops Manager for New Resources](#config-new-resources).
 
@@ -85,8 +85,8 @@ If you re-create your IaaS resources, you must also add those resources to Ops M
 
 1. Perform the procedures for your IaaS to deploy Ops Manager:
     * **AWS**:
-        * If you configured AWS manually, see _Step 12: Launch an Ops Manager API_ through _Step 19: Create a MySQL Database Using AWS RDS_ of [Installing <%= vars.product_name %> on AWS Manually](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/aws/prepare-env-manual.html#pcfaws-om-ami).
-        * If you used Terraform to install <%= vars.product_name %> on AWS, see [Installing <%= vars.product_name %> on AWS Using Terraform](../aws-terraform.html).
+        * If you configured AWS manually, see _Step 12: Launch an Ops Manager API_ through _Step 19: Create a MySQL Database Using AWS RDS_ of [Installing <%= vars.platform_name %> on AWS Manually](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/aws/prepare-env-manual.html#pcfaws-om-ami).
+        * If you used Terraform to install <%= vars.platform_name %> on AWS, see [Installing <%= vars.platform_name %> on AWS Using Terraform](../aws-terraform.html).
     * **GCP**: See [Deploying Ops Manager on GCP Manually](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/gcp/deploy-manual.html).
     * **OpenStack**: See _Step 4: Create Ops Manager Image_ through _Step 9: Create a DNS Entry_ in [Deploying Ops Manager to OpenStack](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/openstack/setup.html#create-om-image).
     * **vSphere**: See [Deploying Ops Manager on vSphere](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/vsphere/deploy.html).
@@ -103,7 +103,7 @@ If you re-create your IaaS resources, you must also add those resources to Ops M
 
         1. In the import panel:
           * Enter the **Decryption Passphrase** in use when you exported the installation settings from Ops Manager.
-          * Click **Choose File** and browse to the installation zip file that you exported in the [Step 9: Export Installation Settings](./backup-pcf-bbr.html#export) section of the _Backing Up <%= vars.product_name %> with BBR_ topic.
+          * Click **Choose File** and browse to the installation zip file that you exported in the [Step 9: Export Installation Settings](./backup-pcf-bbr.html#export) section of the _Backing Up <%= vars.platform_name %> with BBR_ topic.
 
             <%= image_tag("../images/upgrading/decryption_passphrase.png") %>
 
@@ -188,12 +188,12 @@ Use the Ops Manager API or the checkbox on the **Review Pending Changes** page t
 
 ### <a id="artifacts-jumpbox"></a> Step 6: Transfer Artifacts to Jumpbox
 
-In the [Step 9: Back Up Your PAS Deployment](./backup-pcf-bbr.html#bbr-backup) section of the _Backing Up <%= vars.product_name %> with BBR_ topic, in the _After Taking the Backups_ section, you moved the TAR and metadata files of the backup artifacts off your jumpbox to your preferred storage space. Now you must transfer those files back to your jumpbox.
+In the [Step 9: Back Up Your PAS Deployment](./backup-pcf-bbr.html#bbr-backup) section of the _Backing Up <%= vars.platform_name %> with BBR_ topic, in the _After Taking the Backups_ section, you moved the TAR and metadata files of the backup artifacts off your jumpbox to your preferred storage space. Now you must transfer those files back to your jumpbox.
 
 
 ## <a id='restore'></a> Restore Your Backup
 
-This section describes the procedure you must perform to restore your <%= vars.product_name %> backup with BBR.
+This section describes the procedure you must perform to restore your <%= vars.platform_name %> backup with BBR.
 
 ### <a id='retrieve-credentials'></a> Step 7: Retrieve BOSH Director Credentials
 
@@ -239,7 +239,7 @@ To restore BOSH Director:
     * `HOST`is the address of the BOSH Director.
       * If the BOSH Director is public, `HOST` is a URL, such as `https://my-bosh.xxx.cf-app.com`.
       * If the BOSH Director is not public, `HOST` is the `BOSH-DIRECTOR-IP` retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
-    * Use the optional `--debug` flag if you want to enable debug logs. For more information, see the [Logging](backup-pcf-bbr.html#logging) section of the _Backing Up <%= vars.product_name %> with BBR_ topic.
+    * Use the optional `--debug` flag if you want to enable debug logs. For more information, see the [Logging](backup-pcf-bbr.html#logging) section of the _Backing Up <%= vars.platform_name %> with BBR_ topic.
 
 1. After the command succeeds, continue to [Step 10: Identify Your Deployment](#identify-deployment).
 <br>
@@ -269,7 +269,7 @@ If the command fails:
 
 ### <a id='identify-deployment'></a> Step 10: Identify Your Deployment
 
-To identify the name of the BOSH deployment that contains <%= vars.product_name %>:
+To identify the name of the BOSH deployment that contains <%= vars.platform_name %>:
 
 1. Log in to your BOSH Director.
 
@@ -297,7 +297,7 @@ To identify the name of the BOSH deployment that contains <%= vars.product_name 
                                  ...
     </pre>
     <br>
-    In the above example, the name of the BOSH deployment that contains <%= vars.product_name %> is `cf-example`. `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the root Certificate Authority (CA) certificate for the BOSH Director. If you are using the Ops Manager VM as your jumpbox, the path is `/var/tempest/workspaces/default/root_ca_certificate`.
+    In the above example, the name of the BOSH deployment that contains <%= vars.platform_name %> is `cf-example`. `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the root Certificate Authority (CA) certificate for the BOSH Director. If you are using the Ops Manager VM as your jumpbox, the path is `/var/tempest/workspaces/default/root_ca_certificate`.
 
 ### <a id="bosh-cck"></a> Step 11: Remove Stale Cloud IDs for All Deployments
 
@@ -421,7 +421,7 @@ For this step, you must restore data to pre-provisioned service tiles.
 
 The procedures for restoring service data vary. For more information, see the documentation for your service tile.
 
-For example, if you are using Redis for <%= vars.product_name %> v1.14, see [Using BOSH Backup and Restore (BBR)](https://docs.pivotal.io/redis/1-14/bbr-backup.html).
+For example, if you are using Redis for <%= vars.platform_name %> v1.14, see [Using BOSH Backup and Restore (BBR)](https://docs.pivotal.io/redis/1-14/bbr-backup.html).
 
 ### <a id='restore-ert'></a> Step 14: Restore PAS
 
@@ -560,7 +560,7 @@ The process state for all VMs should show as `running`.
 
 ## <a id="after-restore"></a> After Restoring Your Backup
 
-This section describes the procedures you must perform after restoring your <%= vars.product_name %> backup with BBR.
+This section describes the procedures you must perform after restoring your <%= vars.platform_name %> backup with BBR.
 
 ### <a id='removing-disks'></a> Step 18: Remove Unused Disks
 

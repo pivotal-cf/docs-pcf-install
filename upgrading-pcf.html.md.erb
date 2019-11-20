@@ -3,33 +3,40 @@ title: Upgrading Pivotal Platform
 owner: Ops Manager
 ---
 
-<% current_page.data.title = "Upgrading " + vars.product_name %>
+<% current_page.data.title = "Upgrading " + vars.platform_name %>
 
-This topic describes upgrading <%= vars.product_name  %> to <%= vars.v_major_version %>. The upgrade procedure below describes upgrading Pivotal Operations Manager, Pivotal Application Service (PAS), and product tiles.
+This topic describes upgrading <%= vars.platform_name %> to <%= vars.v_major_version %>.
 
 <p class="note breaking"><strong>Breaking Changes:</strong> Read the <a href="https://docs.pivotal.io/platform/<%= vars.current_major_version.sub('.', '-') %>/pcf-release-notes/index.html">Release Notes</a> and <a href="https://docs.pivotal.io/platform/<%= vars.current_major_version.sub('.', '-') %>/pcf-release-notes/breaking-changes.html">Breaking Changes</a> for this release, including the Known Issues sections, before starting the upgrade process.</p>
 
-<p class="note warning"><b>Warning:</b> Pivotal does not recommend that you skip minor versions when upgrading <%= vars.product_name %>. Skipping minor versions when upgrading <%= vars.product_name %> may result in breaking changes. To avoid additional breaking changes, upgrade <%= vars.product_name %> to the minor version that directly follows your current version of <%= vars.product_name %>.</p>
+<p class="note warning"><strong>Warning:</strong> Pivotal does not recommend that you skip minor versions when upgrading <%= vars.platform_name %>. Skipping minor versions when upgrading <%= vars.platform_name %> may result in breaking changes. To avoid additional breaking changes, upgrade <%= vars.platform_name %> to the minor version that directly follows your current version of <%= vars.platform_name %>.</p>
+
+
+## <a id='overview'></a> Overview
+
+The upgrade procedure below describes upgrading Pivotal Operations Manager, Pivotal Application Service (PAS), and product tiles.
 
 The apps in your deployment continue to run during the upgrade. However, you cannot write to your deployment or make changes to apps during the upgrade.
 
-For details about how upgrading <%= vars.product_name %> impacts individual PAS components, see [What Happens During PAS Upgrades](../upgrading/understanding-pas.html).
+For details about how upgrading <%= vars.platform_name %> impacts individual PAS components, see [What Happens During PAS Upgrades](../upgrading/understanding-pas.html).
 
 
 ## <a id="prepare"></a> Prepare to Upgrade
 
-If you have not already, complete the steps in the [Upgrade Preparation Checklist for <%= vars.product_name %> <%= vars.v_major_version %>](../upgrading/checklist.html).
+If you have not already, complete the steps in the [Upgrade Preparation Checklist for <%= vars.platform_name %> <%= vars.v_major_version %>](../upgrading/checklist.html).
 
 
 ## <a id="upgrade_ops"></a> Upgrade Ops Manager and Installed Products to <%= vars.v_major_version %>
 
-Follow these steps to upgrade Ops Manager and Installed Products to <%= vars.product_name %> <%= vars.v_major_version %>.
+Follow these steps to upgrade Ops Manager and Installed Products to <%= vars.platform_name %> <%= vars.v_major_version %>.
 
 ### <a id="upgrade"></a> Import Installation to Ops Manager <%= vars.v_major_version %> VM
 
+To import your Ops Manager installation to the Ops Manager <%= vars.v_major_version %> VM:
+
 1. Download the Ops Manager VM Template <%= vars.v_major_version %> from the [Pivotal Network](https://network.pivotal.io/products/ops-manager) site.
 
-1. Record the FQDN address of the existing Ops Manager VM.
+1. Record the fully qualified domain name (FQDN) address of the existing Ops Manager VM.
 
 1. To avoid conflicts, power off the existing Ops Manager VM.
 
@@ -42,25 +49,27 @@ Follow these steps to upgrade Ops Manager and Installed Products to <%= vars.pro
 
 1. When redirected to the **Welcome to Ops Manager** page, select **Import Existing Installation**.
 
-    <%= image_tag("./images/upgrading/welcome.png") %>
+    <%= image_tag("./images/upgrading/welcome.png", alt: "Below the green Pivotal logo is the text 'Welcome to Ops Manager'. Next is the text 'Select an Authentication System', below which are two rectangular blue buttons. The top button is labeled 'Use an Identity Provider' in white text; the bottom button is labeled 'Internal Authentication' in white text. Below these buttons is a horizontal line break. Below the line break is the text 'Upgrading Ops Manager?', below which is a rectangular blue button labeled 'Import Existing Installation' in white text.") %>
 
 1. When prompted, enter the **Decryption Passphrase** for this Ops Manager installation. You set this passphrase during your initial installation of Ops Manager.
     <p class="note"><strong>Note:</strong> If lost, the <strong>Decryption Passphrase</strong> cannot be recovered.</p>
 
-1. Click **Choose File** and browse to the installation ZIP file exported in the [Export Your Installation](../upgrading/checklist.html#export) step of your upgrade preparation.
+1. Click **Choose File** and browse to the installation ZIP file exported in the installation export step of your upgrade preparation. For more information, see the [Export Your Installation](../upgrading/checklist.html#export) section of the _Upgrade Preparation Checklist for <%= vars.platform_name %> <%= vars.v_major_version %>_ topic.
 
-    <%= image_tag("./images/upgrading/decryption_passphrase.png") %>
+    <%= image_tag("./images/upgrading/decryption_passphrase.png", alt: "Below the green Pivotal logo is a field labeled 'Decryption Passphrase' containing five hidden characters. Below this field is the text 'Enter file', below which is a small, rectangular gray button labeled 'Choose File'. To the right of the 'Choose File' button is the filename 'installation (4).zip'. Below this button and filename is a rectangular blue button labeled 'Import' in white text.") %>
 
 1. Click **Import**.
     <p class="note"><strong>Note:</strong> Some browsers do not provide feedback on the status of the import process, and might appear to hang.</p>
 
 1. A **Successfully imported installation** message appears upon completion.
 
-    <%= image_tag("./images/upgrading/success.png") %>
+    <%= image_tag("./images/upgrading/success.png", alt: "The top half of the pop-up message contains a dark green background, a rectangular green logo with a capital P in white, and the text 'Pivotal Ops Manager' in white. The bottom half of the pop-up message contains a lighter green background, a round, dark green icon containing a light green check, and the text 'Successfully imported installation.' in dark green text.") %>
 
 ### <a id="upgrade_products"></a> Import New PAS and Product Tiles
 
-<a name="success"></a> After upgrading to Ops Manager <%= vars.v_major_version %>, upgrade your product versions:
+<a name="success"></a> After upgrading to Ops Manager <%= vars.v_major_version %>, you must upgrade your product versions.
+
+To upgrade your product versions:
 
 1. Import the product file to your Ops Manager **Installation Dashboard**.
 
@@ -68,11 +77,13 @@ Follow these steps to upgrade Ops Manager and Installed Products to <%= vars.pro
 
 1. Click the newly-added tile to review any configurable options.
 
-1. (Optional) If you use other service tiles, you can upgrade them following the same procedure. See the [Upgrading PAS and Other <%= vars.product_name %> Products](./upgrading-products.html) topic for more information.
+1. (Optional) If you use other service tiles, you can upgrade them following the same procedure. For more information, see [Upgrading PAS and Other <%= vars.platform_name %> Products](./upgrading-products.html).
 
 ### <a id="perform-upgrade"></a> Perform Your Upgrade
 
-<p class="note warning"><strong>Warning:</strong> If the installation fails or returns errors, contact <%= vars.support_link %>. Do not attempt to roll back the upgrade by restarting the previous (v2.3) Ops Manager VM.</p>
+<p class="note warning"><strong>Warning:</strong> If the installation fails or returns errors, contact <%= vars.support_link %>. Do not attempt to roll back the upgrade by restarting the previous version's Ops Manager VM.</p>
+
+To perform your upgrade to Ops Manager <%= vars.v_major_version %>:
 
 1. Navigate to the Ops Manager **Installation Dashboard**.
 
@@ -80,114 +91,115 @@ Follow these steps to upgrade Ops Manager and Installed Products to <%= vars.pro
 
 1. Click each service tile, select the **Status** tab, and confirm that all VMs appear and are in good health.
 
-1. After confirming that the new installation functions correctly, remove the Ops Manager v2.3 VM.
+1. After confirming that the new installation functions correctly, remove the previous version's Ops Manager VM.
 
 
-## <a id="monitor"></a> Monitor Upgrade
+## <a id="monitor"></a> (Optional) Monitor Upgrade
 
-During the upgrade, you can do the following to monitor your <%= vars.product_name %> foundation and help troubleshoot any issues.
+During the upgrade, you can do the following to monitor your <%= vars.platform_name %> foundation and help troubleshoot any issues.
 
 ###  <a id="status"></a> Check Status and Performance
 
-**Note/Reason**: <br>
-Monitor the progress of the upgrade, checking the status of the foundation at various locations.<br>
-**Product/Component**:<br>
-<%= vars.product_name %>
+You can monitor the progress of the upgrade by checking the status of the foundation at various locations.
 
-Pivotal recommends live-monitoring your upgrade with <%= vars.product_name %> Healthwatch, which monitors and alerts on the current health, performance, and capacity of <%= vars.product_name %>. Healthwatch captures, calculates, stores, visualizes, and alerts on <%= vars.product_name %> platform metrics, including:
+Pivotal recommends live-monitoring your upgrade with <%= vars.platform_name %> Healthwatch, which monitors and alerts on the current health, performance, and capacity of <%= vars.platform_name %>. Healthwatch captures, calculates, stores, visualizes, and alerts on <%= vars.platform_name %> platform metrics, including:
 
-- BOSH-reported VM metrics
-- Runtime component metrics
-- [Key Performance Indicators](../monitoring/kpi.html) and [Key Scaling Indicators](../monitoring/key-cap-scaling.html)
-- Healthwatch-generated [super metrics](https://docs.pivotal.io/pcf-healthwatch/metrics.html)
+* BOSH-reported VM metrics
+* Runtime component metrics
+* [Key Performance Indicators](../monitoring/kpi.html) and [Key Scaling Indicators](../monitoring/key-cap-scaling.html)
+* Healthwatch-generated [super metrics](https://docs.pivotal.io/pcf-healthwatch/metrics.html)
 
-For more information, see the [<%= vars.product_name %> Healthwatch documentation](https://docs.pivotal.io/pcf-healthwatch/index.html).
+For more information, see the [<%= vars.platform_name %> Healthwatch](https://docs.pivotal.io/pcf-healthwatch/index.html) documentation.
 
-If you are not using <%= vars.product_name %> Healthwatch, you can do some or all of the following to monitor upgrade progress:
+If you are not using <%= vars.platform_name %> Healthwatch, you can do some or all of the following to monitor upgrade progress:
 
-* Run BOSH CLI status checks:
-  * `bosh -e ALIAS task TASK_NUMBER`
-  * `bosh -e ALIAS vms --vitals, bosh -e ALIAS instances --ps`
-* Check app availability
-* Run cf CLI Commands
-* Check the availability of the Ops Manager UI
-* Check NAS performance (if using NAS)
-* Check vSphere performance (if on vSphere)
+* Run BOSH CLI status checks by running:
+  * `bosh -e ALIAS task TASK-NUMBER`
+  * `bosh -e ALIAS vms --vitals`
+  * `bosh -e ALIAS instances --ps`
+  <br>
+  Where:
+  * `ALIAS` is your BOSH alias.
+  * `TASK-NUMBER` is the number of the BOSH task you want to check.
+
+* Check app availability.
+
+* Run cf CLI commands.
+
+* Check the availability of the Ops Manager UI.
+
+* If using a network-attached storage (NAS) server, check the server's performance.
+
+* If on vSphere, check vSphere performance.
 
 ### <a id="diego"></a> Check Diego State
 
-**Note/Reason**:<br>
-See the [cfdot documentation](https://github.com/cloudfoundry/cfdot) on GitHub for details.<br>
-**Product/Component**:<br>
-PAS
+You can use the CF Diego Operator Toolkit (cfdot) to check Diego component instance count by current state. For more information, see the [cfdot](https://github.com/cloudfoundry/cfdot) repository on GitHub.
 
-Use the CF Diego Operator Toolkit (cfdot) to check Diego component instance count by current state.
+### <a id="storage"></a> Take Snapshots of Storage Metrics
 
-### <a id="storage"></a> (Optional) Take Snapshots of Storage Metrics
+You can periodically take snapshots of storage metrics. Pivotal recommends this if you have a large foundation and have experienced storage issues in the past.
 
-**Reason**:<br>
-Pivotal recommends this if you have a large foundation and have experienced storage issues in the past.<br>
-**Product/Component**:<br>
-<%= vars.product_name %>
-
-Periodically take snapshots of storage metrics.
-
-###  <a id="collect-logs"></a> (Optional) Collect Logs
-
-**Reason**:<br>
-This information helps determine the cause of upgrade issues.<br>
-**Product/Component**:<br>
-<%= vars.product_name %>
+###  <a id="collect-logs"></a> Collect Logs
 
 If you encounter problems during upgrade, collect the following information:
 
 * All job logs
 * Task debug logs for VM upgrade tasks
-* Installation log from Ops Manager
+* The installation log from Ops Manager
+
+This information helps determine the cause of upgrade issues.
 
 
 ## <a id="after"></a> After Upgrade
 
-After your upgrade, do the following to prepare for use of your new environment, check its health status, and clean up.
+After your upgrade, you must prepare for use of your new environment, check its health status, and clean up.
 
 ### <a id="bosh-alias"></a> Re-Create BOSH Alias
 
-Re-create your alias using BOSH: `bosh alias-env ALIAS -e DIRECTOR_IP`
+To log in to BOSH after upgrading <%= vars.platform_name %>, you must re-create your alias.
 
-* **Reason**: To log in to BOSH after upgrading <%= vars.product_name %>, you need to re-create your alias.
-* **Product/Component**: BOSH
+Re-create your alias using BOSH by running:
+
+```
+bosh alias-env ALIAS -e DIRECTOR-IP
+```
+
+Where:
+* `ALIAS` is the BOSH alias you are re-creating.
+* `DIRECTOR-IP` is the IP address of your BOSH Director VM.
 
 ### <a id="cf-cli"></a> Install New cf CLI
 
-Download the version of the Cloud Foundry Command Line Interface (cf CLI) packaged with the [PAS](https://network.pivotal.io/products/elastic-runtime/) tile on Pivotal Network.
+Download the version of the Cloud Foundry Command Line Interface (cf CLI) packaged with the PAS tile on Pivotal Network. To download the cf CLI, go to the [Pivotal Application Service](https://network.pivotal.io/products/elastic-runtime/) download page on Pivotal Network.
 
 ### <a id="health"></a> Check the Health of Your Deployment
 
-1. Run BOSH CLI commands to check system status:
-  1. `bosh -e ALIAS -d DEPLOYMENT_NAME instances --ps`
+Check the health of your <%= vars.platform_name %> deployment to ensure that all jobs and processes are running as expected.
+
+To check the health of your deployment:
+
+1. Check your system status by running:
+  1. `bosh -e ALIAS -d DEPLOYMENT-NAME instances --ps`
   1. `bosh -e ALIAS vms --vitals`
-  1. `bosh -e ALIAS -d DEPLOYMENT_NAME cck --report`
+  1. `bosh -e ALIAS -d DEPLOYMENT-NAME cck --report`
+  <br>
+  Where:
+  * `ALIAS` is your BOSH alias.
+  * `DEPLOYMENT-NAME` is the name of your <%= vars.platform_name %> deployment.
 
-    **Note/Reason**: To ensure that all jobs and process are running as expected<br>
-    **Product/Component**: <%= vars.product_name %> and all tiles
+1. Push and horizontally scale a test app to test PAS performance.
 
-1. Push and horizontally scale a test application.
-  * **Reason**: This is a performance test for PAS.
-  * **Product/Component**: <%= vars.product_name %>
-
-1. If you are running PAS MySQL as a cluster, run the `mysql-diag` tool to validate health of the cluster.
-  * **Reason**: See the BOSH CLI v2 instructions in the [Running mysql-diag](../mysql/mysql-diag.html) topic.
-  * **Product/Component**: PAS
+1. If you are running PAS MySQL as a cluster, run the `mysql-diag` tool to validate health of the cluster. For more information, see the BOSH CLI v2 instructions in [Running mysql-diag](../mysql/mysql-diag.html).
 
 ### <a id="resource-settings"></a> Check Resource Settings
 
-If you added custom **VM Type** or **Persistent Disk Type** options, ensure that these values are correctly set and were not overwritten.
-
-* **Note/Reason**: Verify that the Ops Manager **Resource Config** pane still lists your custom options.
-* **Product/Component**: <%= vars.product_name %>
+If you added custom **VM Type** or **Persistent Disk Type** options, ensure that these values are correctly set and were not overwritten by checking the **Resource Config** pane in the Ops Manager tile.
 
 ### <a id="bosh-cleanup"></a> Run BOSH Clean-Up
 
-Run `bosh -e ALIAS clean-up --all` to clean up old stemcells, releases, orphaned disks, and other unused resources.
+To clean up old stemcells, releases, orphaned disks, and other unused resources, run:
 
-* **Product/Component**: Tiles
+```
+bosh -e ALIAS clean-up --all
+```

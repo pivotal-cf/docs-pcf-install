@@ -14,21 +14,25 @@ This topic describes upgrading <%= vars.first_product_name %> to <%= vars.v_majo
 
 ## <a id='overview'></a> Overview
 
-The upgrade procedure below describes upgrading Pivotal Operations Manager, Pivotal Application Service (PAS), and product tiles.
+The procedure below describes upgrading Pivotal Operations Manager, Pivotal Application Service (PAS), and product tiles.
 
 The apps in your deployment continue to run during the upgrade. However, you cannot write to your deployment or make changes to apps during the upgrade.
 
 For details about how upgrading <%= vars.product_name %> impacts individual PAS components, see [What Happens During PAS Upgrades](../upgrading/understanding-pas.html).
 
 
-## <a id="prepare"></a> Prepare to Upgrade
+## <a id="prepare"></a> Step 1: Prepare to Upgrade
 
 If you have not already, complete the steps in the [Upgrade Preparation Checklist for <%= vars.product_name %> <%= vars.v_major_version %>](../upgrading/checklist.html).
 
 
-## <a id="upgrade_ops"></a> Upgrade Ops Manager and Installed Products to <%= vars.v_major_version %>
+## <a id="upgrade_ops"></a> Step 2: Upgrade Ops Manager and Installed Products to <%= vars.v_major_version %>
 
-Follow these steps to upgrade Ops Manager and installed products to <%= vars.product_name %> <%= vars.v_major_version %>.
+The following sections describe how to upgrade Ops Manager and installed products to <%= vars.platform_name %> <%= vars.v_major_version %>:
+
+* [Import Installation to Ops Manager <%= vars.v_major_version %> VM](#upgrade)
+* [Import New PAS and Product Tiles](#upgrade-products)
+* [Perform Your Upgrade](#perform-upgrade)
 
 ### <a id="upgrade"></a> Import Installation to Ops Manager <%= vars.v_major_version %> VM
 
@@ -65,7 +69,7 @@ To import your Ops Manager installation to the Ops Manager <%= vars.v_major_vers
 
     <%= image_tag("./images/upgrading/success.png", alt: "The top half of the pop-up message contains a dark green background, a rectangular green logo with a capital P in white, and the text 'Pivotal Ops Manager' in white. The bottom half of the pop-up message contains a lighter green background, a round, dark green icon containing a light green check, and the text 'Successfully imported installation.' in dark green text.") %>
 
-### <a id="upgrade_products"></a> Import New PAS and Product Tiles
+### <a id="upgrade-products"></a> Import New PAS and Product Tiles
 
 <a name="success"></a> After upgrading to Ops Manager <%= vars.v_major_version %>, you must upgrade your product versions.
 
@@ -94,9 +98,14 @@ To perform your upgrade to Ops Manager <%= vars.v_major_version %>:
 1. After confirming that the new installation functions correctly, remove the previous version's Ops Manager VM.
 
 
-## <a id="monitor"></a> (Optional) Monitor Upgrade
+## <a id="monitor"></a> (Optional) Step 3: Monitor Upgrade
 
-During the upgrade, you can do the following to monitor your <%= vars.product_name %> foundation and help troubleshoot any issues.
+To monitor your <%= vars.platform_name %> foundation during the upgrade and troubleshoot issues, follow these sections:
+
+* [Check Status and Performance](#status)
+* [Check Diego State](#diego)
+* [Take Snapshots of Storage Metrics](#storage)
+* [Collect Logs](#collect-logs)
 
 ###  <a id="status"></a> Check Status and Performance
 
@@ -113,14 +122,7 @@ For more information, see the [<%= vars.product_name %> Healthwatch](https://doc
 
 If you are not using <%= vars.product_name %> Healthwatch, you can do some or all of the following to monitor upgrade progress:
 
-* Run BOSH CLI status checks by running:
-  * `bosh -e ALIAS task TASK-NUMBER`
-  * `bosh -e ALIAS vms --vitals`
-  * `bosh -e ALIAS instances --ps`
-  <br>
-  Where:
-  * `ALIAS` is your BOSH alias.
-  * `TASK-NUMBER` is the number of the BOSH task you want to check.
+* Use the BOSH CLI to check the status of a task, VM, or instance. For more information, see [Check Status Using BOSH CLI](#bosh-cli-status).
 
 * Check app availability.
 
@@ -132,47 +134,93 @@ If you are not using <%= vars.product_name %> Healthwatch, you can do some or al
 
 * If on vSphere, check vSphere performance.
 
+#### <a id='bosh-cli-status'></a> Check Status Using BOSH CLI
+
+To check the status of a task:
+
+1. Run:
+  
+    ```
+    bosh -e ALIAS task TASK-NUMBER
+    ```
+    Where:
+    * `ALIAS` is your BOSH alias.
+    * `TASK-NUMBER` is the number of the upgrade task you want to check.
+
+To check the status of a VM:
+
+1. Run:
+
+    ```
+    bosh -e ALIAS vms --vitals
+    ```
+    Where ALIAS` is your BOSH alias.
+
+To check the status of an instance:
+
+1. Run:
+
+    ```
+    bosh -e ALIAS instances --ps
+    ```
+    Where ALIAS` is your BOSH alias.
+
 ### <a id="diego"></a> Check Diego State
 
 You can use the CF Diego Operator Toolkit (cfdot) to check Diego component instance count by current state. For more information, see the [cfdot](https://github.com/cloudfoundry/cfdot) repository on GitHub.
 
 ### <a id="storage"></a> Take Snapshots of Storage Metrics
 
-You can periodically take snapshots of storage metrics. Pivotal recommends this if you have a large foundation and have experienced storage issues in the past.
+You can periodically take snapshots of storage metrics. Pivotal recommends this if you have a large foundation and have experienced storage issues in the past. For more information, see the 
 
 ###  <a id="collect-logs"></a> Collect Logs
 
-If you encounter problems during upgrade, collect the following information:
+If you encounter problems during upgrade:
 
-* All job logs
-* Task debug logs for VM upgrade tasks
-* The installation log from Ops Manager
+1. Collect the following information:
+    * All job logs
+    * Task debug logs for VM upgrade tasks
+    * The installation log from Ops Manager
+    <br>
+    This information helps determine the cause of upgrade issues.
 
-This information helps determine the cause of upgrade issues.
 
+## <a id="after"></a> Step 4: After Upgrade
 
-## <a id="after"></a> After Upgrade
+After your upgrade, you must prepare for use of your new environment, check its health status, and clean up. Follow these sections:
 
-After your upgrade, you must prepare for use of your new environment, check its health status, and clean up.
+* [Re-Create BOSH Alias](#bosh-alias)
+* [Install New cf CLI](#cf-cli)
+* [Check the Health of Your Deployment](#health)
+* [Check Resource Settings](#resource-settings)
+* [Run BOSH Clean-Up](#bosh-cleanup)
 
 ### <a id="bosh-alias"></a> Re-Create BOSH Alias
 
 To log in to BOSH after upgrading <%= vars.product_name %>, you must re-create your alias.
 
-Re-create your alias using BOSH by running:
+To re-create your alias using BOSH:
 
-```
-bosh alias-env ALIAS -e DIRECTOR-IP
-```
+1. Run:
 
-Where:
-
-* `ALIAS` is the BOSH alias you are re-creating.
-* `DIRECTOR-IP` is the IP address of your BOSH Director VM.
+    ```
+    bosh alias-env ALIAS -e DIRECTOR-IP
+    ```
+    Where:
+    * `ALIAS` is the BOSH alias you are re-creating.
+    * `DIRECTOR-IP` is the IP address of your BOSH Director VM.
 
 ### <a id="cf-cli"></a> Install New cf CLI
 
-Download the version of the Cloud Foundry Command Line Interface (cf CLI) packaged with the PAS tile on Pivotal Network. To download the cf CLI, go to the [Pivotal Application Service](https://network.pivotal.io/products/elastic-runtime/) download page on Pivotal Network.
+To install the version of the Cloud Foundry Command Line Interface (cf CLI) packaged with the PAS tile on Pivotal Network:
+
+1. Go to the [Pivotal Application Service](https://network.pivotal.io/products/elastic-runtime/) download page on Pivotal Network.
+
+1. Click the **CF CLI** download button.
+
+1. Unzip the cf CLI ZIP file containing compressed binaries for the cf CLI.
+
+1. Follow the procedure in the [Install the cf CLI Using a Compressed Binary](../../cf-cli/install-go-cli.html#bin) section of the _Installing the cf CLI_ topic.
 
 ### <a id="health"></a> Check the Health of Your Deployment
 
@@ -195,14 +243,23 @@ To check the health of your deployment:
 
 ### <a id="resource-settings"></a> Check Resource Settings
 
-If you added custom **VM Type** or **Persistent Disk Type** options, ensure that these values are correctly set and were not overwritten by checking the **Resource Config** pane in the Ops Manager tile.
+If you added custom **VM Type** or **Persistent Disk Type** options, you must ensure that these values are correctly set and were not overwritten.
+
+To check your custom resource settings:
+
+1. Go to the Ops Manager Installation Dashboard and click the Ops Manager tile.
+
+1. Select **Resource Config**.
+
+1. Ensure that the values for **VM Type** and **Persistent Disk Type** are correct.
 
 ### <a id="bosh-cleanup"></a> Run BOSH Clean-Up
 
-To clean up old stemcells, releases, orphaned disks, and other unused resources, run:
+To clean up old stemcells, releases, orphaned disks, and other unused resources:
 
-```
-bosh -e ALIAS clean-up --all
-```
+1. Run:
 
-Where `ALIAS` is the BOSH alias you are re-creating.
+    ```
+    bosh -e ALIAS clean-up --all
+    ```
+    Where `ALIAS` is the BOSH alias you are re-creating.

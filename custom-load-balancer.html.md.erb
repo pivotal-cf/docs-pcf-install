@@ -3,12 +3,11 @@ title: Using Your Own Load Balancer
 owner: Ops Manager
 ---
 
-This guide describes how to use your own load balancer and forward traffic to
-your Pivotal Application Service (PAS) router IP address.
+This guide describes how to use your own load balancer and forward traffic to your Pivotal Application Service (PAS) router IP address.
 
 [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF) includes a tier of reverse proxies that dynamically track the location of application containers and system components, enabling routing of requests to those endpoints even as IPs and ports change. 
 
-In order for the PCF Routers to be horizontally scalable and highly available, a load balancer must be deployed in front of them. The simplest solution is to use a layer-4 TCP load balancer, provided by your IaaS or IT team, which passes all HTTP and TLS handling to the PCF Routers. For details on TLS termination, see [Securing Traffic into Cloud Foundry](../adminguide/securing-traffic.html). For a description of features supported by the PCF routing tier, see [HTTP Routing](../concepts/http-routing.html).
+In order for the PCF Routers to be horizontally scalable and highly available, a load balancer must be deployed in front of them. The simplest solution is to use a layer-4 TCP load balancer, provided by your IaaS or IT team, which passes all HTTP and TLS handling to the PCF Routers. For details on TLS termination, see [Securing Traffic into PAS](../adminguide/securing-traffic.html). For a description of features supported by the PCF routing tier, see [HTTP Routing](../concepts/http-routing.html).
 
 If you have requirements that are not fulfilled by the PCF Routers alone, you can choose to use your own layer-7 load balancer (provided by your IaaS or IT team), or the HAProxy load balancer included with PCF. If you choose to use HAProxy, you must use a layer-4 TCP load balancer in front on it, in order for HAProxy itself to be highly available. Singleton instances of HAProxy are only for use in lab and test environments. 
 
@@ -16,48 +15,53 @@ If you choose to use your own layer-7 load balancer, it must fulfill the followi
 
 * Provides load balancing to each of the PCF Router IP addresses
 * Supports TLS termination for wildcard hostnames
-* Adds appropriate `x-forwarded-for` and `x-forwarded-proto` HTTP headers to
-incoming requests
+* Adds appropriate `x-forwarded-for` and `x-forwarded-proto` HTTP headers to incoming requests
 * Sets an HTTP keep-alive connection timeout greater than five seconds
 * (**Optional**) Supports WebSockets
 
 The choice to use HAProxy or your own load balancer depends on what features you need out of a load balancer, and whether you want the ability to configure it yourself. 
 
-<p class='note'><strong>Note</strong>: Application logging with <a href="../devguide/services/log-management.html#loggregator">Loggregator</a> requires WebSockets. To use another logging service, see the <a href="../devguide/services/log-management.html#use">Using Third-Party Log Management Services</a> topic.</p>
+<p class='note'><strong>Note:</strong> App logging with Loggregator requires WebSockets. To use another logging service, see <a href="../devguide/services/log-management.html">Streaming App Logs to Log Management Services</a>.</p>
 
-For how to install an [F5 Local Traffic Manager (LTM)](https://f5.com/products/big-ip/local-traffic-manager-ltm) as a load balancer for PCF and Pivotal Application Service (PAS), see [Configuring an F5 Load Balancer for PAS](./f5-lb.html).
+For how to install an F5 Local Traffic Manager (LTM)] as a load balancer for PCF and Pivotal Application Service (PAS), see [Configuring an F5 Load Balancer for PAS](./f5-lb.html). For more information about F5 LTMs, see the [F5](https://f5.com/products/big-ip/local-traffic-manager-ltm) documentation.
 
-##<a id='prerequisites'></a>Prerequisites##
 
-To integrate your own load balancer with PCF, you must ensure the following:
+## <a id='prerequisites'></a> Prerequisites
+
+To integrate your own load balancer with PCF, you must ensure:
 
 * WebSocket connections are not blocked for Loggregator functionality.
 * The load balancer must be able to reach the Gorouter IP addresses.
 
 Follow the instructions below to use your own load balancer.
 
-##<a id='deploy'></a>Step 1: Deploy PCF Installation VM##
 
-Deploy a PCF Installation virtual machine. See [Deploying Ops Manager on vSphere](../om/vsphere/deploy.html) for more information.
+## <a id='deploy'></a> Step 1: Deploy PCF Installation VM
 
-##<a id='register'></a>Step 2: Register PCF IP Address##
+Deploy a PCF Installation virtual machine. For more information, see [Deploying Ops Manager on vSphere](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/vsphere/deploy.html).
+
+
+## <a id='register'></a> Step 2: Register PCF IP Address
 
 In your load balancer, register the IP addresses that you assigned to PCF.
 
-##<a id='configure'></a>Step 3: Configure Pivotal Ops Manager and BOSH Director##
+
+## <a id='configure'></a> Step 3: Configure Pivotal Ops Manager and BOSH Director##
 
 Configure your Pivotal Operations Manager and BOSH Director as described in [Installing Pivotal Cloud Foundry](../installing/index.html), then add PAS.
 
 Do not click **Install** after adding PAS.
 
-##<a id='configure-networking'></a>Step 4: Configure Networking
 
-Complete the **Networking** configuration page in PAS. Load balancer 
-configuration in PAS varies depending on which IaaS you are using for 
-PCF. See [Configuring PAS](configure-pas.html). 
+## <a id='configure-networking'></a> Step 4: Configure Networking
 
-## <a id='finalize'></a>Step 5: Finalize Changes ##
+Complete the **Networking** configuration page in PAS. Load balancer configuration in PAS varies depending on which IaaS you are using for PCF. For more information, see [Configuring PAS](configure-pas.html). 
 
-1. Return to the **Ops Manager Installation Dashboard**
+
+## <a id='finalize'></a> Step 5: Finalize Changes
+
+To finalize the changes to your deployment:
+
+1. Return to the **Ops Manager Installation Dashboard**.
 
 1. Click **Install**.

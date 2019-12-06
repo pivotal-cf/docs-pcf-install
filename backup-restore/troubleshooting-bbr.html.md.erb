@@ -3,10 +3,10 @@ title: Troubleshooting BBR
 owner: RelEng
 ---
 
-
 <% $this_topic = 'troubleshoot-bbr' %>
 
 This topic lists common troubleshooting scenarios and their solutions when using BOSH Backup and Restore (BBR) to back up and restore Pivotal Cloud Foundry (PCF).
+
 
 ## <a id="troubleshooting-restore"></a> Troubleshooting During a Restore
 
@@ -28,18 +28,15 @@ Monit start failed: Timed out waiting for monit: 2m0s
 
 #### Explanation
 
-This happens when the MySQL job fails to start within the timeout period.
-It ends up in an **Execution Failed** state and `monit` never tries to start it again.
+This happens when the MySQL job fails to start within the timeout period. It ends up in an **Execution Failed** state and `monit` never tries to start it again.
 
 #### Solution
 
-Ensure that your MySQL Server cluster has only one instance.
-If there is more than one instances of MySQL Server, the restore fails with a `monit start` timeout.
-Scale down to one instance and retry.
+Ensure that your MySQL Server cluster has only one instance. If there is more than one instances of MySQL Server, the restore fails with a `monit start` timeout. Scale down to one instance and retry.
 
-If your MySQL Server cluster is already scaled down to one node, it may have taken longer than normal to restart the cluster. Follow the procedure below to manually verify and retry.
+If your MySQL Server cluster is already scaled down to one node, it might have taken longer than normal to restart the cluster. To manually verify and retry:
 
-1. To list the VMs in your deployment, run the following command:
+1. To list the VMs in your deployment, run:
 
     ```
     bosh -e BOSH-DIRECTOR-IP --ca-cert /var/tempest/workspaces/default/root_ca_certificate \
@@ -48,10 +45,8 @@ If your MySQL Server cluster is already scaled down to one node, it may have tak
     ```
     Where:
     <br>
-    * `BOSH-DIRECTOR-IP` is the BOSH Director IP. For how to retrieve this IP address,
-    see [Retrieve BOSH Director Address](./restore-pcf-bbr.html#retrieve-address).
-    * `DEPLOYMENT-NAME` is the deployment name. For how to retrieve the deployment name,
-    see [Identify Your Deployment](./restore-pcf-bbr.html#identify-deployment).
+    * `BOSH-DIRECTOR-IP` is the BOSH Director IP. For how to retrieve this IP address, see the [Retrieve BOSH Director Address](./restore-pcf-bbr.html#retrieve-address) section of the _Restoring PCF from Backup with BBR_ topic.
+    * `DEPLOYMENT-NAME` is the deployment name. For how to retrieve the deployment name, see the [Identify Your Deployment](./restore-pcf-bbr.html#identify-deployment) section of the _Restoring PCF from Backup with BBR_ topic.
 
 1. Locate the `mysql` VM.
 
@@ -64,7 +59,7 @@ If your MySQL Server cluster is already scaled down to one node, it may have tak
         ```
         ps aux | grep galera-init
         ```
-    * If you selected **Internal Databases - MySQL - MariaDB Galera Cluster** 
+    * If you selected **Internal Databases - MySQL - MariaDB Galera Cluster**
     when you configured the PAS tile, run the following command:
 
         ```
@@ -74,10 +69,10 @@ If your MySQL Server cluster is already scaled down to one node, it may have tak
     <pre class="terminal">
     $ ps aux | grep galera-init
     </pre>
-For more information, see the <a href="../configure-pas.html">Configuring PAS</a>.
+For more information, see [Configuring PAS](../configure-pas.html).
 
-1. Run the following command to check that `monit` reports that the MySQL job process is in an **Execution Failed** state:
-    
+1. Check that `monit` reports that the MySQL job process is in an **Execution Failed** state by running:
+
     ```
     sudo monit summary
     ```
@@ -88,13 +83,13 @@ For more information, see the <a href="../configure-pas.html">Configuring PAS</a
     monit unmonitor
     ```
 
-1. Run the following command to enable monitoring:
+1. Enable monitoring by running:
 
     ```
     monit monitor
     ```
 
-1. After a few minutes, run the following command:
+1. After a few minutes, run:
 
     ```
     monit summary
@@ -102,7 +97,6 @@ For more information, see the <a href="../configure-pas.html">Configuring PAS</a
   The command should report that all the processes are running.
 
 1. Re-attempt the restore with BBR.
-
 
 ### <a id="structure-mismatch"></a> Deployment Does Not Match the Structure of the Backup
 
@@ -116,11 +110,12 @@ Deployment 'deployment-name' does not match the structure of the provided backup
 
 #### Explanation
 
-The instance groups with the restore scripts in the destination environment don't match the backup metadata. For example, they may have the wrong number of instances of a particular instance group, or the metadata names an instance group that does not exist in the destination environment.
+The instance groups with the restore scripts in the destination environment do not match the backup metadata. For example, they may have the wrong number of instances of a particular instance group, or the metadata names an instance group that does not exist in the destination environment.
 
 #### Solution
 
 BBR only supports restoring to an environment that matches your original environment. Pivotal recommends altering the destination environment to match the structure of the backup.
+
 
 ## <a id="general"></a> General Troubleshooting
 
@@ -138,19 +133,20 @@ The jumpbox and the VMs in the deployment are experiencing connection problems.
 
 #### Solution
 
-Perform the following steps:
+To resolve connection problems between the jumpbox and the VMs in the deployment:
 
-1. To ensure your deployment is healthy, run the following command:
+1. Ensure your deployment is healthy by running:
 
     ```
     bosh vms
     ```
-1. To clean up the data from the failed backup on the instances, run the following command:
+
+1. Clean up the data from the failed backup on the instances by running:
 
     ```
     bbr deployment backup-cleanup
     ```
-    <p class="note"><strong>Note</strong>: This step must be performed, otherwise, further BBR commands fail.</p>
+    <p class="note"><strong>Note:</strong> This step is required. Otherwise, further BBR commands fail.</p>
 
 1. Repeat the BBR operation.
 

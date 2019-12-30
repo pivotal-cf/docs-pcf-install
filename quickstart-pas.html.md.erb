@@ -5,60 +5,72 @@ owner: Docs
 
 This topic describes how to minimally configure Pivotal Application Service (PAS) for evaluation or testing purposes. It does not include optional configurations such as external databases or external file storage. 
 
-For production deployments, Pivotal recommends following the instructions in the [Configuring PAS](configure-pas.html) topic.
+For production deployments, Pivotal recommends following the instructions in [Configuring PAS](configure-pas.html).
+
 
 ## <a id="prerequisites"></a> Prerequisites
 
-Before beginning this procedure, ensure that you have successfully completed the steps to prepare your environment for PCF and install and configure the BOSH Director.
+Before beginning this procedure, ensure that you have successfully completed the steps to prepare your environment for <%= vars.platform_name %> and install and configure the BOSH Director.
 
-## <a id='om-add'></a> Add PAS to Ops Manager
 
-To add PAS to Ops Manager, do the following:
+## <a id='om-add'></a> Add PAS to Pivotal Ops Manager
+
+To add PAS to Ops Manager:
 
 1. If you have not already downloaded PAS, log in to [Pivotal Network](https://network.pivotal.io/products/pivotal-cf), and click the PAS tile.
 
 1. From the **Releases** drop-down, select the release to install and choose one of the following:
   1. Click PAS to download the PAS `.pivotal` file.
-  1. Click **PCF Small Footprint Runtime** to download the Small Footprint Runtime `.pivotal` file. For more information, see [Getting Started with Small Footprint Runtime](./small-footprint.html).
+  1. Click **<%= vars.platform_name %> Small Footprint Runtime** to download the Small Footprint Runtime `.pivotal` file. For more information, see [Getting Started with Small Footprint PAS](./small-footprint.html).
 
-1. Navigate to the Pivotal Cloud Foundry Operations Manager Installation Dashboard.
+1. Navigate to the Ops Manager Installation Dashboard.
 
-1. Click **Import a Product** to add your tile to Ops Manager. For more information, refer to the [Adding and Deleting Products](./add-delete.html) topic.
+1. Click **Import a Product** to add your tile to Ops Manager. For more information, see [Adding and Deleting Products](https://docs.pivotal.io/platform/<%= vars.current_major_version.sub('.', '-') %>/customizing/add-delete.html).
 
 1. Click the PAS tile in the Installation Dashboard.
 
+
 ## <a id='configure'></a> Configure PAS
 
-To install PAS with minimal configuration, do the following:
+To install PAS with minimal configuration:
 
-1. Do the procedure in the [Assign AZs and Networks](configure-pas.html#assign-azs-networks) section of _Configuring PAS_. 
-1. Do the procedure in the [Configure Domains](configure-pas.html#domains) section of _Configuring PAS_.
-1. Click the **Networking** pane. 
+1. Do the procedure in the [Assign AZs and Networks](configure-pas.html#assign-azs-networks) section of the _Configuring PAS_ topic. 
+
+1. Do the procedure in the [Configure Domains](configure-pas.html#domains) section of the _Configuring PAS_ topic.
+
+1. Go to the **Networking** pane.
 
 1. Under **Certificates and Private Key for HAProxy and Router**, you must provide at least one **Certificate and Private Key** name and certificate key pair for HAProxy and Gorouter. HAProxy and Gorouter are enabled to receive TLS communication by default. You can configure multiple certificates for HAProxy and Gorouter.
   <p class="note"><strong>Note:</strong> When providing custom certificates, enter them in the following order: <code>wildcard</code>, <code>Intermediate</code>, <code>CA</code>. For more information, see <a href="https://www.digicert.com/ssl-support/pem-ssl-creation.htm">Creating a .pem File for SSL Certificate Installations</a> in the DigiCert documentation.</p>
-   1. Click the **Add** button to add a name for the certificate chain and its private key pair. This certificate is the default used by Gorouter and HAProxy.
-       You can either provide a certificate signed by a Certificate Authority (CA) or click on the **Generate RSA Certificate** link to generate a self-signed certificate in Ops Manager.
-  <p class="note"><strong>Note</strong>: If you configured Ops Manager Front End without a certificate, you can use this new certificate to complete Ops Manager configuration. To configure your Ops Manager Front End certificate, see _Configure Front End_ in <a href="https://docs.pivotal.io/pcf/om/gcp/prepare-env-manual.html#config-frontend">Preparing to Deploy Ops Manager on GCP Manually</a>.</p>
+  1. Click the **Add** button to add a name for the certificate chain and its private key pair. This certificate is the default used by Gorouter and HAProxy. You can either provide a certificate signed by a Certificate Authority (CA) or click on the **Generate RSA Certificate** link to generate a self-signed certificate in Ops Manager.
+  <p class="note"><strong>Note:</strong> If you configured Ops Manager Front End without a certificate, you can use this new certificate to complete Ops Manager configuration. To configure your Ops Manager Front End certificate, see the <a href="https://docs.pivotal.io/pcf/om/gcp/prepare-env-manual.html#config-frontend">Configure Front End</a> of the <em> Preparing to Deploy Ops Manager on GCP Manually</em> topic.</p>
   <p class="note"><strong>Note:</strong> Ensure that you add any certificates that you generate in this pane to your infrastructure load balancer.</p>
+
 1. <%= partial 'ssl_verification' %>
+
 1. Disable **HAProxy forwards requests to Router over TLS**. By default, PAS does not deploy HAProxy. 
-1. Click the **Application Security Groups** pane. <%= partial 'application_security_group' %>
+
+1. <%= partial 'application_security_group' %>
+
 1. Under **SAML Service Provider Credentials**, enter a certificate and private key to be used by UAA as a SAML Service Provider for signing outgoing SAML authentication requests. You can provide an existing certificate and private key from your trusted Certificate Authority or generate a self-signed certificate. The following domain must be associated with the certificate: `*.login.YOUR-SYSTEM-DOMAIN`.
   <p class="note"><strong>Note:</strong> The Pivotal Single Sign-On Service and Pivotal Spring Cloud Services tiles require the <code>*.login.YOUR-SYSTEM-DOMAIN</code>.</p>
+
 1. If the private key specified under **Service Provider Credentials** is password-protected, enter the password under **SAML Service Provider Key Password**.
+
 1. In the **CredHub** pane, Under **Encryption Keys**, specify one or more keys to use for encrypting and decrypting the values stored in the CredHub database.
-	* **Name**. This is the name of the encryption key.
-	* **Provider**. This is the provider of the encryption key.
-	If you have configured an HSM provider and HSM servers above, select **HSM**. Otherwise, select **Internal**.
-	* **Key**. This key is used for encrypting all data. The key must be at least 20 characters long.
-        * **Primary**. This checkbox is used for marking the key you specified above as the primary encryption key. You must mark one key as **Primary**. Do not mark more than one key as **Primary**. 
+	* **Name**: This is the name of the encryption key.
+	* **Provider**: This is the provider of the encryption key.nIf you have configured an HSM provider and HSM servers above, select **HSM**. Otherwise, select **Internal**.
+	* **Key**: This key is used for encrypting all data. The key must be at least 20 characters long.
+  * **Primary**: This checkbox is used for marking the key you specified above as the primary encryption key. You must mark one key as **Primary**. Do not mark more than one key as **Primary**. 
+
 1. In the **E-mail address** field, enter the email address where the MySQL service sends alerts when the cluster experiences a replication issue or when a node is not allowed to auto-rejoin the cluster.
-1. In the **Resource Config** pane, you must associate load balancers with the VMs in your deployment to enable traffic. See [Configure Load Balancing for PAS](configure-lb.html). 
+
+1. In the **Resource Config** pane, you must associate load balancers with the VMs in your deployment to enable traffic. For more information, see [Configure Load Balancing for PAS](configure-lb.html). 
+
 
 ## <a id='complete'></a> Complete the PAS Installation
 
-To complete the PAS installation, do the following:
+To complete the PAS installation:
 
 1. Click the **Installation Dashboard** link to return to the Installation Dashboard.
 

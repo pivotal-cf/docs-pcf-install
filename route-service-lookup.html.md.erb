@@ -3,8 +3,8 @@ title: Configuring Route Service Lookup
 owner: Networking GA
 ---
 
-
 This topic describes how Pivotal Application Service (PAS) administrators can configure route service lookup. 
+
 
 ## <a id="overview"></a> Overview
 
@@ -34,65 +34,75 @@ The table below describes the configuration options and provides guidance for wh
 </tr>
 </table>
 
-For more details, see [Summary of Behavior in Different Configurations](#summary)  below.
+For more details, see [Summary of Behavior in Different Configurations](#summary).
 
-For configuration procedures, see [Configure Route Service Lookup](#configure) below. 
+For configuration procedures, see [Configure Route Service Lookup](#configure). 
+
 
 ## <a id="configure"></a> Configure Route Service Lookup
 
-This following sections provide configuration steps for route service lookup. Ensure that you review the guidance in the [Overview](#overview) section before configuring route service lookup. 
+This following sections provide configuration steps for route service lookup. Review the guidance in the [Overview](#overview) section before configuring route service lookup. 
 
 ### <a id="enable"></a> Configure PAS for Bypass Mode 
 
-To configure bypass mode, do the following:
+To configure bypass mode:
 
 1. Select **Bypass security checks for route service lookup** in the **Networking** pane of the PAS tile. 
 
-1. Follow the steps to [Mitigate Security Risk](#mitigate-risk). 
+1. Follow the procedure in [Mitigate Security Risk](#mitigate-risk). 
 
 #### <a id="mitigate-risk"></a> Mitigate Security Risk
 
-To prevent users from intercepting traffic for externally hosted route services, do the following.
+To prevent users from intercepting traffic for externally hosted route services:
 
-1. Work with developers running apps on PAS to identify all external route services. You can list all user-provided service instances with the following command: 
+1. Work with developers running apps on PAS to identify all external route services. You can list all user-provided service instances by running: 
 
 	```
 	cf curl /v2/user_provided_service_instances
 	``` 
 
-1. Create an org for use by the PAS administrator:
+1. Create an org for use by the PAS administrator by running:
 
 	```
 	cf create-org ORG-NAME
 	```
+	Where `ORG-NAME` is the name of the org you want to create.
 
-1. For each external route service identified, register the route service domain as a private domain in the org you created:
+1. For each external route service identified, register the route service domain as a private domain in the org you created by running:
 
 	```
 	cf create-domain ORG-NAME DOMAIN
 	```
-
-	See [Private Domains](../devguide/deploy-apps/routes-domains.html#private-domains) for more information.  
+	Where:
+	* `ORG-NAME` is the name of the org you created.
+	* `DOMAIN` is the route service domain you want to register as a private domain.
+	<br>
+	For more information, see the [Private Domains](../../devguide/deploy-apps/routes-domains.html#private-domains) section of the _Configuring Routes and Domains_ topic.  
 
 1. Establish a process for monitoring PAS for the addition of new external route services so that you can repeat these steps for them. You may need to regularly curl the `user_provided_service_instances` endpoint. 
 
 ### <a id="disable"></a> Configure PAS for Default Lookup
 
-To configure PAS for default lookup behavior, with bypass mode disabled, do the following:
+To configure PAS for default lookup behavior, with bypass mode disabled:
 
 1. Ensure that **Bypass security checks for route service lookup** in the **Networking** pane of the PAS tile is not selected. 
 
-1. Follow the steps to [Ensure Internal Route Services are Reachable](#internal-reachable). 
+1. Follow the procedure in [Ensure Internal Route Services are Reachable](#internal-reachable). 
 
 #### <a id="internal-reachable"></a> Ensure Internal Route Services are Reachable
 
-To ensure that internal route services are reachable, do the following:
+To ensure that internal route services are reachable:
 
-1. Communicate to developers of route services that the domain name for their internally hosted route services must resolve to the load balancer. You can list all user-provided service instances with the following command: `cf curl /v2/user_provided_service_instances`.
+1. Communicate to developers of route services that the domain name for their internally hosted route services must resolve to the load balancer. You can list all user-provided service instances by running:
+	
+	```
+	cf curl /v2/user_provided_service_instances
+	```
 
 1. If your load balancer or router terminates TLS, work with developers of route services to ensure the load balancer or router have TLS certificates that are valid for the route service URL. 
 
-1. Work with developers of route services to verify that their internal route service apps are reachable. You can do this by visiting the HTTPS URL of the route service directly and confirming that the app received the request with the <code>cf logs</code> output for the route service app.</p>
+1. Work with developers of route services to verify that their internal route service apps are reachable. You can do this by visiting the HTTPS URL of the route service directly and confirming that the app received the request with the `cf logs` output for the route service app.
+
 
 ## <a id="sumary"></a> Summary of Behavior in Different Configurations
 
@@ -102,7 +112,7 @@ The following sections describe how the router behaves when bypass mode is enabl
 
 This section describes how the router handles app requests when the following is true:
 
-* The **Bypass security checks for route service lookup** field in PAS is not selected. 
+* The **Bypass security checks for route service lookup** field in the PAS tile is not selected. 
 * The app is bound to a route service that is hosted on PAS. 
 
 In this case, when the router receives the request, it sends the traffic back to the load balancer to resolve DNS. The load balancer then sends the traffic back to the router. 
@@ -115,8 +125,8 @@ The following diagram illustrates the flow of the request and numbers the steps 
 
 This section describes how the router handles app requests when the following is true:
 
-* The **Bypass security checks for route service lookup** field in PAS is selected. 
-* The app is bound to a route service that is hosted on PAS
+* The **Bypass security checks for route service lookup** field in the PAS tile is selected. 
+* The app is bound to a route service that is hosted on PAS.
 
 In this case, when the router receives the request, it sends it directly to the route service. This assumes the router finds an existing route for the route service. 
 
@@ -128,14 +138,14 @@ The following diagram illustrates the flow of the request.
 
 This section describes how the router handles app requests when the following is true:
 
-* The **Bypass security checks for route service lookup** field in PAS is selected. 
+* The **Bypass security checks for route service lookup** field in the PAS tile is selected. 
 * The app is bound to a route service that is hosted outside of PAS. 
 
 In this case, when the router receives the request, it checks for an existing route and then sends the request directly to the route service. 
 
 This introduces the ability for route service traffic to be intercepted. A developer can register the external route service domain as a private domain in PAS and map it to their own, malicious app. When the router receives a request for the original app bound to the external route service, it will find the domain internally and send the request to the malicious app.
 
-<p class="note"><strong>Note</strong>: This vulnerability exists for both externally hosted route services and route services hosted on a separate foundation.</p> 
+<p class="note"><strong>Note:</strong> This vulnerability exists for both externally hosted route services and route services hosted on a separate foundation.</p> 
 
 The following diagram illustrates the flow of the request in the case that it is intercepted:
 
@@ -145,7 +155,7 @@ The following diagram illustrates the flow of the request in the case that it is
 
 This section describes how the router handles app requests when the following is true:
 
-* The **Bypass security checks for route service lookup** field in PAS is not selected. 
+* The **Bypass security checks for route service lookup** field in the PAS tile is not selected. 
 * The app is bound to a route service that is hosted outside of PAS. 
 
 In this case, the router sends traffic directly to the external route service without checking for an existing route. 
@@ -153,7 +163,3 @@ In this case, the router sends traffic directly to the external route service wi
 The following diagram illustrates the flow of the request.
 
 ![Arrows indicate the flow of the request through platform components. A request goes directly from the load balancer to the router to the route service.](default-external.png)
-
-
-
-

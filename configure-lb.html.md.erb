@@ -3,224 +3,251 @@ title: Configuring Load Balancing for PAS
 owner: Releng
 ---
 
-This topic describes how to configure load balancing for Pivotal Application Service (PAS) by entering the names of your load balancers in the **Resource Config** pane of the PAS tile. This procedure varies by IaaS an installation method. See the section below that corresponds to your use case.
+This topic describes how to configure load balancing for <%= vars.product_runtime %> (<%= vars.product_short %>) by entering the names of your load balancers in the **Resource Config** pane of the <%= vars.product_short %> tile. This procedure varies by IaaS an installation method. See the section below that corresponds to your use case.
 
 
 ## <a id="aws"></a> AWS
 
-To configure the Gorouter or HAProxy to AWS Elastic Load Balancers, do the following:
+### <a id="aws-manual"></a> AWS Paved Manually
 
-1. Record the names of your ELBs. If you followed the procedures in the [Installing PCF on AWS Manually](../om/aws/prepare-env-manual.html) topic, you created the following:
-  * `pcf-ssh-elb`: An SSH load balancer. This is a Classic Load Balancer. 
-  * `pcf-tcp-elb`: A TCP load balancer. This is a Classic Load Balancer. 
-  * `pcf-web-elb`: A web load balancer. This is an Application Load Balancer. 
-    * `pcf-web-elb-target-group`: a target group for the web load balancer
+To configure the Gorouter or HAProxy to AWS Elastic Load Balancers:
 
-1. In the PAS tile, click **Resource Config**.
+1. Record the names of your ELBs. If you followed the procedures in the [Installing <%= vars.product_name %> on AWS Manually](../om/aws/prepare-env-manual.html) topic, you created the following:
+  * `<%= vars.product_name_lc %>-ssh-elb`: An SSH load balancer. This is a Classic Load Balancer. 
+  * `<%= vars.product_name_lc %>-tcp-elb`: A TCP load balancer. This is a Classic Load Balancer. 
+  * `<%= vars.product_name_lc %>-web-elb`: A web load balancer. This is an Application Load Balancer. 
+    * `<%= vars.product_name_lc %>-web-elb-target-group`: A target group for the web load balancer.
 
-1. Enter the name of your SSH load balancer depending on which release you are using.
-  * **PAS**: In the **Load Balancers** field of the **Diego Brain** row, enter the name of your SSH load balancer: `pcf-ssh-elb`.
-  * **Small Footprint Runtime**: In the **Load Balancers** field of the **Control** row, enter the name of your SSH load balancer: `pcf-ssh-elb`.
+1. In the <%= vars.app_runtime_abbr %> tile, select **Resource Config**.
+
+1. Enter the name of your SSH load balancer, depending on which release you are using.
+  * **<%= vars.product_short %>**: In the **Load Balancers** field of the **Diego Brain** row, enter the name of your SSH load balancer: `<%= vars.product_name_lc %>-ssh-elb`.
+  * **Small Footprint <%= vars.product_short %>**: In the **Load Balancers** field of the **Control** row, enter the name of your SSH load balancer: `<%= vars.product_name_lc %>-ssh-elb`.
 
 1. In the **Load Balancers** field of the **Router** row, enter the value determined by the type of load balancer you are using:
-  * **Application Load Balancer**: Enter the name of the target group of your web load balancer, prefixed with `alb:`: `alb:pcf-web-elb-target-group`. The prefix indicates to Ops Manager that you entered the name of a target group, and is required for AWS Application Load Balancers or Network Load Balancers.  
-  * **Classic Load Balancer**: Enter the name of the load balancer: `pcf-web-elb`.  
-  <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, then put the name of the load balancers in the **Load Balancers** field of the **HAProxy** row instead of the **Router** row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
+  * **Application Load Balancer**: Enter the name of the target group of your web load balancer, prefixed with `alb:`: `alb:<%= vars.product_name_lc %>-web-elb-target-group`. The prefix indicates to Ops Manager that you entered the name of a target group, and is required for AWS Application Load Balancers or Network Load Balancers.  
+  * **Classic Load Balancer**: Enter the name of the load balancer: `<%= vars.product_name_lc %>-web-elb`.  
+    <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, put the name of the load balancers in the **Load Balancers** field of the <strong>HAProxy</strong> row instead of the <strong>Router</strong> row. For a high-availability configuration, scale up the HAProxy job to more than one instance.</p>
 
-1. In the **Load Balancers** field of the **TCP Router** row, enter the name of your TCP load balancer if you enabled TCP routing: `pcf-tcp-elb`.
+1. In the **Load Balancers** field of the **TCP Router** row, enter the name of your TCP load balancer if you enabled TCP routing: `<%= vars.product_name_lc %>-tcp-elb`.
 
+### <a id="aws-terraform"></a> AWS with Terraform
 
-## <a id="aws-terraform"></a> AWS Terraform
+To set up load balancing for <%= vars.product_short %> on AWS using Terraform:
 
-If you are installing PAS on AWS using Terraform, do the following to set up load balancing:
+1. Before you install <%= vars.product_short %> on AWS, you must configure the security groups for `web`, `ssh`, and `tcp`. To do this using the Ops Manager CLI, run:
+    
+    ```
+    om -k -t "OPS-MANAGER-FQDN" -u "USERNAME" -p "PASSWORD" curl --path /api/v0/staged/vm_extensions/web-lb-security-group -x PUT -d '{"name": "web-lb-security-group", "cloud_properties": { "security_groups": ["web_lb_security_groups"] }}'
 
-1. Before you install PAS on AWS, you must configure the security groups for `web`, `ssh`, and `tcp`. To do this using the Ops Manager CLI, run the following commands. For more information about the Ops Manager CLI, see [om/docs](https://github.com/pivotal-cf/om/tree/master/docs) in GitHub.
-    - `om -k -t "YOUR-OPS-MANAGER-FQDN" -u "USERNAME" -p "PASSWORD" curl --path /api/v0/staged/vm_extensions/web-lb-security-group -x PUT -d '{"name": "web-lb-security-group", "cloud_properties": { "security_groups": ["web_lb_security_groups"] }}'`
-    - `om -k -t "YOUR-OPS-MANAGER-FQDN" -u "USERNAME" -p "PASSWORD" curl --path /api/v0/staged/vm_extensions/ssh-lb-security-group -x PUT -d '{"name": "ssh-lb-security-group", "cloud_properties": { "security_groups": ["ssh_lb_security_groups"] }}'`
-    - `om -k -t "YOUR-OPS-MANAGER-FQDN" -u "USERNAME" -p "PASSWORD" curl --path /api/v0/staged/vm_extensions/tcp-lb-security-group -x PUT -d '{"name": "tcp-lb-security-group", "cloud_properties": { "security_groups": ["tcp_lb_security_groups"] }}'`
+    om -k -t "OPS-MANAGER-FQDN" -u "USERNAME" -p "PASSWORD" curl --path /api/v0/staged/vm_extensions/ssh-lb-security-group -x PUT -d '{"name": "ssh-lb-security-group", "cloud_properties": { "security_groups": ["ssh_lb_security_groups"] }}'
+
+    om -k -t "OPS-MANAGER-FQDN" -u "USERNAME" -p "PASSWORD" curl --path /api/v0/staged/vm_extensions/tcp-lb-security-group -x PUT -d '{"name": "tcp-lb-security-group", "cloud_properties": { "security_groups": ["tcp_lb_security_groups"] }}'
+    ```
+    Where:
+    * `OPS-MANAGER-FQDN` is the URL at which you access your Ops Manager instance. This corresponds to `ops_manager_dns` in the Terraform output. 
+    * `USERNAME` is the user name you entered when configuring internal authentication. 
+    * `PASSWORD` is the password you entered when configuring internal authentication.
+      <p class="note"><strong>Note:</strong> If you did not configure internal authentication, you must modify this command to use a client ID and secret instead of user name and password. For more information, see [Authentication](https://github.com/pivotal-cf/om/tree/master/docs#authentication) in the Om repository on GitHub.</p> 
+    <br>
+    For more information about the Ops Manager CLI, see the [Om](https://github.com/pivotal-cf/om/) repository on GitHub.
 
 1. Create a file named `vm_extensions_config.yml` with the following content, depending on which release you are using:
-  * **Pivotal Application Service (PAS)**:
+  * **<%= vars.product_runtime %> (<%= vars.product_short %>)**:
 
       ```
-    ---
-    product-name: cf
-    resource-config:
-      diego_brain:
-        elb_names:
-        - alb:SSH_TARGET_GROUP_1
-        - alb:SSH_TARGET_GROUP_2
-        additional_vm_extensions:
-        - ssh-lb-security-groups
-      router:
-        elb_names:
-        - alb:WEB_TARGET_GROUPS_1
-        - alb:WEB_TARGET_GROUPS_2
-        additional_vm_extensions:
-        - web-lb-security-groups
-      tcp_router:
-        elb_names:
-        - alb:TCP_TARGET_GROUP_1
-        - alb:TCP_TARGET_GROUP_2
-        additional_vm_extensions:
-        - tcp-lb-security-groups
-      ```
-  * **Small Footprint Runtime**:
+      ---
+      product-name: cf
+      resource-config:
+        diego_brain:
+          elb_names:
+          - alb:SSH_TARGET_GROUP_1
+          - alb:SSH_TARGET_GROUP_2
+          additional_vm_extensions:
+          - ssh-lb-security-groups
+        router:
+          elb_names:
+          - alb:WEB_TARGET_GROUPS_1
+          - alb:WEB_TARGET_GROUPS_2
+          additional_vm_extensions:
+          - web-lb-security-groups
+        tcp_router:
+          elb_names:
+          - alb:TCP_TARGET_GROUP_1
+          - alb:TCP_TARGET_GROUP_2
+          additional_vm_extensions:
+          - tcp-lb-security-groups
+        ```
+  * **Small Footprint <%= vars.product_short %>**:
 
       ```
-    ---
-    product-name: cf
-    resource-config:
-      control:
-        elb_names:
-        - alb:SSH_TARGET_GROUP_1
-        - alb:SSH_TARGET_GROUP_2
-        additional_vm_extensions:
-        - ssh-lb-security-groups
-      router:
-        elb_names:
-        - alb:WEB_TARGET_GROUPS_1
-        - alb:WEB_TARGET_GROUPS_2
-        additional_vm_extensions:
-        - web-lb-security-groups
-      tcp_router:
-        elb_names:
-        - alb:TCP_TARGET_GROUP_1
-        - alb:TCP_TARGET_GROUP_2
-        additional_vm_extensions:
-        - tcp-lb-security-groups
-      ```
+      ---
+      product-name: cf
+      resource-config:
+        control:
+          elb_names:
+          - alb:SSH_TARGET_GROUP_1
+          - alb:SSH_TARGET_GROUP_2
+          additional_vm_extensions:
+          - ssh-lb-security-groups
+        router:
+          elb_names:
+          - alb:WEB_TARGET_GROUPS_1
+          - alb:WEB_TARGET_GROUPS_2
+          additional_vm_extensions:
+          - web-lb-security-groups
+        tcp_router:
+          elb_names:
+          - alb:TCP_TARGET_GROUP_1
+          - alb:TCP_TARGET_GROUP_2
+          additional_vm_extensions:
+          - tcp-lb-security-groups
+        ```
 
-1. Replace values in the file as follows;
-    * `SSH_TARGET_GROUP_X`: Enter your SSH target groups. You can find these values by running `terraform output ssh_target_groups`. 
-    * `WEB_TARGET_GROUPS_X`: Enter your web target groups. You can find these values by running `terraform output web_target_groups`. 
-    * `TCP_TARGET_GROUP_X`: Enter your TCP target groups. You can find these values by running `terraform output tcp_target_groups`. 
+1. Replace values in the file as follows:
+    * `SSH_TARGET_GROUP_X`: Enter your SSH target groups. You can find these values by running:
 
-1. Apply the VM extension configuration using the `om` CLI. For more information about `om`, see [pivotal-cf/om](https://github.com/pivotal-cf/om) in GitHub. 
+        ```
+        terraform output ssh_target_groups
+        ```
+    * `WEB_TARGET_GROUPS_X`: Enter your web target groups. You can find these values by running:
+
+        ```
+        terraform output web_target_groups
+        ```
+    * `TCP_TARGET_GROUP_X`: Enter your TCP target groups. You can find these values by running:
+
+        ```
+        terraform output tcp_target_groups
+        ```
+
+1. Apply the VM extension configuration using the `om` CLI. For more information about `om`, see the [Om](https://github.com/pivotal-cf/om) repository on GitHub.
 
     ```
     om -k \
-      -t "YOUR-OPS-MANAGER-FQDN" \
+      -t "OPS-MANAGER-FQDN" \
       -u "USERNAME" \
       -p "PASSWORD" \
       configure-product \
       -c vm_extensions_config.yml
     ```
     Where:
-    * `YOUR-OPS-MANAGER-FQDN` is the URL at which you access your Ops Manager instance. This corresponds to `ops_manager_dns` in the Terraform output. 
+    * `OPS-MANAGER-FQDN` is the URL at which you access your Ops Manager instance. This corresponds to `ops_manager_dns` in the Terraform output. 
     * `USERNAME` is the user name you entered when configuring internal authentication. 
     * `PASSWORD` is the password you entered when configuring internal authentication. 
-      <p class="note"><strong>Note</strong>: If you did not configure internal authentication, you must modify this command to use a client ID and secret instead of user name and password. See [Authentication](https://github.com/pivotal-cf/om/tree/master/docs#authentication) in the <code>om</code> repository.</p>
-
+      <p class="note"><strong>Note:</strong> If you did not configure internal authentication, you must modify this command to use a client ID and secret instead of user name and password. For more information, see <a href="https://github.com/pivotal-cf/om/tree/master/docs#authentication">Authentication</a> in the Om repository on GitHub.</p>
 
 
 ## <a id="azure"></a> Azure
 
-To configure the Gorouter to Azure Load Balancers, do the following:
+### <a id="azure-manual"></a> Azure Paved Manually
+
+To configure the Gorouter to use Azure load balancers:
 
 1. Select **Resource Config**.
 
-1. Ensure a `Standard` VM type is selected for the **Router** VM. The PAS deployment fails if you select a `Basic` VM type.
+1. Ensure a `Standard` VM type is selected for the **Router** VM. The <%= vars.product_short %> deployment fails if you select a `Basic` VM type.
 
 1. Retrieve the name(s) of your external ALB by navigating to the Azure portal, clicking **All resources**, and locating your **Load balancer** resource.
-<p class="note"><strong>Note:</strong> The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource. `az network lb list`</p>
+  <p class="note"><strong>Note:</strong> The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource. To see the list of resources, run <code>az network lb list</code>.</p>
 
 1. Locate the **Router** job in the **Resource Config** pane and enter the name of your external ALB in the field under **Load Balancers**.
 
-1. Retrieve the name of your Diego SSH Load Balancer by navigating to the Azure portal, clicking **All resources**, and locating your **Load balancer** resource.
+1. Retrieve the name of your Diego SSH load balancer by navigating to the Azure portal, clicking **All resources**, and locating your **Load balancer** resource.
 
 1. Locate the **Diego Brain** job in the **Resource Config** pane and enter the name of the Diego SSH Load Balancer in the field under **Load Balancers**.
 
-1. Ensure that the **Internet Connected** checkboxes are deselected for all jobs.
+1. Ensure that the **Internet Connected** checkboxes are disabled for all jobs.
 
 1. Scale the number of instances as appropriate for your deployment.
-<p class="note"><strong>Note:</strong> For a high availability deployment of PCF on Azure, Pivotal recommends scaling the number of each PAS job to a minimum of three (3) instances. Using three or more instances for each job creates a sufficient number of availability sets and fault domains for your deployment. For more information, see <a href="../refarch/azure/azure_ref_arch.html">Reference Architecture for Pivotal Cloud Foundry on Azure</a>.</p>
+  <p class="note"><strong>Note:</strong> For a high-availability deployment of <%= vars.product_name %> on Azure, <%= vars.recommended_by %> recommends scaling the number of each <%= vars.product_short %> job to a minimum of three instances. Using three or more instances for each job creates a sufficient number of availability sets and fault domains for your deployment. For more information, see <a href="../refarch/azure/azure_ref_arch.html">Azure Reference Architecture</a>.</p>
 
+### <a id="azure-terraform"></a> Azure with Terraform
 
-## <a id="azure-terraform"></a> Azure Terraform
-
-To configure the Gorouter to Azure Load Balancers, do the following:
+To configure the Gorouter to use Azure load balancers:
 
 1. Select **Resource Config**.
 
-1. Ensure a `Standard` VM type is selected for the **Router** VM. The PAS deployment fails if you select a `Basic` VM type.
+1. Ensure a `Standard` VM type is selected for the **Router** VM. The <%= vars.product_short %> deployment fails if you select a `Basic` VM type.
 
 1. Enter the value of `web_lb_name` from your Terraform output in the **Resource Config** pane under **Load Balancers** for the **Router** job.
 
 1. Enter the value of `diego_ssh_lb_name` from your Terraform output in the **Resource Config** pane under **Load Balancers** for the **Diego Brain** job.
 
-1. Ensure that the **Internet Connected** checkboxes are deselected for all jobs.
+1. Ensure that the **Internet Connected** checkboxes are disabled for all jobs.
 
 1. Scale the number of instances as appropriate for your deployment.
-  <p class="note"><strong>Note:</strong> For a high availability deployment of PCF on Azure, Pivotal recommends scaling the number of each PAS job to a minimum of three (3) instances. Using three or more instances for each job creates a sufficient number of availability sets and fault domains for your deployment. For more information, see <a href="../refarch/azure/azure_ref_arch.html">Reference Architecture for Pivotal Cloud Foundry on Azure</a>.</p>
+  <p class="note"><strong>Note:</strong> For a high-availability deployment of <%= vars.product_name %> on Azure, <%= vars.recommended_by %> recommends scaling the number of each <%= vars.product_short %> job to a minimum of three instances. Using three or more instances for each job creates a sufficient number of availability sets and fault domains for your deployment. For more information, see <a href="../refarch/azure/azure_ref_arch.html">Azure Reference Architecture</a>.</p>
 
 
 ## <a id="gcp"></a> GCP
 
-To Configure Gorouter to GCP Load Balancers, do the following:
+### <a id="gcp-manual"></a> GCP Paved Manually
 
-1. Navigate to the GCP Console and click **Load balancing**.
+To configure the Gorouter to use GCP load balancers:
+
+1. Navigate to the GCP Console and select **Load balancing**.
 
     <%= image_tag('gcp/config-lb.png') %>
 
-    You should see the SSH load balancer, the HTTP(S) load balancer, the TCP WebSockets load balancer, and the TCP router that you created in the _Preparing to Deploy PCF on GCP_ topic.
+    You should see the SSH load balancer, the HTTP(S) load balancer, the TCP WebSockets load balancer, and the TCP router that you created in [Preparing to Deploy Ops Manager on GCP Manually](https://docs.pivotal.io/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/gcp/prepare-env-manual.html).
 
-1. Record the name of your SSH load balancer and your TCP WebSockets load balancer, `MY-PCF-wss-logs` and `MY-PCF-ssh-proxy`.
+1. Record the name of your SSH load balancer and your TCP WebSockets load balancer, `<%= vars.product_name %>-wss-logs` and `<%= vars.product_name %>-ssh-proxy`.
 
-1. Click your HTTP(S) load balancer, `MY-PCF-global-pcf`.
+1. Click your HTTP(S) load balancer, `<%= vars.product_name %>-global-<%= vars.product_name_lc %>`.
     <%= image_tag('gcp/pcf-router.png') %>
 
-1. Under **Backend services**, record the name of the backend service of the HTTP(S) load balancer, `MY-PCF-http-lb-backend`.
+1. Under **Backend services**, record the name of the back end service of the HTTP(S) load balancer, `MY-<%= vars.product_name %>-http-lb-backend`.
 
-1. In the PAS tile, click **Resource Config**.
+1. In the <%= vars.product_short %> tile, select **Resource Config**.
 
-1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-delimited list consisting of the name of your TCP WebSockets load balancer and the name of your HTTP(S) load balancer backend with the protocol prepended. For example, `tcp:MY-PCF-wss-logs,http:MY-PCF-http-lb-backend`.
+1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-separated list consisting of the name of your TCP WebSockets load balancer and the name of your HTTP(S) load balancer back end with the protocol prepended. For example, `tcp:<%= vars.product_name %>-wss-logs,http:<%= vars.product_name %>-http-lb-backend`.
+    <p class="note"><strong>Note:</strong> Do not add a space between key and value pairs in the <code>LOAD BALANCER</code> field, or it fails.</p>
+    <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, enter the above load balancer values in the <code>LOAD BALANCERS</code> field of the <strong>HAProxy</strong> row instead of the <strong>Router</strong> row. For a high-availability configuration, scale up the HAProxy job to more than one instance.</p>
 
-    <p class="note"><strong>Note:</strong> Do not add a space between key/value pairs in the <code>LOAD BALANCER</code> field or it will fail.</p>
-    <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, then enter the above load balancer values in the <code>LOAD BALANCERS</code> field of the <strong>HAProxy</strong> row instead of the <strong>Router</strong> row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
-
-1. If you have enabled TCP routing in the <a href="#tcp-routing-enable">Networking</a> pane and set up the <a href="../om/gcp/prepare-env-manual.html#tcp_websockets_lb">TCP Load Balancer in GCP</a>, add the name of your TCP load balancer, prepended with <code>tcp:</code>, to the <strong>LOAD BALANCERS</strong> column of the <strong>TCP Router</strong> row. For example, <code>tcp:pcf-tcp-router</code>.
+1. If you enabled TCP routing in the **Networking** pane in the <%= vars.product_short %> tile and set up the TCP load balancer in GCP, add the name of your TCP load balancer, prepended with `tcp:`, to the **LOAD BALANCERS** column of the **TCP Router** row. For example, `tcp:<%= vars.product_name_lc %>-tcp-router`.
 
 1. Enter the name of you SSH load balancer depending on which release you are using.
-  * **PAS**: Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the name of your SSH load balancer prepended with `tcp:`. For example, `tcp:MY-PCF-ssh-proxy`.
-  * **Small Footprint Runtime**: Under the **LOAD BALANCERS** column of the **Control** row, enter the name of your SSH load balancer prepended with `tcp:`.
+  * **<%= vars.product_short %>**: Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the name of your SSH load balancer prepended with `tcp:`. For example, `tcp:MY-<%= vars.product_name %>-ssh-proxy`.
+  * **Small Footprint <%= vars.product_short %>**: Under the **LOAD BALANCERS** column of the **Control** row, enter the name of your SSH load balancer prepended with `tcp:`.
 
-1. Verify that the **Internet Connected** checkbox for every job is unchecked. When preparing your GCP environment, you provisioned a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses to allow the jobs to reach the Internet.
-   <p class="note"><strong>Note:</strong> If you want to provision a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses, deselect the <strong>Internet Connected</strong> checkboxes. For more information about using NAT in GCP, see the <a href="https://cloud.google.com/compute/docs/networking">GCP documentation</a>.</p>
+1. Verify that the **Internet Connected** checkbox for every job is disabled. When preparing your GCP environment, you provisioned a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses to allow the jobs to reach the Internet.
+  <p class="note"><strong>Note:</strong> If you want to provision a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses, disable the <strong>Internet Connected</strong> checkboxes. For more information about using NAT in GCP, see <a href="https://cloud.google.com/compute/docs/networking">VPC network overview</a> in the GCP documentation.</p>
 
 1. Click **Save**.
 
+### <a id="gcp-terraform"></a> GCP with Terraform
 
-## <a id="gcp-terraform"></a> GCP Terraform
+To configure the Gorouter to use GCP load balancers:
 
-To Configure Gorouter to GCP Load Balancers, do the following:
+1. Select **Resource Config**.
 
-1. Click **Resource Config**.
-
-1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-delimited list consisting of the values of `ws_router_pool` and `http_lb_backend_name` from your Terraform output. For example, `tcp:pcf-cf-ws,http:pcf-httpslb`. These are the names of the TCP WebSockets and HTTP(S) load balancers for your deployment.
-    <p class="note"><strong>Note:</strong> Do not add a space between key/value pairs in the <code>LOAD BALANCER</code> field or it will fail.</p>
+1. Under the **LOAD BALANCERS** column of the **Router** row, enter a comma-separated list consisting of the values of `ws_router_pool` and `http_lb_backend_name` from your Terraform output. For example, `tcp:<%= vars.product_name_lc %>-cf-ws,http:<%= vars.product_name_lc %>-httpslb`. These are the names of the TCP WebSockets and HTTP(S) load balancers for your deployment.
+    <p class="note"><strong>Note:</strong> Do not add a space between key and value pairs in the <code>LOAD BALANCER</code> field, or it fails.</p>
     <p class="note"><strong>Note:</strong> If you are using HAProxy in your deployment, then enter the above load balancer values in the <code>LOAD BALANCERS</code> field of the <strong>HAPRoxy</strong> row instead of the <strong>Router</strong> row. For a high availability configuration, scale up the HAProxy job to more than one instance.</p>
 
-1. If you have enabled TCP routing in the [Networking](#tcp-routing-enable) pane, add the value of `tcp_router_pool` from your Terraform output, prepended with `tcp:`, to the **LOAD BALANCERS** column of the **TCP Router** row. For example, `tcp:pcf-cf-tcp`.
+1. If you enabled TCP routing in the **Networking** pane of the <%= vars.product_short %> tile, add the value of `tcp_router_pool` from your Terraform output, prepended with `tcp:`, to the **LOAD BALANCERS** column of the **TCP Router** row. For example, `tcp:<%= vars.product_name_lc %>-cf-tcp`.
 
-1. Enter the name of your SSH load balancer depending on which release you are using.
-  * **PAS**: Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the value of `ssh_router_pool` from your Terraform output, prepended with `tcp:`. For example, `tcp:MY-PCF-ssh-proxy`.
-  * **Small Footprint Runtime**: Under the **LOAD BALANCERS** column of the **Control** row, enter the value of `ssh_router_pool` from your Terraform output, prepended with `tcp:`.
+1. Enter the name of your SSH load balancer, depending on which release you are using:
+  * **<%= vars.product_short %>**: Under the **LOAD BALANCERS** column of the **Diego Brain** row, enter the value of `ssh_router_pool` from your Terraform output, prepended with `tcp:`. For example, `tcp:<%= vars.product_name %>-ssh-proxy`.
+  * **Small Footprint <%= vars.product_short %>**: Under the **LOAD BALANCERS** column of the **Control** row, enter the value of `ssh_router_pool` from your Terraform output, prepended with `tcp:`.
 
-1. Verify that the **Internet Connected** checkbox for every job is checked. The terraform templates do not provision a Network Address Translation (NAT) box for Internet connectivity to your VMs so instead they will be provided with ephemeral public IP addresses to allow the jobs to reach the Internet.
-   <p class="note"><strong>Note:</strong> If you want to provision a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses, deselect the <strong>Internet Connected</strong> checkboxes. For more information about using NAT in GCP, see the <a href="https://cloud.google.com/compute/docs/networking">GCP documentation</a>.</p>
+1. Verify that the **Internet Connected** checkbox for every job is enabled. The Terraform templates do not provision a Network Address Translation (NAT) box for Internet connectivity to your VMs, so they are provided with ephemeral public IP addresses to allow the jobs to reach the Internet.
+   <p class="note"><strong>Note:</strong> If you want to provision a Network Address Translation (NAT) box to provide Internet connectivity to your VMs instead of providing them with public IP addresses, disable the <strong>Internet Connected</strong> checkboxes. For more information about using NAT in GCP, see <a href="https://cloud.google.com/compute/docs/networking">VPC network overview</a> in the GCP documentation.</p>
 
 1. Click **Save**.
 
 
 ## <a id="openstack"></a> Openstack
 
-Unless you are using your own load balancer, you must enable traffic flow to the OpenStack private subnet as follows. Give each HAProxy a way of routing traffic into the private subnet by providing public IP addresses as floating IP addresses.
+Unless you are using your own load balancer, you must provide HAProxy with public IP addresses to use as floating IP addresses. This allows the HAProxy route traffic into the OpenStack private subnet.
 
-1. Click **Resource Config**.
+To provide HAProxy with public IP addresses:
+
+1. Select **Resource Config**.
 
 1. Enter one or more IP addresses in **Floating IPs** for each HAProxy.
 
-1. (Optional) If you have enabled the TCP Routing feature, enter one or more IP addresses in **Floating IPs** column for each TCP Router.
+1. (Optional) If you enabled the TCP routing feature, enter one or more IP addresses in **Floating IPs** column for each TCP router.
 
 1. Click **Save**.

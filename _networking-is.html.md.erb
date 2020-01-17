@@ -1,15 +1,14 @@
-Perform the following steps to configure the PCF Isolation Segment tile:
+In the **Networking** pane, you configure security and routing services for your IaaS.
 
-1. Click **Networking**.
+To configure the **Networking** pane:
 
-	<%= image_tag('router-ha-ip.png') %>
+1. Select **Networking**.
 
-1. (Optional): Under **Router IPs**, enter one or more static IP addresses for the routers that handle this isolation segment. These IP addresses must be within the subnet CIDR block that you defined in the Ops Manager network configuration for your Isolation Segment. If you have a load balancer, configure it to point to these IP addresses.
+1. (Optional) Under **Router IPs**, enter one or more static IP addresses for the routers that handle this isolation segment. These IP addresses must be within the subnet CIDR block that you defined in the Ops Manager network configuration for your isolation segment. If you have a load balancer, configure it to point to these IP addresses.
+    <p class="note"><strong>Note:</strong> Entering the static IP addresses is not necessary for deployments running on a public IaaS such as AWS, GCP, or Azure because users specify the IaaS load balancer in the <strong>Resource Config</strong> pane of the Pivotal Isolation Segment tile.</p>
 
-    <p class="note"><strong>Note</strong>: Entering the static IP addresses is not necessary for deployments running on a public IaaS such as AWS, GCP, or Azure because PCF users specify the IaaS load balancer in the <strong>Resource Config</strong> section of the <strong>PCF Isolation Segment</strong> tile.</p>
-
-1. If you want to use HAProxy for this isolation segment, enter at least one address in the **HAProxy IPs** field. You should specify more than one IP address for high availability. Then configure your load balancer to forward requests for the domains you have set up for your deployment to these IP addresses. For more information, see <a href="../opsguide/ssl-term-haproxy.html">Configuring SSL/TLS Termination at HAProxy</a>.</td>
-	<p class="note"><strong>Note</strong>: If you rely on HAProxy for a feature in Pivotal Application Service (PAS) and you want isolated networking for this isolation segment, you may want to deploy the HAProxy provided by the Isolation Segment tile.</p>
+1. If you want to use HAProxy for this isolation segment, enter at least one address in the **HAProxy IPs** field. You should specify more than one IP address for high availability. Then configure your load balancer to forward requests for the domains you have set up for your deployment to these IP addresses. For more information, see [Configuring SSL/TLS Termination at HAProxy](../opsguide/ssl-term-haproxy.html).
+	<p class="note"><strong>Note:</strong> If you rely on HAProxy for a feature in <%= vars.product_short %> and you want isolated networking for this isolation segment, you may want to deploy the HAProxy provided by the <%= vars.product_name %> Isolation Segment tile.</p>
 
 1. <%= partial 'haproxy_router_cert_config' %>
 1. <%= partial 'router_haproxy_ca' %>
@@ -28,28 +27,21 @@ Perform the following steps to configure the PCF Isolation Segment tile:
 1. <%= partial 'zipkin_enable' %>
 1. <%= partial 'enable_router_local_logs' %>
 1. <%= partial 'enable-proxy-support' %>
-1. **Bypass security checks for route service lookup** has potential security concerns, but may be needed for backwards compatibility. See the _Route Service Internal Lookup Considerations_ section of [Route Services](../services/route-services.html) for details.
+1. **Bypass security checks for route service lookup** has potential security concerns, but may be needed for backwards compatibility. For more information, see [Route Services](../services/route-services.html).
 1. <%= partial 'max_connections_backend' %>
 1. <%= partial 'keepalive_connections' %>
 1. <%= partial 'router_timeout_backend' %>
 1. <%= partial 'lb_unhealthy_threshold' %>
 1. <%= partial 'lb_healthy_threshold' %>
-
-    <%= image_tag 'images/router_lb_thresholds.png' %>
-
 1. <%= partial 'http_headers_to_log' %>
-    ![Http Headers to Log](images/headers_to_log.png)
 1. <%= partial 'haproxy_request_max_buffer' %>
 1. <%= partial 'protected_domains' %>
-1. For <strong>DNS Search Domains</strong>, enter DNS search domains as a comma-separated list. Your containers append these search domains to hostnames to resolve them into full domain names.
-    <%= image_tag 'images/dns-search-domains.png' %>
+1. For **DNS Search Domains**, enter DNS search domains as a comma-separated list. Your containers append these search domains to hostnames to resolve them into full domain names.
 
-1. The <strong>Enable Silk Policy Enforcement</strong> checkbox is enabled by default. To disable Silk network policy enforcement between apps, disable the checkbox. Disabling network policy enforcement allows all apps to send network traffic to all other apps in the foundation despite no policy specifically allowing it.
-	<%= image_tag 'images/ist-silk.png' %>
+1. The **Enable Silk Policy Enforcement** checkbox is enabled by default. To disable Silk network policy enforcement between apps, disable the checkbox. Disabling network policy enforcement allows all apps to send network traffic to all other apps in the foundation despite no policy specifically allowing it.
 
-1. Select a sharding mode in the **Router Sharding Mode** field. The options are explained below. For more information, see [Sharding Routers for Isolation Segments](../adminguide/routing-is.html#sharding-routers-isolation-segment).
-	![Sharding options](router-sharding-options.png)
-	* **Isolation Segment Only**: The routers for the tile acknowledge requests only from apps deployed within the cells of the tile. All other requests fail.
-	* **No Isolation Segment**: The routers for the tile reject requests for any isolation segment. Choose this option to add a group of routers for the PAS tile, such as when you want a private point of entry for the system domain.
+1. Select a sharding mode in the **Router Sharding Mode** field. For more information, see the [Sharding Routers for Isolation Segments](../adminguide/routing-is.html#sharding-routers-isolation-segment) section of the _Routing for Isolation Segments_ topic.
+	* **Isolation Segment Only**: The routers for the tile acknowledge requests only from apps deployed within the Diego Cells of the tile. All other requests fail.
+	* **No Isolation Segment**: The routers for the tile reject requests for any isolation segment. Choose this option to add a group of routers for the <%= vars.product_short %> tile, such as when you want a private point of entry for the system domain.
 
 1. Click **Save**.

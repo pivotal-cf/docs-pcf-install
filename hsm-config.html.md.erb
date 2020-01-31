@@ -10,11 +10,11 @@ This topic describes how to prepare a Hardware Security Module (HSM) to store Cr
 
 SafeNet Luna HSM is the only HSM option that you can use as a CredHub encryption provider. The Amazon Web Services (AWS) [CloudHSM Classic](https://aws.amazon.com/cloudhsm/faqs-classic/) service uses SafeNet Luna HSMs. For more information about SafeNet Luna HSM, see the [SafeNet Luna Network HSMs](https://safenet.gemalto.com/data-encryption/hardware-security-modules-hsms/safenet-network-hsm/) product page.
 
-When configuring Ops Manager, BOSH CredHub uses a single HSM to store encryption keys. In <%= vars.app_runtime_full %> (<%= vars.app_runtime_abbr %>), you can configure multiple HSMs for runtime CredHub to use as encryption providers.
+When configuring <%= vars.ops_manager_full %>, BOSH CredHub uses a single HSM to store encryption keys. In <%= vars.app_runtime_full %> (<%= vars.app_runtime_abbr %>), you can configure multiple HSMs for runtime CredHub to use as encryption providers.
 
 To configure BOSH CredHub, see _Step 3: Configure Director_ in the [BOSH Director configuration topic for your IaaS](deploy-bosh-om.html#contents).
 
-<p class="note"><strong>Note:</strong> You can configure multiple HSMs for BOSH CredHub using the Ops Manager API. For more information, see the <a href="https://docs.pivotal.io/platform/opsman-api/#updating-director-and-iaas-properties-experimental">Ops Manager API documentation</a>.</p>
+<p class="note"><strong>Note:</strong> You can configure multiple HSMs for BOSH CredHub using the <%= vars.ops_manager %> API. For more information, see the <a href="https://docs.pivotal.io/platform/opsman-api/#updating-director-and-iaas-properties-experimental"><%= vars.ops_manager %> API documentation</a>.</p>
 
 Configure runtime CredHub with one or more HSMs to securely manage service broker credentials. To configure runtime CredHub, see [Step 1: Configure the <%= vars.app_runtime_abbr %> Tile](../opsguide/secure-si-creds.html#pas-config) in _Securing Service Instance Credentials with Runtime CredHub_.
 
@@ -196,7 +196,9 @@ To register a client host and partitions for your HSM:
 
 ## <a id="hsm-encryption-keys"></a> Encryption Keys on the HSM
 
-You can set which key is used for encryption operations by defining the encryption key name in the **Director Config** pane of the BOSH Director tile for BOSH Credhub, or the **CredHub** pane of the <%= vars.app_runtime_abbr %> tile for runtime CredHub. If a key already exists on the HSM, CredHub uses it by default. If a key does not exist on the HSM, CredHub creates one automatically in the referenced partition.
+You can set which key is used for encryption operations by defining the encryption key name in the **Director Config** pane of the BOSH Director tile for BOSH Credhub, the **CredHub** pane of the <%= vars.app_runtime_abbr %> tile for runtime CredHub, or the <%= vars.ops_manager %> API. If a key already exists on the HSM, CredHub uses it by default. If a key does not exist on the HSM, CredHub creates one automatically in the referenced partition.
+
+### <a id='review-stored-keys'></a> Review Stored Keys on a Partition
 
 When you generate a new key, you should review the list of keys on each HSM to validate that key replication is occurring. If new keys do not propagate among the HSMs, you could get locked out of HSMs.
 
@@ -209,3 +211,138 @@ To review stored keys on a partition:
     ```
     Where `PARTITION-NAME` is the name of your partition.
 
+### <a id=''></a> Delete Key
+
+<%= vars.ops_manager %> places extra safeguards to ensure that you cannot accidentally delete active CredHub encryption keys through the <%= vars.ops_manager %> API:
+
+* You must always have an active key.
+* You cannot delete keys that are currently active. You can only delete keys after they have been deactivated.
+
+To delete an active CredHub key, you must first deactivate it and activate a new or existing key.
+
+To delete the currently active key:
+
+1. Deactivate the currently active key by running:
+
+    ```
+    curl "https://OPS-MANAGER-FQDN/api/v0/staged/director/properties" \
+      -X PUT \
+      -H "Content-Type: application/json" \
+      -d '{
+            "director-configuration": {
+              "encryption": {
+                "keys": {
+                  "provider_name": "hsm",
+                  "encryption_key_name": "KEY-TO-DEACTIVATE",
+                  "active": "false"
+                }
+                        {
+                  "provider_name": "hsm",
+                  "encryption_key_name": "OTHER-KEY",
+                  "active": "false"
+                }
+              }
+            }
+          }'
+    ```
+    Where:
+    * `OPS-MANAGER-FQDN` is the fully-qualified domain name (FQDN) of your Ops Manager instance.
+    * `KEY-DEACTIVATE` is the name of the encryption key you want to deactivate.
+    * `OTHER-KEY` is any other key you may have stored in CredHub.
+
+1. Activate either a new or existing key.
+    * To activate a new key:
+        1. Upload a new key by running:
+
+            ```
+            curl "https://OPS-MANAGER-FQDN/api/v0/staged/director/properties" \
+              -X POST \
+              -H "Content-Type: application/json" \
+              -d '{
+                    "director-configuration": {
+                      "encryption": {
+                        "keys": {
+                          "provider_name": "hsm",
+                          "encryption_key_name": "KEY-TO-UPLOAD"
+                        }
+                      }
+                    }
+                  }'
+            ```
+            Where:
+            * `OPS-MANAGER-FQDN` is the FQDN of your Ops Manager instance.
+            * `KEY-TO-UPLOAD` is the name of the encryption key you want to upload.
+
+        1. Activate the key by running:
+
+            ```
+            curl "https://OPS-MANAGER-FQDN/api/v0/staged/director/properties" \
+              -X PUT \
+              -H "Content-Type: application/json" \
+              -d '{
+                    "director-configuration": {
+                      "encryption": {
+                        "keys": {
+                          "provider_name": "hsm",
+                          "encryption_key_name": "UPLOADED-KEY",
+                          "active": "true"
+                        }
+                      }
+                    }
+                  }'
+            ```
+            Where:
+            * `OPS-MANAGER-FQDN` is the FQDN of your Ops Manager instance.
+            * `UPLOADED-KEY` is the name of the encryption key you uploaded in the previous step.
+
+    * To activate an existing key, run:
+
+        ```
+        curl "https://OPS-MANAGER-FQDN/api/v0/staged/director/properties" \
+          -X PUT \
+          -H "Content-Type: application/json" \
+          -d '{
+                "director-configuration": {
+                  "encryption": {
+                    "keys": {
+                      "provider_name": "hsm",
+                      "encryption_key_name": "DEACTIVATED-KEY",
+                      "active": "false"
+                    }
+                            {
+                      "provider_name": "hsm",
+                      "encryption_key_name": "KEY-TO-ACTIVATE",
+                      "active": "true"
+                    }
+                  }
+                }
+              }'
+        ```
+        Where:
+        * `OPS-MANAGER-FQDN` is the FQDN of your Ops Manager instance.
+        * `DEACTIVATED-KEY` is the key you want to deactivate.
+        * `KEY-TO-ACTIVATE` is the name of the encryption key you want to activate.
+
+1. To delete the key you deactivated, you must run a `PUT` request with the key you want to delete omitted from your `keys` array. Run:
+
+    ```
+    curl "https://OPS-MANAGER-FQDN/api/v0/staged/director/properties" \
+      -X PUT \
+      -H "Content-Type: application/json" \
+      -d '{
+            "director-configuration": {
+              "encryption": {
+                "keys": {
+                  "provider_name": "hsm",
+                  "encryption_key_name": "ACTIVATED-KEY",
+                  "active": "false"
+                }
+              }
+            }
+          }'
+    ```
+    Where:
+    * `OPS-MANAGER-FQDN` is the FQDN of your Ops Manager instance.
+    * `ACTIVATED-KEY` is the name of the encryption key you activated in the previous step.
+
+For information about running commands with the <%= vars.ops_manager %> API, see [Run API Commands](ops-man-api.html#run-commands) in _Using the <%= vars.ops_manager %> API_.

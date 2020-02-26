@@ -29,17 +29,17 @@ This section describes the restrictions for a backup artifact to be restorable t
 
 For a backup artifact to be restorable, these restrictions apply:
 
-* **CIDR ranges:** BBR requires the IP address ranges to be the same in the restore environment as in the backup environment.
+* **CIDR ranges**: BBR requires the IP address ranges to be the same in the restore environment as in the backup environment.
 
-* **Topology:** BBR requires the BOSH topology of a deployment to be the same in the restore environment as it was in the backup environment.
+* **Topology**: BBR requires the BOSH topology of a deployment to be the same in the restore environment as it was in the backup environment.
 
-* **Naming of instance groups and jobs:** For any deployment that implements the backup and restore scripts, the instance groups and jobs must have the same names.
+* **Naming of instance groups and jobs**: For any deployment that implements the backup and restore scripts, the instance groups and jobs must have the same names.
 
-* **Number of instance groups and jobs:** For instance groups and jobs that have backup and restore scripts, there must be the same number of instances.
+* **Number of instance groups and jobs**: For instance groups and jobs that have backup and restore scripts, there must be the same number of instances.
 
-* **Limited validation:** BBR puts the backed-up data into the corresponding instance groups and jobs in the restored environment, but cannot validate the restore beyond that. For example, if the MySQL encryption key is different in the restore environment, the BBR restore might succeed, but the restored MySQL database is unusable.
+* **Limited validation**: BBR puts the backed-up data into the corresponding instance groups and jobs in the restored environment, but cannot validate the restore beyond that. For example, if the MySQL encryption key is different in the restore environment, the BBR restore might succeed, but the restored MySQL database is unusable.
 
-* **<%= vars.platform_name %> version:** BBR can restore to the same version of <%= vars.platform_name %> that was backed up. BBR does not support restoring to other major, minor, or patch releases.
+* **<%= vars.platform_name %> version**: BBR can restore to the same version of <%= vars.platform_name %> that was backed up. BBR does not support restoring to other major, minor, or patch releases.
 
 <p class="note"><strong>Note:</strong> A change in VM size or underlying hardware does not affect BBR's ability to restore data, as long as there is adequate storage space to restore the data.</p>
 
@@ -48,23 +48,25 @@ For a backup artifact to be restorable, these restrictions apply:
 
 The diagram below illustrates the flow of the <%= vars.platform_name %> restore process in a series of steps performed by the <%= vars.platform_name %> operator. The following steps are covered in more detail throughout this topic. Click the diagram to see the full-size image.
 
-<a href="images/pcf-restore.png"><%= image_tag("pcf-restore.png", :alt => "Flow chart shows the platform Operator through a series of steps interacting with the BOSH CLI, <%= vars.ops_manager %> VM, Director VM, and the PAS tile. Details on these steps are described below.") %></a>
+![Flow chart shows the platform Operator through a series of steps interacting with the BOSH CLI, <%= vars.ops_manager %> VM, Director VM, and the <%= vars.app_runtime_abbr %> tile. Details on these steps are described below.](./images/pcf-restore.png)
 
-1. **Launch new <%= vars.ops_manager %>:** Follow the procedures for your IaaS to deploy <%= vars.ops_manager %>. For more information, see Step 1 of [Deploy <%= vars.ops_manager %> and Import Installation Settings](#deploy-import).
+[View a larger version of this diagram](./images/pcf-restore.png).
 
-1. **Import settings:** You can import settings either with the <%= vars.ops_manager %> UI or API. For more information, see Step 2 of [Deploy <%= vars.ops_manager %> and Import Installation Settings](#deploy-import).
+1. **Launch new <%= vars.ops_manager %>**: Follow the procedures for your IaaS to deploy <%= vars.ops_manager %>. For more information, see Step 1 of [Deploy <%= vars.ops_manager %> and Import Installation Settings](#deploy-import).
 
-1. **Remove bosh-state.json:** SSH into your <%= vars.ops_manager %> VM and delete the `bosh-state.json` file. For more information, see [Remove BOSH State File](#bosh-state).
+1. **Import settings**: You can import settings either with the <%= vars.ops_manager %> UI or API. For more information, see Step 2 of [Deploy <%= vars.ops_manager %> and Import Installation Settings](#deploy-import).
 
-1. **Apply Changes (BOSH Director only):** Use the <%= vars.ops_manager %> API to only deploy the BOSH Director. For more information, see [Deploy the BOSH Director](#bosh-only-deploy).
+1. **Remove bosh-state.json**: SSH into your <%= vars.ops_manager %> VM and delete the `bosh-state.json` file. For more information, see [Remove BOSH State File](#bosh-state).
 
-1. **bbr restore &lt;director&gt;:** Run the BBR restore command from your jumpbox to restore the BOSH Director. For more information, see [Restore the BOSH Director](#restore-bosh).
+1. **Apply Changes (BOSH Director only)**: Use the <%= vars.ops_manager %> API to only deploy the BOSH Director. For more information, see [Deploy the BOSH Director](#bosh-only-deploy).
 
-1. **Use BOSH cck to fix the stale cloud ID references in the BOSH database:** For each deployment in the BOSH Director, you must run a `bosh cloud-check` command. For more information, see [Remove Stale Cloud IDs for All Deployments](#bosh-cck).
+1. **bbr restore &lt;director&gt;**: Run the BBR restore command from your jumpbox to restore the BOSH Director. For more information, see [Restore the BOSH Director](#restore-bosh).
 
-1. **Apply Changes:** In the <%= vars.ops_manager %> Installation Dashboard, click **Review Pending Changes**, review your changes, and click **Apply Changes**. For more information, see [Reviewing Pending Product Changes](../review-pending-changes.html).
+1. **Use BOSH cck to fix the stale cloud ID references in the BOSH database**: For each deployment in the BOSH Director, you must run a `bosh cloud-check` command. For more information, see [Remove Stale Cloud IDs for All Deployments](#bosh-cck).
 
-1. **bbr restore &lt;PAS&gt;:** Run the BBR restore command from your jumpbox to restore <%= vars.app_runtime_full %> (<%= vars.app_runtime_abbr %>). For more information, see [Restore <%= vars.app_runtime_abbr %>](#restore-ert).
+1. **Apply Changes**: In the <%= vars.ops_manager %> Installation Dashboard, click **Review Pending Changes**, review your changes, and click **Apply Changes**. For more information, see [Reviewing Pending Product Changes](../review-pending-changes.html).
+
+1. **bbr restore &lt;<%= vars.app_runtime_abbr %>&gt;**: Run the BBR restore command from your jumpbox to restore <%= vars.app_runtime_full %> (<%= vars.app_runtime_abbr %>). For more information, see [Restore <%= vars.app_runtime_abbr %>](#restore-ert).
 
 
 ## <a id='prepare-restore'></a> Prepare to Restore
@@ -84,12 +86,12 @@ If you re-create your IaaS resources, you must also add those resources to <%= v
 ### <a id='deploy-import'></a> Step 2: Deploy <%= vars.ops_manager %> and Import Installation Settings
 
 1. Follow the procedures for your IaaS to deploy <%= vars.ops_manager %>:
-    * **AWS:**
+    * **AWS**:
         * If you configured AWS manually, see [Deploying <%= vars.ops_manager %> on AWS Manually](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/aws/deploy-manual.html).
         * If you used Terraform to install <%= vars.platform_name %> on AWS, see [Installing <%= vars.platform_name %> on AWS Using Terraform](../aws-terraform.html).
-    * **GCP:** See [Deploying <%= vars.ops_manager %> on GCP Manually](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/gcp/deploy-manual.html).
-    * **OpenStack:** See _Step 4: Create <%= vars.ops_manager %> Image_ through _Step 9: Create a DNS Entry_ in [Deploying <%= vars.ops_manager %> on OpenStack](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/openstack/setup.html#create-om-image).
-    * **vSphere:** See [Deploying <%= vars.ops_manager %> on vSphere](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/vsphere/deploy.html).
+    * **GCP**: See [Deploying <%= vars.ops_manager %> on GCP Manually](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/gcp/deploy-manual.html).
+    * **OpenStack**: See _Step 4: Create <%= vars.ops_manager %> Image_ through _Step 9: Create a DNS Entry_ in [Deploying <%= vars.ops_manager %> on OpenStack](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/openstack/setup.html#create-om-image).
+    * **vSphere**: See [Deploying <%= vars.ops_manager %> on vSphere](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/vsphere/deploy.html).
 
 1. Import your installation settings. This can be done in two ways:
     1. Using the <%= vars.ops_manager %> UI:
@@ -322,8 +324,7 @@ To remove stale cloud IDs for all deployments:
     Where:
     <br>
     * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
-    * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA.
-    (CA) certificate for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
+    * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
     * `DEPLOYMENT-NAME` is the deployment name retrieved in [Step 10: Identify Your Deployment](#identify-deployment).
     <br>
     Run this command for each deployment.
@@ -347,11 +348,11 @@ These sections describe the steps to redeploy <%= vars.app_runtime_abbr %>.
 
 To determine which stemcell is used by <%= vars.app_runtime_abbr %>, either:
 
-* Review the Stemcell Library:
+* Review the stemcell library:
     1. Go to **Stemcell Library**.
     1. Record the <%= vars.app_runtime_abbr %> stemcell release number from the **Staged** column.
 
-* Review a Stemcell List Using BOSH CLI:
+* Review a stemcell list using BOSH CLI:
     1. To retrieve the stemcell release using the BOSH CLI, run:
 
         ```
@@ -585,7 +586,7 @@ To clean up disk references:
 
 If `bosh cloud-check` does not clean up all disk references, you must manually delete the remaining disks.
 
-To delete the remaining disks, you can perform one of two procedures:
+To delete the remaining disks, follow one of these procedures:
 
   * Use the BOSH CLI to delete the disks:
     1. Target the redeployed BOSH Director using the BOSH CLI by following the procedures in [Step 8: Retrieve BOSH Director Address](#retrieve-address).

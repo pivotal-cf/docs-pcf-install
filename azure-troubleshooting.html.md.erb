@@ -7,18 +7,18 @@ owner: Ops Manager, Release Integration
 
 <html class="list-style-none"></html>
 
-This topic describes how to troubleshoot known issues when deploying or running <%= vars.platform_name %> on Azure.
+This topic describes how to troubleshoot known issues when deploying or running <%= vars.platform_name  %> on Azure.
 
 
 ## <a id="install-issues"></a> Installation Issues
 
 This section describes how to troubleshoot known installation issues.
 
-### <a id="cannot-copy-om"></a> Cannot Copy the <%= vars.ops_manager_full %> Image
+### <a id="cannot-copy-om"></a> Cannot Copy the Pivotal Ops Manager Image
 
 #### Symptom
 
-You cannot copy the <%= vars.ops_manager %> image into your storage account as part of _Step 4: Boot <%= vars.ops_manager %>_ in [Deploying <%= vars.ops_manager %> on Azure Manually](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/azure/deploy-manual.html#boot).
+You cannot copy the Ops Manager image into your storage account as part of the _Step 4: Boot Ops Manager_ section of the [Deploying Ops Manager on Azure Manually](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/azure/deploy-manual.html#boot) topic.
 
 #### Explanation
 
@@ -28,11 +28,13 @@ You have an outdated version of the Azure CLI. You need Azure CLI v2.0.0 or late
 
 Install the Azure CLI v2.0 by following the instructions for your operating system in the [Azure documentation](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli).
 
+<hr>
+
 ### <a id="create-env-fails"></a> Deployment Fails at "create-env"
 
 #### Symptom
 
-After clicking **Review Pending Changes**, then **Apply Changes** to install <%= vars.ops_manager %> and <%= vars.app_runtime_full %> (<%= vars.app_runtime_abbr %>), the deployment fails at `create-env` with an error message similar to the following:
+After clicking **Review Pending Changes**, then **Apply Changes** to install Ops Manager and PAS, the deployment fails at `create-env` with an error message similar to the following:
 
 ```
 Command 'deploy' failed:
@@ -52,11 +54,13 @@ Exited with 1.
 
 #### Explanation
 
-You provided a passphrase when creating your key pair in _Step 4: Boot <%= vars.ops_manager %>_ in [Deploying <%= vars.ops_manager %> on Azure Manually](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/azure/deploy-manual.html#boot).
+You provided a passphrase when creating your key pair in the _Step 4: Boot Ops Manager_ section of the [Deploying Ops Manager on Azure Manually](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/azure/deploy-manual.html#boot) topic.
 
 #### Solution
 
-Create a new key pair with no passphrase and re-do the installation. For more information, see _Step 4: Boot <%= vars.ops_manager %>_ in [Deploying <%= vars.ops_manager %> on Azure Manually](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/azure/deploy-manual.html#boot).
+Create a new key pair with no passphrase and redo the installation. For more information, see the _Step 4: Boot Ops Manager_ section of [Deploying Ops Manager on Azure Manually](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/azure/deploy-manual.html#boot).
+
+<hr>
 
 ### <a id="database-permissions"></a> Insufficient External Database Permissions
 
@@ -79,19 +83,19 @@ The Azure Load Balancer (ALB) disconnects active TCP connections lying idle for 
 
 #### Solution
 
-To mitigate slow performance or timeouts, the default value of the **Gorouter timeout to back ends** field is set to `900` seconds. This default value is set high to mitigate performance issues but operators should tune this parameter to fit their infrastructure.
+To mitigate slow performance or timeouts, the default value of the **Router timeout to back ends** field is set to 900 seconds. This default value is set high to mitigate performance issues but operators should tune this parameter to fit their infrastructure.
 
-To edit the **Gorouter timeout to back ends** field:
+To edit the **Router timeout to back ends** field:
 
-1. Navigate to the <%= vars.ops_manager %> Installation Dashboard.
-
-1. Click the <%= vars.app_runtime_abbr %> tile. 
+1. Go to the Installation Dashboard and click the Pivotal Application Service (PAS) tile. 
 
 1. Select **Networking**.
 
-1. Enter your desired time, in seconds, in the **Gorouter timeout to back ends** field.
+1. Enter your desired time, in seconds, in the **Router timeout to back ends** field.
 
 1. Click **Save**.
+
+<hr>
 
 ### <a id="service-create-fail"></a> Service Instance Creation Times Out
 
@@ -101,10 +105,10 @@ You are unable to provision a service instance of a Java or Go service. `cf crea
 
 #### Explanation
 
-HTTP libraries for Java and Go, running with default settings, prune connections that have been idle for 240 seconds from their connection pool without sending a TCP reset message back to the client service broker. This removes the ability of the broker to provision new service instances.
+HTTP libraries for Java and Go, running with default settings, prune idle (for 240 seconds) connections from their connection pool without sending a TCP reset message back to the client service broker. This removes the ability of the broker to provision new service instances.
 
 #### Solution
 
-In the **Networking** pane of the <%= vars.app_runtime_abbr %> tile, set **Front end idle timeout** to `240` seconds or less, so that <%= vars.platform_name %> regenerates the front end connection before it times out.
+In the **Configure Networking** pane of the PAS tile, set **Front end idle timeout** to 240 seconds or less, so that <%= vars.platform_name %> regenerates the front end connection before it times out.
 
 For more information, see [Azure Networking Connection Idle for more than Four minutes](https://community.pivotal.io/s/article/Azure-Networking-Connection-Idle-for-more-than-Four-minutes) in the Pivotal Knowledge Base.

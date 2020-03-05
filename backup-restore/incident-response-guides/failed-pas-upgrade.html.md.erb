@@ -3,122 +3,108 @@ title: Recovering from an Ops Manager and PAS Upgrade Failure
 owner: Platform Recovery
 ---
 
-This topic explains how to use BOSH Backup and Restore (BBR) to restore Pivotal Operations Manager
-and Pivotal Application Service (PAS) back to a healthy state after a failed upgrade
-between PAS minor versions.
+This topic explains how to use BOSH Backup and Restore (BBR) to restore <%= vars.ops_manager %> and <%= vars.app_runtime_full %> (<%= vars.app_runtime_abbr %>) back to a healthy state after a failed upgrade between <%= vars.app_runtime_abbr %> minor versions.
 
-<p class="note"><strong>Note:</strong> BBR can only restore across the same PAS minor
-  versions. See <code>metadata/cf-VERSION.yml</code> in the backup artifact to verify
-which version of PAS was used to create the backup artifact.</p>
+<p class="note"><strong>Note:</strong> BBR can only restore across the same <%= vars.app_runtime_abbr %> minor versions. To verify which version of <%= vars.app_runtime_abbr %> was used to create the backup artifact, see <code>metadata/cf-VERSION.yml</code> in the backup artifact.</p>
 
-## <a id="evaluate"></a>Evaluate Your Deployment
 
-You can restore Ops Manager and PAS to a healthy state after a failed upgrade between
-PAS minor versions if your backups, BOSH Director, and PAS deployment meet certain
-conditions. Follow the procedures in this section to confirm that your deployment
-can be restored by BBR.
+## <a id="evaluate"></a> Evaluate Your Deployment
 
-### <a id="review-backup"></a>Review Your Backup
+You can restore <%= vars.ops_manager %> and <%= vars.app_runtime_abbr %> to a healthy state after a failed upgrade between <%= vars.app_runtime_abbr %> minor versions if your backups, BOSH Director, and <%= vars.app_runtime_abbr %> deployment meet certain conditions. Follow the procedures in this section to confirm that your deployment can be restored by BBR.
 
-Before you perform a restore, you must do the following:
+### <a id="review-backup"></a> Review Your Backup
 
-1. Run the following `bbr` commands from your Ops Manager VM:
-  + Back up your deployments by running the following command:
+Before you perform a restore, you must:
+
+1. Run the following `bbr` commands from your <%= vars.ops_manager %> VM:
+  * Back up your deployments by running:
 
         ```
-        bbr deployment --deployment DEPLOYMENT_NAME backup
+        bbr deployment --deployment DEPLOYMENT-NAME backup
         ```
-  + Back up your BOSH Director by running the following command:
+        Where `DEPLOYMENT-NAME` is the name of your <%= vars.app_runtime_abbr %> deployment.
+  * Back up your BOSH Director by running:
 
         ```
         bbr director backup
         ```
         The above `bbr` commands produce the following backup artifacts:
 
-        + `DEPLOYMENT_NAME_TIMESTAMP/`
-        + `DIRECTOR_IP_TIMESTAMP/`
-        + `installation.zip`
+        * `DEPLOYMENT_NAME_TIMESTAMP/`
+        * `DIRECTOR_IP_TIMESTAMP/`
+        * `installation.zip`
 
-1. Export your Ops Manager settings. For more information, see the [Settings Page](../../pcf-interface.html#settings)
-section of _Using the Ops Manager Interface_.
+1. Export your <%= vars.ops_manager %> settings. For more information, see [Settings Page](../../pcf-interface.html#settings) in _Using the <%= vars.ops_manager %> Interface_.
 
 ### <a id="validating-environment-restore"></a>Validate Your Environment for Restore
 
-Before you can restore after a failed upgrade between PAS minor versions, you must
-confirm that your BOSH Director and PAS deployment are healthy.
+Before you can restore after a failed upgrade between <%= vars.app_runtime_abbr %> minor versions, you mustvconfirm that your BOSH Director and <%= vars.app_runtime_abbr %> deployment are healthy.
 
-#### <a id="bosh-director"></a>Confirm That Your BOSH Director Is Healthy
+#### <a id="bosh-director"></a>vConfirm That Your BOSH Director Is Healthy
 
-To check that the BOSH Director is in a healthy state for a `bbr restore`, SSH to
-the Ops Manager VM and ensure that all jobs are running.
+To check that the BOSH Director is in a healthy state for a `bbr restore`, you should SSH to the <%= vars.ops_manager %> VM and ensure that all jobs are running.
 
-To ensure that all jobs are running, do the following:
+To ensure that all jobs are running:
 
-1. SSH into your BOSH Director. For more information, see [Log in to the BOSH
-Director VM with SSH](../../trouble-advanced.html#bosh-director-ssh) in _Advanced
-Troubleshooting with the BOSH CLI_.
+1. SSH into your BOSH Director. For more information, see [Log In to the BOSH Director VM with SSH](../../trouble-advanced.html#bosh-director-ssh) in _Advanced Troubleshooting with the BOSH CLI_.
 
-1. View all deployment job instances by running the following command:
+1. View all deployment job instances by running:
 
-	```
-	monit summary
-	```
-Monit should report that all jobs are `running`.
+    ```
+	  monit summary
+	  ```
+    Monit should report that all jobs are `running`.
 
 1. Ensure that the BOSH API is responsive by running the following command:
 
-	```
-	bosh configs
-	```
-
+    ```
+  	bosh configs
+  	```
     If this command runs successfully, then the BOSH Director API is in a healthy
     and responsive state and can be restored by BBR.
 
-If your BOSH Director is unhealthy, see [Restoring an Unhealthy BOSH Director](#unhealthy-bosh) below.
+If your BOSH Director is unhealthy, see [Restoring an Unhealthy BOSH Director](#unhealthy-bosh).
 
-####<a id="pas"></a>Confirm That Your PAS Deployment Is Healthy
+#### <a id="pas"></a> Confirm That Your <%= vars.app_runtime_abbr %> Deployment Is Healthy
 
-To confirm that PAS is in a healthy state, run the following command:
+To confirm that <%= vars.app_runtime_abbr %> is in a healthy state:
 
-```
-bosh -d PAS-DEPLOYMENT-NAME instances
-```
-Where `PAS-DEPLOYMENT-NAME` is the name of your PAS BOSH deployment.
+1. Run:
 
-If your PAS deployment is healthy, then the output states that all of your instances
-are in the `running` state. If all instances are running, PAS can be restored by BBR.
+    ```
+    bosh -d <%= vars.app_runtime_abbr %>-DEPLOYMENT-NAME instances
+    ```
+    Where `<%= vars.app_runtime_abbr %>-DEPLOYMENT-NAME` is the name of your <%= vars.app_runtime_abbr %> BOSH deployment.
+    <br>
+    <br>
+    If your <%= vars.app_runtime_abbr %> deployment is healthy, then the output states that all of your instances are in the `running` state. If all instances are running, <%= vars.app_runtime_abbr %> can be restored by BBR.
+    <br>
+    <br>
+    If your <%= vars.app_runtime_abbr %> deployment is unhealthy, see [Restoring an Unhealthy <%= vars.app_runtime_abbr %> Deployment](#unhealthy-pas).
 
-If your PAS deployment is unhealthy, see [Restoring an Unhealthy PAS Deployment](failed-pas-upgrade.html#unhealthy-pas).
 
-## <a id="restore"></a>Restore Your Deployment
+## <a id="restore"></a> Restore Your Deployment
 
-After you confirm that your BOSH Director is healthy with its data intact, and
-all instances in your PAS deployment are responsive, you can restore PAS with BBR.
+After you confirm that your BOSH Director is healthy with its data intact, and all instances in your <%= vars.app_runtime_abbr %> deployment are responsive, you can restore <%= vars.app_runtime_abbr %> with BBR.
 
-### <a id="healthy-bosh-healthy-pas"></a>Restoring PAS
+### <a id="healthy-bosh-healthy-pas"></a> Restoring <%= vars.app_runtime_abbr %>
 
-If your BOSH Director is healthy, you can restore across the same PAS minor version
-by following the procedures in [Step 13: Restore PAS](../restore-pcf-bbr.html#restore-ert)
+If your BOSH Director is healthy, you can restore across the same <%= vars.app_runtime_abbr %> minor version by following the procedures in [Step 13: Restore <%= vars.app_runtime_abbr %>](../restore-pcf-bbr.html#restore-ert)
 in _Restoring <%= vars.platform_name %> from Backup with BBR_.
 
-##<a id="recover"></a>Recover to a Healthy State
 
-If either the BOSH Director or PAS are not in a healthy state, they must be recovered
-before you can run `bbr restore`. If you need guidance on the following subsections,
-contact [Pivotal Support](https://support.pivotal.io/).
+## <a id="recover"></a> Recover to a Healthy State
 
-###<a id="unhealthy-bosh"></a>Restoring an Unhealthy BOSH Director
+If either the BOSH Director or <%= vars.app_runtime_abbr %> are not in a healthy state, they must be recovered before you can run `bbr restore`. If you need guidance on the following subsections, contact [Pivotal Support](https://support.pivotal.io/).
 
-If the BOSH Director is not in a healthy state, Pivotal recommends following our
-full restore workflow to regain your Ops Manager, BOSH Director, and BOSH deployments.
+### <a id="unhealthy-bosh"></a> Restoring an Unhealthy BOSH Director
 
-See [Restore Workflow](../restore-pcf-bbr.html#restore-diagram) in _Restoring <%= vars.platform_name %> from Backup with BBR_.
+If the BOSH Director is not in a healthy state, <%= vars.recommended_by %> recommends following the full restore workflow to regain your <%= vars.ops_manager %>, BOSH Director, and BOSH deployments. For more information, see [Restore Workflow](../restore-pcf-bbr.html#restore-diagram) in _Restoring <%= vars.platform_name %> from Backup with BBR_.
 
-###<a id="unhealthy-pas"></a>Restoring an Unhealthy PAS Deployment
+### <a id="unhealthy-pas"></a> Restoring an Unhealthy <%= vars.app_runtime_abbr %> Deployment
 
 If your BOSH Director is healthy, you can restore your previous BOSH Director state
-by following [Step 8: Restore the BOSH Director](../restore-pcf-bbr.html#restore-bosh)
+by following the procedure in [Step 8: Restore the BOSH Director](../restore-pcf-bbr.html#restore-bosh)
 in _Restoring <%= vars.platform_name %> from Backup with BBR_.
 
-After your BOSH Director is restored, you can then restore your deployments by following
-[Step 13: Restore PAS](../restore-pcf-bbr.html#restore-ert) in _Restoring <%= vars.platform_name %> from Backup with BBR_.
+After your BOSH Director is restored, you can then restore your deployments by following the procedure in [Step 13: Restore <%= vars.app_runtime_abbr %>](../restore-pcf-bbr.html#restore-ert) in _Restoring <%= vars.platform_name %> from Backup with BBR_.

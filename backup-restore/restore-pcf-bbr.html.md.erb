@@ -14,7 +14,7 @@ For BBR release notes, see [BOSH Backup and Restore Release Notes](https://docs.
 
 To perform the procedures in this topic, you must have backed up <%= vars.platform_name %> by following the procedure in [Backing Up <%= vars.platform_name %> with BBR](backup-pcf-bbr.html).
 
-The procedures described in this topic prepare your environment for <%= vars.platform_name %>, deploy <%= vars.ops_manager_full %>, import your installation settings, and use BBR to restore your <%= vars.platform_name %> components.
+The procedures described in this topic prepare your environment for <%= vars.platform_name %>, deploy <%= vars.ops_manager %>, import your installation settings, and use BBR to restore your <%= vars.platform_name %> components.
 
 <p class="note warning"><strong>Warning:</strong> Restoring <%= vars.platform_name %> with BBR is a destructive operation. If the restore fails, the new environment could be left in an unusable state and require re-provisioning. Only perform the procedures in this topic for the purpose of disaster recovery, such as re-creating <%= vars.platform_name %> after a storage-area network (SAN) corruption.</p>
 
@@ -29,44 +29,44 @@ This section describes the restrictions for a backup artifact to be restorable t
 
 For a backup artifact to be restorable, these restrictions apply:
 
-* **CIDR ranges**: BBR requires the IP address ranges to be the same in the restore environment as in the backup environment.
+* **CIDR ranges:** BBR requires the IP address ranges to be the same in the restore environment as in the backup environment.
 
-* **Topology**: BBR requires the BOSH topology of a deployment to be the same in the restore environment as it was in the backup environment.
+* **Topology:** BBR requires the BOSH topology of a deployment to be the same in the restore environment as it was in the backup environment.
 
-* **Naming of instance groups and jobs**: For any deployment that implements the backup and restore scripts, the instance groups and jobs must have the same names.
+* **Naming of instance groups and jobs:** For any deployment that implements the backup and restore scripts, the instance groups and jobs must have the same names.
 
-* **Number of instance groups and jobs**: For instance groups and jobs that have backup and restore scripts, there must be the same number of instances.
+* **Number of instance groups and jobs:** For instance groups and jobs that have backup and restore scripts, there must be the same number of instances.
 
-* **Limited validation**: BBR puts the backed-up data into the corresponding instance groups and jobs in the restored environment, but cannot validate the restore beyond that. For example, if the MySQL encryption key is different in the restore environment, the BBR restore might succeed, but the restored MySQL database is unusable.
+* **Limited validation:** BBR puts the backed-up data into the corresponding instance groups and jobs in the restored environment, but cannot validate the restore beyond that. For example, if the MySQL encryption key is different in the restore environment, the BBR restore might succeed, but the restored MySQL database is unusable.
 
-* **<%= vars.platform_name %> version**: BBR can restore to the same version of <%= vars.platform_name %> that was backed up. BBR does not support restoring to other major, minor, or patch releases.
+* **<%= vars.platform_name %> version:** BBR can restore to the same version of <%= vars.platform_name %> that was backed up. BBR does not support restoring to other major, minor, or patch releases.
 
-<p class="note"><strong>Note:</strong> A change in VM size or underlying hardware does not affect BBR's ability to restore data, as long as there is adequate storage space to restore the data.</p>
+<p class="note"><strong>Note:</strong> A change in VM size or underlying hardware does not affect the ability of BBR to restore data, as long as there is adequate storage space to restore the data.</p>
 
 
 ## <a id="restore-diagram"></a> Restore Workflow
 
-The diagram below illustrates the flow of the <%= vars.platform_name %> restore process in a series of steps performed by the <%= vars.platform_name %> operator. The following steps are covered in more detail throughout this topic. Click the diagram to see the full-size image.
+The diagram below illustrates the flow of the <%= vars.platform_name %> restore process in a series of steps performed by the <%= vars.platform_name %> operator. These steps are described in more detail throughout this topic.
 
-![Flow chart shows the platform Operator through a series of steps interacting with the BOSH CLI, <%= vars.ops_manager %> VM, Director VM, and the <%= vars.app_runtime_abbr %> tile. Details on these steps are described below.](./images/pcf-restore.png)
+![Flow chart shows the platform Operator through a series of steps interacting with the BOSH CLI, <%= vars.ops_manager %> VM, Director VM, and the <%= vars.app_runtime_full %> (<%= vars.app_runtime_abbr %>) tile. Details on these steps are described below.](./images/pcf-restore.png)
 
 [View a larger version of this diagram](./images/pcf-restore.png).
 
-1. **Launch new <%= vars.ops_manager %>**: Follow the procedures for your IaaS to deploy <%= vars.ops_manager %>. For more information, see Step 1 of [Deploy <%= vars.ops_manager %> and Import Installation Settings](#deploy-import).
+1. **Launch new <%= vars.ops_manager %>:** Follow the procedures for your IaaS to deploy <%= vars.ops_manager %>. For more information, see Step 1 of [Deploy <%= vars.ops_manager %> and Import Installation Settings](#deploy-import).
 
-1. **Import settings**: You can import settings either with the <%= vars.ops_manager %> UI or API. For more information, see Step 2 of [Deploy <%= vars.ops_manager %> and Import Installation Settings](#deploy-import).
+1. **Import settings:** You can import settings either with the <%= vars.ops_manager %> UI or API. For more information, see Step 2 of [Deploy <%= vars.ops_manager %> and Import Installation Settings](#deploy-import).
 
-1. **Remove bosh-state.json**: SSH into your <%= vars.ops_manager %> VM and delete the `bosh-state.json` file. For more information, see [Remove BOSH State File](#bosh-state).
+1. **Remove bosh-state.json:** SSH into your <%= vars.ops_manager %> VM and delete the `bosh-state.json` file. For more information, see [Remove BOSH State File](#bosh-state).
 
-1. **Apply Changes (BOSH Director only)**: Use the <%= vars.ops_manager %> API to only deploy the BOSH Director. For more information, see [Deploy the BOSH Director](#bosh-only-deploy).
+1. **Apply Changes (BOSH Director only):** Use the <%= vars.ops_manager %> API to only deploy the BOSH Director. For more information, see [Deploy the BOSH Director](#bosh-only-deploy).
 
-1. **bbr restore &lt;director&gt;**: Run the BBR restore command from your jumpbox to restore the BOSH Director. For more information, see [Restore the BOSH Director](#restore-bosh).
+1. **bbr restore &lt;director&gt;:** Run the BBR restore command from your jumpbox to restore the BOSH Director. For more information, see [Restore the BOSH Director](#restore-bosh).
 
-1. **Use BOSH cck to fix the stale cloud ID references in the BOSH database**: For each deployment in the BOSH Director, you must run a `bosh cloud-check` command. For more information, see [Remove Stale Cloud IDs for All Deployments](#bosh-cck).
+1. **Use BOSH cck to fix the stale cloud ID references in the BOSH database:** For each deployment in the BOSH Director, you must run a `bosh cloud-check` command. For more information, see [Remove Stale Cloud IDs for All Deployments](#bosh-cck).
 
-1. **Apply Changes**: In the <%= vars.ops_manager %> Installation Dashboard, click **Review Pending Changes**, review your changes, and click **Apply Changes**. For more information, see [Reviewing Pending Product Changes](../review-pending-changes.html).
+1. **Apply Changes:** In the <%= vars.ops_manager %> Installation Dashboard, click **Review Pending Changes**, review your changes, and click **Apply Changes**. For more information, see [Reviewing Pending Product Changes](../review-pending-changes.html).
 
-1. **bbr restore &lt;<%= vars.app_runtime_abbr %>&gt;**: Run the BBR restore command from your jumpbox to restore <%= vars.app_runtime_full %> (<%= vars.app_runtime_abbr %>). For more information, see [Restore <%= vars.app_runtime_abbr %>](#restore-ert).
+1. **bbr restore &lt;<%= vars.app_runtime_abbr %>&gt;:** Run the BBR restore command from your jumpbox to restore <%= vars.app_runtime_abbr %>. For more information, see [Restore <%= vars.app_runtime_abbr %>](#restore-ert).
 
 
 ## <a id='prepare-restore'></a> Prepare to Restore
@@ -86,16 +86,16 @@ If you re-create your IaaS resources, you must also add those resources to <%= v
 ### <a id='deploy-import'></a> Step 2: Deploy <%= vars.ops_manager %> and Import Installation Settings
 
 1. Follow the procedures for your IaaS to deploy <%= vars.ops_manager %>:
-    * **AWS**:
+    * **AWS:**
         * If you configured AWS manually, see [Deploying <%= vars.ops_manager %> on AWS Manually](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/aws/deploy-manual.html).
         * If you used Terraform to install <%= vars.platform_name %> on AWS, see [Installing <%= vars.platform_name %> on AWS Using Terraform](../aws-terraform.html).
-    * **GCP**: See [Deploying <%= vars.ops_manager %> on GCP Manually](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/gcp/deploy-manual.html).
-    * **OpenStack**: See _Step 4: Create <%= vars.ops_manager %> Image_ through _Step 9: Create a DNS Entry_ in [Deploying <%= vars.ops_manager %> on OpenStack](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/openstack/setup.html#create-om-image).
-    * **vSphere**: See [Deploying <%= vars.ops_manager %> on vSphere](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/vsphere/deploy.html).
+    * **GCP:** See [Deploying <%= vars.ops_manager %> on GCP Manually](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/gcp/deploy-manual.html).
+    * **OpenStack:** See _Step 4: Create <%= vars.ops_manager %> Image_ through _Step 9: Create a DNS Entry_ in [Deploying <%= vars.ops_manager %> on OpenStack](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/openstack/setup.html#create-om-image).
+    * **vSphere:** See [Deploying <%= vars.ops_manager %> on vSphere](/platform/<%= vars.current_major_version.sub('.', '-') %>/om/vsphere/deploy.html).
 
 1. Import your installation settings. This can be done in two ways:
     1. Using the <%= vars.ops_manager %> UI:
-        1. Access your new <%= vars.ops_manager %> by navigating to your Ops Manager fully-qualified domain name (FQDN) in a browser.
+        1. Access your new <%= vars.ops_manager %> deployment by navigating to the fully-qualified domain name (FQDN) for your <%= vars.ops_manager %> deployment in a browser.
         1. On the **Welcome to <%= vars.ops_manager %>** page, click **Import Existing Installation**.
 
             <%= image_tag("../images/upgrading/welcome.png") %>
@@ -108,7 +108,6 @@ If you re-create your IaaS resources, you must also add those resources to <%= v
 
         1. Click **Import**.
             <p class="note"><strong>Note:</strong> Some browsers do not provide feedback on the status of the import process, and might appear to hang. The import process takes at least 10 minutes, and takes longer the more tiles that were present on the backed-up <%= vars.ops_manager %>.</p>
-
         1. A **Successfully imported installation** message appears upon completion.
 
             <%= image_tag("../images/upgrading/success.png") %>
@@ -124,11 +123,12 @@ If you re-create your IaaS resources, you must also add those resources to <%= v
               -F 'passphrase=DECRYPTION-PASSPHRASE'
             ```
             Where:
+            <br>
             * `OPS-MANAGER-FQDN` is the FQDN for your <%= vars.ops_manager %> deployment.
-            * `UAA-ACCESS-TOKEN` is the UAA access token. For more information about how to retrieve this token, see [Using the <%= vars.ops_manager %> API](../../customizing/ops-man-api.html).
+            * `UAA-ACCESS-TOKEN` is your UAA access token. For more information about how to retrieve this token, see [Using the <%= vars.ops_manager %> API](../../customizing/ops-man-api.html).
             * `DECRYPTION-PASSPHRASE` is the decryption passphrase in use when you exported the installation settings from <%= vars.ops_manager %>.
 
-<p class="note warning"><strong>Warning:</strong> Do not click <strong>Apply Changes</strong> in <%= vars.ops_manager %> until the instruction in <em>Step 14: Redeploy PAS</em>.</p>
+<p class="note warning"><strong>Warning:</strong> Do not click <strong>Apply Changes</strong> in <%= vars.ops_manager %> until the instruction in <em>Step 14: Redeploy <%= vars.app_runtime_abbr %></em>.</p>
 
 ### <a id="config-new-resources"></a> Step 3: (Optional) Configure <%= vars.ops_manager %> for New Resources
 
@@ -184,7 +184,7 @@ To remove the BOSH state file:
     sudo rm /var/tempest/workspaces/default/deployments/bosh-state.json
     ```
 
-1. In a browser, navigate to <%= vars.ops_manager %>'s FQDN.
+1. In a browser, navigate to the FQDN of your <%= vars.ops_manager %> deployment.
 
 1. Log in to <%= vars.ops_manager %>.
 
@@ -218,7 +218,7 @@ To retrieve the IP address of your BOSH Director from the BOSH Director tile:
 <div class="note"><strong>Notes:</strong>
   <ul>
     <li>The BBR BOSH Director restore command can take at least 15 minutes to complete.</li>
-    <li><%= vars.recommended_by %> recommends that you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code> but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</li>
+    <li><%= vars.recommended_by %> recommends that you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code>, but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</li>
   </ul>
 </div>
 
@@ -236,42 +236,41 @@ To restore BOSH Director:
     --username bbr \
     --host HOST \
     restore \
-    --artifact-path PATH-TO-DIRECTOR-BACKUP
+    --artifact-path PATH-TO-BOSH-DIRECTOR-BACKUP
     ```
     Where:
     <br>
-    * `PATH-TO-DIRECTOR-BACKUP` is the path to the BOSH Director backup you want to restore.
     * `PRIVATE-KEY-FILE` is the path to the private key file you created in [Step 7: Retrieve BOSH Director Credentials](#retrieve-credentials).
     * `HOST` is the address of the BOSH Director.
       * If the BOSH Director is public, `HOST` is a URL, such as `https://bosh-director.xxx.cf-app.com`.
-      * If the BOSH Director is not public, `HOST` is the `BOSH-DIRECTOR-IP` retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
-    * (Optional) Use the `--debug` flag to enable debug logs. For more information, see [Logging](backup-pcf-bbr.html#logging) in _Backing Up <%= vars.platform_name %> with BBR_.
+      * If the BOSH Director is not public, `HOST` is the `BOSH-DIRECTOR-IP` you retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
+    * `PATH-TO-BOSH-DIRECTOR-BACKUP` is the path to the BOSH Director backup you want to restore.
+    * (Optional) To enable debug logs, use the `--debug` flag. For more information, see [Logging](backup-pcf-bbr.html#logging) in _Backing Up <%= vars.platform_name %> with BBR_.
 
 1. After the command succeeds, continue to [Step 10: Identify Your Deployment](#identify-deployment).
 <br>
 If the command fails:
   1. Run:
 
-        ```
-        bbr director \
-        --private-key-path PRIVATE-KEY-FILE \
-        --username bbr \
-        --host HOST \
-        restore-cleanup
-        ```
-        Where:
-        <br>
-        * `PRIVATE-KEY-FILE`is the path to the private key file you created in [Step 7: Retrieve BOSH Credentials](#retrieve-credentials).
-        * `HOST` is the address of the BOSH Director.
-          * If the BOSH Director is public, `HOST` is a URL, such as `https://bosh-director.xxx.cf-app.com`.
-          * If the BOSH Director is not public, `HOST` is the `BOSH-DIRECTOR-IP` retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
+      ```
+      bbr director \
+      --private-key-path PRIVATE-KEY-FILE \
+      --username bbr \
+      --host HOST \
+      restore-cleanup
+      ```
+      Where:
+      <br>
+      * `PRIVATE-KEY-FILE`is the path to the private key file you created in [Step 7: Retrieve BOSH Credentials](#retrieve-credentials).
+      * `HOST` is the address of the BOSH Director.
+        * If the BOSH Director is public, `HOST` is a URL, such as `https://bosh-director.xxx.cf-app.com`.
+        * If the BOSH Director is not public, `HOST` is the `BOSH-DIRECTOR-IP` you retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
   1. Run the BBR restore command again after ensuring that:
-        * All the parameters in the command are set.
-        * The BOSH Director credentials are valid.
-        * The specified deployment exists.
-        * The source deployment is compatible with the target deployment.
-        * That the jumpbox can reach the BOSH Director.
-
+      * All the parameters in the command are set.
+      * The BOSH Director credentials are valid.
+      * The specified deployment exists.
+      * The source deployment is compatible with the target deployment.
+      * That the jumpbox can reach the BOSH Director.
 
 ### <a id='identify-deployment'></a> Step 10: Identify Your Deployment
 
@@ -286,24 +285,8 @@ To identify the name of the BOSH deployment that contains <%= vars.platform_name
     ```
     Where:
     <br>
-    * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
-    * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the Certificate Authority (CA) certificate for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
-
-    For example:
-    <pre class='terminal'>
-    $ bosh -e BOSH-DIRECTOR-IP --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
-    <br>
-    Name                     Release(s)
-    cf-example               push-apps-manager-release/661.1.24
-                                 cf-backup-and-restore/0.0.1
-                                 binary-buildpack/1.0.11
-                                 capi/1.28.0
-                                 cf-autoscaling/91
-                                 cf-mysql/35
-                                 ...
-    </pre>
-    <br>
-    In the above example, the name of the BOSH deployment that contains <%= vars.platform_name %> is `cf-example`. `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the root CA certificate for the BOSH Director. If you are using the <%= vars.ops_manager %> VM as your jumpbox, the path is `/var/tempest/workspaces/default/root_ca_certificate`.
+    * `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
+    * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the certificate authority (CA) for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
 
 ### <a id="bosh-cck"></a> Step 11: Remove Stale Cloud IDs for All Deployments
 
@@ -323,9 +306,9 @@ To remove stale cloud IDs for all deployments:
 
     Where:
     <br>
-    * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
+    * `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
     * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
-    * `DEPLOYMENT-NAME` is the deployment name retrieved in [Step 10: Identify Your Deployment](#identify-deployment).
+    * `DEPLOYMENT-NAME` is the deployment name you retrieved in [Step 10: Identify Your Deployment](#identify-deployment).
     <br>
     Run this command for each deployment.
 
@@ -334,7 +317,6 @@ To remove stale cloud IDs for all deployments:
     ```
     bosh cloud-check
     ```
-
     If the `bosh cloud-check` command does not successfully delete disk references, and you see a message similar to the example below, follow the additional procedures in [Remove Unused Disks](#removing-disks).
     <pre class="terminal">
     Scanning 19 persistent disks: 19 OK, 0 missing ...
@@ -348,7 +330,7 @@ These sections describe the steps to redeploy <%= vars.app_runtime_abbr %>.
 
 To determine which stemcell is used by <%= vars.app_runtime_abbr %>, either:
 
-* Review the stemcell library:
+* Review the Stemcell Library:
     1. Go to **Stemcell Library**.
     1. Record the <%= vars.app_runtime_abbr %> stemcell release number from the **Staged** column.
 
@@ -358,17 +340,7 @@ To determine which stemcell is used by <%= vars.app_runtime_abbr %>, either:
         ```
         bosh -e BOSH-DIRECTOR-IP deployments
         ```
-        Where `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
-        <br><br>
-        For example:
-        <pre class="terminal">
-        $ bosh -e BOSH-DIRECTOR-IP deployments
-        Using environment '10.0.0.5' as user 'director' (bosh.\*.read, openid, bosh.\*.admin, bosh.read, bosh.admin)
-
-        Name                     Release(s)                            Stemcell(s)                                    Team(s)  Cloud Config
-        cf-9cb6995b7d746cd77438  push-apps-manager-release/661.1.24    bosh-google-kvm-ubuntu-trusty-go_agent/3421.9  -        latest
-        ...
-        </pre>
+        Where `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
 
 For more information about stemcells in <%= vars.ops_manager %>, see [Importing and Managing Stemcells](../../opsguide/managing-stemcells.html).
 
@@ -389,12 +361,12 @@ To upload the required stemcell:
     ```
     Where:
     <br>
-    * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
-    * `DEPLOYMENT-NAME` is the deployment name retrieved in [Step 10: Identify Your Deployment](#identify-deployment).
+    * `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
+    * `DEPLOYMENT-NAME` is the deployment name you retrieved in [Step 10: Identify Your Deployment](#identify-deployment).
     * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA certificate for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
     * `PATH-TO-STEMCELL` is the path to your tile's stemcell.
 
-1. To ensure the stemcells for all of your other installed tiles have been uploaded, repeat the last step, running `bosh <%= vars.bosh_upload_stemcell %> --fix PATH-TO-STEMCELL`, for each stemcell that is different from the already uploaded PAS stemcell.
+1. To ensure the stemcells for all of your other installed tiles have been uploaded, repeat the previous step, running `bosh <%= vars.bosh_upload_stemcell %> --fix PATH-TO-STEMCELL`, for each stemcell that is different from the already uploaded <%= vars.app_runtime_abbr %> stemcell.
 
 #### <a id='redeploy-pas'></a> Redeploy <%= vars.app_runtime_abbr %>
 
@@ -457,13 +429,18 @@ To restore your <%= vars.app_runtime_abbr %> backup:
     ```
     Where:
     <br>
-    * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
+    * `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
     * `BOSH-CLIENT` and `BOSH-PASSWORD` are the **Uaa Bbr Client Credentials**, identity and password that you retrieved in [Step 7: Retrieve BOSH Director Credentials](#retrieve-credentials).
-    * `DEPLOYMENT-NAME` is the deployment name retrieved in [Step 10: Identify Your Deployment](#identify-deployment).
-    * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA certificate for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
+    * `DEPLOYMENT-NAME` is the deployment name you retrieved in [Step 10: Identify Your Deployment](#identify-deployment).
+    * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
     * `PATH-TO-<%= vars.app_runtime_abbr %>-BACKUP` is the path to the <%= vars.app_runtime_abbr %> backup you want to restore.
 
-1. If desired, scale the MySQL Server job back up to its previous number of instances in the **Resource Config** section of the <%= vars.app_runtime_abbr %> tile. After scaling the job, return to the <%= vars.ops_manager %> Installation Dashboard.
+1. (Optional) To scale the MySQL Server job back up to its previous number of instances:
+  1. Navigate to the <%= vars.ops_manager %> Installation Dashboard
+  1. Click the the <%= vars.app_runtime_abbr %> tile.
+  1. Select **Resource Config**.
+  1. Scale the MySQL Server job back up.
+  1. Return to the <%= vars.ops_manager %> Installation Dashboard.
 
 1. Click **Review Pending Changes**.
 
@@ -473,21 +450,26 @@ To restore your <%= vars.app_runtime_abbr %> backup:
 
 ### <a id='restore-apps'></a> Step 15: (Optional) Restore Apps to a Running State
 
-Restoring apps to a running state is only required if you configured a <%= vars.app_runtime_abbr %> file storage backup that excludes droplets or both droplets and packages. For more information about the advantages and disadvantages of excluding droplets and packages, see [File Storage Backup Level](./file-storage-backup-level.html).
+Restoring apps to a running state is only required if you configured a <%= vars.app_runtime_abbr %> file storage backup that excludes droplets or both droplets and packages. For more information about the advantages and disadvantages of excluding droplets and packages, see [File Storage Backup Level](file-storage-backup-level.html).
 
 To return apps to a running state:
 
-    * If you excluded droplets from your backup, restage each app by running:
+* If you excluded droplets from your backup, restage each app by running:
 
-        ```
-        cf restage APP-NAME
-        ```
+    ```
+    cf restage APP-NAME
+    ```
+    Where `APP-NAME` is the name of the app you want to restage.
 
-    * If you excluded both droplets and packages from your backup, re-push each app by running:
+* If you excluded both droplets and packages from your backup, re-push each app by running:
 
-        ```
-        cf push APP-NAME OPTIONAL-FLAGS
-        ```
+    ```
+    cf push APP-NAME OPTIONAL-FLAGS
+    ```
+    Where:
+    <br>
+    * `APP-NAME` is the name of the app you want to re-push.
+    * `OPTIONAL-FLAGS` are any flags you want to use while re-pushing your app.
 
 ### <a id='odb'></a> Step 16: (Optional) Restore On-Demand Service Instances
 
@@ -495,7 +477,9 @@ If you have on-demand service instances provisioned by an on-demand service brok
 
 To restore your on-demand service instances:
 
-1. Navigate to an on-demand service tile in the <%= vars.ops_manager %> Installation Dashboard.
+1. Navigate to the <%= vars.ops_manager %> Installation Dashboard.
+
+1. Click an on-demand service tile.
 
 1. Select the **Errands** tab.
 
@@ -505,7 +489,9 @@ To restore your on-demand service instances:
 
 1. Return to the <%= vars.ops_manager %> Installation Dashboard.
 
-1. Click **Review Pending Changes**, review your changes, and then click **Apply Changes**. This includes running the **Upgrade All Service Instances** errand for the on-demand service, which redeploys the on-demand service instances.
+1. Click **Review Pending Changes**.
+
+1. Click **Apply Changes**. This runs the **Upgrade All Service Instances** errand for the on-demand service, which redeploys the on-demand service instances.
 
 1. (Optional) Restore service data to every on-demand service instance.
 
@@ -526,7 +512,7 @@ To restore the VMs:
     ```
     Where:
     <br>
-    * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
+    * `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
     * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA certificate for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
 
 1. Identify the names of the deployments that you need to restore. Do not include the deployments from <%= vars.ops_manager %> tiles.
@@ -541,9 +527,9 @@ To restore the VMs:
     ```
     Where:
     <br>
-    * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
-    * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA certificate for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
-    * `DEPLOYMENT-NAME` is the deployment name retrieved in [Step 10: Identify Your Deployment](#identify-deployment).
+    * `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
+    * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
+    * `DEPLOYMENT-NAME` is the deployment name you retrieved in [Step 10: Identify Your Deployment](#identify-deployment).
 
 1. To verify the status of the VMs in each deployment, run:
 
@@ -555,9 +541,9 @@ To restore the VMs:
     ```
     Where:
     <br>
-    * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
-    * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA certificate for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
-    * `DEPLOYMENT-NAME` is the deployment name retrieved in [Step 10: Identify Your Deployment](#identify-deployment).
+    * `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
+    * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
+    * `DEPLOYMENT-NAME` is the deployment name you retrieved in [Step 10: Identify Your Deployment](#identify-deployment).
 
 The process state for all VMs should show as `running`.
 
@@ -588,36 +574,37 @@ If `bosh cloud-check` does not clean up all disk references, you must manually d
 
 To delete the remaining disks, follow one of these procedures:
 
-  * Use the BOSH CLI to delete the disks:
-    1. Target the redeployed BOSH Director using the BOSH CLI by following the procedures in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
-    1. List the deployments by running:
+* Use the BOSH CLI to delete the disks:
+  1. Target the redeployed BOSH Director using the BOSH CLI by following the procedures in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
+  1. List the deployments by running:
 
-          ```
-          bosh -e BOSH-DIRECTOR-IP \
-          --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
-          ```
-          Where:
-          <br>
-          * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
-          * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA certificate for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
-    1. Delete each deployment by running:
+        ```
+        bosh -e BOSH-DIRECTOR-IP \
+        --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
+        ```
+        Where:
+        <br>
+        * `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
+        * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
+  1. Delete each deployment by running:
 
-          ```
-          bosh -d DEPLOYMENT-NAME <%= vars.bosh_delete_deployment %>
-          ```
-          Where:
-          <br>
-          * `DEPLOYMENT-NAME` is the deployment name retrieved in [Step 10: Identify Your Deployment](#identify-deployment).
-  * Log in to your IaaS account and delete the disks manually.
-      1. To retrieve a list of disk IDs, run:
+        ```
+        bosh -d DEPLOYMENT-NAME <%= vars.bosh_delete_deployment %>
+        ```
+        Where:
+        <br>
+        * `DEPLOYMENT-NAME` is the deployment name you retrieved in [Step 10: Identify Your Deployment](#identify-deployment).
 
-          ```
-          bosh -e BOSH-DIRECTOR-IP \
-          --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE instances -i
-          ```
-          Where:
-          <br>
-          * `BOSH-DIRECTOR-IP` is the BOSH Director IP retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
-          * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA certificate for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
+* Log in to your IaaS account and delete the disks manually.
+    1. To retrieve a list of disk IDs, run:
+
+        ```
+        bosh -e BOSH-DIRECTOR-IP \
+        --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE instances -i
+        ```
+        Where:
+        <br>
+        * `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
+        * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA for the BOSH Director, if the certificate is not verifiable by the local machine's certificate chain.
 
 After the disks are deleted, continue with [Step 11: Remove Stale Cloud IDs for All Deployments](#bosh-cck).

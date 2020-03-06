@@ -8,25 +8,27 @@ owner: Ops Manager
 	}
 </style>
 
-<%= vars.platform_name  %> supports Amazon Elastic Block Store (EBS) encryption for <%= vars.product_short %> deployments on AWS. You can use this feature to meet data-at-rest encryption requirements or as a security best practice. This feature uses AWS Key Management Service (KMS).
+<%= vars.platform_name %> supports Amazon Elastic Block Store (EBS) encryption for <%= vars.platform_name %> deployments on AWS. You can use this feature to meet data-at-rest encryption requirements or as a security best practice. This feature uses AWS Key Management Service (KMS).
 
-<p class="note"><strong>Note:</strong> Enabling EBS encryption only encrypts Linux VMs. The Windows VMs deployed with Pivotal Application Service (PAS) for Windows are not encrypted.</p>
+<p class="note"><strong>Note:</strong> Enabling EBS encryption only encrypts Linux VMs. The Windows VMs deployed with <%= vars.app_runtime_full %> (<%= vars.app_runtime_abbr %>) for Windows are not encrypted.</p>
 
 By following the procedures in this topic, you can use full disk encryption for all persistent disks on the following VMs:
 
 * BOSH and all present and future VMs
-* The Pivotal Operations Manager VM
+* The <%= vars.ops_manager %> VM
 
-There is no performance penalty for using encrypted EBS volumes. Pivotal advises all users of <%= vars.product_short %> on AWS to enable encryption.
+There is no performance penalty for using encrypted EBS volumes. <%= vars.recommended_by %> recommends that all users of <%= vars.platform_name %> on AWS enable encryption.
 
 <p class="note"><strong>Note:</strong> Before you enable EBS encryption with KMS, you may need to update your AWS policy. For more information, see <a href="policy-doc.html#add-policies">Add Additional AWS Policies</a>.</p>
 
 
 ## <a id="enable-bosh"></a> Enable Encryption for BOSH
 
-To enable EBS encryption, do the following:
+To enable EBS encryption:
 
-1. Click the **BOSH Director** tile.
+1. Navigate to the <%= vars.ops_manager %> Installation Dashboard.
+
+1. Click the BOSH Director tile.
 
     <%= image_tag("aws/director-tile-aws.png") %>
 
@@ -34,8 +36,8 @@ To enable EBS encryption, do the following:
 
 	<%= image_tag("cloudform/aws-config.png") %>
 
-1. Select **Encrypt Linux EBS Volumes**.
-	<p class="note"><strong>Note:</strong> <strong>Encrypt Linux EBS Volumes</strong> is a global setting. When selected, <strong>Encrypt Linux EBS Volumes</strong> enables encryption on all Linux VMs deployed by BOSH for all product tiles. Windows VMs are not encrypted.</p>
+1. Enable the **Encrypt Linux EBS Volumes** checkbox.
+	<p class="note"><strong>Note:</strong> <strong>Encrypt Linux EBS Volumes</strong> is a global setting. When enabled, the <strong>Encrypt Linux EBS Volumes</strong> checkbox enables encryption on all Linux VMs deployed by BOSH for all product tiles. Windows VMs are not encrypted.</p>
 
 1. (Optional) Enter a **Custom Encryption Key**. You can create an encryption key in the **IAM** section of your **AWS Management Console**. Look for the Amazon Resource Name (ARN) and copy that value. The ARN should look similar to the following:
 
@@ -43,44 +45,50 @@ To enable EBS encryption, do the following:
 	arn:aws:kms:us-east-1:123456789012:
 key/12345678-9012-3456-7890-123456789012
 	```
-	If you leave the field empty, the encryption key will default to the Amazon account key. For more information about creating your own encryption key, see [Creating Keys](https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html) and [Viewing Keys](https://docs.aws.amazon.com/kms/latest/developerguide/viewing-keys.html) in the AWS documentation.
+	If you leave the field empty, the encryption key defaults to the Amazon account key. For more information about creating your own encryption key, see [Creating Keys](https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html) and [Viewing Keys](https://docs.aws.amazon.com/kms/latest/developerguide/viewing-keys.html) in the AWS documentation.
 
 	<p class="note"><strong>Note:</strong> AWS rotates your KMS automatically each year. For more information, see <a href="https://docs.aws.amazon.com/kms/latest/developerguide/rotate-keys.html">Rotating Customer Master Keys</a> in the AWS Documentation.</p>
 
 1. Click **Save**.
 
-1. (Optional) Ignore this series of steps if you are making your first deployment. Otherwise, you need to reset your VMs so that they can encrypt Linux EBS volumes. Complete the following steps to encrypt all current BOSH and BOSH-deployed VMs:
+1. (Optional) Ignore this series of steps if you are making your first deployment. Otherwise, you need to reset your VMs so that they can encrypt Linux EBS volumes. To encrypt all current BOSH and BOSH-deployed VMs:
   <p class="note"><strong>Note:</strong> If you need help with the following advanced steps, contact <a href="https://support.pivotal.io/">Pivotal Support</a>.</p>
-	1. Encrypt the BOSH Director VM.
-		1. SSH into the Ops Manager VM with the BOSH CLI. For more information about SSHing with BOSH, see [BOSH SSH](trouble-advanced.html#bosh-ssh) in the _Advanced Troubleshooting with the BOSH CLI_ topic.
-		1. Go to the `/var/tempest/workspaces/default/deployments` directory in the SSHed Ops Manager VM.
+	1. Encrypt the BOSH Director VM:
+		1. SSH into the <%= vars.ops_manager %> VM with the BOSH CLI. For more information about SSHing with BOSH, see [BOSH SSH](trouble-advanced.html#bosh-ssh) in _Advanced Troubleshooting with the BOSH CLI_.
+		1. Go to the `/var/tempest/workspaces/default/deployments` directory in the SSHed <%= vars.ops_manager %> VM.
 		1. Back up your `bosh-state.json` file elsewhere in case you want to restore the file.
 		1. Edit `bosh-state.json` to remove `current_stemcell_id` and `stemcells` values. For example, enter `"current_stemcell_id": ""` and `"stemcells": []`.
-	1. Encrypt BOSH-created VMs.
+	1. Encrypt BOSH-created VMs:
 		1. Enter the `bosh stemcells` and `bosh deployments` commands into the command line. Record the stemcell names that BOSH-deployed VMs are using.
 		**Encrypt BOSH-deployed VMs**
-		1. Go to the folder `var/tempest/stemcells` in the SSHed Ops Manager VM.
+		1. Go to the folder `var/tempest/stemcells` in the SSHed <%= vars.ops_manager %> VM.
 		1. Enter the `bosh upload-stemcell STEMCELL_NAME --fix` command into the command line for each stemcell to enforce the BOSH Director, encrypt the stemcells, and re-upload them.
-	1. Reset Persistent Disks and Recreate VMs.
-		1. Select the **Director Config** pane.
+	1. Reset Persistent Disks and Recreate VMs:
+		1. Select **Director Config**.
 		1. Enable **Recreate VMs deployed by the BOSH Director**.
 		1. Enable **Recreate BOSH Director VM**.
 		1. Enable **Recreate All Persistent Disks**.
 		1. Click **Save**.
 
-1. Return to the **Installation Dashboard**.
+1. Return to the <%= vars.ops_manager %> Installation Dashboard.
 
-1. In Ops Manager, click **Review Pending Changes**, then **Apply Changes** and review any reported errors. The following error message lists jobs that cannot be encrypted due to unsupported instance types.
+1. Click **Review Pending Changes**.
+
+1. Click **Apply Changes** and review any reported errors. The following error message lists jobs that cannot be encrypted due to unsupported instance types.
 
 	<%= image_tag("cloudform/encrypt-ebs-errors.png") %>
 
-	If you find a job that should be encrypted in the error list, modify the instance type for that job in the **Resource Config** page of the Pivotal Application Service (PAS). Select an instance type that supports encryption. Pivotal recommends using `t3.large`.
+	If you find a job that should be encrypted in the error list, modify the instance type for that job in the **Resource Config** page of the <%= vars.app_runtime_abbr %> tile. Select an instance type that supports encryption. <%= vars.recommended_by %> recommends using `t3.large`.
 
-1. After you make your changes in PAS, return to Ops Manager and click **Review Pending Changes**, then **Apply Changes**.
+1. After you make your changes in <%= vars.app_runtime_abbr %>, return to the <%= vars.ops_manager %> Installation Dashboard.
 
-<p class="note warning"><strong>WARNING:</strong> After you enable or disable <strong>Encrypt Linux EBS Volumes</strong> and click <strong>Review Pending Changes</strong>, then <strong>Apply Changes</strong>, Ops Manager recreates all existing persistent VM disks.</p>
+1. Click **Review Pending Changes**.
+
+1. Click **Apply Changes**.
+
+<p class="note warning"><strong>Warning:</strong> After you enable or disable the <strong>Encrypt Linux EBS Volumes</strong> checkbox, click <strong>Review Pending Changes</strong>, and click <strong>Apply Changes</strong>, <%= vars.ops_manager %> recreates all existing persistent VM disks.</p>
 
 
-## <a id="enable-om"></a> Enable Encryption for Ops Manager
+## <a id="enable-om"></a> Enable Encryption for <%= vars.ops_manager %>
 
-To encrypt the Ops Manager VM, you must manually re-launch Ops Manager with a new Amazon Machine Image (AMI). See _Step 1: Launch an Ops Manager AMI_ in [Deploying Ops Manager on AWS Manually](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/aws/deploy-manual.html#pcfaws-om-ami).
+To encrypt the <%= vars.ops_manager %> VM, you must manually re-launch <%= vars.ops_manager %> with a new Amazon Machine Image (AMI). For more information, see [Step 1: Launch an <%= vars.ops_manager %> AMI](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/aws/deploy-manual.html#pcfaws-om-ami) in _Deploying <%= vars.ops_manager %> on AWS Manually]_.

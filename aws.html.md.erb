@@ -10,32 +10,33 @@ This guide describes how to install [<%= vars.platform_name %>](https://network.
 
 ## <a id='overview'></a> Overview
 
-You can install <%= vars.platform_name %> on AWS with either the Pivotal Application Service (PAS) or Pivotal Container Service (PKS) runtime. There are resource requirements specific to each runtime. Ensure you meet the requirements for your runtime and the requirements specific to AWS before installing <%= vars.platform_name %> on AWS.
+You can install <%= vars.platform_name %> on AWS with either the <%= vars.app_runtime_full %> (<%= vars.app_runtime_abbr %>) or <%= vars.k8s_runtime_full %> (<%= vars.k8s_runtime_abbr %>) runtime. There are resource requirements specific to each runtime. Ensure you meet the requirements for your runtime and the requirements specific to AWS before installing <%= vars.platform_name %> on AWS.
 
 
 ## <a id="requirements"></a> Requirements
 
 This section lists the following resource requirements for installing <%= vars.platform_name %> on AWS:
 
-* General <%= vars.platform_name %> resource requirements. See [<%= vars.platform_name %> Resource Requirements](#general-requirements).
-* AWS-specific resource requirements. See [AWS Resource Requirements](#aws-requirements).
+* General <%= vars.platform_name %> resource requirements. For more information, see [<%= vars.platform_name %> Resource Requirements](#general-requirements).
+
+* AWS-specific resource requirements. For more information, see [AWS Resource Requirements](#aws-requirements).
 
 ### <a id="general-requirements"></a> <%= vars.platform_name %> Resource Requirements
 
-This section lists <%= vars.platform_name %> resource requirements for installing <%= vars.platform_name %> on AWS. It includes general <%= vars.platform_name %> resource requirements for both the PAS and PKS runtimes.
+This section lists <%= vars.platform_name %> resource requirements for installing <%= vars.platform_name %> on AWS. It includes general <%= vars.platform_name %> resource requirements for both the <%= vars.app_runtime_abbr %> and <%= vars.k8s_runtime_abbr %> runtimes.
 
-View one of the following, depending on your <%= vars.platform_name %> runtime:
+See one of the following sections, depending on your <%= vars.platform_name %> runtime:
 
-* PAS-specific <%= vars.platform_name %> resource requirements. See [PAS Resource Requirements](#pas).
-* PKS-specific <%= vars.platform_name %> resource requirements. See [PKS Resource Requirements](#pks).
+* [<%= vars.app_runtime_abbr %> Resource Requirements](#pas)
+* [<%= vars.k8s_runtime_abbr %> Resource Requirements](#pks)
 
-#### <a id="pas"></a> PAS Resource Requirements
+#### <a id="pas"></a> <%= vars.app_runtime_abbr %> Resource Requirements
 
-The following are general resource requirements for deploying and managing a <%= vars.platform_name %> deployment with Ops Manager and PAS:
+The following are general resource requirements for deploying and managing a <%= vars.platform_name %> deployment with <%= vars.ops_manager %> and <%= vars.app_runtime_abbr %>:
 
-* PAS requires sufficient IP allocation. The following lists the minimum required IP allocations:
+* <%= vars.app_runtime_abbr %> requires sufficient IP allocation. The following lists the minimum required IP allocations:
   * One static IP address for either HAProxy or one of your Gorouters
-  * One static IP address for each job in the Ops Manager tile. See the Ops Manager **Resource Config** pane for each tile for a full list.
+  * One static IP address for each job in the <%= vars.ops_manager %> tile. For a full list, see the <%= vars.ops_manager %> **Resource Config** pane for each tile.
   * One static IP address for each job listed below:
       * Consul
       * NATS
@@ -50,245 +51,246 @@ The following are general resource requirements for deploying and managing a <%=
       * TCP Router
   * One IP for each VM instance created by the service.
   * An additional IP address for each compilation worker. Use the following formula to determine the total IPs required: `IPs needed = static IPs + VM instances + compilation workers`.
-  * Pivotal recommends that you allocate at least 36 dynamic IP addresses when deploying Ops Manager and PAS. BOSH requires additional dynamic IP addresses during installation to compile and deploy VMs, install PAS, and connect to services.
-* Pivotal recommends using a network without DHCP for deploying PAS VMs.
-  <p class="note"><strong>Note:</strong> If you have DHCP, refer to the <a href="./troubleshooting.html">Troubleshooting Guide</a> to avoid issues with your installation.</p>
+  * <%= vars.recommended_by %> recommends that you allocate at least 36 dynamic IP addresses when deploying <%= vars.ops_manager %> and <%= vars.app_runtime_abbr %>. BOSH requires additional dynamic IP addresses during installation to compile and deploy VMs, install <%= vars.app_runtime_abbr %>, and connect to services.
 
-#### <a id='pks'></a> PKS Resource Requirements
+* <%= vars.recommended_by %> recommends using a network without DHCP for deploying <%= vars.app_runtime_abbr %> VMs.
+  <p class="note"><strong>Note:</strong> If you have DHCP, see <a href="./troubleshooting.html">Troubleshooting Problems in <%= vars.platform_name %></a> to avoid issues with your installation.</p>
 
-For PKS-specific resource requirements, see [AWS Prerequisites and Resource Requirements](https://docs.pivotal.io/pks/aws-requirements.html).
+#### <a id='pks'></a> <%= vars.k8s_runtime_abbr %> Resource Requirements
+
+For <%= vars.k8s_runtime_abbr %>-specific resource requirements, see [AWS Prerequisites and Resource Requirements](https://docs.pivotal.io/pks/aws-requirements.html).
 
 ### <a id="aws-requirements"></a> AWS Resource Requirements
 
 The following are AWS-specific resource requirements for installing <%= vars.platform_name %> on AWS with an external database and external file storage:
 
-* Installing <%= vars.platform_name %> on AWS requires a minimum of the following VM instance limits in your AWS account. The number of VMs required depends on the number of tiles and availability zones you plan to deploy. The following VM guidelines apply to the PAS, Small Footprint PAS, and PKS runtimes:
-  - **PAS**: At a minimum, a new AWS deployment requires the following VMs for PAS:
-<table border="1" class="nice">
-  <tr>
-    <th>AWS Requirements</th>
-    <th>VM Name</th>
-    <th>VM Type</th>
-    <th>Default VM Count</th>
-    <th>Required or Optional VM</th>
-  </tr><tr>
-    <th rowspan=24>PAS</th>
-    <td>NATS</td>
-    <td>t3.micro</td>
-    <td>2</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>File Storage</td>
-    <td>m5.large</td>
-    <td>1</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>MySQL Proxy</td>
-    <td>t3.micro</td>
-    <td>2</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>MySQL Server</td>
-    <td>r5.large</td>
-    <td>3</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>Backup Restore Node</td>
-    <td>t3.micro</td>
-    <td>1</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>Diego BBS</td>
-    <td>t3.micro</td>
-    <td>3</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>UAA</td>
-    <td>m5.large</td>
-    <td>2</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>Cloud Controller</td>
-    <td>m5.large</td>
-    <td>2</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>HAProxy</td>
-    <td>t3.micro</td>
-    <td>0</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>Router</td>
-    <td>t3.micro</td>
-    <td>3</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>MySQL Monitor</td>
-    <td>t3.micro</td>
-    <td>1</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>Clock Global</td>
-    <td>t3.medium</td>
-    <td>2</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>Cloud Controller Worker</td>
-    <td>t3.micro</td>
-    <td>2</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>Diego Brain</td>
-    <td>t3.small</td>
-    <td>3</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>Diego Cell</td>
-    <td>r5.xlarge</td>
-    <td>3</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>Loggregator Traffic Controller</td>
-    <td>t3.micro</td>
-    <td>2</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>Doppler Server</td>
-    <td>m5.large</td>
-    <td>3</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>TCP Router</td>
-    <td>t3.micro</td>
-    <td>0</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>CredHub</td>
-    <td>r5.large</td>
-    <td>2</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>Istio Router</td>
-    <td>r5.large</td>
-    <td>0</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>Istio Control</td>
-    <td>r5.large</td>
-    <td>0</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>Route Syncer</td>
-    <td>r5.large</td>
-    <td>0</td>
-    <td>Optional</td>
-  </tr><tr>
-    <th rowspan=2>Ops Manager</th>
-    <td>BOSH Director</td>
-    <td>m5.large</td>
-    <td>1</td>
-    <td>Required</td>
-  </tr>
-</table>
-<p class="note"><strong>Note:</strong> If you are deploying a test or sandbox <%= vars.platform_name %> that does not require high availability, then you can scale down the number of VM instances in your deployment. For more information, see <a href="../opsguide/scaling-ert-components.html">Scaling PAS</a>.</p>
-
-  - **Small Footprint PAS**: To run Small Footprint PAS, a new AWS deployment requires:
-<table id='aws-requirements' border="1" class="nice">
-  <tr>
-  	<th>AWS Requirements</th>
-    <th>VM Name</th>
-    <th>VM Type</th>
-    <th>Default VM Count</th>
-    <th>Minimum HA VM Count</th>
-    <th>Required or Optional VM</th>
-  </tr><tr>
-    <th rowspan=12>Small Footprint PAS</th>
-    <td>Compute</td>
-    <td>r5.xlarge</td>
-    <td>1</td>
-    <td>3</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>Control</td>
-    <td>r5.xlarge</td>
-    <td>1</td>
-    <td>2</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>Database</td>
-    <td>r5.large</td>
-    <td>1</td>
-    <td>3</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>Router</td>
-    <td>t3.micro</td>
-    <td>1</td>
-    <td>3</td>
-    <td>Required</td>
-  </tr><tr>
-    <td>File Storage</td>
-    <td>m5.large</td>
-    <td>1</td>
-    <td>N/A</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>Backup Restore Node</td>
-    <td>t3.micro</td>
-    <td>1</td>
-    <td>1</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>MySQL Monitor</td>
-    <td>t3.micro</td>
-    <td>1</td>
-    <td>1</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>HAProxy</td>
-    <td>t3.micro</td>
-    <td>0</td>
-    <td>2</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>TCP Router</td>
-    <td>t3.micro</td>
-    <td>0</td>
-    <td>1</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>Istio Router</td>
-    <td>r5.large</td>
-    <td>0</td>
-    <td>1</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>Istio Control</td>
-    <td>r5.large</td>
-    <td>0</td>
-    <td>2</td>
-    <td>Optional</td>
-  </tr><tr>
-    <td>Route Syncer</td>
-    <td>r5.large</td>
-    <td>0</td>
-    <td>1</td>
-    <td>Optional</td>
-  </tr><tr>
-    <th rowspan=2>Ops Manager</th>
-    <td>BOSH Director</td>
-    <td>m5.large</td>
-    <td>1</td>
-    <td>N/A</td>
-    <td>Required</td>
-  </tr>
-</table>
+* Installing <%= vars.platform_name %> on AWS requires a minimum of the following VM instance limits in your AWS account. The number of VMs required depends on the number of tiles and availability zones (AZs) you plan to deploy. The following VM guidelines apply to the <%= vars.app_runtime_abbr %>, Small Footprint <%= vars.app_runtime_abbr %>, and <%= vars.k8s_runtime_abbr %> runtimes:
+  * **<%= vars.app_runtime_abbr %>:** At a minimum, a new AWS deployment requires the following VMs for <%= vars.app_runtime_abbr %>:
+    <table border="1" class="nice">
+      <tr>
+        <th>AWS Requirements</th>
+        <th>VM Name</th>
+        <th>VM Type</th>
+        <th>Default VM Count</th>
+        <th>Required or Optional VM</th>
+      </tr><tr>
+        <th rowspan=24><%= vars.app_runtime_abbr %></th>
+          <td>NATS</td>
+          <td>t3.micro</td>
+          <td>2</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>File Storage</td>
+          <td>m5.large</td>
+          <td>1</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>MySQL Proxy</td>
+          <td>t3.micro</td>
+          <td>2</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>MySQL Server</td>
+          <td>r5.large</td>
+          <td>3</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>Backup Restore Node</td>
+          <td>t3.micro</td>
+          <td>1</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>Diego BBS</td>
+          <td>t3.micro</td>
+          <td>3</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>UAA</td>
+          <td>m5.large</td>
+          <td>2</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>Cloud Controller</td>
+          <td>m5.large</td>
+          <td>2</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>HAProxy</td>
+          <td>t3.micro</td>
+          <td>0</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>Router</td>
+          <td>t3.micro</td>
+          <td>3</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>MySQL Monitor</td>
+          <td>t3.micro</td>
+          <td>1</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>Clock Global</td>
+          <td>t3.medium</td>
+          <td>2</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>Cloud Controller Worker</td>
+          <td>t3.micro</td>
+          <td>2</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>Diego Brain</td>
+          <td>t3.small</td>
+          <td>3</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>Diego Cell</td>
+          <td>r5.xlarge</td>
+          <td>3</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>Loggregator Traffic Controller</td>
+          <td>t3.micro</td>
+          <td>2</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>Doppler Server</td>
+          <td>m5.large</td>
+          <td>3</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>TCP Router</td>
+          <td>t3.micro</td>
+          <td>0</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>CredHub</td>
+          <td>r5.large</td>
+          <td>2</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>Istio Router</td>
+          <td>r5.large</td>
+          <td>0</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>Istio Control</td>
+          <td>r5.large</td>
+          <td>0</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>Route Syncer</td>
+          <td>r5.large</td>
+          <td>0</td>
+          <td>Optional</td>
+      </tr><tr>
+        <th rowspan=2><%= vars.ops_manager %></th>
+          <td>BOSH Director</td>
+          <td>m5.large</td>
+          <td>1</td>
+          <td>Required</td>
+      </tr>
+    </table>
+    <p class="note"><strong>Note:</strong> If you are deploying a test or sandbox <%= vars.platform_name %> that does not require high availability, then you can scale down the number of VM instances in your deployment. For more information, see <a href="../opsguide/scaling-ert-components.html">Scaling <%= vars.app_runtime_abbr %></a>.</p>
+  * **Small Footprint <%= vars.app_runtime_abbr %>:** To run Small Footprint <%= vars.app_runtime_abbr %>, a new AWS deployment requires:
+    <table id='aws-requirements' border="1" class="nice">
+      <tr>
+      	<th>AWS Requirements</th>
+        <th>VM Name</th>
+        <th>VM Type</th>
+        <th>Default VM Count</th>
+        <th>Minimum HA VM Count</th>
+        <th>Required or Optional VM</th>
+      </tr><tr>
+        <th rowspan=12>Small Footprint <%= vars.app_runtime_abbr %></th>
+          <td>Compute</td>
+          <td>r5.xlarge</td>
+          <td>1</td>
+          <td>3</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>Control</td>
+          <td>r5.xlarge</td>
+          <td>1</td>
+          <td>2</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>Database</td>
+          <td>r5.large</td>
+          <td>1</td>
+          <td>3</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>Router</td>
+          <td>t3.micro</td>
+          <td>1</td>
+          <td>3</td>
+          <td>Required</td>
+      </tr><tr>
+          <td>File Storage</td>
+          <td>m5.large</td>
+          <td>1</td>
+          <td>N/A</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>Backup Restore Node</td>
+          <td>t3.micro</td>
+          <td>1</td>
+          <td>1</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>MySQL Monitor</td>
+          <td>t3.micro</td>
+          <td>1</td>
+          <td>1</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>HAProxy</td>
+          <td>t3.micro</td>
+          <td>0</td>
+          <td>2</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>TCP Router</td>
+          <td>t3.micro</td>
+          <td>0</td>
+          <td>1</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>Istio Router</td>
+          <td>r5.large</td>
+          <td>0</td>
+          <td>1</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>Istio Control</td>
+          <td>r5.large</td>
+          <td>0</td>
+          <td>2</td>
+          <td>Optional</td>
+      </tr><tr>
+          <td>Route Syncer</td>
+          <td>r5.large</td>
+          <td>0</td>
+          <td>1</td>
+          <td>Optional</td>
+      </tr><tr>
+        <th rowspan=2><%= vars.ops_manager %></th>
+          <td>BOSH Director</td>
+          <td>m5.large</td>
+          <td>1</td>
+          <td>N/A</td>
+          <td>Required</td>
+      </tr>
+    </table>
 <br />
-  - **PKS**: See [AWS Prerequisites and Resource Requirements](https://docs.pivotal.io/pks/aws-requirements.html).
-* The following AWS resources are required for installing <%= vars.platform_name %> on AWS with PAS:
-  * 3 Elastic Load Balancers (ELBs)
-  * 1 Relational Database Service. As a minimum, Pivotal recommends using a db.m5.xlarge instance with at least 100&nbsp;GB of allocated storage.
-  * 5 S3 Buckets
+  * **<%= vars.k8s_runtime_abbr %>:** See [AWS Prerequisites and Resource Requirements](https://docs.pivotal.io/pks/aws-requirements.html).
+
+* The following AWS resources are required for installing <%= vars.platform_name %> on AWS with <%= vars.app_runtime_abbr %>:
+  * Three Elastic Load Balancers (ELBs)
+  * One Relational Database Service. As a minimum, <%= vars.recommended_by %> recommends using a db.m5.xlarge instance with at least 100&nbsp;GB of allocated storage.
+  * Five S3 buckets
 
 
 ## <a id="prerequisites"></a> Prerequisites
@@ -306,25 +308,25 @@ To install <%= vars.platform_name %> on AWS, you must:
 * Register a wildcard domain for your <%= vars.platform_name %> installation. For more information, see [SSL/TLS Certificates for Classic Load Balancers](http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/ssl-server-cert.html#create-cert) in the AWS documentation.
 
 * Create an SSL certificate for your <%= vars.platform_name %> domain. For more information, see the [AWS documentation about SSL certificates](http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/ssl-server-cert.html).
-  <p class="note"><strong>Note:</strong> To deploy <%= vars.platform_name %> to a production environment, you must obtain a certificate from a certificate authority. Pivotal recommends using a self-signed certificate generated by Ops Manager for development and testing purposes only.</p>
+  <p class="note"><strong>Note:</strong> To deploy <%= vars.platform_name %> to a production environment, you must obtain a certificate from a certificate authority. Pivotal recommends using a self-signed certificate generated by <%= vars.ops_manager %> for development and testing purposes only.</p>
 
-* **(PAS-only)** Configure sufficient IP allocation. For more information about IP allocation requirements, see [PAS Resource Requirements](#pas).
+* **(<%= vars.app_runtime_abbr %> only)** Configure sufficient IP allocation. For more information about IP allocation requirements, see [<%= vars.app_runtime_abbr %> Resource Requirements](#pas).
 
-* **(Optional)** **(PAS-only)** Configure external storage. Pivotal recommends using external storage if possible. For more information about how file storage location affects platform performance and stability during upgrades, see [Configure File Storage](../upgrading/configuring.html#file-storage).
+* (Optional) **(<%= vars.app_runtime_abbr %> only)** Configure external storage. <%= vars.recommended_by %> recommends using external storage if possible. For more information about how file storage location affects platform performance and stability during upgrades, see [Configure File Storage](../upgrading/configuring.html#file-storage) in _Configuring <%= vars.app_runtime_abbr %>_.
 
-* **(Optional)** **(PAS and Ops Manager-only)** Configure external databases. Pivotal recommends using external databases in production deployments for BOSH Director and PAS. An external database must be configured to use the UTC timezone.
+* (Optional) **(<%= vars.app_runtime_abbr %> and <%= vars.ops_manager %> only)** Configure external databases. <%= vars.recommended_by %> recommends using external databases in production deployments for BOSH Director and <%= vars.app_runtime_abbr %>. An external database must be configured to use the UTC timezone.
 
-* **(Optional)** **(PAS and Ops Manager-only)** Configure external user stores. When you deploy <%= vars.platform_name %>, you can select a SAML user store for Ops Manager or a SAML or LDAP user store for PAS, to integrate existing user accounts.
+* (Optional) **(<%= vars.app_runtime_abbr %> and <%= vars.ops_manager %> only)** Configure external user stores. When you deploy <%= vars.platform_name %>, you can select a SAML user store for <%= vars.ops_manager %> or a SAML or LDAP user store for <%= vars.app_runtime_abbr %>, to integrate existing user accounts.
 
 
 ## <a id="install"></a> Install <%= vars.platform_name %> on AWS
 
 You can install <%= vars.platform_name %> on AWS either manually or using Terraform.
 
-To install <%= vars.platform_name %> on AWS, do one of the following:
+To install <%= vars.platform_name %> on AWS, see one of the following topics:
 
-* Install <%= vars.platform_name %> on AWS manually. See [Installing <%= vars.platform_name %> on AWS Manually](./aws-manual.html).
-* Install <%= vars.platform_name %> on AWS using Terraform. See [Install <%= vars.platform_name %> on AWS Using Terraform](./aws-terraform.html).
+* [Installing <%= vars.platform_name %> on AWS Manually](aws-manual.html)
+* [Install <%= vars.platform_name %> on AWS Using Terraform](aws-terraform.html)
 
 
 ## <a id="resources"></a> Additional Resources
@@ -337,6 +339,6 @@ The following are additional resources related to installing <%= vars.platform_n
 
 * For best practices for managing IaaS users and permissions, see [Temporary Security Credentials](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html) in the AWS documentation.
 
-* For recommendations on how to create and scope AWS accounts for <%= vars.platform_name %>, see [AWS Permissions Guidelines](./aws-iaas-user-roles.html).
+* For recommendations on how to create and scope AWS accounts for <%= vars.platform_name %>, see [AWS Permissions Guidelines](aws-iaas-user-roles.html).
 
 * For more information about certificate requirements for installing <%= vars.platform_name %>, see [Certificate Requirements](../adminguide/securing-traffic.html#certtypes).

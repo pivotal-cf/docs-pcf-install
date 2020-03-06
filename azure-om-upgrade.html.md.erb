@@ -3,68 +3,84 @@ title: Upgrading BOSH Director on Azure
 owner: Ops Manager
 ---
 
-This topic describes how to upgrade BOSH Director for <%= vars.platform_name  %> on Azure.
+This topic describes how to upgrade BOSH Director for <%= vars.platform_name %> on Azure.
 
-Complete the tasks in this topic as part of the Pivotal Operations Manager upgrade process. For more information, see [Upgrading <%= vars.platform_name %>](upgrading-pcf.html#upgrade_ops).
+Complete the tasks in this topic as part of the <%= vars.ops_manager %> upgrade process. For more information, see [Upgrading <%= vars.platform_name %>](upgrading-pcf.html#upgrade_ops).
 
-##<a id='overview'></a> Overview
+
+## <a id='overview'></a> Overview
 
 <%# Find this partial in GitHub at `pivotal-cf/docs-partials` %>
 <%= partial "/pcf/core/#{vars.current_major_version.sub('.', '-')}/om_upgrade_overview" %>
 
 <p class="note"><strong>Note:</strong> The Azure portal sometimes displays the names of resources with incorrect capitalization. Always use the Azure CLI to retrieve the correctly capitalized name of a resource.</p>
 
-To create an Ops Manager VM instance, do the following:
+To create an <%= vars.ops_manager %> VM instance:
 
-1. Export environment variables. See [Export Environment Variables](#env-vars). 
+1. Export environment variables. For more information, see [Export Environment Variables](#env-vars).
 
-1. Copy the Ops Manager image into your storage account. See [Copy the Ops Manager Image](#setup).
+1. Copy the <%= vars.ops_manager %> image into your storage account. For more information, see [Copy the <%= vars.ops_manager %> Image](#setup).
 
-1. Configure the Ops Manager IP Address. See [Configure Ops Manager IP Address](#config-ip).
+1. Configure the <%= vars.ops_manager %> IP Address. For more information, see [Configure <%= vars.ops_manager %> IP Address](#config-ip).
 
-1. Create Ops Manager VM instance. See [Create Ops Manager VM Instance](#boot).
+1. Create <%= vars.ops_manager %> VM instance. For more information, see [Create <%= vars.ops_manager %> VM Instance](#boot).
 
 
-##<a id='prerequisites'></a> Prerequisites
+## <a id='prerequisites'></a> Prerequisites
 
 <%# Find this partial in GitHub at `pivotal-cf/docs-partials` %>
-<%= partial "/pcf/core/#{vars.current_major_version.sub('.', '-')}/om_upgrade_prerequisite" %> 
+<%= partial "/pcf/core/#{vars.current_major_version.sub('.', '-')}/om_upgrade_prerequisite" %>
 
 
 ## <a id='env-vars'></a> Export Environment Variables
 
-Export the `connectionString` variable for your Azure account and assign it to a new environment variable. You use the `connectionString` environment variable when you copy the Ops Manager image in the following procedure.
+Export the `connectionString` variable for your Azure account and assign it to a new environment variable. You use the `connectionString` environment variable when you copy the <%= vars.ops_manager %> image in the following procedure.
 
-To export environment variables, do the following:
+To export environment variables:
 
-1. Install the Azure CLI v2.0 by following the instructions for your operating system in the [Azure documentation](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli).
+1. Install the Azure CLI v2.0 by following the instructions for your operating system in [Install the Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) in the Microsoft Azure documentation.
 
-1. Set your cloud:
-    <pre class="terminal">
-    $ az cloud set --name AzureCloud
-    </pre>
-    If you deployed <%= vars.product_short %> in an environment other than Azure Cloud, consult the following list: 
-    * For Azure China, replace <code>AzureCloud</code> with <code>AzureChinaCloud</code>. If logging in to <code>AzureChinaCloud</code> fails with a <code>CERT_UNTRUSTED</code> <a href="https://github.com/Azure/azure-xplat-cli/issues/2725">error</a>, use the latest version of node, 4.x or later.
+1. Set your cloud by running:
+
+    ```
+    az cloud set --name AzureCloud
+    ```
+    If you deployed <%= vars.platform_name %> in an environment other than Azure Cloud, consult the following list:
+    * For Azure China, replace `AzureCloud` with `AzureChinaCloud`. If logging in to `AzureChinaCloud` fails with a `CERT_UNTRUSTED` error, use Node v4 or later.
     * For Azure Government Cloud, replace `AzureCloud` with `AzureUSGovernment`.
     * For Azure Germany, replace `AzureCloud` with `AzureGermanCloud`.
 
 1. Log in:
-    <pre class="terminal">
-    $ az login
-    </pre>
+
+    ```
+    az login
+    ```
     Authenticate by navigating to the URL in the output, entering the provided code, and clicking your account.
 
-1. Ensure that the following environment variables are set to the names of the resources you created when deploying Ops Manager as part of the procedures in [Deploying Ops Manager on Azure Manually](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/azure/deploy-manual.html).
-    * `$RESOURCE_GROUP`: This should be set to the name of your resource group. Run `az group list` to list the resource groups for your subscription.
-    * `$LOCATION`: This should be set to your location, such as `westus`. For a list of available locations, run `az account list-locations`.
-    * `$STORAGE_NAME`: This should be set to your BOSH storage account name. Run `az storage account list` to list your storage accounts.
+1. Ensure that the following environment variables are set to the names of the resources you created when deploying <%= vars.ops_manager %> as part of the procedures in [Deploying <%= vars.ops_manager %> on Azure Manually](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/azure/deploy-manual.html):
+  * `$RESOURCE_GROUP`: This should be set to the name of your resource group. To list the resource groups for your subscription, run:
 
-1. Retrieve the connection string for the account.
-    <pre class="terminal">
-    $ az storage account show-connection-string \
+      ```
+      az group list
+      ```
+  * `$LOCATION`: This should be set to your location, such as `westus`. To view a list of available locations, run:
+
+      ```
+      az account list-locations
+      ```
+  * `$STORAGE_NAME`: This should be set to your BOSH storage account name. To list your storage accounts, run:
+
+      ```
+      az storage account list
+      ```
+
+1. Retrieve the connection string for the account by running:
+
+    ```
+    az storage account show-connection-string \
     --name $STORAGE_NAME --resource-group $RESOURCE_GROUP
-    </pre>
-The command returns output similar to the following:
+    ```
+    The command returns output similar to the following:
     <pre class="terminal">
     {
       "connectionString": "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=cfdocsboshstorage;AccountKey=EXAMPLEaaaaaaaaaleiIy/Lprnc5igFxYWsgq016Tu9uGwseOl8bqNBEL/2tp7wX92QMUM19Pz9BYTXt8aq4A=="
@@ -73,45 +89,57 @@ The command returns output similar to the following:
 
 1. From the `data:` field in the output above, record the full value of `connectionString` from the output above, starting with and including `DefaultEndpointsProtocol=`.
 
-1. Export the value of `connectionString` as the environment variable `$AZURE_STORAGE_CONNECTION_STRING`.
-    <pre class="terminal">
-    $ export AZURE_STORAGE_CONNECTION_STRING="YOUR-ACCOUNT-KEY-STRING"
-    </pre>
+1. Export the value of `connectionString` as the environment variable `$AZURE_STORAGE_CONNECTION_STRING` by running:
+
+    ```
+    export AZURE_STORAGE_CONNECTION_STRING="ACCOUNT-KEY-STRING"
+    ```
+    Where `ACCOUNT-KEY-STRING` is the value of `connectionString`.
 
 
-## <a id='setup'></a> Copy the Ops Manager Image
+## <a id='setup'></a> Copy the <%= vars.ops_manager %> Image
 
-Copy the Ops Manager image into your storage account. You use the Ops Manager image to create the VM that hosts that the new version of Ops Manager.
+Copy the <%= vars.ops_manager %> image into your storage account. You use the <%= vars.ops_manager %> image to create the VM that hosts that the new version of <%= vars.ops_manager %>.
 
-To copy the Ops Manager image into your storage account, do the following:
+To copy the <%= vars.ops_manager %> image into your storage account:
 
-1. Navigate to [Pivotal Network](https://network.pivotal.io/products/ops-manager) and download the release of **Pivotal Ops Manager for Azure** you want to upgrade to.
+1. Navigate to the [Ops Manager](https://network.pivotal.io/products/ops-manager) page on Pivotal Network and download the release of **<%= vars.ops_manager %> for Azure** to which you want to upgrade.
 
-1. View the downloaded PDF and locate the Ops Manager image URL appropriate for your region.
+1. View the downloaded PDF and locate the <%= vars.ops_manager %> image URL appropriate for your region.
 
-1. Export the Ops Manager image URL as an environment variable.
-    <pre class="terminal">$ export OPS_MAN_IMAGE_URL="YOUR-OPS-MAN-IMAGE-URL"</pre>
-    This command overrides the old Ops Manager image URL with the new Ops Manager image URL.
+1. Export the <%= vars.ops_manager %> image URL as an environment variable by running:
 
-1. Copy the Ops Manager image into your storage account.  For compatibility when upgrading to future versions of Ops Manager, choose a unique name for the image that includes the Ops Manager version number. For example, replace <code>opsman-image-version</code> in the following examples with <code>opsman-image-2.0.1</code>.
-    <pre class="terminal">
-    $ az storage blob copy start --source-uri $OPS_MAN_IMAGE_URL \
+    ```
+    export OPS_MAN_IMAGE_URL="OPS-MANAGER-IMAGE-URL"
+    ```
+    Where `OPS-MANAGER-IMAGE-URL` is the URL of your <%= vars.ops_manager %> image.
+    <br>
+    <br>
+    This command overrides the old <%= vars.ops_manager %> image URL with the new <%= vars.ops_manager %> image URL.
+
+1. Copy the <%= vars.ops_manager %> image into your storage account. For compatibility when upgrading to future versions of <%= vars.ops_manager %>, choose a unique name for the image that includes the <%= vars.ops_manager %> version number. For example, replace `opsman-image-version` in the following examples with `opsman-image-2.0.1`. Run:
+
+    ```
+    az storage blob copy start --source-uri $OPS_MAN_IMAGE_URL \
     --connection-string $AZURE_STORAGE_CONNECTION_STRING \
     --destination-container opsmanager \
     --destination-blob opsman-image-version.vhd
-    </pre>
+    ```
 
-1. Copying the image may take several minutes. Run the following command and examine the output under `"copy"`:
-    <pre class="terminal">
-    $ az storage blob show --name opsman-image-version.vhd \
+1. Copying the image may take several minutes. Run:
+
+    ```
+    az storage blob show --name opsman-image-version.vhd \
     --container-name opsmanager \
     --account-name $STORAGE_NAME
-    ...
+    ```
+    Examine the output under `"copy"`, as in the example below:
+    <pre class="terminal">
     "copy": {
       "completionTime": "2017-06-26T22:24:11+00:00",
       "id": "b9c8b272-a562-4574-baa6-f1a04afcefdf",
       "progress": "53687091712/53687091712",
-      "source": "http<span>s:/</span>/opsmanagerwestus.blob.core.windows.net/images/ops-manager-2.0.x.vhd",
+      "source": "https://opsmanagerwestus.blob.core.windows.net/images/ops-manager-2.0.x.vhd",
       "status": "success",
       "statusDescription": null
     },
@@ -119,39 +147,50 @@ To copy the Ops Manager image into your storage account, do the following:
     When `status` reads `success`, continue to the next step.
 
 
-## <a id='config-ip'></a> Configure Ops Manager IP Address
+## <a id='config-ip'></a> Configure <%= vars.ops_manager %> IP Address
 
-Remove the old Ops Manager VM and record the IP address for the Ops Manager network interface. You use this IP address when creating the new Ops Manager VM that hosts the upgraded version of Ops Manager. 
+Remove the old <%= vars.ops_manager %> VM and record the IP address for the <%= vars.ops_manager %> network interface. You use this IP address when creating the new <%= vars.ops_manager %> VM that hosts the upgraded version of <%= vars.ops_manager %>.
 
-To configure the Ops Manager IP address, do one of the following:
+To configure the <%= vars.ops_manager %> IP address, follow one of these procedures:
 
-* [Reuse the existing dynamic public IP address](#reuse-dynamic).
-* [Use a new dynamic public IP address](#new-ip).
+* [Reuse Existing Dynamic Public IP Address](#reuse-dynamic)
+* [Use a New Dynamic Public IP Address](#new-ip)
 
 ### <a id='reuse-dynamic'></a> Reuse Existing Dynamic Public IP Address
 
-To reuse an existing dynamic public IP address, do the following:
+To reuse an existing dynamic public IP address:
 
-1. List your VMs and record the name of your Ops Manager VM:
-    <pre class="terminal">$ az vm list</pre>
+1. List your VMs and record the name of your <%= vars.ops_manager %> VM by running:
 
-1. Delete your old Ops Manager VM:
-    <pre class="terminal">$ az vm delete --name YOUR-OPS-MAN-VM --resource-group $RESOURCE_GROUP</pre>
+    ```
+    az vm list
+    ```
 
-1. List your network interfaces and record the name of the Ops Manager network interface:
-    <pre class="terminal">$ az resource list --resource-group $RESOURCE_GROUP \
-    --resource-type Microsoft.Network/networkInterfaces</pre>
+1. Delete your old <%= vars.ops_manager %> VM by running:
+
+    ```
+    az vm delete --name OPS-MANAGER-VM --resource-group $RESOURCE_GROUP
+    ```
+    Where `OPS-MANAGER-VM` is your old <%= vars.ops_manager %> VM.
+
+1. List your network interfaces and record the name of the <%= vars.ops_manager %> network interface. Run:
+
+    ```
+    az resource list --resource-group $RESOURCE_GROUP \
+    --resource-type Microsoft.Network/networkInterfaces
+    ```
 
 ### <a id='new-ip'></a> Use a New Dynamic Public IP Address
 
-To use a new dynamic public IP address, do the following:
+To use a new dynamic public IP address:
 
-1. Create a new public IP address named `ops-manager-ip-new`.
-    <pre class="terminal">
-    $ az network public-ip create --name ops-manager-ip-new \
+1. Create a new public IP address named `ops-manager-ip-new` by running:
+
+    ```
+    az network public-ip create --name ops-manager-ip-new \
     --resource-group $RESOURCE_GROUP --location $LOCATION \
     --allocation-method Static
-   {
+    {
       "publicIp": {
         "dnsSettings": null,
         "etag": "W/\"4450ebe2-9e97-4b17-9cf2-44838339c661\"",
@@ -170,50 +209,57 @@ To use a new dynamic public IP address, do the following:
         "type": "Microsoft.Network/publicIPAddresses"
       }
     }
-    </pre>
+    ```
 
-1. Record the value for `ipAddress` from the output above. This is the public IP address of Ops Manager.
+1. Record the value for `ipAddress` from the output above. This is the public IP address of <%= vars.ops_manager %>.
 
-1. Create a network interface for Ops Manager.
-    <pre class="terminal">
-    $ az network nic create --vnet-name <%= vars.product_name_lc %>-net \
+1. Create a network interface for <%= vars.ops_manager %>  by running:
+
+    ```
+    az network nic create --vnet-name <%= vars.product_name_lc %>-net \
     --subnet <%= vars.product_name_lc %> --network-security-group opsmgr-nsg \
     --private-ip-address 10.0.0.5 \
     --public-ip-address ops-manager-ip-new \
     --resource-group $RESOURCE_GROUP \
     --name ops-manager-nic-new --location $LOCATION
-    </pre>
+    ```
 
-1. Shut down your old Ops Manager VM, if it still exists:
-    <pre class="terminal">
-    $ az vm deallocate --name ops-manager --resource-group $RESOURCE_GROUP
-    </pre>
-    If your Ops Manager VM is not named `ops-manager`, provide the correct name. To list all VMs in your account, use `az vm list`.
+1. Shut down your old <%= vars.ops_manager %> VM, if it still exists. Run:
 
-1. Update your DNS record to point to your new public IP address of Ops Manager.
+    ```
+    az vm deallocate --name ops-manager --resource-group $RESOURCE_GROUP
+    ```
+    If your <%= vars.ops_manager %> VM is not named `ops-manager`, provide the correct name. To list all VMs in your account, run:
+
+    ```
+    az vm list
+    ```
+
+1. Update your DNS record to point to your new public IP address of <%= vars.ops_manager %>.
 
 
-## <a id='boot'></a> Create Ops Manager VM Instance
+## <a id='boot'></a> Create <%= vars.ops_manager %> VM Instance
 
-Create an Ops Manager VM instance to host the new version of Ops Manager. 
+Create an <%= vars.ops_manager %> VM instance to host the new version of <%= vars.ops_manager %>.
 
-To create an Ops Manager VM instance, do the following:
+To create an <%= vars.ops_manager %> VM instance:
 
-1. To use the key pair from your previous Ops Manager, locate the path to the file on your local machine. To create a new key pair, enter the following command:
-   <pre class="terminal">
-   $ ssh-keygen -t rsa -f opsman -C ubuntu
-   </pre>
-   <br>
-   When prompted for a passphrase, press the `enter` key to provide an empty passphrase.
+1. To use the key pair from your previous <%= vars.ops_manager %>, locate the path to the file on your local machine. To create a new key pair, enter:
 
-1. Create the Ops Manager VM.
-    * If you are using unmanaged disks, run the following command to create your Ops Manager VM, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key .pub file, and replacing `opsman-image-version` with the version of Ops Manager you are deploying, for example `opsman-image-2.0.1`:
-        <pre class="terminal">
-        $ az vm create --name opsman-version --resource-group $RESOURCE_GROUP \
+   ```
+   ssh-keygen -t rsa -f opsman -C ubuntu
+   ```
+   When prompted for a passphrase, press the `Enter` key to provide an empty passphrase.
+
+1. Create the <%= vars.ops_manager %> VM.
+    * If you are using unmanaged disks, create your <%= vars.ops_manager %> VM by running:
+
+        ```
+        az vm create --name OPS-MANAGER-VERSION --resource-group $RESOURCE_GROUP \
         --location $LOCATION \
         --nics opsman-nic \
-        --image https://$STORAGE_NAME.my-azure-instance.com/opsmanager/opsman-image-version.vhd \
-        --os-disk-name opsman-version-osdisk \
+        --image https://$STORAGE_NAME.AZURE-INSTANCE-URL.com/opsmanager/OPS-MANAGER-IMAGE-VERSION.vhd \
+        --os-disk-name OPS-MANAGER-VERSION-osdisk \
         --os-disk-size-gb 128 \
         --os-type Linux \
         --use-unmanaged-disk \
@@ -221,52 +267,69 @@ To create an Ops Manager VM instance, do the following:
         --storage-container-name opsmanager \
         --admin-username ubuntu \
         --ssh-key-value PATH-TO-PUBLIC-KEY
-        </pre>
-        Replace `my-azure-instance.com` with the URL of your Azure instance. Find the complete source URL in the Azure UI by viewing the **Blob properties** of the Ops Manager image you created earlier in this procedure.<br><br>
-    * If you are using Azure managed disks, perform the following steps, replacing `opsman-image-version` with the version of Ops Manager you are deploying, for example `opsman-image-2.0.1`.:
-        1. Create a managed image from the Ops Manager VHD file:
-            <pre class="terminal">
-            $ az image create --resource-group $RESOURCE\_GROUP \
-            --name opsman-image-version \
-            --source https://$STORAGE\_NAME.blob.core.windows.net/opsmanager/opsman-image-version.vhd \
+        ```
+        Where:
+        * `OPS-MANAGER-VERSION` is the version of <%= vars.ops_manager %> you are deploying. For example, `opsman-2.0.1`.
+        * `AZURE-INSTANCE-URL.com` is the URL of your Azure instance. Find the complete source URL in the Azure UI by viewing the **Blob properties** of the <%= vars.ops_manager %> image you created earlier in this procedure.
+        * `OPS-MANAGER-IMAGE-VERSION` is the image version of <%= vars.ops_manager %> you are deploying. For example, `opsman-image-2.0.1`.
+        * `PATH-TO-PUBLIC-KEY` is the path to your public key .pub file.
+    * If you are using Azure managed disks:
+        1. Create a managed image from the <%= vars.ops_manager %> VHD file by running:
+
+            ```
+            az image create --resource-group $RESOURCE\_GROUP \
+            --name OPS-MANAGER-VERSION \
+            --source https://$STORAGE_NAME.blob.core.windows.net/opsmanager/OPS-MANAGER-VERSION.vhd \
             --location $LOCATION \
             --os-type Linux
-            </pre>
+            ```
+            Where `OPS-MANAGER-VERSION` is the version of <%= vars.ops_manager %> you are deploying.
+            <br>
             If you are using Azure China, Azure Government Cloud, or Azure Germany, replace `blob.core.windows.net` with the following:
-            * For Azure China, use `blob.core.chinacloudapi.cn`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/china/china-get-started-developer-guide) for more information.
-            * For Azure Government Cloud, use `blob.core.usgovcloudapi.net`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-government/documentation-government-services-storage) for more information.
-            * For Azure Germany, use `blob.core.cloudapi.de`. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/germany/germany-developer-guide) for more information.
-        1. Create your Ops Manager VM, replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file, and replacing `opsman-version` and `opsman-image-version` with the version of Ops Manager you are deploying, for example `opsman-2.0.1`, `opsman-2.0.1-osdisk`, and `opsman-image-2.0.1`.
-            <pre class="terminal">
-             $ az vm create --name opsman-version --resource-group $RESOURCE\_GROUP \
-             --location $LOCATION \
-             --nics opsman-nic \
-             --image opsman-image-version \
-             --os-disk-name opsman-version-osdisk \
-             --admin-username ubuntu \
-             --size Standard\_DS2_v2 \
-             --storage-sku Standard\_LRS \
-             --ssh-key-value PATH-TO-PUBLIC-KEY
-            </pre>
+            * For Azure China, use `blob.core.chinacloudapi.cn`. For more information, see [Azure China developer guide](https://docs.microsoft.com/en-us/azure/china/china-get-started-developer-guide) in the Microsoft Azure documentation.
+            * For Azure Government Cloud, use `blob.core.usgovcloudapi.net`. For more information, see [Azure Government storage](https://docs.microsoft.com/en-us/azure/azure-government/documentation-government-services-storage) in the Microsoft Azure documentation.
+            * For Azure Germany, use `blob.core.cloudapi.de`. For more information, see [Azure Germany developer guide](https://docs.microsoft.com/en-us/azure/germany/germany-developer-guide) in the Microsoft Azure documentation.
+        1. Create your <%= vars.ops_manager %> VM by running: replacing `PATH-TO-PUBLIC-KEY` with the path to your public key `.pub` file, and replacing `opsman-version` and `opsman-image-version` with the version of <%= vars.ops_manager %> you are deploying, for example `opsman-2.0.1`, `opsman-2.0.1-osdisk`, and `opsman-image-2.0.1`.
 
-1. If you have deployed more than one tile in this Ops Manager installation, perform the following steps to increase the size of the Ops Manager VM disk. You can repeat this process and increase the disk again at a later time if necessary.
-    <p class="note"><strong>Note:</strong> If you use Azure Stack, you must increase the Ops Manager VM disk size using the Azure Stack UI.</p>
-    1. Run the following command to stop the VM and detach the disk, replacing `opsman-version` with the version of Ops Manager you are deploying, for example `opsman-2.0.1`:
-    <pre class="terminal">
-    $ az vm deallocate --name opsman-version \
-    --resource-group $RESOURCE\_GROUP
-    </pre>
-    1. Run the following command to resize the disk to 128&nbsp;GB, replacing `opsman-version` with the version of Ops Manager you are deploying, for example `opsman-2.0.1`:
-    <pre class="terminal">
-    $ az disk update --size-gb 128 --name opsman-version-osdisk \
-    --resource-group $RESOURCE\_GROUP
-    </pre>
-    1. Run the following command to start the VM, replacing `opsman-version` with the version of Ops Manager you are deploying, for example `opsman-2.0.1`:
-    <pre class="terminal">
-    $ az vm start --name opsman-version --resource-group $RESOURCE\_GROUP
-    </pre>
+            ```
+            az vm create --name opsman-version --resource-group $RESOURCE_GROUP \
+            --location $LOCATION \
+            --nics opsman-nic \
+            --image OPS-MANAGER-IMAGE-VERSION \
+            --os-disk-name OPS-MANAGER-VERSION-osdisk \
+            --admin-username ubuntu \
+            --size Standard_DS2_v2 \
+            --storage-sku Standard_LRS \
+            --ssh-key-value PATH-TO-PUBLIC-KEY
+            ```
+            Where:
+            * `OPS-MANAGER-IMAGE-VERSION` is the image version of <%= vars.ops_manager %> you are deploying. For example, `opsman-image-2.0.1`.
+            * `OPS-MANAGER-VERSION` is the version of <%= vars.ops_manager %> you are deploying. For example, `opsman-2.0.1`.
+            * `PATH-TO-PUBLIC-KEY` is the path to your public key .pub file.
 
+1. If you have deployed more than one tile in this <%= vars.ops_manager %> installation, increase the size of the <%= vars.ops_manager %> VM disk. You can repeat this process and increase the disk again at a later time if necessary.
+    <p class="note"><strong>Note:</strong> If you use Azure Stack, you must increase the <%= vars.ops_manager %> VM disk size using the Azure Stack UI.</p>
+    1. Stop the VM and detach the disk by running:
+
+        ```
+        az vm deallocate --name OPS-MANAGER-VERSION \
+        --resource-group $RESOURCE_GROUP
+        ```
+        Where `OPS-MANAGER-VERSION` is the version of <%= vars.ops_manager %> you are deploying. For example, `opsman-2.0.1`.
+    1. Resize the disk to 128&nbsp;GB by running:
+
+        ```
+        az disk update --size-gb 128 --name OPS-MANAGER-VERSION-osdisk \
+        --resource-group $RESOURCE_GROUP
+        ```
+        Where `OPS-MANAGER-VERSION` is the version of <%= vars.ops_manager %> you are deploying. For example, `opsman-2.0.1`.
+    1. Start the VM by running:
+
+        ```
+        az vm start --name OPS-MANAGER-VERSION --resource-group $RESOURCE_GROUP
+        ```
+        Where `OPS-MANAGER-VERSION` is the version of <%= vars.ops_manager %> you are deploying. For example, `opsman-2.0.1`.
 
 ## <a id='next'></a> Next Steps
 
-After you complete this procedure, continue the upgrade instructions in Upgrading <%= vars.platform_name %> topic.
+After you complete this procedure, continue to the upgrade instructions in [Upgrading <%= vars.platform_name %>](upgrading-pcf.html).

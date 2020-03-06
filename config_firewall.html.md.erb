@@ -50,11 +50,11 @@ The following example procedure uses `iptables` commands to configure a firewall
 1. Add environment variables to use when creating the IP rules by running:
 
     ```
-    export INTERNAL\_NETWORK\_RANGE=10.0.0.0/8
-    export GATEWAY\_INTERNAL\_IP=10.0.0.1
-    export GATEWAY\_EXTERNAL\_IP=203.0.113.242
-    export PIVOTALCF\_IP=10.0.0.2
-    export HA\_PROXY\_IP=10.0.0.254
+    export INTERNAL_NETWORK_RANGE=10.0.0.0/8
+    export GATEWAY_INTERNAL_IP=10.0.0.1
+    export GATEWAY_EXTERNAL_IP=203.0.113.242
+    export VMWARETANZU_IP=10.0.0.2
+    export HA_PROXY_IP=10.0.0.254
     ```
 
 1. To configure IP rules for the specified chains, run:
@@ -67,29 +67,29 @@ The following example procedure uses `iptables` commands to configure a firewall
   * **POSTROUTING:**
 
       ```
-      $ iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-      $ iptables -t nat -A POSTROUTING -d $HA_PROXY_IP -s $INTERNAL_NETWORK_RANGE \
+      iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+      iptables -t nat -A POSTROUTING -d $HA_PROXY_IP -s $INTERNAL_NETWORK_RANGE \
               -p tcp --dport 80 -j SNAT --to $GATEWAY_INTERNAL_IP
-      $ iptables -t nat -A POSTROUTING -d $HA_PROXY_IP -s $INTERNAL_NETWORK_RANGE \
+      iptables -t nat -A POSTROUTING -d $HA_PROXY_IP -s $INTERNAL_NETWORK_RANGE \
               -p tcp --dport 443 -j SNAT --to $GATEWAY_INTERNAL_IP
   	  ```
   * **PREROUTING:**
 
       ```
       iptables -t nat -A PREROUTING -d $GATEWAY_EXTERNAL_IP -p tcp --dport \
-               25555 -j DNAT --to $PIVOTALCF_IP
+               25555 -j DNAT --to $VMWARETANZU_IP
       iptables -t nat -A PREROUTING -d $GATEWAY_EXTERNAL_IP -p tcp --dport \
                443 -j DNAT --to $HA_PROXY_IP
       iptables -t nat -A PREROUTING -d $GATEWAY_EXTERNAL_IP -p tcp --dport \
                80 -j DNAT --to $HA_PROXY_IP
       iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 8443 -j DNAT \
-            --to $PIVOTALCF_IP:443
+            --to $VMWARETANZU_IP:443
       iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j DNAT \
             --to $HA_PROXY_IP:80
       iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 8022 -j DNAT \
-            --to $PIVOTALCF_IP:22
+            --to $VMWARETANZU_IP:22
       iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 8080 -j DNAT \
-            --to $PIVOTALCF_IP:80
+            --to $VMWARETANZU_IP:80
   	  ```
 
 1. Save the iptables by running:

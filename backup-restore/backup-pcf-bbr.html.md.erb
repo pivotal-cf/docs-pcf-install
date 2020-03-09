@@ -5,7 +5,10 @@ owner: RelEng
 
 <% $this_topic = 'backup-pcf' %>
 
-This topic describes the procedure for backing up your critical back end <%= vars.platform_name %> components with BOSH Backup and Restore (BBR), a command-line tool for backing up and restoring BOSH deployments. To restore your backup, see [Restoring <%= vars.platform_name %> from Backup with BBR](restore-pcf-bbr.html).
+This topic describes the procedure for backing up your critical
+back end components with BOSH Backup and Restore (BBR),
+a command-line tool for backing up and restoring BOSH deployments.
+To restore your backup, see [Restoring Deployments from Backup with BBR](restore-pcf-bbr.html).
 
 For BBR release notes, see [BOSH Backup and Restore Release Notes](https://docs.cloudfoundry.org/bbr/bbr-rn.html) in the Cloud Foundry documentation.
 
@@ -19,9 +22,9 @@ During the backup, BBR stops the Cloud Controller API and the Cloud Controller w
     <ul>
       <li><strong>Security:</strong> Backup artifacts can contain secrets. Secure backup artifacts by using encryption or other means.</li>
       <li><strong>Compatibility:</strong> A BBR backup can only be restored to environments matching its source environment. To ensure that a restore environment is compatible with a backup, see <a href="./restore-pcf-bbr.html#compatibility">Compatibility of Restore</a>.</li>
-      <li><strong>Failed Restore:</strong> Restore is a destructive operation. BBR is designed to restore <%= vars.platform_name %> after a disaster. If a restore fails, the environment might be left in an unusable state and require re-provisioning. For more information, see <a href="restore-pcf-bbr.html">Restoring <%= vars.platform_name %> from Backup with BBR</a>.</li>
+      <li><strong>Failed Restore:</strong> Restore is a destructive operation. BBR is designed to restore deployments after a disaster. If a restore fails, the environment might be left in an unusable state and require re-provisioning. For more information, see <a href="restore-pcf-bbr.html">Restoring Deployments from Backup with BBR</a>.</li>
       <li><strong>Service Data:</strong> BBR does not back up any service data.</li>
-      <li><strong>API Outage:</strong> The Cloud Controller API does not send or receive calls during <%= vars.platform_name %> restoration.</li>
+      <li><strong>API Outage:</strong> The Cloud Controller API does not send or receive calls during restoration.</li>
     </ul>
 </div>
 
@@ -30,9 +33,11 @@ During the backup, BBR stops the Cloud Controller API and the Cloud Controller w
 
 <%= vars.recommended_by %> recommends:
 
-* Follow the full procedure documented in this topic when creating a backup. This ensures that you always have a consistent backup of <%= vars.ops_manager %> and <%= vars.app_runtime_abbr %> to restore from.
+* Follow the full procedure documented in this topic when creating a backup.
+  This ensures that you always have a consistent backup to restore from.
 
-* Back up frequently, especially before making any changes to your <%= vars.platform_name %> deployment, such as the configuration of any tiles in Ops Manager.
+* Back up frequently, especially before making any changes to your deployment,
+  such as the configuration of any tiles in <%= vars.ops_manager %>.
 
 * You can prune the BOSH blobstore by running `bosh clean-up --all` before you run a backup of the BOSH Director. The command removes all unused resources including packages compiled against older stemcell versions. If a lot of unused resources have accumulated over time, you create a smaller, faster backup of the BOSH Director. For more information see [Clean-Up](https://bosh.io/docs/cli-v2/#clean-up) in the BOSH documentation.
 
@@ -181,9 +186,9 @@ If you configured an unsupported external blobstore or an unsupported external d
 
 | Scenario | Action |
 | -------- | ------ |
-| You configured a supported database and an unsupported external blobstore in <%= vars.app_runtime_abbr %>. | Follow the <%= vars.platform_name %> backup process and copy the external blobstore by using the IaaS-specific tool. |
-| You configured an unsupported external database and a supported blobstore in <%= vars.app_runtime_abbr %>. | Follow the <%= vars.platform_name %> backup process and copy the external database by using the IaaS-specific tool. |
-| You configured both an unsupported external database and an unsupported external blobstore in <%= vars.app_runtime_abbr %>. | Follow the <%= vars.platform_name %> backup process but skip [Back Up Your <%= vars.app_runtime_abbr %> Deployment](#bbr-backup). Copy the external database and blobstore by using the IaaS-specific tool. |
+| You configured a supported database and an unsupported external blobstore in <%= vars.app_runtime_abbr %>. | Follow the backup procedures and copy the external blobstore by using the IaaS-specific tool. |
+| You configured an unsupported external database and a supported blobstore in <%= vars.app_runtime_abbr %>. | Follow the backup procedures and copy the external database by using the IaaS-specific tool. |
+| You configured both an unsupported external database and an unsupported external blobstore in <%= vars.app_runtime_abbr %>. | Follow the backup procedures but skip [Back Up Your <%= vars.app_runtime_abbr %> Deployment](#bbr-backup). Copy the external database and blobstore by using the IaaS-specific tool. |
 
 <p class="note warning"><strong>Warning:</strong> You might encounter inconsistencies between the blobstore and database. If apps do not appear during a restore, re-push those apps.</p>
 
@@ -200,7 +205,7 @@ When backing up services:
 
 * BBR does not back up managed services or their data.
 
-* You can back up and restore brokered services with the procedures documented in this topic and in [Restoring <%= vars.platform_name %> from Backup with BBR](restore-pcf-bbr.html).
+* You can back up and restore brokered services with the procedures documented in this topic and in [Restoring Deployments from Backup with BBR](restore-pcf-bbr.html).
 
 
 ## <a id='workflow'></a> Backup Workflow
@@ -215,7 +220,8 @@ BBR examines the jobs in the BOSH deployment, and triggers the scripts in the fo
 
 Scripts in the same stage are all triggered together. For instance, BBR triggers all pre-backup lock scripts before any backup scripts. Scripts within a stage can be triggered in any order.
 
-The backup artifacts are drained to the jumpbox, where the operator can transfer them to storage and use them to restore <%= vars.platform_name %>.
+The backup artifacts are drained to the jumpbox,
+where the operator can transfer them to storage and use them to restore the deployment.
 
 The following diagram shows a sample backup flow:
 
@@ -238,9 +244,11 @@ You must use this path to run BBR commands.
 
 As an alternative to using the <%= vars.ops_manager %> VM as your jumpbox, you can:
 
-* Use Concourse to back up a <%= vars.platform_name %> installation using BBR. For more information, see the [BBR <%= vars.platform_name %> Pipeline Tasks](https://github.com/pivotal-cf/bbr-pcf-pipeline-tasks) repository on GitHub.
+* Use Concourse to back up a deployment using BBR.
+  For more information, see the [BBR PCF Pipeline Tasks](https://github.com/pivotal-cf/bbr-pcf-pipeline-tasks) repository on GitHub.
 
-* Configure a custom jumpbox. For more information, see [Configuring a custom jumpbox for BBR](https://community.pivotal.io/s/article/Configuring-a-Custom-Jumpbox-for-BBR) in the Pivotal Knowledge Base.
+* Configure a custom jumpbox.
+  For more information, see [Configuring a custom jumpbox for BBR](https://community.pivotal.io/s/article/Configuring-a-Custom-Jumpbox-for-BBR) in the Knowledge Base.
 
 ### <a id='encrypt-key'></a> Step 2: Record the Cloud Controller Database Encryption Credentials
 
@@ -254,7 +262,8 @@ To retrieve the Cloud Controller database encryption credentials from the <%= va
 
 1. Locate the **Cloud Controller** section.
 
-1. Record the **Db Encryption Credentials**. You must provide these credentials when you contact [Pivotal Support](https://support.pivotal.io) for help restoring your installation.
+1. Record the **Db Encryption Credentials**.
+  You must provide these credentials when you contact [Support](https://support.pivotal.io) for help restoring your installation.
 
 	<%= image_tag("ccdb-encrypt-creds.png") %>
 
@@ -307,40 +316,46 @@ You can use the environment variable `BOSH_ALL_PROXY` to open an SSH tunnel with
 
 <p class="note"><strong>Note:</strong> For the following procedures to work, ensure the SOCKS port is not already in use by a different tunnel or process.</p>
 
-To connect with `BOSH_ALL_PROXY`, perform one of the following procedures:
-
-* To establish the tunnel separate from the BOSH CLI:
-  1. Establish the tunnel and make it available on a local port by running:
-
-      ```
-      ssh -4 -D SOCKS-PORT -fNC JUMPBOX-USERNAME@JUMPBOX-ADDRESS -i JUMPBOX-KEY-FILE -o ServerAliveInterval=60
-      ```
-      Where:
-      * `SOCKS-PORT` is the local SOCKS port.
-      * `JUMPBOX-USERNAME` is your jumpbox username.
-      * `JUMPBOX-ADDRESS` is the IP address or hostname of the jumpbox.
-      * `JUMPBOX-KEY-FILE` is the local SSH private key for accessing the jumpbox.
-  1. Provide the BOSH CLI with access to the tunnel using the `BOSH_ALL_PROXY` environment variable by running:
-
-      ```
-      export BOSH_ALL_PROXY=socks5://localhost:SOCKS-PORT
-      ```
-      Where is `SOCKS-PORT` is your local SOCKS port.
-
-* To establish the tunnel using the BOSH CLI, provide the BOSH CLI with the necessary SSH credentials to create the tunnel by running:
-
-      ```
-      export BOSH_ALL_PROXY=ssh+socks5://JUMPBOX-USERNAME@JUMPBOX-ADDRESS:SOCKS-PORT?private_key=JUMPBOX-KEY-FILE
-      ```
-      Where:
-      * `JUMPBOX-USERNAME` is your jumpbox username.
-      * `JUMPBOX-ADDRESS` is the IP address or hostname of the jumpbox.
-      * `SOCKS-PORT` is the local SOCKS port.
-      * `JUMPBOX-KEY-FILE` is the local SSH private key for accessing the jumpbox.
-
 <p class="note"><strong>Note:</strong> Using <code>BOSH_ALL_PROXY</code> can result in longer backup and restore times due to network performance degradation. All operations must pass through the proxy, so moving backup artifacts can be significantly slower.</p>
 
-<p class="note warning"><strong>Warning:</strong> In BBR v1.5.0 and earlier, the tunnel created by the BOSH CLI does not include the <code>ServerAliveInterval</code> flag. This might cause your SSH connection to time out when transferring large artifacts. In BBR v1.5.1, the <code>ServerAliveInterval</code> flag is included. For more information, see <a href="https://github.com/cloudfoundry-incubator/bosh-backup-and-restore/releases/tag/v1.5.1">bosh-backup-and-restore</a> on GitHub.</p>
+To connect with `BOSH_ALL_PROXY`, perform one of the following procedures:
+
+* Establish the tunnel separately from the BOSH CLI.
+* Establish the tunnel using the BOSH CLI.
+
+To establish the tunnel separately from the BOSH CLI:
+
+1. Establish the tunnel and make it available on a local port by running:
+
+    ```
+    ssh -4 -D SOCKS-PORT -fNC JUMPBOX-USERNAME@JUMPBOX-ADDRESS -i JUMPBOX-KEY-FILE -o ServerAliveInterval=60
+    ```
+    Where:
+      * `SOCKS-PORT` is the local SOCKS port.
+      * `JUMPBOX-USERNAME` is your jumpbox username.
+      * `JUMPBOX-ADDRESS` is the IP address or hostname of the jumpbox.
+      * `JUMPBOX-KEY-FILE` is the local SSH private key for accessing the jumpbox.
+1. Provide the BOSH CLI with access to the tunnel using the `BOSH_ALL_PROXY` environment variable by running:
+
+    ```
+    export BOSH_ALL_PROXY=socks5://localhost:SOCKS-PORT
+    ```
+    Where is `SOCKS-PORT` is your local SOCKS port.
+
+To establish the tunnel using the BOSH CLI:
+
+1. Provide the BOSH CLI with the necessary SSH credentials to create the tunnel by running:
+
+    ```
+    export BOSH_ALL_PROXY=ssh+socks5://JUMPBOX-USERNAME@JUMPBOX-ADDRESS:SOCKS-PORT?private_key=JUMPBOX-KEY-FILE
+    ```
+    Where:
+      * `JUMPBOX-USERNAME` is your jumpbox username.
+      * `JUMPBOX-ADDRESS` is the IP address or hostname of the jumpbox.
+      * `SOCKS-PORT` is the local SOCKS port.
+      * `JUMPBOX-KEY-FILE` is the local SSH private key for accessing the jumpbox.
+
+    <p class="note warning"><strong>Warning:</strong> In BBR v1.5.0 and earlier, the tunnel created by the BOSH CLI does not include the <code>ServerAliveInterval</code> flag. This might cause your SSH connection to time out when transferring large artifacts. In BBR v1.5.1, the <code>ServerAliveInterval</code> flag is included. For more information, see <a href="https://github.com/cloudfoundry-incubator/bosh-backup-and-restore/releases/tag/v1.5.1">bosh-backup-and-restore</a> on GitHub.</p>
 
 #### <a id='check-bosh-director'></a> Check Your BOSH Director
 
@@ -360,9 +375,9 @@ To check your BOSH Director:
   	* `HOST` is the address of the BOSH Director. If the BOSH Director is public, HOST` is a URL, such as `https://my-bosh.xxx.cf-app.com`. Otherwise, `HOST` is the `BOSH-DIRECTOR-IP` which you retrieved in [Step 4: Retrieve BOSH Director Address](#retrieve-address).
     <p class='note'><strong>Note:</strong> To enable debug logs, use the optional <code>--debug</code> flag. For more information, see <a href="#logging">Logging</a>.</p>
 
-1. After the pre-backup check succeeds, continue to [Step 5: Confirm Backup Restore Node is Deployed](#backup-restore-node). If the pre-backup check fails, the BOSH Director might not have the correct backup scripts, or the connection to the BOSH Director might have failed.
+1. After the pre-backup check succeeds, continue to [Step 5: Confirm Backup Restore Node is Deployed](#backup-restore-node). If the pre-backup check fails, the BOSH Director might not have the correct backup scripts or the connection to the BOSH Director might have failed.
 
-### <a id='backup-restore-node'></a> Step 6: Confirm Backup Restore Node is Deployed
+### <a id='backup-restore-node'></a> Step 6: Confirm Backup Restore Node Is Deployed
 
 When BBR backs up <%= vars.app_runtime_abbr %>, it needs a Backup Restore node.
 
@@ -375,7 +390,8 @@ To confirm that the Backup Restore node is deployed:
 1. Select **Resource Config**.
 
 1. Find the **Backup Restore Node** job and check if the **Instances** dropdown is set to `1`.
-<%= image_tag("backup-restore-node.png") %>
+
+    <%= image_tag("backup-restore-node.png") %>
 
 1. If the **Instances** dropdown is not set to `1`:
   1. Set the **Instances** dropdown to `1`.
@@ -387,11 +403,11 @@ To confirm that the Backup Restore node is deployed:
 
 ### <a id='identify-deployment'></a> Step 7: Identify Your Deployment
 
-To identify the name of the BOSH deployment that contains <%= vars.platform_name %>:
+To identify the name of the BOSH deployment:
 
 1. Log in to your BOSH Director.
 
-1. To identify the name of the BOSH deployment that contains <%= vars.platform_name %>, run:
+1. To identify the name of the BOSH deployment, run:
 
     ```
     bosh -e BOSH-DIRECTOR-IP --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments

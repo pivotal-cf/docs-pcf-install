@@ -78,7 +78,7 @@ In the event of a disaster, you can lose not only your VMs and disks, but your I
 
 If you need to re-create your IaaS resources, prepare your environment for <%= vars.platform_name %> by following the instructions specific to your IaaS in [Installing <%= vars.platform_name %>](../../installing/index.html).
 
-<p class="note"><strong>Note:</strong> The instructions for installing <%= vars.platform_name %> on Amazon Web Services (AWS) and OpenStack combine the procedures for preparing your environment and deploying <%= vars.ops_manager %> into a single topic. The instructions for the other supported IaaSes split these procedures into two separate topics.</p>
+<p class="note"><strong>Note:</strong> The instructions for installing a deployment on Amazon Web Services (AWS) and OpenStack combine the procedures for preparing your environment and deploying <%= vars.ops_manager %> into a single topic. The instructions for the other supported IaaSes split these procedures into two separate topics.</p>
 
 If you re-create your IaaS resources, you must also add those resources to <%= vars.ops_manager %> by following the procedures in [Step 3: (Optional) Configure <%= vars.ops_manager %> for New Resources](#config-new-resources).
 
@@ -101,7 +101,7 @@ If you re-create your IaaS resources, you must also add those resources to <%= v
 
         1. In the import panel:
           * Enter the **Decryption Passphrase** in use when you exported the installation settings from <%= vars.ops_manager %>.
-          * Click **Choose File** and browse to the installation ZIP file that you exported in [Step 9: Export Installation Settings](./backup-pcf-bbr.html#export) in _Backing Up <%= vars.platform_name %> with BBR_.
+          * Click **Choose File** and browse to the installation ZIP file that you exported in [Step 9: Export Installation Settings](./backup-pcf-bbr.html#export) in _Backing Up Deployments with BBR_.
 
             <%= image_tag("../images/upgrading/decryption_passphrase.png") %>
 
@@ -135,7 +135,7 @@ If you re-created IaaS resources such as networks and load balancers by followin
 
 To update <%= vars.ops_manager %>:
 
-1. Enable the advanced mode of <%= vars.ops_manager %>. For more information, see [How to Enable Advanced Mode in the Ops Manager](https://community.pivotal.io/s/article/How-to-Enable-Advanced-Mode-in-the-Ops-Manager) in the Pivotal Knowledge Base.
+1. Enable the advanced mode of <%= vars.ops_manager %>. For more information, see [How to Enable Advanced Mode in the Ops Manager](https://community.pivotal.io/s/article/How-to-Enable-Advanced-Mode-in-the-Ops-Manager) in the Knowledge Base.
     <p class="note"><strong>Note:</strong> In advanced mode, <%= vars.ops_manager %> allows you to make changes that are normally disabled. You might see warning messages when you save changes.</p>
 
 1. Navigate to the <%= vars.ops_manager %> Installation Dashboard.
@@ -169,7 +169,7 @@ To update <%= vars.ops_manager %>:
 
 1. Update your **System domain** and **Apps domain** refer to the new environment's domains.
 
-1. Ensure that there are no outstanding warning messages in the BOSH Director tile, then disable <%= vars.ops_manager %> advanced mode. For more information, see [How to Enable Advanced Mode in the Ops Manager](https://community.pivotal.io/s/article/How-to-Enable-Advanced-Mode-in-the-Ops-Manager) in the Pivotal Knowledge Base.
+1. Ensure that there are no outstanding warning messages in the BOSH Director tile, then disable <%= vars.ops_manager %> advanced mode. For more information, see [How to Enable Advanced Mode in the Ops Manager](https://community.pivotal.io/s/article/How-to-Enable-Advanced-Mode-in-the-Ops-Manager) in the Knowledge Base.
 
 ### <a id="bosh-state"></a> Step 4: Remove BOSH State File
 
@@ -193,12 +193,13 @@ Use the <%= vars.ops_manager %> API or the checkbox on the **Review Pending Chan
 
 ### <a id="artifacts-jumpbox"></a> Step 6: Transfer Artifacts to Jumpbox
 
-In [Step 9: Back Up Your <%= vars.app_runtime_abbr %> Deployment](./backup-pcf-bbr.html#bbr-backup) in _Backing Up <%= vars.platform_name %> with BBR_, in the _After Taking the Backups_ section, you moved the TAR and metadata files of the backup artifacts off your jumpbox to your preferred storage space. Now you must transfer those files back to your jumpbox.
+In [Step 9: Back Up Your <%= vars.app_runtime_abbr %> Deployment](./backup-pcf-bbr.html#bbr-backup) in _Backing Up Deployments with BBR_,
+you moved the TAR and metadata files of the backup artifacts off your jumpbox to your preferred storage space. Now you must transfer those files back to your jumpbox.
 
 
 ## <a id='restore'></a> Restore Your Backup
 
-These sections describe the procedure to restore your <%= vars.platform_name %> backup with BBR.
+These sections describe the procedure to restore your backup with BBR.
 
 ### <a id='retrieve-credentials'></a> Step 7: Retrieve BOSH Director Credentials
 
@@ -247,23 +248,21 @@ To restore BOSH Director:
     * (Optional) To enable debug logs, use the `--debug` flag. For more information, see [Logging](backup-pcf-bbr.html#logging) in _Backing Up <%= vars.platform_name %> with BBR_.
 
 1. After the command succeeds, continue to [Step 10: Identify Your Deployment](#identify-deployment).
-<br>
 If the command fails:
   1. Run:
 
-      ```
-      bbr director \
-      --private-key-path PRIVATE-KEY-FILE \
-      --username bbr \
-      --host HOST \
-      restore-cleanup
-      ```
+          ```
+          bbr director \
+          --private-key-path PRIVATE-KEY-FILE \
+          --username bbr \
+          --host HOST \
+          restore-cleanup
+          ```
       Where:
-      <br>
-      * `PRIVATE-KEY-FILE`is the path to the private key file you created in [Step 7: Retrieve BOSH Credentials](#retrieve-credentials).
-      * `HOST` is the address of the BOSH Director.
-        * If the BOSH Director is public, `HOST` is a URL, such as `https://bosh-director.xxx.cf-app.com`.
-        * If the BOSH Director is not public, `HOST` is the `BOSH-DIRECTOR-IP` you retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
+          * `PRIVATE-KEY-FILE`is the path to the private key file you created in [Step 7: Retrieve BOSH Credentials](#retrieve-credentials).
+          * `HOST` is the address of the BOSH Director.
+            * If the BOSH Director is public, `HOST` is a URL, such as `https://bosh-director.xxx.cf-app.com`.
+            * If the BOSH Director is not public, `HOST` is the `BOSH-DIRECTOR-IP` you retrieved in [Step 8: Retrieve BOSH Director Address](#retrieve-address).
   1. Run the BBR restore command again after ensuring that:
       * All the parameters in the command are set.
       * The BOSH Director credentials are valid.
@@ -343,11 +342,11 @@ To determine which stemcell is used by <%= vars.app_runtime_abbr %>, either:
 
 For more information about stemcells in <%= vars.ops_manager %>, see [Importing and Managing Stemcells](../../opsguide/managing-stemcells.html).
 
-#### <a id='upload-stemcell'></a>> Upload the Stemcell
+#### <a id='upload-stemcell'></a>Upload the Stemcell
 
 To upload the required stemcell:
 
-1. Download the stemcell from the [Pivotal Stemcells](https://network.pivotal.io/products/stemcells-ubuntu-xenial/) page on VMware Tanzu Network.
+1. Download the stemcell from the [Stemcells](https://network.pivotal.io/products/stemcells-ubuntu-xenial/) page on <%= vars.product_network %>.
 
 1. Upload the stemcell used by <%= vars.app_runtime_abbr %> by running:
 
@@ -549,7 +548,7 @@ The process state for all VMs should show as `running`.
 
 ## <a id="after-restore"></a> After Restoring Your Backup
 
-This section describes the procedures you must perform after restoring your <%= vars.platform_name %> backup with BBR.
+This section describes the procedures you must perform after restoring your backup with BBR.
 
 ### <a id='removing-disks'></a> Step 18: Remove Unused Disks
 

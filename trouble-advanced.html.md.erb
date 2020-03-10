@@ -3,26 +3,36 @@ title: Advanced Troubleshooting with the BOSH CLI
 owner: Ops Manager
 ---
 
-This topic describes using the BOSH CLI to help diagnose and resolve issues with your [<%= vars.platform_name %>](https://network.pivotal.io/products/pivotal-cf) deployment. Before using the information and techniques in this topic, review [Diagnosing Problems in <%= vars.platform_name %>](./diagnostics.html).
+This topic describes using the BOSH CLI to help diagnose and resolve issues with your
+<%= vars.platform_name %> deployment. Before using the information and techniques in this topic,
+review [Diagnosing Problems in <%= vars.platform_name %>](https://docs.pivotal.io/platform/application-service/operating/diagnostics.html).
 
-To follow the steps in this topic, you must log in to the BOSH Director VM. The BOSH Director runs on the virtual machine (VM) that Pivotal Operations Manager deploys on the first install of the BOSH Director tile.
+To follow the steps in this topic, you must log in to the BOSH Director VM. The BOSH Director runs
+on the virtual machine (VM) that <%= vars.platform_name %> deploys on the first install of the BOSH
+Director tile.
 
-After authenticating into the BOSH Director, you can run specific commands using the BOSH Command Line Interface (BOSH CLI). BOSH Director diagnostic commands have access to information about your entire <%= vars.platform_name %> installation.
+After authenticating into the BOSH Director, you can run specific commands using the BOSH Command
+Line Interface (BOSH CLI). BOSH Director diagnostic commands have access to information about your
+entire <%= vars.platform_name %> installation.
 
-<p class="note"><strong>Note:</strong> Before running any BOSH CLI commands, verify that no BOSH Director tasks are running on the Ops Manager VM. See the <em>Tasks</em> section of <a href="https://bosh.io/docs/cli-v2#task-mgmt">BOSH CLI commands</a> for more information.</p>
-
+<p class="note"><strong>Note:</strong> Before running any BOSH CLI commands, verify that no BOSH
+  Director tasks are running on the <%= vars.platform_name %> VM. For more information, see the
+  <a href="https://bosh.io/docs/cli-v2#task-mgmt">Tasks</a> section of <em>BOSH CLI commands</em>
+  in the BOSH documentation.</p>
 
 ## <a id='gather'></a> Gather Credential and IP Address Information
 
-Before you begin troubleshooting with the BOSH CLI, follow the instructions below to collect the information you need from the Ops Manager interface.
+Before you begin troubleshooting with the BOSH CLI, follow the instructions below to collect the information you need from the <%= vars.platform_name %> interface.
 
-1. Open the Ops Manager interface by navigating to the Ops Manager fully qualified domain name (FQDN) in a web browser.
+1. Open the <%= vars.platform_name %> interface by navigating to the <%= vars.platform_name %>
+fully qualified domain name (FQDN) in a web browser.
 
 1. Click the **BOSH Director** tile and select the **Status** tab.
 
-1. Record the IP address for the Director job. This is the IP address of the VM where the BOSH Director runs.
+1. Record the IP address for the Director job. This is the IP address of the VM where the BOSH
+Director runs.
 
-	<%= image_tag("ops-mgr-job-ip.png") %>
+    <%= image_tag("ops-mgr-job-ip.png") %>
 
 1. Select the **Credentials** tab.
 
@@ -32,77 +42,91 @@ Before you begin troubleshooting with the BOSH CLI, follow the instructions belo
 
 1. Return to the **Installation Dashboard**.
 
-1. **(Optional)** To prepare to troubleshoot the job VM for any other product, click the product tile and repeat the procedure above to record the IP address and VM credentials for that job VM.
+1. **(Optional)** To prepare to troubleshoot the job VM for any other product, click the product
+tile and repeat the procedure above to record the IP address and VM credentials for that job VM.
 
-1. Log out of Ops Manager.
+1. Log out of <%= vars.platform_name %>.
 
-<p class="note"><strong>Note:</strong> Ensure that there are no Ops Manager installations or updates in progress while using the BOSH CLI.</p>
+<p class="note"><strong>Note:</strong> Ensure that there are no <%= vars.platform_name %>
+  installations or updates in progress while using the BOSH CLI.</p>
 
+## <a id='ssh'></a> Log in to the <%= vars.platform_name %> VM with SSH
 
-## <a id='ssh'></a> Log In to the Ops Manager VM with SSH
-
-Use SSH to connect to the Ops Manager VM. Follow the instructions in one of the sections below to log in to the Ops Manager VM with SSH.
+Use SSH to connect to the <%= vars.platform_name %> VM. Follow the instructions in one of the
+sections below to log in to the <%= vars.platform_name %> VM with SSH.
 
 ### <a id='ssh-aws'></a> AWS
 
-To log in to the Ops Manager VM with SSH in AWS, you need the key pair you used when you created the Ops Manager VM.
-To see the name of the key pair, click on the Ops Manager VM and locate the `key pair name` in the properties.
+To log in to the <%= vars.platform_name %> VM with SSH in AWS, you need the key pair you used when
+you created the <%= vars.platform_name %> VM. To see the name of the key pair, click on the
+<%= vars.platform_name %> VM and locate the `key pair name` in the properties.
 
-To log in to the Ops Manager VM with SSH in AWS, do the following:
+To log in to the <%= vars.platform_name %> VM with SSH in AWS, do the following:
 
-1. Locate the Ops Manager FQDN on the AWS **EC2 instances** page.
+1. Locate the <%= vars.platform_name %> FQDN on the AWS **EC2 instances** page.
 
 1. Run `chmod 600 ops_mgr.pem` to change the permissions on the `.pem` file to be more restrictive. For example:
 
-	<pre class="terminal">
-	$ chmod 600 ops_mgr.pem
-	</pre>
+    <pre class="terminal">
+    $ chmod 600 ops_mgr.pem
+    </pre>
 
-1. Run `ssh -i ops_mgr.pem ubuntu@OPS-MANAGER-FQDN` to log in to the Ops Manager VM with SSH. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager. For example:
+1. Run `ssh -i ops_mgr.pem ubuntu@FQDN` to log in to the <%= vars.platform_name %> VM with SSH.
+Replace `FQDN` with the fully qualified domain name of <%= vars.platform_name %>. For example:
 
-	<pre class="terminal">
-	$ ssh -i ops_mgr.pem ubuntu@my-opsmanager-fqdn.example.com
-	</pre>
+    <pre class="terminal">
+    $ ssh -i ops_mgr.pem ubuntu@my-opsmanager-fqdn.example.com
+    </pre>
 
 ### <a id='ssh-azure'></a> Azure
 
-To log in to the Ops Manager VM with SSH in Azure, you need the key pair you used when creating the Ops Manager VM. If you need to reset the SSH key, locate the Ops Manager VM in the Azure portal and click **Reset Password**.
+To log in to the <%= vars.platform_name %> VM with SSH in Azure, you need the key pair you used
+when creating the <%= vars.platform_name %> VM. If you need to reset the SSH key, locate the
+<%= vars.platform_name %> VM in the Azure portal and click **Reset Password**.
 
-To log in to the Ops Manager VM with SSH in Azure, do the following:
+To log in to the <%= vars.platform_name %> VM with SSH in Azure, do the following:
 
-1. From the Azure portal, locate the Ops Manager fully-qualified domain name (FQDN) by selecting the VM.
+1. From the Azure portal, locate the <%= vars.platform_name %> FQDN by selecting the VM.
 
 1. Change the permissions for your SSH private key by running the following command:
-  <pre class="terminal">
-  $ chmod 600 PRIVATE-KEY
-  </pre>
-  Where `PRIVATE-KEY` is the name of your SSH private key.
 
-1. SSH into the Ops Manager VM by running the following command:
-  <pre class="terminal">
-  $ ssh -i PRIVATE-KEY ubuntu@OPS-MANAGER-FQDN
-  </pre>
-  Where:
-      + `OPS-MANAGER-FQDN` is the FQDN for your Ops Manager deployment.
-      + `PRIVATE-KEY` is the name of your SSH private key.
+    <pre class="terminal">
+    $ chmod 600 PRIVATE-KEY
+    </pre>
+    Where `PRIVATE-KEY` is the name of your SSH private key.
+
+1. SSH into the <%= vars.platform_name %> VM by running the following command:
+
+    <pre class="terminal">
+    $ ssh -i PRIVATE-KEY ubuntu@FQDN
+    </pre>
+    Where:
+    * `FQDN` is the FQDN for your <%= vars.platform_name %> deployment.
+    * `PRIVATE-KEY` is the name of your SSH private key.
 
 ### <a id='ssh-gcp'></a> GCP
 
-To log in to the Ops Manager VM with SSH in GCP, do the following:
+To log in to the <%= vars.platform_name %> VM with SSH in GCP, do the following:
 
-1. Confirm that you have installed the [Google Cloud SDK and CLI](https://cloud.google.com/sdk/docs/quickstart-macos). See the [Google Cloud Platform documentation](https://cloud.google.com/sdk/gcloud/#downloading_gcloud) for more information.
+1. Confirm that you have installed the
+[Google Cloud SDK and CLI](https://cloud.google.com/sdk/docs/quickstart-macos). For more
+information, see the
+[Google Cloud Platform documentation](https://cloud.google.com/sdk/gcloud/#downloading_gcloud).
 
-1. Initialize Google Cloud CLI, using a user account with Owner, Editor, or Viewer permissions to access the project. Ensure that the Google Cloud CLI can login to the project by running the command `gcloud auth login`.
+1. Initialize Google Cloud CLI, using a user account with Owner, Editor, or Viewer permissions to
+access the project. Ensure that the Google Cloud CLI can login to the project by running the
+command `gcloud auth login`.
 
 1. From the GCP web console, navigate to **Compute Engine**.
 
-1. Locate the Ops Manager VM in the **VM Instances** list.
+1. Locate the <%= vars.platform_name %> VM in the **VM Instances** list.
 
 1. Under **Remote access**, click the **SSH** dropdown and select **View gcloud command**.
 
 1. Copy the SSH command that appears in the popup window.
 
 1. Paste the command into your terminal window to SSH to the VM. For example:
+
     <pre class="terminal">
     $ gcloud compute ssh "YOUR-VM" --zone "YOUR-ZONE-ID"
     </pre>
@@ -111,108 +135,135 @@ To log in to the Ops Manager VM with SSH in GCP, do the following:
 
 ### <a id='ssh-openstack'></a> OpenStack
 
-To log in to the Ops Manager VM with SSH in OpenStack, you need the key pair that you created in _Step 2: Configure Security_ of [Deploying Ops Manager on OpenStack](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/openstack/setup.html#security).
-If you need to reset the SSH key, locate the Ops Manager VM in the OpenStack console and boot it in recovery mode to generate a new key pair.
+To log in to the <%= vars.platform_name %> VM with SSH in OpenStack, you need the key pair that you
+created in [Configure Security](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/openstack/setup.html#security) in _Deploying <%= vars.platform_name %> on OpenStack_.
+If you must reset the SSH key, locate the <%= vars.platform_name %> VM in the OpenStack console and
+boot it in recovery mode to generate a new key pair.
 
-To log in to the Ops Manager VM with SSH in OpenStack, do the following:
+To log in to the <%= vars.platform_name %> VM with SSH in OpenStack, do the following:
 
-1. Locate the Ops Manager FQDN on the **Access & Security** page.
+1. Locate the <%= vars.platform_name %> FQDN on the **Access & Security** page.
 
-1. Run `chmod 600 ops_mgr.pem` to change the permissions on the `.pem` file to be more restrictive. For example:
-  <pre class="terminal">
-  $ chmod 600 ops_mgr.pem
-  </pre>
+1. Run `chmod 600 ops_mgr.pem` to change the permissions on the `.pem` file to be more restrictive.
+For example:
 
-1. Run `ssh -i ops_mgr.pem ubuntu@OPS-MANAGER-FQDN` to log in to the Ops Manager VM with SSH. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops Manager. For example:
-  <pre class="terminal">
-  $ ssh -i ops_mgr.pem ubuntu<span>@</span>my-opsmanager-fqdn.example.com
-  </pre>
+    <pre class="terminal">
+    $ chmod 600 ops_mgr.pem
+    </pre>
+
+1. Run `ssh -i ops_mgr.pem ubuntu@FQDN` to log in to the <%= vars.platform_name %> VM with SSH.
+Replace `FQDN` with the fully qualified domain name of <%= vars.platform_name %>. For example:
+
+    <pre class="terminal">
+    $ ssh -i ops_mgr.pem ubuntu<span>@</span>my-fqdn.example.com
+    </pre>
 
 ### <a id='ssh-vsphere'></a> vSphere
 
-To log in to the Ops Manager VM with SSH in vSphere, you need the public SSH key that imports the <%= vars.platform_name %> `.ova` or `.ovf` file into your virtualization system.
+To log in to the <%= vars.platform_name %> VM with SSH in vSphere, you must have the public SSH key
+that imports the <%= vars.platform_name %> `.ova` or `.ovf` file into your virtualization system.
 
-You set the public SSH key in the **Public SSH Key** field of the **Customize template** screen when you deployed Ops Manager. For more information, see [Deploy Ops Manager](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/vsphere/deploy.html#deploy).
+You set the public SSH key in the **Public SSH Key** field of the **Customize template** screen
+when you deployed <%= vars.platform_name %>. For more information, see [Deploy <%= vars.platform_name %>](/platform/ops-manager/<%= vars.current_major_version.sub('.', '-') %>/vsphere/deploy.html#deploy) in _Deploying <%= vars.platform_name %> on vSphere_.
 
-<p class="note"><strong>Note</strong>: If you lose your SSH key, you must shut down the Ops Manager VM in the vSphere UI and then reset the public SSH key. For more information, see <a href="https://docs.vmware.com/en/VMware-vSphere/6.5/com.vmware.vsphere.vm_admin.doc/GUID-E05E8AF9-C8F2-4482-B3F0-733C85C6DD97.html">Edit vApp Settings</a> in the vSphere documentation.</p>
+<p class="note"><strong>Note</strong>: If you lose your SSH key, you must shut down the
+  <%= vars.platform_name %> VM in the vSphere UI and then reset the public SSH key. For more
+  information, see <a href="https://docs.vmware.com/en/VMware-vSphere/6.5/com.vmware.vsphere.vm_admin.doc/GUID-E05E8AF9-C8F2-4482-B3F0-733C85C6DD97.html">Edit vApp Settings</a> in the vSphere documentation.</p>
 
-To log in to the Ops Manager VM with SSH in vSphere, do the following:
+To log in to the <%= vars.platform_name %> VM with SSH in vSphere, do the following:
 
 1. Run the following command:
-   ```
-   ssh ubuntu@OPS-MANAGER-FQDN`.
-   ```
-   Where `OPS-MANAGER-FQDN` is the fully qualified domain name of Ops Manager. For example:
+
+    ```
+    ssh ubuntu@FQDN
+    ```
+    Where `FQDN` is the fully qualified domain name of <%= vars.platform_name %>. For example:
     <pre class='terminal'>
-    $ ssh ubuntu@my-opsmanager-fqdn<span>.</span>example.com
+    $ ssh ubuntu@my-fqdn<span>.</span>example.com
     </pre>
 
 1. When prompted, enter the public SSH key.
-
 
 ## <a id='log-in'></a> Authenticate with the BOSH Director VM
 
 To authenticate with BOSH, use one of the following methods:
 
-- [Set the BOSH Environment Variables on the Ops Manager VM](#ops-man-export-bosh-envs)
-- [Create a Local BOSH Director Alias](#bosh-alias)
+* [Set the BOSH Environment Variables on the <%= vars.platform_name %> VM](#export-bosh-envs)
+* [Create a Local BOSH Director Alias](#bosh-alias)
 
-### <a id='ops-man-export-bosh-envs'></a> Set the BOSH Environment Variables on the Ops Manager VM
+### <a id='export-bosh-envs'></a> Set the BOSH Environment Variables on the <%= vars.platform_name %> VM
 
-If you have access to the Ops Manager VM, SSH into the Ops Manager VM and do the following:
+If you have access to the <%= vars.platform_name %> VM, SSH into the <%= vars.platform_name %> VM
+and do the following:
 
 1. Record the **Bosh Commandline Credentials** from the **Credentials** tab of the BOSH Director tile.
 
-1. SSH into the Ops Manager VM. See [Log in to the Ops Manager VM with SSH](#ssh) above.
+1. SSH into the <%= vars.platform_name %> VM. See [Log in to the <%= vars.platform_name %> VM with SSH](#ssh) above.
 
 1. Export all the environment variables by running the following command:
 
     ```
     export YOUR-ENV-VARIABLES
     ```
-    Where `YOUR-ENV-VARIABLES` is the value for `credential` in the BOSH commandline credentials that you recorded.
+    Where `YOUR-ENV-VARIABLES` is the value for `credential` in the BOSH command line credentials
+    that you recorded in a previous step.
 
     For example:
-      <pre class="terminal">$ export BOSH_CLIENT=ops_manager \
-      BOSH_CLIENT_SECRET=some secret \
-      BOSH_CA_CERT=/var/tempest/workspaces/default/root_ca_certificate \
-      BOSH_ENVIRONMENT=10.0.0.5 bosh</pre>
+    <pre class="terminal">
+    $ export BOSH_CLIENT=ops_manager \
+    BOSH_CLIENT_SECRET=some_secret \
+    BOSH_CA_CERT=/var/tempest/workspaces/default/root_ca_certificate \
+    BOSH_ENVIRONMENT=10.0.0.5 bosh
+    </pre>
 
 1. Verify that BOSH access works by running the following command.
-    <pre>bosh deployments</pre>
+
+    ```
+    bosh deployments
+    ```
 
 ### <a id='bosh-alias'></a> Create a Local BOSH Director Alias
 
 To create a BOSH Director alias and log in to the BOSH Director VM, do the following:
 
-1. Run the following command to create a local alias for the BOSH Director using the BOSH CLI: `bosh alias-env MY-ENV -e DIRECTOR-IP-ADDRESS --ca-cert /var/tempest/workspaces/default/root_ca_certificate`
+1. Run the following command to create a local alias for the BOSH Director using the BOSH CLI:
 
-    Replace the placeholder text with the following:
+    `bosh alias-env MY-ENV -e DIRECTOR-IP-ADDRESS --ca-cert /var/tempest/workspaces/default/root_ca_certificate`
+    Where:
     * `MY-ENV`: Enter an alias for the BOSH Director, such as `gcp`.
     * `DIRECTOR-IP-ADDRESS`: Enter the IP address of your BOSH Director VM.
-For example:
-    <pre class="terminal">$ bosh alias-env gcp -e 10.0.0.3 --ca-cert /var/tempest/workspaces/default/root_ca_certificate</pre>
+    For example:
+    <pre class="terminal">
+    $ bosh alias-env gcp -e 10.0.0.3 --ca-cert /var/tempest/workspaces/default/root_ca_certificate
+    </pre>
 
 1. Log in to the BOSH Director VM using one of the following options:
   * [Internal User Store Login through UAA](#uaa-bosh): Log in to the BOSH Director VM using BOSH.
-  * [External User Store Login through SAML](#saml-bosh): Use an external user store to log in to the BOSH Director VM.
+  * [External User Store Login through SAML](#saml-bosh): Use an external user store to log in to
+    the BOSH Director VM.
 
 #### <a id='uaa-bosh'></a> Log In to the BOSH Director VM with UAA
 
 1. Retrieve the Director username and password in one of the following ways:
-  * In Ops Manager, click the BOSH Director, select the **Credentials** tab, and click the link
-    to **Director Credentials**.
-  * Browse to `https://OPS-MANAGER-FQDN/api/v0/deployed/director/credentials/director_credentials`
-    to obtain the password. Replace `OPS-MANAGER-FQDN` with the fully qualified domain name of Ops
-    Manager.
+  * In <%= vars.platform_name %>, click the BOSH Director, select the **Credentials** tab, and
+    click the link to **Director Credentials**.
+  * Browse to `https://FQDN/api/v0/deployed/director/credentials/director_credentials`
+    to obtain the password, where `FQDN` is the fully qualified domain name of
+    <%= vars.platform_name %>.
 
-1. Run `bosh -e MY-ENV log-in` to log in to the BOSH Director VM. Replace `MY-ENV` with the alias for your BOSH Director. For example:
-    <pre class='terminal'>$ bosh -e gcp log-in</pre>
-    Follow the BOSH CLI prompts and enter the BOSH Director credentials to log in to the BOSH Director VM.
+1. Run `bosh -e MY-ENV log-in` to log in to the BOSH Director VM, where `MY-ENV` is the alias for
+your BOSH Director. For example:
 
-#### <a id='saml-bosh'></a> Log In to the BOSH Director VM with SAML
+    <pre class='terminal'>
+    $ bosh -e gcp log-in
+    </pre>
+    Follow the BOSH CLI prompts and enter the BOSH Director credentials to log in to the BOSH
+    Director VM.
 
-1. Log in to your identity provider and use the following information to configure SAML Service Provider Properties:
+#### <a id='saml-bosh'></a> Log in to the BOSH Director VM with SAML
+
+1. Log in to your identity provider and use the following information to configure SAML Service
+Provider Properties:
   * **Service Provider Entity ID:** `bosh-uaa`
   * **ACS URL:** `https://DIRECTOR-IP-ADDRESS:8443/saml/SSO/alias/bosh-uaa`
   * **Binding:** HTTP Post
@@ -220,10 +271,15 @@ For example:
   * **Binding:** HTTP Redirect
   * **Name ID:** Email Address
 
-1. Run `bosh -e MY-ENV log-in` to log in to the BOSH Director VM. Replace `MY-ENV` with the alias for your BOSH Director. For example:
-    <pre class='terminal'>$ bosh -e gcp log-in</pre>
+1. Run `bosh -e MY-ENV log-in` to log in to the BOSH Director VM, where `MY-ENV` is the alias for
+your BOSH Director. For example:
+
+    <pre class='terminal'>
+    $ bosh -e gcp log-in
+    </pre>
     Follow the BOSH CLI prompts and enter your SAML credentials to log in to the BOSH Director VM.
-    <p class="note"><strong>Note:</strong> Your browser must be able to reach the BOSH Director in order to log in with SAML.</p>
+    <p class="note"><strong>Note:</strong> Your browser must be able to reach the BOSH Director to
+    log in with SAML.</p>
 
 1. Click **Log in with organization credentials (SAML)**.
 
@@ -235,43 +291,47 @@ For example:
 
 1. You see a login confirmation. For example:
 
-    <pre class='terminal'>Logged in as admin@example.org
+    <pre class='terminal'>
+    Logged in as admin@example.org
     </pre>
-
 
 ## <a id='bosh-director-ssh'></a> SSH Into the BOSH Director VM
 
 Do the following steps to log in to the BOSH Director VM with SSH:
 
-1. From Ops Manager, open the BOSH Director tile.
+1. From <%= vars.platform_name %>, open the BOSH Director tile.
 
 1. Select the **Credentials** tab.
 
-1. Next to **Bbr Ssh Credentials**, click **Link to Credential**. A tab opens containing a JSON credential structure.
+1. Next to **Bbr Ssh Credentials**, click **Link to Credential**. A tab opens containing a JSON
+credential structure.
 
-1. Copy the `RSA PRIVATE KEY` and paste it into a file named `bbr.pem`.  Include `-----BEGIN RSA PRIVATE KEY-----` and `-----END RSA PRIVATE KEY-----`.
-  <p class="note warning"><strong>Warning:</strong> Pivotal recommends you keep the key secure. The key provides full access to the entire <%= vars.platform_name %> environment.</p>
+1. Copy the `RSA PRIVATE KEY` and paste it into a file named `bbr.pem`. Include
+`-----BEGIN RSA PRIVATE KEY-----` and `-----END RSA PRIVATE KEY-----`.
+    
+	 <p class="note warning"><strong>Warning:</strong> Keep the key secure. The key provides full
+    access to the entire <%= vars.platform_name %> environment.</p>
 
 1. Replace all `\n` characters in `bbr.pem` with a line break.
 
-1. Copy `bbr.pem` to the `~/.ssh/` directory on your machine.
+1. Copy `bbr.pem` to the `~/.ssh/` directory on your computer.
 
-1. Modify the permissions of the file by running `chmod 600 ~/.ssh/bbr.pem`.
+1. Run `chmod 600 ~/.ssh/bbr.pem` to modify the permissions of the file.
 
 1. Log in to the BOSH Director VM with SSH from your machine.
 
     ```
-    ssh bbr@BOSH-DIRECTOR-IP  -i  ~/.ssh/bbr.pem
+    ssh bbr@BOSH-DIRECTOR-IP -i ~/.ssh/bbr.pem
     ```
-    <p class="note"><strong>Note: </strong> If you are using GCP, ensure SSH port <code>22</code> is open for your BOSH Director VM in your GCP console. If the SSH port is not open, open it by creating a firewall rule.</p>
+    <p class="note"><strong>Note:</strong> If you use GCP, ensure SSH port <code>22</code> is open
+    for the BOSH Director VM in your GCP console. If the SSH port is not open, open it by creating
+    a firewall rule.</p>
 
 1. Run `sudo -i` to get the root privilege.
 
-
 ## <a id='cli'></a> Use the BOSH CLI for Troubleshooting
 
-This section describes three BOSH CLI commands commonly used during
-troubleshooting.
+This section describes three BOSH CLI commands commonly used during troubleshooting.
 
 * **VMs:** Lists the VMs in a deployment
 * **Cloud Check:** Runs a cloud consistency check and interactive repair
@@ -281,7 +341,10 @@ troubleshooting.
 
 The `bosh vms` command provides an overview of the virtual machines that BOSH manages.
 
-To use this command, run `bosh -e MY-ENV vms` to see an overview of all virtual machines managed by BOSH, or `bosh -e MY-ENV -d MY-DEPLOYMENT vms` to see only the virtual machines associated with a particular deployment. Replace `MY-ENV` with your environment, and, if using the `-d` flag, also replace `MY-DEPLOYMENT` with the name of a deployment.
+To use this command, run `bosh -e MY-ENV vms` to see an overview of all virtual machines managed by
+BOSH, or `bosh -e MY-ENV -d MY-DEPLOYMENT vms` to see only the virtual machines associated with a
+particular deployment. Replace `MY-ENV` with your environment, and, if using the `-d` flag, also
+replace `MY-DEPLOYMENT` with the name of a deployment.
 
 When troubleshooting an issue with your deployment, `bosh vms` may show a VM in
 an **unknown** state.
@@ -295,9 +358,12 @@ troubleshooting.
 `bosh vms` supports the following arguments:
 
 * `--dns`: Report also includes the DNS A record for each VM
-* `--vitals`: Report also includes load, CPU, memory usage, swap usage, system disk usage, ephemeral disk usage, and persistent disk usage for each VM
+* `--vitals`: Report also includes load, CPU, memory usage, swap usage, system disk usage,
+  ephemeral disk usage, and persistent disk usage for each VM
 
-<p class="note"><strong>Note:</strong> The <strong>Status</strong> tab of the Pivotal Application Service (PAS) product tile displays information similar to the <code>bosh vms</code> output.</p>
+  <p class="note"><strong>Note:</strong> The <strong>Status</strong> tab of the
+  <%= vars.app_runtime_full %> product tile displays information similar to the
+  <code>bosh vms</code> output.</p>
 
 ### <a id='cck'></a> BOSH Cloud Check
 
@@ -306,71 +372,66 @@ between the VM state database maintained by the BOSH Director and the actual
 state of the VMs. For each difference detected, `bosh <%= vars.bosh_cloud_check %>` can offer the
 following repair options:
 
-* `Reboot VM`: Instructs BOSH to reboot a VM. Rebooting can resolve many
-  transient errors.
-* `Ignore problem`: Instructs BOSH to do nothing.
-  You may want to ignore a problem in order to run `bosh ssh` and attempt
-  troubleshooting directly on the machine.
-* `Reassociate VM with corresponding instance`: Updates the BOSH Director state
-  database.
-  Use this option if you believe that the BOSH Director state database is in
-  error and that a VM is correctly associated with a job.
-* `Recreate VM using last known apply spec`: Instructs BOSH to destroy the
-  server and recreate it from the deployment manifest that the installer
-  provides. Use this option if a VM is corrupted.
-* `Delete VM reference`: Instructs BOSH to delete a VM reference in the
-  Director state database. If a VM reference exists in the state database, BOSH
-  expects to find an agent running on the VM.
+* `Reboot VM`: Instructs BOSH to reboot a VM. Rebooting can resolve many transient errors.
+* `Ignore problem`: Instructs BOSH to do nothing. You may want to ignore a problem ands instead run
+  `bosh ssh` in an attempt to troubleshoot directly on the machine.
+* `Reassociate VM with corresponding instance`: Updates the BOSH Director state database. Use this
+  option if you believe that the BOSH Director state database is in error and that a VM is
+  correctly associated with a job.
+* `Recreate VM using last known apply spec`: Instructs BOSH to destroy the server and recreate it
+  from the deployment manifest that the installer provides. Use this option if a VM is corrupted.
+* `Delete VM reference`: Instructs BOSH to delete a VM reference in the Director state database. If
+  a VM reference exists in the state database, BOSH expects to find an agent running on the VM.
   Select this option only if you know that this reference is in error.
   Once you delete the VM reference, BOSH can no longer control the VM.
 
-To use this command, run `bosh -e MY-ENV -d MY-DEPLOYMENT <%= vars.bosh_cloud_check %>`. Replace `MY-ENV` with your environment, and `MY-DEPLOYMENT` with your deployment.
+To use this command, run `bosh -e MY-ENV -d MY-DEPLOYMENT <%= vars.bosh_cloud_check %>`, where `MY-ENV` is your environment, and `MY-DEPLOYMENT` is your deployment.
 
 #### Example Scenarios
 
 **Unresponsive Agent**
 
 <pre class='terminal'>
-  $ bosh -e example-env -d example-deployment <%= vars.bosh_cloud_check %>
-  ccdb/0 (vm-3e37133c-bc33-450e-98b1-f86d5b63502a) is not responding:
+$ bosh -e example-env -d example-deployment <%= vars.bosh_cloud_check %>
+ccdb/0 (vm-3e37133c-bc33-450e-98b1-f86d5b63502a) is not responding:
 
-  - Ignore problem
-  - Reboot VM
-  - Recreate VM using last known apply spec
-  - Delete VM reference (DANGEROUS!)
+- Ignore problem
+- Reboot VM
+- Recreate VM using last known apply spec
+- Delete VM reference (DANGEROUS!)
 </pre>
 
 **Missing VM**
 
 <pre class='terminal'>
-  $ bosh -e example-env -d example-deployment <%= vars.bosh_cloud_check %>
-  VM with cloud ID `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' missing:
+$ bosh -e example-env -d example-deployment <%= vars.bosh_cloud_check %>
+VM with cloud ID `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' missing:
 
-  - Ignore problem
-  - Recreate VM using last known apply spec
-  - Delete VM reference (DANGEROUS!)
+- Ignore problem
+- Recreate VM using last known apply spec
+- Delete VM reference (DANGEROUS!)
 </pre>
 
 **Unbound Instance VM**
 
 <pre class='terminal'>
-  $ bosh -e example-env -d example-deployment <%= vars.bosh_cloud_check %>
-  VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' reports itself as `ccdb/0' but does not have a bound instance:
+$ bosh -e example-env -d example-deployment <%= vars.bosh_cloud_check %>
+VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' reports itself as `ccdb/0' but does not have a bound instance:
 
-  - Ignore problem
-  - Delete VM (unless it has persistent disk)
-  - Reassociate VM with corresponding instance
+- Ignore problem
+- Delete VM (unless it has persistent disk)
+- Reassociate VM with corresponding instance
 </pre>
 
 **Out of Sync VM**
 
 <pre class='terminal'>
-  $ bosh -e example-env -d example-deployment <%= vars.bosh_cloud_check %>
-  VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' is out of sync:
-  expected `cf-d7293430724a2c421061: ccdb/0', got `cf-d7293430724a2c421061: nats/0':
+$ bosh -e example-env -d example-deployment <%= vars.bosh_cloud_check %>
+VM `vm-3e37133c-bc33-450e-98b1-f86d5b63502a' is out of sync:
+expected `cf-d7293430724a2c421061: ccdb/0', got `cf-d7293430724a2c421061: nats/0':
 
-  - Ignore problem
-  - Delete VM (unless it has persistent disk)
+- Ignore problem
+- Delete VM (unless it has persistent disk)
 </pre>
 
 ### <a id='bosh-ssh'></a> BOSH SSH
@@ -379,7 +440,12 @@ Use `bosh ssh` to log in to the VMs in your deployment with SSH.
 
 To use `bosh ssh`, do the following:
 
-1. Identify a VM to log in to with SSH. Run `bosh -e MY-ENV -d MY-DEPLOYMENT vms` to list the VMs in the given deployment. Replace `MY-ENV` with your environment alias and `MY-DEPLOYMENT` with the deployment name.
+1. Identify a VM to log in to with SSH. Run `bosh -e MY-ENV -d MY-DEPLOYMENT vms` to list the VMs
+in the given deployment, where `MY-ENV` is your environment alias and `MY-DEPLOYMENT` is the
+deployment name.
 
 1. Run `bosh -e MY-ENV -d MY-DEPLOYMENT ssh VM-NAME/GUID`. For example:
-  <pre class="terminal">$ bosh -e example-env -d example-deployment ssh diego-cell/abcd0123-a012-b345-c678-9def01234567</pre>
+
+    <pre class="terminal">
+    $ bosh -e example-env -d example-deployment ssh diego-cell/abcd0123-a012-b345-c678-9def01234567
+    </pre>

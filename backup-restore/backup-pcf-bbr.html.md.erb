@@ -293,40 +293,46 @@ You can use the environment variable `BOSH_ALL_PROXY` to open an SSH tunnel with
 
 <p class="note"><strong>Note:</strong> For the following procedures to work, ensure the SOCKS port is not already in use by a different tunnel or process.</p>
 
+<p class="note"><strong>Note:</strong> Using <code>BOSH_ALL_PROXY</code> can result in longer backup and restore times due to network performance degradation. All operations must pass through the proxy, so moving backup artifacts can be significantly slower.</p>
+
 To connect with `BOSH_ALL_PROXY`, perform one of the following procedures:
 
-* To establish the tunnel separate from the BOSH CLI:
-    1. Establish the tunnel and make it available on a local port by running:
+* Establish the tunnel separately from the BOSH CLI.
+* Establish the tunnel using the BOSH CLI.
 
-        ```
-        ssh -4 -D SOCKS-PORT -fNC JUMPBOX-USERNAME@JUMPBOX-ADDRESS -i JUMPBOX-KEY-FILE -o ServerAliveInterval=60
-        ```
-        Where:
-        * `SOCKS-PORT` is the local SOCKS port.
-        * `JUMPBOX-USERNAME` is your jumpbox username.
-        * `JUMPBOX-ADDRESS` is the IP address or hostname of the jumpbox.
-        * `JUMPBOX-KEY-FILE` is the local SSH private key for accessing the jumpbox.
-    1. Provide the BOSH CLI with access to the tunnel using the `BOSH_ALL_PROXY` environment variable by running:
+To establish the tunnel separately from the BOSH CLI:
 
-        ```
-        export BOSH_ALL_PROXY=socks5://localhost:SOCKS-PORT
-        ```
-        Where is `SOCKS-PORT` is your local SOCKS port.
+1. Establish the tunnel and make it available on a local port by running:
 
-* To establish the tunnel using the BOSH CLI, provide the BOSH CLI with the necessary SSH credentials to create the tunnel by running:
+    ```
+    ssh -4 -D SOCKS-PORT -fNC JUMPBOX-USERNAME@JUMPBOX-ADDRESS -i JUMPBOX-KEY-FILE -o ServerAliveInterval=60
+    ```
+    Where:
+      * `SOCKS-PORT` is the local SOCKS port.
+      * `JUMPBOX-USERNAME` is your jumpbox username.
+      * `JUMPBOX-ADDRESS` is the IP address or hostname of the jumpbox.
+      * `JUMPBOX-KEY-FILE` is the local SSH private key for accessing the jumpbox.
+1. Provide the BOSH CLI with access to the tunnel using the `BOSH_ALL_PROXY` environment variable by running:
 
-      ```
-      export BOSH_ALL_PROXY=ssh+socks5://JUMPBOX-USERNAME@JUMPBOX-ADDRESS:SOCKS-PORT?private_key=JUMPBOX-KEY-FILE
-      ```
-      Where:
+    ```
+    export BOSH_ALL_PROXY=socks5://localhost:SOCKS-PORT
+    ```
+    Where is `SOCKS-PORT` is your local SOCKS port.
+
+To establish the tunnel using the BOSH CLI:
+
+1. Provide the BOSH CLI with the necessary SSH credentials to create the tunnel by running:
+
+    ```
+    export BOSH_ALL_PROXY=ssh+socks5://JUMPBOX-USERNAME@JUMPBOX-ADDRESS:SOCKS-PORT?private_key=JUMPBOX-KEY-FILE
+    ```
+    Where:
       * `JUMPBOX-USERNAME` is your jumpbox username.
       * `JUMPBOX-ADDRESS` is the IP address or hostname of the jumpbox.
       * `SOCKS-PORT` is the local SOCKS port.
       * `JUMPBOX-KEY-FILE` is the local SSH private key for accessing the jumpbox.
 
-<p class="note"><strong>Note:</strong> Using <code>BOSH_ALL_PROXY</code> can result in longer backup and restore times due to network performance degradation. All operations must pass through the proxy, so moving backup artifacts can be significantly slower.</p>
-
-<p class="note warning"><strong>Warning:</strong> In BBR v1.5.0 and earlier, the tunnel created by the BOSH CLI does not include the <code>ServerAliveInterval</code> flag. This might cause your SSH connection to time out when transferring large artifacts. In BBR v1.5.1, the <code>ServerAliveInterval</code> flag is included. For more information, see <a href="https://github.com/cloudfoundry-incubator/bosh-backup-and-restore/releases/tag/v1.5.1">bosh-backup-and-restore</a> on GitHub.</p>
+    <p class="note warning"><strong>Warning:</strong> In BBR v1.5.0 and earlier, the tunnel created by the BOSH CLI does not include the <code>ServerAliveInterval</code> flag. This might cause your SSH connection to time out when transferring large artifacts. In BBR v1.5.1, the <code>ServerAliveInterval</code> flag is included. For more information, see <a href="https://github.com/cloudfoundry-incubator/bosh-backup-and-restore/releases/tag/v1.5.1">bosh-backup-and-restore</a> on GitHub.</p>
 
 #### <a id='check-bosh-director'></a> Check Your BOSH Director
 

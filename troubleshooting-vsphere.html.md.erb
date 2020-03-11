@@ -3,66 +3,102 @@ title: Troubleshooting Ops Manager for VMware vSphere
 owner: Ops Manager
 ---
 
-This guide provides help with diagnosing and resolving issues that are specific to [<%= vars.platform_name %>](https://network.pivotal.io/products/pivotal-cf) deployments on VMware vSphere.
+This guide provides help with diagnosing and resolving issues that are specific to
+<%= vars.platform_name %> deployments on VMware vSphere.
 
-For infrastructure-agnostic troubleshooting help, see [Diagnosing Problems in <%= vars.platform_name %>](./diagnostics.html).
+For infrastructure-agnostic troubleshooting help, see [Diagnosing Problems in
+<%= vars.platform_name %>](./diagnostics.html).
 
+## <a id='common-issues'></a> Common Issues
 
-## <a id='common-problems'></a> Common Issues
-
-The following sections list common issues you might encounter and possible resolutions.
+The following sections list common issues that you might encounter with <%= vars.platform_name %>
+and possible resolutions.
 
 ### <a id='vcenter-setting'></a> <%= vars.platform_name %> Installation Fails
 
-If you modify the vCenter Statistics Interval Duration setting from its default setting of 5 minutes, the <%= vars.platform_name %> installation might fail at the MicroBOSH deployment stage, and the logs might contain the following error message:
-`The specified parameter is not correct, interval`. This failure happens because Pivotal Operations Manager expects a default value of 5 minutes, and the call to this method fails when the retrieved value does not match the expected default value.
+If you modify the vCenter Statistics Interval Duration setting from its default setting of five
+minutes, the <%= vars.platform_name %> installation might fail at the MicroBOSH deployment stage,
+and the logs might contain the following error message:
 
-To resolve this issue, launch vCenter, navigate to **Administration > vCenter Server Settings > Statistics**, and reset the vCenter Statistics Interval Duration setting to 5 minutes.
+```
+The specified parameter is not correct, interval
+```
+
+This failure happens because <%= vars.platform_name %> expects a default value of five minutes, and
+the call to this method fails when the retrieved value does not match the expected default value.
+
+To resolve this issue, launch vCenter, navigate to **Administration > vCenter Server Settings > Statistics**,
+and reset the vCenter Statistics Interval Duration setting to five minutes.
 
 ### <a id='bosh_install'></a> BOSH Automated Installation Fails
 
-Before starting an Pivotal Application Service (PAS) deployment, you must set up and configure a vSphere cluster.
+Before starting an <%= vars.app_runtime_full %> (<%= vars.app_runtime_abbr %>) deployment, you must
+set up and configure a vSphere cluster.
 
-If you enable vSphere DRS (Distributed Resource Scheduler) for the cluster, you must set the Automation level to **Partially automated** or **Fully automated**.
+If you enable vSphere DRS (Distributed Resource Scheduler) for the cluster, you must set the
+Automation level to **Partially automated** or **Fully automated**.
 
-If you set the Automation level to **Manual**, the BOSH automated installation will fail with a `power_on_vm` error when BOSH attempts to create virtual VMs.
+If you set the Automation level to **Manual**, the BOSH automated installation will fail with a
+`power_on_vm` error when BOSH attempts to create virtual VMs.
 
 <%= image_tag("troubleshooting/drs_automation_level.png") %>
 
-### <a id='net-settings'></a> Ops Manager Loses Its IP Address After HA or Reboot
+### <a id='net-settings'></a> <%= vars.platform_name %> Loses IP Address After HA or Reboot
 
-Ops Manager can lose its IP address and use DHCP due to an issue in the open source version of VMware Tools. For more information to troubleshoot this issue, see [IP is not Getting Assigned in vSphere after Ops Manager Restart](https://community.pivotal.io/s/article/IP-is-not-Getting-Assigned-in-vSphere-after-Ops-Manager-Restart) in the Pivotal Support Knowledge Base.
+<%= vars.platform_name %> can lose its IP address and use DHCP due to an issue in the open source
+version of VMware Tools. For more information to troubleshoot this issue, see
+[IP is not Getting Assigned in vSphere after <%= vars.platform_name %> Restart](https://community.pivotal.io/s/article/IP-is-not-Getting-Assigned-in-vSphere-after-Ops-Manager-Restart)
+in the Pivotal Support Knowledge Base.
 
 ### <a id='net-settings'></a> Cannot Connect to the OVF in a Browser
 
-If you deployed the OVF file but cannot connect to in a browser, check that the network settings you entered in the wizard are correct.
+If you deployed the OVF file but cannot connect to it in a browser, check that the network settings
+you entered in the wizard are correct.
 
-1. Access the <%= vars.platform_name %> installation VM using the vSphere Console. If your network settings are configured incorrectly, you cannot SSH into the installation VM.
+1. Access the <%= vars.platform_name %> installation VM using the vSphere Console. If your network
+settings are configured incorrectly, you cannot SSH into the installation VM.
 
-1. Log in using the private SSH key associated with the public SSH key that you provided when you imported the <%= vars.platform_name %> `.ova` in vCenter.
+1. Log in using the private SSH key associated with the public SSH key that you provided when you
+imported the <%= vars.platform_name %> `.ova` in vCenter.
 
-1. Confirm that the network settings are correct by checking that the ADDRESS, NETMASK, GATEWAY, and DNS-NAMESERVERS entries are correct in `/etc/network/interfaces`.
+1. Confirm that the network settings are correct by checking that the `ADDRESS`, `NETMASK`,
+`GATEWAY`, and `DNS-NAMESERVERS` entries are correct in `/etc/network/interfaces`.
 
-1. If any of the settings are incorrect, run `sudo vi /etc/network/interfaces` and correct the incorrect entries.
+1. If any of the settings are incorrect, run `sudo vi /etc/network/interfaces` and correct the
+incorrect entries.
 
-1. In vSphere, navigate to the **Summary** tab for the VM and confirm that the network name is correct.
+1. In vSphere, navigate to the **Summary** tab for the VM and confirm that the network name is
+correct.
 
     <%= image_tag("troubleshooting/network_settings.png") %>
 
-1. If the network name is incorrect, right click on the VM, select **Edit Settings > Network adapter 1**, and select the correct network.
+1. If the network name is incorrect, right click on the VM, select **Edit Settings > Network adapter 1**,
+and select the correct network.
 
 1. Reboot the installation VM.
 
 ### <a id='communication'></a> Installation Fails with Failed Network Connection
 
-If you experience a communication error while installing Ops Manager or MicroBOSH Director, check the following settings.
+If you experience a communication error while installing <%= vars.platform_name %> or MicroBOSH
+Director, check the following:
 
-* Ensure that the routes are not blocked. vSphere environments use [NSX](http://www.vmware.com/products/nsx.html) for firewall and NAT/SNAT translation and load balancing. All communication between <%= vars.platform_name %> VMs and vCenter or ESXi hosts route through the NSX firewall and are blocked by default.
+* Ensure that the routes are not blocked. vSphere environments use
+[NSX](http://www.vmware.com/products/nsx.html) for firewall and NAT/SNAT translation and load
+balancing. All communication between <%= vars.platform_name %> VMs and vCenter or ESXi hosts route
+through the NSX firewall and are blocked by default.
 
-* Open port 443. Ops Manager and MicroBOSH Director VMs require access to vCenter and all ESX through port 443.
+* Open port 443. <%= vars.platform_name %> and MicroBOSH Director VMs require access to vCenter and
+all ESX through port 443.
 
-* Allocate more IP addresses. BOSH requires that you allocate a sufficient number of additional dynamic IP addresses when configuring a reserved IP address range during installation. BOSH uses these IP addresses during installation to compile and deploy VMs, install PAS, and connect to services. <%= vars.company_name %> recommends that you allocate at least 36 dynamic IP addresses when deploying Ops Manager and PAS.
+* Allocate more IP addresses. BOSH requires that you allocate a sufficient number of additional
+dynamic IP addresses when configuring a reserved IP address range during installation. BOSH uses
+these IP addresses during installation to compile and deploy VMs, install
+<%= vars.app_runtime_abbr %>, and connect to services. <%= vars.company_name %> recommends that you
+allocate at least 36 dynamic IP addresses when deploying <%= vars.platform_name %> and
+<%= vars.app_runtime_abbr %>.
 
 ### <a id="database-permissions"></a> Insufficient External Database Permissions
 
-Upgrade issues can be caused when the external database user used for the network policy database is given insufficient permissions. To avoid this upgrade issue, ensure that the networkpolicyserver database user has the `ALL PRIVILEGES` permission.
+Upgrade issues can be caused when the external database user used for the network policy database
+is given insufficient permissions. To avoid this upgrade issue, ensure that the networkpolicyserver
+database user has the `ALL PRIVILEGES` permission.

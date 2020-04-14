@@ -1,36 +1,39 @@
+In the **Application Containers** pane, you enable microservice frameworks, private Docker registries, and other services that support your apps at the container level.
 
-1. Select **Application Containers**. The following image shows the **Application Containers** page.
+To configure the **Application Containers** pane:
 
-	![There is a heading at the top of the Application Containers page that begins with the text, Enable microservices framework. There are several fields on the Application Containers page. The first three fields are Enable Custom Buildpacks, Allow SSH access to app containers, and Enable SSH when an app is created.](../images/docker-registry-ert.png)
+1. Select **Application Containers**.
 
-1. The **Enable Custom Buildpacks** checkbox governs the ability to pass a custom buildpack URL to the `-b` option of the `cf push` command. By default, this ability is enabled, letting developers use custom buildpacks when deploying apps. Disable this option by disabling the checkbox. For more information about custom buildpacks, refer to the [buildpacks](../buildpacks/) section of the PCF documentation.
+1. The **Enable Custom Buildpacks** checkbox governs the ability to pass a custom buildpack URL to the `-b` option of the `cf push` command. By default, this ability is enabled, letting developers use custom buildpacks when deploying apps. Disable this option by disabling the checkbox. For more information about custom buildpacks, see [Buildpacks](../buildpacks/).
 
-1. The **Allow SSH access to app containers** checkbox controls SSH access to application instances. Enable the checkbox to permit SSH access across your deployment, and disable it to prevent all SSH access. See the [Application SSH Overview](../devguide/deploy-apps/app-ssh-overview.html) topic for information about SSH access permissions at the space and app scope.
+1. The **Allow SSH access to app containers** checkbox controls SSH access to app instances. Enable the checkbox to permit SSH access across your deployment, and disable it to prevent all SSH access. For more information about SSH access permissions at the space and app scope, see [App SSH Overview](../devguide/deploy-apps/app-ssh-overview.html).
 
-1. If you want to enable SSH access for new apps by default in spaces that allow SSH, select **Enable SSH when an app is created**. If you deselect the checkbox, developers can still enable SSH after pushing their apps by running `cf enable-ssh APP-NAME`.
+1. To enable SSH access for new apps by default in spaces that allow SSH, select the **Enable SSH when an app is created** checkbox. If you disable the checkbox, developers can still enable SSH after pushing their apps by running `cf enable-ssh APP-NAME`.
+    <p class='note'><strong>Note:</strong> If you are using a load balancer instead of HAProxy, ensure that it has port 2222 open to enable SSH traffic.</p>
+  You can give SSH access to an app only if an admin assigns you a Space Developer role in the space where the app runs. For more information, see the [Manage App Space Roles](../console/console-roles.html#space-roles) section in the _Managing User Roles with Apps Manager_ topic.
 
-1. To enable the Gorouter to verify app identity using TLS, click **Router uses TLS to verify application identity**. To enable the Gorouter and your apps to verify each other's identity using TLS, click **Router and applications use mutual TLS to verify each other's identity**.
-  <p class='note'><strong>Note:</strong> Mutual TLS app identity verification does not work for Windows containers.</p>
-  Verifying app identity using TLS or mutual TLS enables encryption between router and app containers and guards against misrouting during control plane failures. For more information about Gorouter route consistency modes, see [Preventing Misrouting](../concepts/http-routing.html#consistency) in _HTTP Routing_.
-  <p class='note'><strong>Note:</strong> To support mutual TLS app identity verification, you need v2.3 or later of both PAS and PCF Isolation Segment (IST). The Gorouter and cell components in PCF v2.2 and earlier do not support mTLS handshakes.</p>
-  <p class='note'><strong>Note:</strong> This feature does not work if the <b>Disable SSL certificate verification for this environment</b> checkbox is selected.</p>
+1. To enable SSH access for new apps by default in spaces that allow SSH, select the **Enable SSH when an app is created** checkbox. If you disable this checkbox, developers can still enable SSH after pushing their apps by running `cf enable-ssh APP-NAME`.
 
-1. To enable time-to-live (TTL) expiration for routes, select the **Prune Routes on TTL Expiry for TLS Backends** checkbox. 
-You should only enable TTL expiration for TLS backends if you are experiencing occasional misrouting of apps due to stale routes. 
-For more information, see [Preventing Misrouting](../concepts/http-routing.html#consistency) in _HTTP Routing_ and [Intermittent Misrouting of Apps in Large PCF Foundations](https://docs.pivotal.io/pivotalcf/2-6/pcf-release-notes/runtime-rn.html##stale-routes) in the _PAS v2.6 Release Notes_.
+1. Choose the method the Gorouter uses to verify app identity under **Router application identity verification**. To enable the Gorouter to verify app identity using TLS, select **Router uses TLS to verify application identity**. To enable the Gorouter and your apps to verify each other's identity using TLS, select **Router and apps use mutual TLS to verify each other's identity**.
+    <p class='note'><strong>Note:</strong> Mutual TLS (mTLS) app identity verification does not work for Windows containers.</p>
+    Verifying app identity using TLS or mTLS enables encryption between router and app containers and guards against misrouting during control plane failures. For more information about Gorouter route consistency modes, see the [Preventing Misrouting](../concepts/http-routing.html#consistency) section in the _HTTP Routing_ topic.
+    <p class='note'><strong>Note:</strong> To support mTLS app identity verification, you need v2.3 or later of both PAS and PCF Isolation Segment (IST). The Gorouter and Diego Cell components in PCF v2.2 and earlier do not support mTLS handshakes.</p>
+    <p class='note'><strong>Note:</strong> This feature does not work if the <strong>Disable SSL certificate verification for this environment</strong> checkbox is enabled in the <strong>Networking</strong> pane.</p>
 
-1. You can configure Pivotal Application Service (PAS) to run app instances in Docker containers by supplying their IP address ranges in the **Private Docker Insecure Registry Whitelist** textbox. See the [Using Docker Registries](../opsguide/docker-registry.html) topic for more information.
+1. To enable time-to-live (TTL) expiration for routes, select the **Prune Routes on TTL Expiry for TLS Backends** checkbox. You should only enable TTL expiration for TLS back ends if you are experiencing occasional misrouting of apps due to stale routes. For more information, see the [Preventing Misrouting](../concepts/http-routing.html#consistency) section in the _HTTP Routing_ topic and [Intermittent Misrouting of Apps in Large PCF Foundations](https://docs.pivotal.io/pivotalcf/2-6/pcf-release-notes/runtime-rn.html#stale-routes) in the _Pivotal Application Service v2.6 Release Notes_.
 
-1. Select your preference for **Docker Images Disk-Cleanup Scheduling on Cell VMs**. If you choose **Clean up disk-space once usage fills disk**, enter a **Reserved amount of disk space for other jobs** in megabytes. For more information about the configuration options and how to configure a reserved amount, see [Configuring Docker Images Disk-Cleanup Scheduling](../opsguide/config-cell-cleanup.html).
+1. You can configure PAS to run app instances in Docker containers by providing a comma-separated list of their IP address ranges in the **Private Docker Insecure Registry Whitelist** textbox. For more information, see [Using Docker Registries](../opsguide/docker-registry.html).
 
-1. The **Enable Containerd Delegation** checkbox governs whether or not Garden delegates container create and destroy operations to the containerd tool. By default, this option is enabled and Garden uses containerd. Disable this option by disabling the checkbox. For more information about the containerd tool, see [containerd](https://containerd.io).
+1. Select your preference for **Docker Images Disk-Cleanup Scheduling on Cell VMs**. If you choose **Clean up disk-space once usage fills disk**, enter a value in MB for **Reserved amount of disk space for other jobs**. For more information about the configuration options and how to configure a reserved amount, see [Configuring Cell Disk Cleanup Scheduling](../opsguide/config-cell-cleanup.html).
 
-1. Enter a number in the **Max Inflight Container Starts** textbox. This number configures the maximum number of started instances across the Diego cells in your deployment. For more information about this feature, see [Setting a Maximum Number of Started Containers](../upgrading/configuring.html#container-starts).
+1. The **Enable Containerd Delegation** governs whether or not Garden delegates container create and destroy operations to the containerd tool. By default, this option is enabled and Garden uses containerd. Disable this option by disabling the checkbox. For more information about the containerd tool, see [containerd](https://containerd.io).
 
-1. Under **Enabling NFSv3 volume services**, select **Enable** or **Disable**. NFS volume services allow application developers to bind existing NFS volumes to their applications for shared file access. For more information, see the [Enabling NFS Volume Services](../opsguide/enable-vol-services.html) topic.
+1. Enter a number in the **Max Inflight Container Starts** field. This number configures the maximum number of started instances across the Diego cells in your deployment. Entering `0` sets no limit. For more information, see the [Set a Maximum Number of Started Containers](../upgrading/configuring.html#container-starts) section of the _Configuring PAS for Upgrades_ topic.
+
+1. Under **Enabling NFSv3 volume services**, select **Enable** or **Disable**. NFS volume services allow app developers to bind existing NFS volumes to their apps for shared file access. For more information, see [Enabling Volume Services](../opsguide/enable-vol-services.html).
 	<p class="note"><strong>Note:</strong> In a fresh install, NFSv3 volume services is enabled by default. In an upgrade, NFSv3 volume services is set to the same setting as it was in the previous deployment.</p>
 
-1. (Optional) To configure LDAP for NFSv3 volume services, do the following:
+1. (Optional) To configure LDAP for NFSv3 volume services:
   * For **LDAP Service Account User**, enter the username of the service account in LDAP that will manage volume services.
   * For **LDAP Service Account Password**, enter the password for the service account.
   * For **LDAP Server Host**, enter the hostname or IP address of the LDAP server.
@@ -39,11 +42,12 @@ For more information, see [Preventing Misrouting](../concepts/http-routing.html#
   * For **LDAP Server CA Cert**, you can optionally enter a certificate if your LDAP server supports TLS and you want to enable TLS connections from the NFS driver to your LDAP server. Paste in the root certificate from your CA certificate or your self-signed certificate.
   <p class='note'><strong>Note:</strong> UAA can only parse one certificate entered into this field. If you enter multiple certificates, UAA only uses the first one you entered and ignores the rest. You only need to include one root certificate or self-signed certificate.</p>
 
-1. Select the **Format of timestamps in Diego logs**, either **RFC3339 timestamps** or **Seconds since the Unix epoch**. Fresh PAS v2.2 installations default to **RFC3339 timestamps**, while upgrades to PAS v2.2 from previous versions default to **Seconds since the Unix epoch**.
+1. Select the **Format of timestamps in Diego logs**, either **RFC3339 timestamps** or **Seconds since the Unix epoch**.
 
-1. (Optional) Select the **Enable SMB volume services** checkbox to enable SMB volume services. Enabling SMB volume services allows developers to bind existing SMB shares to their apps. For more information, see [Enabling  Volume Services](../opsguide/enable-vol-services.html).
-<p class="note"><b>Note:</b> If you enable SMB volume services, in the **Errands** pane, set the **SMB Broker Errand** to **On**.</p>
+1. (Optional) Select the **Enable SMB volume services** checkbox to enable SMB volume services. Enabling SMB volume services allows developers to bind existing SMB shares to their apps. For more information, see [Enabling Volume Services](../opsguide/enable-vol-services.html).
+    <p class="note"><strong>Note:</strong> If you enable SMB volume services, you must set the <strong>SMB Broker Errand</strong> to <strong>On</strong> in the <strong>Errands</strong> pane.</p>
 
 1. (Optional) Modify the **Default health check timeout**. The value configured for this field is the amount of time allowed to elapse between starting up an app and the first healthy response from the app. If the health check does not receive a healthy response within the configured timeout, then the app is declared unhealthy. The default timeout is `60` seconds and the maximum configurable timeout is `600` seconds.
+    <p class='note warning'><strong>Warning:</strong> If you decrease the default health check timeout value below its current value, existing apps with startup times greater than the new value may fail to start up.</p>
 
 1. Click **Save**.

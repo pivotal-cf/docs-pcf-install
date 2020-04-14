@@ -1,4 +1,4 @@
-The **Advanced Features** section of Pivotal Application Service (PAS) includes new functionality that may have certain constraints. Although these features are fully supported, Pivotal recommends caution when using them in production environments.
+The **Advanced Features** pane includes new functionality that may have certain constraints. Although these features are fully supported, Pivotal recommends caution when using them in production environments.
 
 ### <a id="disk-memory-overcommit"></a> Diego Cell Memory and Disk Overcommit
 
@@ -8,13 +8,13 @@ For example, you might want to use the overcommit if your apps use a small amoun
 
 <p class="note"><strong>Note:</strong> Due to the risk of app failure and the deployment-specific nature of disk and memory use, Pivotal has no recommendation about how much, if any, memory or disk space to overcommit.</p>
 
-To enable overcommit, do the following:
+To enable overcommit:
 
 1. Select **Advanced Features**.
 
-1. Enter the total desired amount of Diego cell memory value in the **Cell Memory Capacity (MB)** field. Refer to the **Diego Cell** row in the **Resource Config** tab for the current Cell memory capacity settings that this field overrides.
+1. Enter in MB the total desired amount of Diego cell memory value in the **Cell Memory Capacity (MB)** field. Refer to the **Diego Cell** row in the **Resource Config** tab for the current Diego Cell memory capacity settings that this field overrides.
 
-1. Enter the total desired amount of Diego cell disk capacity value in the **Cell Disk Capacity (MB)** field. Refer to the **Diego Cell** row in the **Resource Config** tab for the current Cell disk capacity settings that this field overrides.
+1. Enter in MB the total desired amount of Diego cell disk capacity value in the **Cell Disk Capacity (MB)** field. Refer to the **Diego Cell** row in the **Resource Config** tab for the current Diego Cell disk capacity settings that this field overrides.
 
 1. Click **Save**.
 
@@ -24,13 +24,13 @@ To enable overcommit, do the following:
 
 ### <a id="rfc_whitelist"></a> Whitelist for Non-RFC-1918 Private Networks
 
-Some private networks require extra configuration so that internal file storage (WebDAV) can communicate with other PCF processes. 
+Some private networks require extra configuration so that internal file storage (WebDAV) can communicate with other <%= vars.product_name %> processes. 
 
 The **Whitelist for non-RFC-1918 Private Networks** field is provided for deployments that use a non-RFC 1918 private network. This is typically a private network other than `10.0.0.0/8`, `172.16.0.0/12`, or `192.168.0.0/16`. 
 
-Most PCF deployments do not require any modifications to this field.
+Most <%= vars.product_name %> deployments do not require any modifications to this field.
 
-To add your private network to the whitelist, do the following:
+To add your private network to the whitelist:
 
 1. Select **Advanced Features**.
 
@@ -44,48 +44,76 @@ To add your private network to the whitelist, do the following:
 
 ### <a id="cf_cli_timeout"></a> CF CLI Connection Timeout
 
-The **CF CLI Connection Timeout** field allows you to override the default five second timeout of the Cloud Foundry Command Line Interface (cf CLI) used within your PCF deployment. This timeout affects the cf CLI command used to push PAS errand apps such as Notifications, Autoscaler, and Apps Manager. 
+The **CF CLI Connection Timeout** field allows you to override the default five-second timeout of the Cloud Foundry Command Line Interface (cf CLI) used within your <%= vars.product_name %> deployment. This timeout affects the cf CLI command used to push <%= vars.product_short %> errand apps such as Notifications, Autoscaler, and Apps Manager. 
 
-Set the value of this field to a higher value, in seconds, if you are experiencing domain name resolution timeouts when pushing errands in PAS.
+Set the value of this field to a higher value, in seconds, if you are experiencing domain name resolution timeouts when pushing errands in <%= vars.product_short %>.
 
-To modify the value of the **CF CLI Connection Timeout**, perform the following steps:
+To modify the value of the CF CLI connection timeout:
 
 1. Select **Advanced Features**.
 
-1. Add a value, in seconds, to the **CF CLI Connection Timeout** field. 
+1. Enter a value, in seconds, to the **CF CLI Connection Timeout** field. 
 
 1. Click **Save**.
 
-<% end %>
+### <a id='tls'></a> (Optional) Enable TLS for Internal System Database
 
-<% if current_page.data.deployment != "IST" %>
+You can enable TLS for clients of the internal system database. This feature is in beta, and the checkbox is disabled by default. For more information about the internal system database, see [Managing Internal Databases](../opsguide/internal-databases.html).
 
-### <a id='tls'></a> Enable TLS for Internal System Database
+To enable TLS for clients of the internal system database:
 
-You can optionally enable TLS for clients of the internal system database. This feature is in beta, and the checkbox is disabled by default. For more information about the internal system database, see [Managing Internal Databases](../opsguide/internal-databases.html).
+1. Select **Advanced Features**.
 
-To enable TLS for clients of the internal system database, do the following:
-
-1. Select **BETA: Enable TLS for internal system database**.
+1. Select the **BETA: Enable TLS for internal system database** checkbox.
 
 1. Click **Save**.
 
 ### <a id="db-connection-limits"></a> Database Connection Limits
 
-You can configure the maximum number of concurrent database connections that diego and container networking components can have. Use the field beginning with **Maximum number of open connections...** for a given component. The placeholder values for each field are the default values. 
+You can configure the maximum number of concurrent database connections that Diego and container networking components can have.
+
+To configure the maximum number of concurrent database connections:
+
+1. Select **Advanced Features**.
+
+1. Enter a value in each field beginning with **Maximum number of open connections...** for a given component. The placeholder values for each field are the default values.
+
+1. Click **Save**.
 
 When there are not enough connections available, such as during a time of heavy load, components may experience degraded performance and sometimes failure. To resolve or prevent this, you can increase and fine-tune database connection limits for the component.  
 
-<p class="note warning"><strong>WARNING:</strong> Decreasing the value of this field for a component may affect the amount of time it takes for it to respond to requests.</p>
+<p class="note warning"><strong>Warning:</strong> Decreasing the value of this field for a component may affect the amount of time it takes for it to respond to requests.</p>
 
-### <a id="zdt-app-deployments"></a> Rolling App Deployments
+### <a id="zdt-app-deployments"></a> (Optional) Rolling App Deployments
 
-You can optionally disable rolling app deployments. For more information, see the [Rolling App Deployments (Beta)](../devguide/deploy-apps/rolling-deploy.html) topic.
+You can disable rolling app deployments. For more information, see [Rolling App Deployments (Beta)](../devguide/deploy-apps/rolling-deploy.html).
 
-To disable zero downtime app deployments, do the following:
+To disable rolling app deployments:
 
-1. Select **Disable Zero Downtime App Deployments**.
+1. Select **Advanced Features**.
+
+1. Select the **Disable Zero Downtime App Deployments** checkbox.
 
 1. Click **Save**.
+
+<% else %>
+
+### <a id='smb'></a> SMB Volume Services
+
+Enabling SMB volume services allows developers to bind existing SMB shares to their apps for shared file access.
+
+To enable SMB volume services:
+
+1. Select **Advanced Features**.
+
+1. Select the **Enable SMB volume services** checkbox.
+
+1. Click **Save**.
+
+1. In the **Errands** pane of the <%= vars.product_short %> tile, set the **SMB Broker Errand** to **On**.
+
+1. Click **Save**.
+
+For more information about SMB volume services, see [Enabling Volume Services](../opsguide/enable-vol-services.html).
 
 <% end %>

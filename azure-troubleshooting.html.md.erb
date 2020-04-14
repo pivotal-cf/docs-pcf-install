@@ -3,35 +3,34 @@ title: Troubleshooting PCF on Azure
 owner: Ops Manager, Release Integration
 ---
 
-
 <html class="list-style-none"></html>
 
-This topic describes how to troubleshoot known issues when deploying or running Pivotal Cloud Foundry (PCF) on Azure.
+This topic describes how to troubleshoot known issues when deploying or running <%= vars.product_name_full %> (<%= vars.product_name %>) on Azure.
 
 
-## <a id="install-issues"></a>Installation Issues
+## <a id="install-issues"></a> Installation Issues
 
-### <a id="cannot-copy-om"></a> Cannot Copy the Ops Manager Image
+This section describes how to troubleshoot known installation issues.
+
+### <a id="cannot-copy-om"></a> Cannot Copy the <%= vars.ops_manager_full %> Image
 
 #### Symptom
 
-Cannot copy the Ops Manager image into your storage account as part of _Step 4: Boot Ops Manager_ in [Deploying Ops Manager on Azure Manually](../om/azure/deploy-manual.html#boot).
+You cannot copy the <%= vars.ops_manager %> image into your storage account as part of _Step 4: Boot <%= vars.ops_manager %>_ in [Deploying <%= vars.ops_manager %> on Azure Manually](../om/azure/deploy-manual.html#boot).
 
 #### Explanation
 
-You have an outdated version of the Azure CLI. You need the Azure CLI version 2.0.0 or greater. Run `az --version` from the command line to display your current Azure CLI version.
+You have an outdated version of the Azure CLI. You need Azure CLI v2.0.0 or later. Run `az --version` from the command line to display your current Azure CLI version.
 
 #### Solution
 
-Install the Azure CLI 2.0 by following the instructions for your operating system in the [Azure documentation](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli).
-
-<hr>
+Install the Azure CLI v2.0 by following the instructions for your operating system in the [Azure documentation](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli).
 
 ### <a id="create-env-fails"></a> Deployment Fails at "create-env"
 
 #### Symptom
 
-After clicking **Review Pending Changes**, then **Apply Changes** to install Ops Manager and PAS, the deployment fails at `create-env` with an error message similar to the following:
+After clicking **Review Pending Changes**, then **Apply Changes** to install <%= vars.ops_manager %> and <%= vars.product_runtime %> (<%= vars.product_short %>), the deployment fails at `create-env` with an error message similar to the following:
 
 ```
 Command 'deploy' failed:
@@ -51,25 +50,26 @@ Exited with 1.
 
 #### Explanation
 
-You provided a passphrase when creating your key pair in _Step 4: Boot Ops Manager_ of [Deploying Ops Manager on Azure Manually](../om/azure/deploy-manual.html#boot).
+You provided a passphrase when creating your key pair in _Step 4: Boot <%= vars.ops_manager %>_ in [Deploying <%= vars.ops_manager %> on Azure Manually](../om/azure/deploy-manual.html#boot).
 
 #### Solution
 
-Create a new key pair with no passphrase and redo the installation. See _Step 4: Boot Ops Manager_ in [Deploying Ops Manager on Azure Manually](../om/azure/deploy-manual.html#boot).
-
-<hr>
+Create a new key pair with no passphrase and re-do the installation. For more information, see _Step 4: Boot <%= vars.ops_manager %>_ in [Deploying <%= vars.ops_manager %> on Azure Manually](../om/azure/deploy-manual.html#boot).
 
 ### <a id="database-permissions"></a> Insufficient External Database Permissions
 
-Upgrade issues can be caused when the external database user used for the network policy DB is given insufficient permissions. To avoid this upgrade issue, ensure that the networkpolicyserver database user has the `ALL PRIVILEGES` permission.
+Upgrade issues can be caused when the external database user used for the network policy database is given insufficient permissions. To avoid this upgrade issue, ensure that the network policy server database user has the `ALL PRIVILEGES` permission.
 
-## <a id="operation-issues"></a>Operation Issues
+
+## <a id="operation-issues"></a> Operation Issues
+
+This section describes how to troubleshoot known operation issues.
 
 ### <a id="timeouts"></a> Slow Performance or Timeouts
 
 #### Symptom
 
-Developers suffer from slow performance or timeouts when pushing or managing apps, and end users suffer from slow performance or timeouts when accessing apps
+Developers suffer from slow performance or timeouts when pushing or managing apps, and end users suffer from slow performance or timeouts when accessing apps.
 
 #### Explanation
 
@@ -81,13 +81,15 @@ To mitigate slow performance or timeouts, the default value of the **Router Time
 
 To edit the **Router Timeout to Backends (in seconds)** field:
 
-1. Select the Pivotal Application Service (PAS) tile that is located within your **Installation Dashboard**. 
-1. Select the **Networking** tab.
-1. Enter your desired time, in seconds, within the **Router Timeout to Backends (in seconds)** field.
- <%= image_tag('images/router-timeout-ert.png') %>
-1. Click **Save**.
+1. Navigate to the <%= vars.ops_manager %> Installation Dashboard.
 
-<hr>
+1. Click the <%= vars.product_short %> tile. 
+
+1. Select **Networking**.
+
+1. Enter your desired time, in seconds, in the **Router Timeout to Backends (in seconds)** field.
+
+1. Click **Save**.
 
 ### <a id="service-create-fail"></a> Service Instance Creation Times Out
 
@@ -97,10 +99,10 @@ You are unable to provision a service instance of a Java or Go service. `cf crea
 
 #### Explanation
 
-HTTP libraries for Java and Go, running with default settings, prune idle (for 240 seconds) connections from their connection pool without sending a TCP reset message back to the client service broker. This removes the ability of the broker to provision new service instances.
+HTTP libraries for Java and Go, running with default settings, prune connections that have been idle for 240 seconds from their connection pool without sending a TCP reset message back to the client service broker. This removes the ability of the broker to provision new service instances.
 
 #### Solution
 
-In the PAS tile **Configure Networking** pane, set **Frontend Idle Timeout** to 240 seconds or less, so that Cloud Foundry regenerates the front-end connection before it times out.
+In the **Networking** pane of the <%= vars.product_short %> tile, set **Frontend Idle Timeout** to `240` seconds or less, so that <%= vars.product_name %> regenerates the front end connection before it times out.
 
-See the Knowledge Base article [Azure Networking Connection Idle for more than Four minutes](https://community.pivotal.io/s/article/Azure-Networking-Connection-Idle-for-more-than-Four-minutes) for details.
+For more information, see [Azure Networking Connection Idle for more than Four minutes](https://community.pivotal.io/s/article/Azure-Networking-Connection-Idle-for-more-than-Four-minutes) in the Pivotal Knowledge Base.

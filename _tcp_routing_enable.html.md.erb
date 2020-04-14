@@ -1,8 +1,39 @@
-(Optional) TCP Routing is disabled by default. You should enable this feature if your DNS sends TCP traffic through a load balancer rather than directly to a TCP router. To enable TCP routing:
-   1. Select **Enable TCP Routing**.
-   1. For **TCP Routing Ports**, enter a single port or a range of ports for the load balancer to forward to. These are the same ports that you configured in the [Pre-Deployment Steps](../adminguide/enabling-tcp-routing.html) of the _Enabling TCP Routing_ topic.
-     - To support multiple TCP routes, Pivotal recommends allocating multiple ports.
-     - To allocate a list of ports rather than a range:
-         1. Enter a single port in the **TCP Routing Ports** field.
-         2. After deploying PAS, follow the directions in [Configuring a List of TCP Routing Ports](https://docs.pivotal.io/pivotalcf/2-3/pcf-release-notes/runtime-rn.html#tcp-port-config) to add TCP routing ports using the cf CLI.
-   <p class='note'><strong>Note:</strong> If you have mutual TLS app identity verification enabled, app containers accept incoming communication only from the Gorouter. This disables TCP routing.</p>
+(Optional) TCP routing is disabled by default. You should enable this feature if your DNS sends TCP traffic through a load balancer rather than directly to a TCP router. To enable TCP routing:
+   1. Under **Enable TCP requests to apps through specific ports on the TCP router**, select **Enable TCP Routing**.
+   	<p class='note'><strong>Note:</strong> If you have mutual TLS app identity verification enabled, app containers accept incoming communication only from the Gorouter. This disables TCP routing.</p>
+   1. For **TCP Routing Ports**, enter one or more ports to which the load balancer forwards requests. To support multiple TCP routes, Pivotal recommends allocating multiple ports. Do one of the following:
+      * To allocate a single port or range of ports, enter a single port or a range of ports.  
+      <p class="note"><strong>Note:</strong> If you configured AWS for <%= vars.product_name %> manually, enter <code>1024-1123</code> which corresponds to the rules you created for <code><%= vars.product_name_lc %>-tcp-elb</code>.</p>
+      * To allocate a list of ports:
+         1. Enter a single port in the **TCP routing ports** field.
+         1. After deploying <%= vars.product_short %>, follow the procedure in the [Configuring a List of TCP Routing Ports](https://docs.pivotal.io/pivotalcf/2-3/pcf-release-notes/runtime-rn.html#tcp-port-config) section of the _<%= vars.product_runtime %> v2.3 Release Notes_ topic to add TCP routing ports using the cf CLI.
+   1. (Optional) For **TCP request timeout**, modify the default value of 300 seconds. This field determines when the TCP router closes idle connections from clients to apps that use TCP routes. You may want to increase this value to enable developers to push apps that require long-running idle connections with clients.
+   1. Follow these additional instructions based on your IaaS:
+      <table>
+         <tr>
+            <th>IaaS</th>
+            <th>Instructions</th>
+         </tr>
+         <tr>
+            <td>GCP</td>
+            <td>Specify the name of a GCP TCP load balancer in the <strong>LOAD BALANCER</strong> field of the <strong>TCP Router</strong> job in the <strong>Resource Config</strong> pane. You configure this later on in PAS. For more information, see <a href="#resources">Configure Resources</a>.</td>
+         </tr>
+         <tr>
+            <td>AWS</td>
+            <td>Specify the name of a TCP ELB in the <strong>LOAD BALANCER</strong> field of the <strong>TCP Router</strong> job in the <strong>Resource Config</strong> pane. You configure this later on in PAS. For more information, see <a href="#resources">Configure Resources</a>.</td>
+         </tr>
+         <tr>
+            <td>Azure</td>
+            <td>Specify the name of a Azure load balancer in the <strong>LOAD BALANCER</strong> field of the <strong>TCP Router</strong> job in the <strong>Resource Config</strong> pane. You configure this later on in PAS. For more information, see <a href="#resources">Configure Resources</a>.</td>
+         </tr>
+         <tr>
+            <td>OpenStack and vSphere</td>
+            <td>
+               <ol>
+                  <li> Return to the top of the <strong>Networking</strong> pane.</li>
+                  <li>In the <strong>TCP router IPs</strong> field, ensure that you have entered IP addresses that are within your subnet CIDR block. These are the same IP addresses you configured your load balancer with in the <a href="../adminguide/enabling-tcp-routing.html#pre-deploy">Pre-Deployment Steps</a> section of the <em>Enabling TCP Routing</em> topic, unless you configured DNS to resolve the TCP domain name directly to an IP you have chosen for the TCP router.</li>
+               </ol>
+            </td>
+         </tr>
+      </table>
+      

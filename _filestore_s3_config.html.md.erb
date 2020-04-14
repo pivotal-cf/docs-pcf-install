@@ -1,19 +1,17 @@
-To use an external S3-compatible filestore for PAS file storage, perform the following steps:
+To use an external S3-compatible filestore for PAS file storage:
 
-1. Select the **External S3-Compatible Filestore** option and complete the following fields:
-    * Enter the `https://` **URL Endpoint** for your region.
-          <br />
-          For example, in the **us-west-2** region, enter
-          `https://s3-us-west-2.amazonaws.com/`.
-    * If you use an AWS instance profile to manage role information for your filestore, select the **S3 AWS with Instance Profile** checkbox. For more information, see [AWS Identity and Access Management](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) in the AWS documentation.
+1. Select **External S3-Compatible Filestore** and complete the following fields:
+    * Enter the `https://` **URL Endpoint** for your region. For example, `https://s3.us-west-2.amazonaws.com/`.
+    * If you use an AWS instance profile to manage role information for your filestore, enable the **S3 AWS with Instance Profile** checkbox. For more information, see [AWS Identity and Access Management](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) in the AWS documentation.<br>
     <%= image_tag("images/external-s3-filestore-instance-profile.png") %>
-    * Alternatively, enter the **Access Key** and **Secret Key** of the `pcf-user` you created when configuring AWS for PCF. If you select the **S3 AWS with Instance Profile** checkbox and also enter an **Access Key** and **Secret Key**, the instance profile will overrule the Access Key and Secret Key.
-    * From the **S3 Signature Version** dropdown, select **V4 Signature**.  For more information about S4 signatures, see [Signing AWS API Requests](https://docs.aws.amazon.com/general/latest/gr/signing_aws_api_requests.html) in the AWS documentation.
-    * For **Region**, enter the region in which your S3 buckets are located. `us-west-2` is an example of an acceptable value for this field. 
+    <% if aws == true %>
+    * If your PAS deployment is on AWS, you can alternatively enter the **Access key** and **Secret key** of the `<%= vars.product_name_lc %>-user` you created when configuring AWS for <%= vars.product_name %>. If you enable the **S3 AWS with instance profile** checkbox and also enter an **Access key** and **Secret key**, the instance profile will overrule the access key and secret key.
+    <% end %>
+    * From the **S3 Signature Version** dropdown, select **V4 Signature**. For more information about S4 signatures, see [Signing AWS API Requests](https://docs.aws.amazon.com/general/latest/gr/signing_aws_api_requests.html) in the AWS documentation.
+    * For **Region**, enter the region in which your S3 buckets are located. For example, `us-west-2`. 
     * Select **Server-side Encryption** to encrypt the contents of your S3 filestore. This option is only available for AWS S3.
-    * (Optional) If you selected **Server-side Encryption**, you can also specify a **KMS Key ID**. PAS uses the KMS key to encrypt files uploaded to the blobstore. If you do not provide a KMS Key ID, PAS uses the default AWS key. For more information, see [Protecting Data Using Server-Side Encryption with AWS KMS–Managed Keys (SSE-KMS)](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html).
+    * (Optional) If you selected **Server-side Encryption**, you can also specify a **KMS Key ID**. PAS uses the KMS key to encrypt files uploaded to the blobstore. If you do not provide a KMS Key ID, PAS uses the default AWS key. For more information, see [Protecting Data Using Server-Side Encryption with AWS KMS–Managed Keys (SSE-KMS)](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingKMSEncryption.html) in the AWS documentation.
     * Enter names for your S3 buckets:
-
         <table border="1" class="nice" >
           <tr>
             <th>Ops Manager Field</th>
@@ -45,8 +43,8 @@ To use an external S3-compatible filestore for PAS file storage, perform the fol
       - **Versioned S3 buckets**: Enable the **Use versioning for backup and restore** checkbox to archive each bucket to a version.
       - **Unversioned S3 buckets**: Disable the **Use versioning for backup and restore** checkbox, and enter a backup bucket name for each active bucket. The backup bucket name must be different from the name of the active bucket it backs up.
         <%= image_tag("images/backup-buckets.png") %>
-      For more information about setting up external S3 blobstores, see the <a href="https://docs.cloudfoundry.org/bbr/external-blobstores.html#enable-s3-versioning">Backup and Restore with External Blobstores</a> topic in the Cloud Foundry documentation.
+      For more information about setting up external S3 blobstores, see <a href="https://docs.cloudfoundry.org/bbr/external-blobstores.html#enable-s3-versioning">Backup and Restore with External Blobstores</a>.
 
 1. Click **Save**.
 
-<p class="note"><strong>Note</strong>: For more information regarding AWS S3 Signatures, see the <a href="http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html">Authenticating Requests</a> topic in the AWS documentation.</p>
+<p class="note"><strong>Note:</strong> For more information regarding AWS S3 Signatures, see the <a href="http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html">Authenticating Requests</a> topic in the AWS documentation.</p>

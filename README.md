@@ -1,12 +1,51 @@
-Pivotal Cloud Foundry Installation Guide
-========
+docs-pcf-install
+==========
 
-This guide explains how to install [Pivotal Cloud Foundry](https://network.pivotal.io/products/pivotal-cf) (PCF).
-It is just one of the guides associated with the PCF release. The full doc set contains the following:
+Installation docs for Ops Manager and VMware Tanzu Application Service for VMs.
 
-*  [Getting Started](https://github.com/pivotal-cf/docs-pcf-gsg): Getting Started Guide for preparing your VMware vSphere environment and standing up Pivotal Application Service (PAS) using Pivotal Cloud Foundry
-*  [Pivotal Cloud Foundry Installation Guide](https://github.com/pivotal-cf/pcf-docs): How to use Pivotal Cloud Foundry to install and manage components
-*  [Operating PAS](https://github.com/pivotal-cf/docs-ops-guide): A guide to operating and troubleshooting PAS
-*  [Extending Cloud Foundry](https://github.com/cloudfoundry/docs-extend-cloudfoundry): A guide to extending your Cloud Foundry instance with user-supplied services and custom buildpacks. Note that this content is shared with the open source context and therefore will have the name Cloud Foundry throughout.
-*  [Using the Apps Manager](https://github.com/pivotal-cf/docs-pivotalcf-console): A guide to using the web-based Apps Manager application for managing users, organizations, spaces, and applications.
-*  [Developer Guide](https://github.com/cloudfoundry/docs-dev-guide): A guide for developers on deploying and troubleshooting applications running in Cloud Foundry. Note that this content is shared with the open source context and therefore will have the name Cloud Foundry throughout.
+## Which book repos publish this repo?
+
+Currently only the [docs-book-pivotalcf](https://github.com/pivotal-cf/docs-partials) repo publishes this repo. 
+
+## Which branch to use?
+
+**Note**: Provide instructions in your PRs to indicate which branches you want Docs to apply your commits to.
+
+| Branch name | Use for… |
+|-------------| -------|
+| master      | "edge" branch for Ops Manager and TAS for VMs v2.10, publishes to https://docs-pcf-staging.cfapps.io/platform/2-10/customizing/
+| 2.9		  | v2.9.x |
+| 2.8         | v2.8.x |
+| 2.7         | v2.7.x |
+| 2.6         | EOGS v2.6.x. |
+| 2.5         | EOGS v2.5.x. |
+| 2.4         | EOGS v2.4.x. |
+| 2.3         | EOGS v2.3.x.|
+| 2.2         | v2.2.x — PDFed: https://resources.docs.pivotal.io/pdfs/pcf-docs-2.2.pdf |
+| 2.1         | v2.1.x — PDFed: https://resources.docs.pivotal.io/pdfs/pcf-docs-2.1.pdf |
+| 2.0         | v2.0.x — PDFed: https://resources.docs.pivotal.io/pdfs/pcf-docs-2.0.pdf |
+| 1.12        | v2.0.x — PDFed: https://resources.docs.pivotal.io/pdfs/pcf-docs-2.0.pdf |
+| 1.11         | v2.0.x — PDFed: https://resources.docs.pivotal.io/pdfs/pcf-docs-2.0.pdf |
+| 1.10         | v2.0.x — PDFed: https://resources.docs.pivotal.io/pdfs/pcf-docs-2.0.pdf |
+| 1.9         | v2.0.x — PDFed: https://resources.docs.pivotal.io/pdfs/pcf-docs-2.0.pdf |
+
+## Partials
+
+Cross-product and repo partials are single sourced from the [docs-partials](https://github.com/pivotal-cf/docs-partials) repo.
+
+## Style Guide
+
+See [Word and Phrase List](https://docs.google.com/spreadsheets/d/1hkadtxR1hY57kK7h5HN4ITHLJleZixCDH_RJPUpNq_A/edit#gid=0).
+
+## Steps for local development
+```
+$ git clone git@github.com:pivotal-cf/docs-layout-repo
+$ git clone git@github.com:pivotal-cf/docs-pcf-install
+$ cd docs-pcf-install && git checkout <branch> && cd -
+$ git clone git@github.com:pivotal-cf/docs-book-pivotalcf
+$ cd docs-book-pivotalcf && git checkout <branch>
+$ bundle install
+$ bundle exec bookbinder watch
+$ open http://127.0.0.1:XXXX/platform/<version, such as `2-10`>/customizing
+```
+

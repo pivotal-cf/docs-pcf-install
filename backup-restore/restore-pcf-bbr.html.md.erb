@@ -356,8 +356,11 @@ To upload the required stemcell:
 
 1. To ensure the stemcells for all of your other installed tiles have been uploaded, repeat the previous step, running `bosh <%= vars.bosh_upload_stemcell %> --fix PATH-TO-STEMCELL`, for each stemcell that is different from the already uploaded <%= vars.app_runtime_abbr %> stemcell.
 
-#### <a id='create-external-database'></a>Create external database
-If you are using an external database, please follow the steps [Creating Database for TAS for VMS](https://docs.pivotal.io/platform/application-service/operating/create-pas-dbs.html) before proceeding.
+#### <a id='create-external-database'></a>Create an External Database
+
+If you are using an external database,
+follow the steps in [Creating Databases for TAS for 
+VMS](https://docs.pivotal.io/platform/application-service/operating/create-pas-dbs.html).
 
 
 #### <a id='redeploy-pas'></a> Redeploy <%= vars.app_runtime_abbr %>
@@ -397,14 +400,17 @@ For example, if you are using Redis for <%= vars.platform_name %> v1.14, see [Us
 
 ### <a id='restore-ert'></a> Step 14: Restore <%= vars.app_runtime_abbr %>
 
-<div class="note"><strong>Notes:</strong>
-  <ul>
-    <li>The BBR <%= vars.app_runtime_abbr %> restore command can take at least 15 minutes to complete.</li>
-    <li><%= vars.company_name %> recommends that you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code>, but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</li>
-    <li>If the <%= vars.app_runtime_abbr %> file storage has been configured to selectively back up the blobstore, you might need to follow additional steps to restore your apps.</li>
-    <li>Once the BBR <%= vars.app_runtime_abbr %> restore completes it will then take time for Diego to bring all the application back into a running state. You can use `cf apps` to view the status of what apps are running and which are still pending.</li>
-  </ul>
-</div>
+The BBR <%= vars.app_runtime_abbr %> restore command can take at least 15 minutes to complete.</li>
+
+After the BBR <%= vars.app_runtime_abbr %> restore completes,
+then Diego brings the apps back into a running state,
+unless <%= vars.app_runtime_abbr %> file storage has been configured to selectively back up the blobstore.
+In that case, you need to follow [Step 15: (Optional) Restore Apps to a Running State](#restore-apps) below.
+
+<%= vars.company_name %> recommends that you run the BBR <%= vars.app_runtime_abbr %> restore command
+   independently of the SSH session,
+so that the process can continue running even if your connection to the jumpbox fails.
+The command uses `nohup`, but you could also run the command in a `screen` or `tmux` session.
 
 To restore your <%= vars.app_runtime_abbr %> backup:
 
@@ -442,6 +448,11 @@ To restore your <%= vars.app_runtime_abbr %> backup:
 1. Review your changes. For more information, see [Reviewing Pending Product Changes](../review-pending-changes.html).
 
 1. Click **Apply Changes** to deploy.
+
+
+1. (Optional) Run `cf apps` to view the status of apps.
+   By observing which apps are running
+   and which are still pending, you can estimate how much longer the restore will take.
 
 ### <a id='restore-apps'></a> Step 15: (Optional) Restore Apps to a Running State
 

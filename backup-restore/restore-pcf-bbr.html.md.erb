@@ -310,16 +310,6 @@ To remove stale cloud IDs for all deployments:
     <br>
     Run this command for each deployment.
 
-1. To delete disk references, run:
-
-    ```
-    bosh cloud-check
-    ```
-    If the `bosh cloud-check` command does not successfully delete disk references, and you see a message similar to the example below, follow the additional procedures in [Remove Unused Disks](#removing-disks).
-    <pre class="terminal">
-    Scanning 19 persistent disks: 19 OK, 0 missing ...
-    </pre>
-
 ### <a id='redeploy-ert'></a> Step 12: Redeploy <%= vars.app_runtime_abbr %>
 
 These sections describe the steps to redeploy <%= vars.app_runtime_abbr %>.
@@ -366,6 +356,10 @@ To upload the required stemcell:
 
 1. To ensure the stemcells for all of your other installed tiles have been uploaded, repeat the previous step, running `bosh <%= vars.bosh_upload_stemcell %> --fix PATH-TO-STEMCELL`, for each stemcell that is different from the already uploaded <%= vars.app_runtime_abbr %> stemcell.
 
+#### <a id='create-external-database'></a>Create external database
+If you are using an external database, please follow the steps [Creating Database for TAS for VMS](https://docs.pivotal.io/platform/application-service/operating/create-pas-dbs.html) before proceeding.
+
+
 #### <a id='redeploy-pas'></a> Redeploy <%= vars.app_runtime_abbr %>
 
 To redeploy <%= vars.app_runtime_abbr %>:
@@ -378,6 +372,8 @@ To redeploy <%= vars.app_runtime_abbr %>:
 
 1. Ensure the number of instances for MySQL Server is set to `1`.
   <p class="note warning"><strong>Warning:</strong> Restore fails if there is not exactly one MySQL Server instance deployed.</p>
+
+1. (Optional) Increase the CPU and memory of `backup_restore` VM. This will decrease how long the restore process will take during [Step 12: Restore <%= vars.app_runtime_abbr %>](#restore-ert)
 
 1. Ensure that all errands needed by your system are set to **Run**.
 
@@ -406,6 +402,7 @@ For example, if you are using Redis for <%= vars.platform_name %> v1.14, see [Us
     <li>The BBR <%= vars.app_runtime_abbr %> restore command can take at least 15 minutes to complete.</li>
     <li><%= vars.company_name %> recommends that you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code>, but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</li>
     <li>If the <%= vars.app_runtime_abbr %> file storage has been configured to selectively back up the blobstore, you might need to follow additional steps to restore your apps.</li>
+    <li>Once the BBR <%= vars.app_runtime_abbr %> restore completes it will then take time for Diego to bring all the application back into a running state. You can use `cf apps` to view the status of what apps are running and which are still pending.</li>
   </ul>
 </div>
 

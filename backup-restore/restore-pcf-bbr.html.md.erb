@@ -366,11 +366,20 @@ To upload the required stemcell:
 
 1. To ensure the stemcells for all of your other installed tiles have been uploaded, repeat the previous step, running `bosh <%= vars.bosh_upload_stemcell %> --fix PATH-TO-STEMCELL`, for each stemcell that is different from the already uploaded <%= vars.app_runtime_abbr %> stemcell.
 
-#### <a id='create-external-database'></a>Create an External Database
+#### <a id='create-external-database'></a>Create External Databases
 
-If you are using an external database,
-follow the steps in [Creating Databases for TAS for 
-VMS](https://docs.pivotal.io/platform/application-service/operating/create-pas-dbs.html).
+If your foundation is configured to use an external MySQL database instance,
+then re-create the component databases on the external database instance.
+For an example of how to create external databases,
+see [Creating Databases for <%= vars.app_runtime_abbr %>](https://docs-pcf-staging.cfapps.io/platform/application-service/2-10/operating/create-pas-dbs.html).
+
+If you do not know whether your foundation uses an external or internal database,
+look on the **Databases** pane in the <%= vars.ops_manager %> UI.
+
+If your external database VM instance has also changed, for example, if the database instance has been lost,
+update the configuration settings in the **Databases** pane on the <%= vars.apps_runtime_abbr %> tile.
+For information about the **Databases** pane,
+see [Configure Databases](https://docs-pcf-staging.cfapps.io/platform/application-service/2-10/operating/configure-pas.html#sys-db).
 
 
 #### <a id='redeploy-pas'></a> Redeploy <%= vars.app_runtime_abbr %>
@@ -385,6 +394,9 @@ To redeploy <%= vars.app_runtime_abbr %>:
 
 1. Ensure the number of instances for MySQL Server is set to `1`.
   <p class="note warning"><strong>Warning:</strong> Restore fails if there is not exactly one MySQL Server instance deployed.</p>
+
+1. (Optional) Increase the CPU and memory of the `backup_restore` VM.
+   This will decrease how long the restore process will take during [Step 14: Restore <%= vars.app_runtime_abbr %>](#restore-ert).
 
 1. Ensure that all errands needed by your system are set to **Run**.
 

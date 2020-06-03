@@ -3,6 +3,9 @@ docs-pcf-install
 
 Installation docs for Ops Manager and VMware Tanzu Application Service for VMs.
 
+**Note:** Any PRs made against the `backup-restore` directory, should be moved to the PCF Docs Services tracker
+and the Services Docs PM notified.
+
 ## Which book repos publish this repo?
 
 Currently only the [docs-book-pivotalcf](https://github.com/pivotal-cf/docs-partials) repo publishes this repo. 

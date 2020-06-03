@@ -3,8 +3,8 @@ docs-pcf-install
 
 Installation docs for Ops Manager and VMware Tanzu Application Service for VMs.
 
-**Note:** Any PRs made against the `backup-restore` directory, should be moved to the PCF Docs Services tracker
-and the Services Docs PM notified.
+**Note:** If you see PRs made against the `backup-restore` directory, move the corresponding Tracker story
+to the PCF Docs Services tracker and notify the Services Docs PM.
 
 ## Which book repos publish this repo?
 

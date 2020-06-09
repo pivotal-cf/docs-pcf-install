@@ -1,12 +1,9 @@
 ---
-title: Troubleshooting Problems in Ops Manager
+title: Troubleshooting Problems in Deployments 
 owner: Ops Manager
 ---
 
-<% current_page.data.title = "Troubleshooting Problems in " + vars.platform_name %>
-
-This guide is intended to provides assistance with resolving issues encountered during the
-installation of <%= vars.platform_name %>.
+This guide is intended to provides assistance with resolving issues encountered when deploying products with <%= vars.ops_manager %>.
 
 ## <a id='retry'></a> Retrying the Deployment
 
@@ -137,7 +134,7 @@ Your <%= vars.platform_name %> install exits with a `creates/updates/deletes an 
 In either of the above scenarios, ensure that you have correctly entered your
 domains in wildcard format:
 
-1. Browse to the Operations Manager fully qualified domain name (FQDN).
+1. Browse to the fully qualified domain name (FQDN) of Ops Manager.
 
 1. Click the <%= vars.app_runtime_abbr %> tile.
 
@@ -177,27 +174,27 @@ Diego cells may be running out of disk space capacity.
 To perform a detailed analysis of disk usage by containers and host VMs in your <%= vars.platform_name %> deployment,
 see [Examining GrootFS Disk Usage](../adminguide/examining_grootfs_disk.html).
 
-### <a id='vsphere_fails'></a>Installing BOSH Director Fails ###
-If the DNS information for the <%= vars.platform_name %> VM is incorrectly specified when
-deploying the <%= vars.platform_name %> .ova file, installing BOSH Director fails at the "Installing Micro BOSH" step.
+### <a id='vsphere_fails'></a>Installing BOSH Director Fails in vSphere ###
 
-To resolve this issue, correct the DNS settings in the <%= vars.platform_name %> Virtual
+If the DNS information for the <%= vars.ops_manager %> VM is incorrectly specified when
+deploying the <%= vars.ops_manager %> .ova file, installing BOSH Director fails at the "Installing Micro BOSH" step.
+
+To resolve this issue, correct the DNS settings in the <%= vars.ops_manager %> Virtual
 Machine properties.
 
-### <a id='delete_om_fails'></a>Deleting <%= vars.platform_name %> Fails ###
+### <a id='delete_om_fails'></a>Deleting a Deployment Fails ###
 
-<%= vars.platform_name %> displays an error message when it cannot delete your installation. This
+<%= vars.ops_manager %> displays an error message when it cannot delete your installation. This
 scenario might happen if the BOSH Director cannot access the VMs or is experiencing other issues.
 To manually delete your installation and all VMs, you must do the following:
 
-1. Use your IaaS dashboard to manually delete the VMs for all installed products, with the
-   exception of the <%= vars.platform_name %> VM.
-1. SSH into your <%= vars.platform_name %> VM and remove the `installation.yml` file from
+1. Use your IaaS dashboard to manually delete the VMs for all installed products, with the exception of the <%= vars.ops_manager %> VM.
+1. SSH into your <%= vars.ops_manager %> VM and remove the `installation.yml` file from
    `/var/tempest/workspaces/default/`.
     <p class="note"><strong>Note</strong>: Deleting the <code>installation.yml</code> file does not
-      prevent you from reinstalling <%= vars.platform_name %>. For future deploys,
-      <%= vars.platform_name %> regenerates this file when you click <strong>Save</strong> on any
-      page in the BOSH Director.</p>
+      prevent you from reinstalling a deployment. For future deploys,
+      <%= vars.ops_manager %> regenerates this file when you click <strong>Save</strong> on any
+      page in the BOSH Director tile.</p>
 
 Your installation is now deleted.
 
@@ -206,32 +203,32 @@ Your installation is now deleted.
 The following sections describe errors that may occur when installing <%= vars.app_runtime_abbr %>
 and how to resolve them.
 
-#### <%= vars.platform_name %> Cannot Verify App Push
+#### <%= vars.app_runtime_abbr %> Cannot Verify App Push
 
-If the DNS information for the <%= vars.platform_name %> VM becomes incorrect after BOSH Director
+If the DNS information for the <%= vars.ops_manager %> VM becomes incorrect after BOSH Director
 has been installed, installing <%= vars.app_runtime_abbr %> fails at the "Verifying app push" step.
 
-To resolve this issue, correct the DNS settings in the <%= vars.platform_name %> Virtual
+To resolve this issue, correct the DNS settings in the <%= vars.ops_manager %> Virtual
 Machine properties.
 
 #### MySQL Monitor Not Running After Update
 
-When MySQL cannot communicate with UAA, <%= vars.platform_name %> shows the following error:
+When MySQL cannot communicate with UAA, <%= vars.ops_manager %> shows the following error:
 > **Error: 'mysql_monitor/12a3b456-cd7e-8fgh-9012-345678b90ijk (0)' is not running after update. Review logs for failed jobs: replication-canary.**
 
 If you see this error, create firewall rules that allow MySQL to reach UAA, using the
 [MySQL Network Communications](../security/networking/mysql-network-paths.html) topic as a
 reference.
 
-### <a id='ip_address_taken'></a><%= vars.platform_name %> Hangs During MicroBOSH Install or HAProxy States "IP Address Already Taken" ###
+### <a id='ip_address_taken'></a><%= vars.ops_manager %> Hangs During MicroBOSH Install or HAProxy States "IP Address Already Taken" ###
 
-During an <%= vars.platform_name %> installation, you might receive the following errors:
+During a <%= vars.app_runtime_abbr %> installation, you might receive the following errors:
 
-* The <%= vars.platform_name %> GUI shows that the installation stops at the "Setting MicroBOSH
+* The <%= vars.ops_manager %> GUI shows that the installation stops at the "Setting MicroBOSH
   deployment manifest" task.
 * When you set the IP address for the HAProxy, the "IP Address Already Taken" message appears.
 
-When you install <%= vars.platform_name %>, you assign it an IP address. <%= vars.platform_name %>
+When you install the BOSH Director, you assign it an IP address. <%= vars.platform_name %>
 then takes the next two consecutive IP addresses, assigns the first to MicroBOSH, and reserves the
 second. For example:
 
@@ -244,10 +241,11 @@ second. For example:
 To resolve this issue, ensure that the next two subsequent IP addresses from the manually assigned
 address are unassigned.
 
-### <a id='pcf_slow'></a>Poor <%= vars.platform_name %> Performance ###
+### <a id='pcf_slow'></a>Poor Performance ###
 
-If you notice poor network performance by your <%= vars.platform_name %> deployment and your
-deployment uses a Network Address Translation (NAT) gateway, your NAT gateway may be
+If you notice poor network performance by your deployment and your
+deployment uses a Network Address Translation (NAT) gateway, 
+your NAT gateway may be
 under-resourced.
 
 ####<a id='troubleshoot-slow'></a>Troubleshoot

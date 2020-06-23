@@ -3,145 +3,133 @@ title: Restoring Lost PAS Data
 owner: Platform Recovery
 ---
 
-This topic explains how to use BOSH Backup and Restore (BBR) to restore a piece of
-<%= vars.product_runtime %> (<%= vars.product_short %>) data, such as a user or space, which has been lost.
+This guide explains how to use BOSH Backup and Restore (BBR) to restore a piece of
+Pivotal Application Service (PAS) data, such as a user or space, which has been lost.
 
+## <a id="prerequisite"></a>Prerequisite
 
-## <a id="prerequisite"></a> Prerequisite
+Restoring PAS data with BBR is only possible if you have previously taken a backup
+using the following command:
 
-Restoring <%= vars.product_short %> data with BBR is only possible if you have previously taken a backup using the `bbr deployment backup` command.
+```
+bbr deployment backup
+```
 
-This command produces a backup artifact in the format `PAS_DEPLOYMENT_TIMESTAMP/`.
+This command produces a backup artifact in the format `PAS_DEPLOYMENT-TIMESTAMP/`.
 
+## <a id="validating-artifact"></a>Validate Your Backup Artifact
 
-## <a id="validating-artifact"></a> Validate Your Backup Artifact
+Before restoring, verify that the backup artifact you have is suitable for your
+restore need. You can `untar` and explore the PAS backup artifact to verify that
+it contains the data that you need to restore.
 
-Before restoring, verify that the backup artifact you have is suitable for your restore need. You can `untar` and explore the <%= vars.product_short %> backup artifact to verify that it contains the data that you need to restore.
-
-Use any of the checks in this section depending on the data you need to restore.
+Use any the checks in this section depending on the data you need to restore.
 
 ### <a id="verify-org"></a>Verify an Org Is Present
 
-To verify that your backup artifact contains the org you need to restore:
+To verify that your backup artifact contains the org you need to restore, do the following:
 
-1. Run:
+```bash
+tar -xvf backup_restore-0-bbr-cloudcontrollerdb.tar
+cat cloudcontroller-artifact-file | grep "ORG-TO-RESTORE"
+```
+Where `ORG-TO-RESTORE` is the org you need to restore.
 
-    ```
-    tar -xvf backup_restore-0-bbr-cloudcontrollerdb.tar
-    cat cloudcontroller-artifact-file | grep "ORG-TO-RESTORE"
-    ```
-    Where `ORG-TO-RESTORE` is the org you need to restore.
-
-If you see the following line in the output of the above command, then you can restore this org:
+If you see the following line in the output of the above command, then
+you can restore this org:
 
 ```
 INSERT INTO `organizations` VALUES (..., ,'ORG-TO-RESTORE', ...);
+``` 
+
+### <a id="verify-space"></a>Verify a Space Is Present
+
+To verify that your backup artifact contains the space you need to restore, do the following:
+
+```bash
+tar -xvf backup_restore-0-bbr-cloudcontrollerdb.tar
+cat cloudcontroller-artifact-file | grep "SPACE-TO-RESTORE"
 ```
+Where `SPACE-TO-RESTORE` is the space you need to restore.
 
-Where `ORG-TO-RESTORE` is the org you need to restore.
-
-### <a id="verify-space"></a> Verify a Space Is Present
-
-To verify that your backup artifact contains the space you need to restore:
-
-1. Run:
-
-    ```
-    tar -xvf backup_restore-0-bbr-cloudcontrollerdb.tar
-    cat cloudcontroller-artifact-file | grep "SPACE-TO-RESTORE"
-    ```
-    Where `SPACE-TO-RESTORE` is the space you need to restore.
-
-If you see the following line in the output of the above command, then you can restore this space:
+If you see the following line in the output of the above command, then
+you can restore this space:
 
 ```
 INSERT INTO `spaces` VALUES (..., ,'SPACE-TO-RESTORE', ...);
 ```
 
-Where `SPACE-TO-RESTORE` is the space you need to restore.
+### <a id="verify-user"></a>Verify a User Is Present
 
-### <a id="verify-user"></a> Verify a User Is Present
+To verify that your backup artifact contains the user you need to restore, do the following:
 
-To verify that your backup artifact contains the user you need to restore:
+```bash
+tar -xvf backup_restore-0-bbr-uaadb.tar
+cat uaadb-artifact-file | grep "USER-TO-RESTORE"
+```
+Where `USER-TO-RESTORE` is the user you need to restore.
 
-1. Run:
-
-    ```
-    tar -xvf backup_restore-0-bbr-uaadb.tar
-    cat uaadb-artifact-file | grep "USER-TO-RESTORE"
-    ```
-    Where `USER-TO-RESTORE` is the user you need to restore.
-
-If you see the following line in the output of the above command, then you can restore this user:
+If you see the following line in the output of the above command, then
+you can restore this user:
 
 ```
 INSERT INTO `users` VALUES (..., ,'USER-TO-RESTORE', ...);
 ```
 
-Where `USER-TO-RESTORE` is the user you need to restore.
+### <a id="verify-route"></a>Verify a Route Is Present
 
-### <a id="verify-route"></a> Verify a Route Is Present
+To verify that your backup artifact contains the route you need to restore, do the following:
 
-To verify that your backup artifact contains the route you need to restore:
+```bash
+tar -xvf backup_restore-0-bbr-cloudcontrollerdb.tar
+cat cloudcontroller-artifact-file | grep "ROUTE-TO-RESTORE"
+```
+Where `ROUTE-TO-RESTORE` is the route you need to restore.
 
-1. Run:
 
-    ```
-    tar -xvf backup_restore-0-bbr-cloudcontrollerdb.tar
-    cat cloudcontroller-artifact-file | grep "ROUTE-TO-RESTORE"
-    ```
-    Where `ROUTE-TO-RESTORE` is the route you need to restore.
-
-If you see the following line in the output of the above command, then you can restore this user:
+If you see the following line in the output of the above command, then
+you can restore this user:
 
 ```
 INSERT INTO `routes` VALUES (..., ,'ROUTE-TO-RESTORE', ...);
 ```
 
-Where `ROUTE-TO-RESTORE` is the route you need to restore.
+### <a id="verify-domain"></a>Verify a Domain Is Present
 
-### <a id="verify-domain"></a> Verify a Domain Is Present
+To verify that your backup artifact contains the domain you need to restore, do the following:
 
-To verify that your backup artifact contains the domain you need to restore:
+```bash
+tar -xvf backup_restore-0-bbr-cloudcontrollerdb.tar
+cat cloudcontroller-artifact-file | grep "DOMAIN-TO-RESTORE"
+```
+Where `DOMAIN-TO-RESTORE` is the domain you need to restore.
 
-1. Run:
 
-    ```
-    tar -xvf backup_restore-0-bbr-cloudcontrollerdb.tar
-    cat cloudcontroller-artifact-file | grep "DOMAIN-TO-RESTORE"
-    ```
-    Where `DOMAIN-TO-RESTORE` is the domain you need to restore.
-
-If you see the following line in the output of the above command, then you can restore this domain:
+If you see the following line in the output of the above command, then
+you can restore this domain:
 
 ```
 INSERT INTO `domains` VALUES (..., ,'DOMAIN-TO-RESTORE', ...);
 ```
 
-Where `DOMAIN-TO-RESTORE` is the domain you need to restore.
+### <a id="verify-app"></a>Verify an App Is Present
 
-### <a id="verify-app"></a> Verify an App Is Present
+To verify that your backup artifact contains the app you need to restore, do the following:
 
-To verify that your backup artifact contains the app you need to restore:
-
-1. Run:
-
-    ```
-    tar -xvf backup_restore-0-bbr-cloudcontrollerdb.tar
-    cat cloudcontroller-artifact-file | grep "APP-TO-RESTORE"
-    ```
-    Where `APP-TO-RESTORE` is the app you need to restore.
+```bash
+tar -xvf backup_restore-0-bbr-cloudcontrollerdb.tar
+cat cloudcontroller-artifact-file | grep "APP-TO-RESTORE"
+```
+Where `APP-TO-RESTORE` is the app you need to restore.
 
 To verify that your blobstore backup artifact contains the droplet for the app
-you need to restore:
+you need to restore, do the following:
 
-1. Run:
-
-    ```
-    tar -xvf blobstore-backup.tar
-    tree blobstore-backup | grep "APP-DROPLET"
-    ```
-    Where `APP-DROPLET` is the droplet for the app that you need to restore.
+```bash
+tar -xvf blobstore-backup.tar
+tree blobstore-backup | grep "APP-DROPLET"
+```
+Where `APP-DROPLET` is the droplet for the app you need to restore.
 
 If you see the following line in the output of the above command, then you can
 restore this app:
@@ -157,20 +145,24 @@ Where:
 
 <p class="note"><strong>Note:</strong> If you use an external blobstore, go to your IaaS console and check the backup bucket to verify that the droplet is present.</p>
 
-
-## <a id="perform-restore"></a> Perform the Restore
+## <a id="perform-restore"></a>Perform the Restore
 
 <p class="note warning"><strong>Warning:</strong> BBR restore is a destructive process which removes any current data in your deployment. Performing a restore overwrites all new data since you created your most recent backup artifact.</p>
 
-<%= vars.recommended_by %> recommends that you verify the compatibility of your backup artifact by attempting the restore on an environment that is identical to the target environment. If this is not possible, see [Compatibility of Restore](../restore-pcf-bbr.html#compatibility) in _Restoring <%= vars.product_name %> from Backup with BBR_ to confirm that your backup is compatible with your restore environment.
+Pivotal recommends that you verify the compatibility of your backup artifact by
+attempting the restore on an environment that is identical to the target
+environment. If this is not possible, refer to the [Compatibility of Restore](../restore-pcf-bbr.html#compatibility) section of _Restoring PCF from Backup with BBR_ to confirm that your backup is compatible with your restore environment.
 
-To run a <%= vars.product_short %> restore, follow the BBR instructions in [Step 13: Restore <%= vars.product_short %>](../restore-pcf-bbr.html#restore-ert) in _Restoring <%= vars.product_name %> from Backup with BBR_.
+Run a PAS restore by following the BBR instructions in [Step 13: Restore PAS](../restore-pcf-bbr.html#restore-ert) of _Restoring PCF from Backup with BBR_.
 
-After a restore, <%= vars.product_short %> should roll back to its state at the time when the backup was taken, and contain the data that you had previously lost.
+After a restore, PAS should roll back to its state at the time when the backup was taken, and contain the data that you had previously lost.
 
+## <a id="consolidating-environment"></a>Consolidate Your Environment
 
-## <a id="consolidating-environment"></a> Consolidate Your Environment
+If you have service instances that were not present when you performed the backup,
+then the BOSH service deployments become orphaned. PAS has no reference to these
+service deployments, but they continue to exist. You can locate orphaned service
+deployments using the BOSH command-line interface (CLI).
 
-If you have service instances that were not present when you performed the backup, then the BOSH service deployments become orphaned. <%= vars.product_short %> has no reference to these service deployments, but they continue to exist. You can locate orphaned service deployments using the BOSH command-line interface (CLI).
-
-You can locate orphaned on-demand service instances by running the `orphan-deployments` errand. For more information, see [Orphan Deployments](https://docs.pivotal.io/svc-sdk/odb/management.html#orphan-deployments) in _Broker and Service Management_.
+You can locate orphaned on-demand service instances by running the
+`orphan-deployments` errand. For more information, see [Orphan Deployments](https://docs.pivotal.io/svc-sdk/odb/management.html#orphan-deployments) in _Broker and Service Management_.

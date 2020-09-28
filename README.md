@@ -1,6 +1,16 @@
 docs-pcf-install
 ==========
 
+**Note**: This repository is no longer in use for Ops Manager v2.7 and later.
+See the following repositories for current product documentation:
+
+- Ops Manager: https://github.com/pivotal-cf/docs-ops-manager
+- Tanzu Application Service (TAS for VMs): https://github.com/pivotal-cf/docs-pas
+- Tanzu Application Service [Windows] (TAS for VMs [Windows]): https://github.com/pivotal-cf/docs-pcf-windows
+- Tanzu Kubernetes Grid Integrated Edition (TKGi): https://github.com/pivotal-cf/docs-pks
+
+---
+
 Installation docs for Ops Manager and VMware Tanzu Application Service for VMs.
 
 **Note:** If you see PRs made against the `backup-restore` directory, move the corresponding Tracker story
@@ -16,10 +26,7 @@ Currently only the [docs-book-pivotalcf](https://github.com/pivotal-cf/docs-part
 
 | Branch name | Use for… |
 |-------------| -------|
-| master      | "edge" branch for Ops Manager and TAS for VMs v2.10, publishes to https://docs-pcf-staging.cfapps.io/platform/2-10/customizing/
-| 2.9		  | v2.9.x |
-| 2.8         | v2.8.x |
-| 2.7         | v2.7.x |
+| master      | not in use |
 | 2.6         | EOGS v2.6.x. |
 | 2.5         | EOGS v2.5.x. |
 | 2.4         | EOGS v2.4.x. |

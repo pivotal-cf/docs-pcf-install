@@ -15,7 +15,7 @@ For BBR release notes, see [BOSH Backup and Restore Release Notes](https://docs.
 
 ## <a id='overview'></a> Overview
 
-During the backup, BBR stops the Cloud Controller API and the Cloud Controller workers to create a consistent backup. Only the API functionality is affected, such as when pushing apps or using the Cloud Foundry Command Line Interface (cf CLI). The deployed apps do not experience downtime.
+During the backup, BBR stops the Cloud Foundry API (CAPI) and the Cloud Controller workers to create a consistent backup. Only the API functionality is affected, such as when pushing apps or using the Cloud Foundry Command Line Interface (cf CLI). The deployed apps do not experience downtime.
 
 <div class="note warning">
   <strong>Warning:</strong>
@@ -24,7 +24,7 @@ During the backup, BBR stops the Cloud Controller API and the Cloud Controller w
       <li><strong>Compatibility:</strong> A BBR backup can only be restored to environments matching its source environment. To ensure that a restore environment is compatible with a backup, see <a href="./restore-pcf-bbr.html#compatibility">Compatibility of Restore</a>.</li>
       <li><strong>Failed Restore:</strong> Restore is a destructive operation. BBR is designed to restore deployments after a disaster. If a restore fails, the environment might be left in an unusable state and require re-provisioning. For more information, see <a href="restore-pcf-bbr.html">Restoring Deployments from Backup with BBR</a>.</li>
       <li><strong>Service Data:</strong> BBR does not back up any service data.</li>
-      <li><strong>API Outage:</strong> The Cloud Controller API does not send or receive calls during restoration.</li>
+      <li><strong>API Outage:</strong> CAPI does not send or receive calls during restore.</li>
     </ul>
 </div>
 
@@ -225,10 +225,12 @@ where the operator can transfer them to storage and use them to restore the depl
 
 The following diagram shows a sample backup flow:
 
-<%= image_tag('backup-flow.png') %><%# Images require alt text that describes the image in detail. %>
+<%= image_tag('backup-flow.png', alt: 'The operator runs bbr backup pcf-deployment, calling the
+backup scripts. The scripts transfer artifacts from deployment to jumpbox. The artifacts transfer
+from the network/AZ to a secondary backup store.') %>
 
 
-## <a id='prepare'></a> Preparing to Create Your Backup
+## <a id='prepare'></a> Prepare to Create Your Backup
 
 ### <a id='setup-jumpbox'></a> Step 1: Set Up Your Jumpbox
 
@@ -248,7 +250,7 @@ As an alternative to using the <%= vars.ops_manager %> VM as your jumpbox, you c
   For more information, see the [BBR PCF Pipeline Tasks](https://github.com/pivotal-cf/bbr-pcf-pipeline-tasks) repository on GitHub.
 
 * Configure a custom jumpbox.
-  For more information, see [Configuring a custom jumpbox for BBR](https://community.pivotal.io/s/article/Configuring-a-Custom-Jumpbox-for-BBR) in the Knowledge Base.
+  For more information, see [VMware Tanzu Support documentation](https://community.pivotal.io/s/article/Configuring-a-Custom-Jumpbox-for-BBR) in the Knowledge Base.
 
 ### <a id='encrypt-key'></a> Step 2: Record the Cloud Controller Database Encryption Credentials
 
@@ -265,7 +267,7 @@ To retrieve the Cloud Controller database encryption credentials from the <%= va
 1. Record the **Db Encryption Credentials**.
   You must provide these credentials when you contact [Support](https://support.pivotal.io) for help restoring your installation.
 
-	<%= image_tag("ccdb-encrypt-creds.png") %><%# Images require alt text that describes the image in detail. %>
+  <%= image_tag("ccdb-encrypt-creds.png", alt: "Screenshot showing Link to Credential buttons for VM Credentials, Db Encryption Credentials, Encrypt Key, and Locket Client Cert") %>
 
 ### <a id="retrieve-credentials"></a> Step 3: Retrieve BOSH Director Credentials
 
@@ -316,7 +318,7 @@ You can use the environment variable `BOSH_ALL_PROXY` to open an SSH tunnel with
 
 <p class="note"><strong>Note:</strong> For the following procedures to work, ensure the SOCKS port is not already in use by a different tunnel or process.</p>
 
-<p class="note"><strong>Note:</strong> Using <code>BOSH_ALL_PROXY</code> can result in longer backup and restore times due to network performance degradation. All operations must pass through the proxy, so moving backup artifacts can be significantly slower.</p>
+<p class="note"><strong>Note:</strong> Using <code>BOSH_ALL_PROXY</code> can result in longer backup and restore times due to network performance degradation. All operations must pass through the proxy, so moving backup artifacts might be significantly slower.</p>
 
 To connect with `BOSH_ALL_PROXY`, perform one of the following procedures:
 
@@ -355,7 +357,7 @@ To establish the tunnel using the BOSH CLI:
       * `SOCKS-PORT` is the local SOCKS port.
       * `JUMPBOX-KEY-FILE` is the local SSH private key for accessing the jumpbox.
 
-    <p class="note warning"><strong>Warning:</strong> In BBR v1.5.0 and earlier, the tunnel created by the BOSH CLI does not include the <code>ServerAliveInterval</code> flag. This might cause your SSH connection to time out when transferring large artifacts. In BBR v1.5.1, the <code>ServerAliveInterval</code> flag is included. For more information, see <a href="https://github.com/cloudfoundry-incubator/bosh-backup-and-restore/releases/tag/v1.5.1">bosh-backup-and-restore</a> on GitHub.</p>
+    <p class="note warning"><strong>Warning:</strong> In BBR v1.5.0 and earlier, the tunnel created by the BOSH CLI does not include the <code>ServerAliveInterval</code> flag. This might cause your SSH connection to timeout when transferring large artifacts. In BBR v1.5.1, the <code>ServerAliveInterval</code> flag is included. For more information, see <a href="https://github.com/cloudfoundry-incubator/bosh-backup-and-restore/releases/tag/v1.5.1">bosh-backup-and-restore</a> on GitHub.</p>
 
 #### <a id='check-bosh-director'></a> Check Your BOSH Director
 
@@ -364,15 +366,15 @@ To check your BOSH Director:
 1. Run:
 
     ```
-  	bbr director \
+    bbr director \
     --private-key-path PRIVATE-KEY-FILE \
     --username bbr \
     --host HOST \
     pre-backup-check
-  	```
-  	Where:
-  	* `PRIVATE-KEY-FILE` is the path to the private key file that you created from **Bbr Ssh Credentials** in [Step 3: Retrieve BOSH Director Credentials](#retrieve-credentials).
-  	* `HOST` is the address of the BOSH Director. If the BOSH Director is public, HOST is a URL, such as `https://bosh.xxx.cf-app.com`. Otherwise, `HOST` is the `BOSH-DIRECTOR-IP` you retrieved in [Step 4: Retrieve BOSH Director Address](#retrieve-address).
+    ```
+    Where:
+    * `PRIVATE-KEY-FILE` is the path to the private key file that you created from **Bbr Ssh Credentials** in [Step 3: Retrieve BOSH Director Credentials](#retrieve-credentials).
+    * `HOST` is the address of the BOSH Director. If the BOSH Director is public, HOST is a URL, such as `https://bosh.xxx.cf-app.com`. Otherwise, `HOST` is the `BOSH-DIRECTOR-IP` you retrieved in [Step 4: Retrieve BOSH Director Address](#retrieve-address).
     <p class='note'><strong>Note:</strong> To enable debug logs, use the optional <code>--debug</code> flag. For more information, see <a href="#logging">Logging</a>.</p>
 
 1. After the pre-backup check succeeds, continue to [Step 6: Confirm Backup Restore Node is Deployed](#backup-restore-node). If the pre-backup check fails, the BOSH Director might not have the correct backup scripts or the connection to the BOSH Director might have failed.
@@ -391,7 +393,8 @@ To confirm that the Backup Restore node is deployed:
 
 1. Find the **Backup Restore Node** job and check if the **Instances** dropdown is set to `1`.
 
-    <%= image_tag("backup-restore-node.png") %><%# Images require alt text that describes the image in detail. %>
+    <%= image_tag("backup-restore-node.png", alt: "Screenshot of Backup Restore Node dropdowns.
+    The menus have the values Automatic: 1, Automatic: 200 GB, and Automatic: micro (cpu: 1, ram: 1 GB, disk: 8)") %>
 
 1. If the **Instances** dropdown is not set to `1`:
   1. Set the **Instances** dropdown to `1`.
@@ -413,7 +416,7 @@ To identify the name of the BOSH deployment:
     bosh -e BOSH-DIRECTOR-IP --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE deployments
     ```
     Where:
-    * `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 4: Retrieve BOSH Director Address](#retrieve-address).
+    * `BOSH-DIRECTOR-IP` is the BOSH Director IP address you retrieved in [Step 4: Retrieve BOSH Director Address](#retrieve-address).
     * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA for the BOSH Director.
 
 ### <a id='check'></a> Step 8: Check Your Deployment
@@ -430,9 +433,9 @@ To check that your BOSH Director is reachable and has a deployment that can be b
     --deployment DEPLOYMENT-NAME \
     --ca-cert PATH-TO-BOSH-SERVER-CERTIFICATE \
     pre-backup-check
-  	```
+    ```
     Where:
-    * `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 4: Retrieve BOSH Director Address](#retrieve-address).
+    * `BOSH-DIRECTOR-IP` is the BOSH Director IP address you retrieved in [Step 4: Retrieve BOSH Director Address](#retrieve-address).
     * `BOSH-CLIENT`, `BOSH-PASSWORD` are the **Uaa Bbr Client Credentials**,
        identity and password, that you retrieved in [Step 3: Retrieve BOSH Director Credentials](#retrieve-credentials).
     * `DEPLOYMENT-NAME` is the deployment name you retrieved in [Step 6: Identify Your Deployment](#identify-deployment).
@@ -477,11 +480,14 @@ To export your installation settings using the <%= vars.ops_manager %> UI:
 1. Select **Export Installation Settings**.
 
 1. Click **Export Installation Settings**.
-    <%= image_tag("settings.png") %><%# Images require alt text that describes the image in detail. %>
+    <%= image_tag("settings.png", alt: "Screenshot of Export Installation Settings. Above the Export
+    Installation Settings button is the warning: 'Upgrading Ops Manager may block the upgrade path
+    for certain products. Please read Upgrading Ops Manager and verify an upgrade path exists for
+    your installed products.'") %>
 
 #### <a id='export-using-api'></a> Option 2: Use the <%= vars.ops_manager %> API
 
-If you want to automate the backup process, you can use the <%= vars.ops_manager %> API to export your installation settings.
+To automate the backup process, you can use the <%= vars.ops_manager %> API to export your installation settings.
 
 To export your installation settings using the <%= vars.ops_manager %> API:
 
@@ -546,7 +552,7 @@ To clean up:
 
 <div class="note"><strong>Notes:</strong>
   <ul>
-    <li>Backing up <%= vars.app_runtime_abbr %> can take a considerable amount of time, and varies depending on network and hardware infrastructure. In controlled conditions, backup durations have been observed ranging from a few minutes to several hours. To reduce your backup lock times, consider using selective backups. For more information, see <a href="file-storage-backup-level.html">File Storage Backup Level</a>. Part of the backup process causes downtime for Cloud Controller, during which you cannot push, scale, or delete apps. Your apps are not affected.</li>
+    <li>Backing up <%= vars.app_runtime_abbr %> can take a considerable amount of time, and varies depending on network and hardware infrastructure. In controlled conditions, backup durations were observed to range from a few minutes to several hours. To reduce your backup lock times, consider using selective backups. For more information, see <a href="file-storage-backup-level.html">File Storage Backup Level</a>. Part of the backup process causes downtime for Cloud Controller, during which you cannot push, scale, or delete apps. Your apps are not affected.</li>
     <li>Because the BBR <code>backup</code> command can take a long time to complete, <%= vars.company_name %> recommends you run it independently of the SSH session, so that the process can continue running even if your connection to the jumpbox fails. The command above uses <code>nohup</code>, but you could also run the command in a <code>screen</code> or <code>tmux</code> session.</li>
   </ul>
 </div>
@@ -567,7 +573,7 @@ To back up your <%= vars.app_runtime_abbr %> deployment:
     backup
     ```
     Where:
-    * `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 4: Retrieve BOSH Director Address](#retrieve-address).
+    * `BOSH-DIRECTOR-IP` is the BOSH Director IP address you retrieved in [Step 4: Retrieve BOSH Director Address](#retrieve-address).
     * `BOSH-CLIENT`, `BOSH-PASSWORD` are the **Uaa Bbr Client Credentials**, or the identity and password, that you retrieved in [Step 3: Retrieve BOSH Director Credentials](#retrieve-credentials).
     * `DEPLOYMENT-NAME` is the deployment name you retrieved in [Step 6: Identify Your Deployment](#identify-deployment).
     * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA for the BOSH Director.
@@ -587,7 +593,7 @@ To back up your <%= vars.app_runtime_abbr %> deployment:
         backup-cleanup
         ```
         Where:
-        * `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 4: Retrieve BOSH Director Address](#retrieve-address).
+        * `BOSH-DIRECTOR-IP` is the BOSH Director IP address you retrieved in [Step 4: Retrieve BOSH Director Address](#retrieve-address).
         * `BOSH-CLIENT`, `BOSH-PASSWORD` are the **Uaa Bbr Client Credentials**, or the identity and password, that you retrieved in [Step 3: Retrieve BOSH Director Credentials](#retrieve-credentials).
         * `DEPLOYMENT-NAME` is the deployment name you retrieved in [Step 6: Identify Your Deployment](#identify-deployment).
         * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA for the BOSH Director.
@@ -640,7 +646,7 @@ To spin up a second environment and test the backup:
 
 #### <a id='ert-validate'></a> Validate Your <%= vars.app_runtime_abbr %> Backup Only
 
-For a sandbox or other non-production environment, you can optionally perform an _in-place_ restore of <%= vars.app_runtime_abbr %> only. In this case, you restore the <%= vars.app_runtime_abbr %> backup to the same <%= vars.platform_name %> environment that the backup was created from. For more information, see [Step 12: Redeploy <%= vars.app_runtime_abbr %>](restore-pcf-bbr.html#restore-ert) in _Restoring Deployments from Backup with BBR_.
+For a sandbox or other non-production environment, you can perform an _in-place_ restore of <%= vars.app_runtime_abbr %> only. In this case, you restore the <%= vars.app_runtime_abbr %> backup to the same <%= vars.platform_name %> environment that the backup was created from. For more information, see [Step 12: Redeploy <%= vars.app_runtime_abbr %>](restore-pcf-bbr.html#restore-ert) in _Restoring Deployments from Backup with BBR_.
 
 
 ## <a id='logging'></a> Logging
@@ -660,11 +666,11 @@ If you require additional logging, use the optional `--debug` flag to print:
 * Standard in and standard out streams for the backup and restore scripts when they are executed
 
 
-## <a id='canceling-backup'></a> Canceling a Backup
+## <a id='canceling-backup'></a> Cancel a Backup
 
 To cancel a backup:
 
-1. Enter `CTRL-C` to terminate the BBR process, then enter `yes` to confirm.
+1. Enter `CTRL-C` to terminate the BBR process and then enter `yes` to confirm.
 
 1. Run the BBR `backup-cleanup` command.
     * For a canceled director backup, run:
@@ -693,7 +699,7 @@ To cancel a backup:
         backup-cleanup
         ```
         Where:
-        * `BOSH-DIRECTOR-IP` is the BOSH Director IP you retrieved in [Step 4: Retrieve BOSH Director Address](#retrieve-address).
+        * `BOSH-DIRECTOR-IP` is the BOSH Director IP address you retrieved in [Step 4: Retrieve BOSH Director Address](#retrieve-address).
         * `BOSH-CLIENT`, `BOSH-PASSWORD` are the **Uaa Bbr Client Credentials**, or the identity and password, that you retrieved in [Step 3: Retrieve BOSH Director Credentials](#retrieve-credentials).
         * `DEPLOYMENT-NAME` is the deployment name you retrieved in [Step 6: Identify Your Deployment](#identify-deployment).
         * `PATH-TO-BOSH-SERVER-CERTIFICATE` is the path to the CA for the BOSH Director.

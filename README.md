@@ -6,8 +6,8 @@ See the following repositories for current product documentation:
 
 - Ops Manager: https://github.com/pivotal-cf/docs-ops-manager
 - Tanzu Application Service (TAS for VMs): https://github.com/pivotal-cf/docs-pas
-- Tanzu Application Service [Windows] (TAS for VMs [Windows]): https://github.com/pivotal-cf/docs-pcf-windows
-- Tanzu Kubernetes Grid Integrated Edition (TKGi): https://github.com/pivotal-cf/docs-pks
+- Tanzu Application Service [Windows](TAS for VMs [Windows]): https://github.com/pivotal-cf/docs-pcf-windows
+- Tanzu Kubernetes Grid Integrated Edition (TKGI): https://github.com/pivotal-cf/docs-pks
 
 ---
 
